@@ -28,6 +28,7 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | 202D0 | RECONSTRUCTION/functions/202D0.md | INFERRED |
 | 74C8 | RECONSTRUCTION/functions/74C8.md | INFERRED |
 | 9D64 | RECONSTRUCTION/functions/9D64.md | INFERRED |
+| 1FB5C | RECONSTRUCTION/functions/1FB5C.md | INFERRED |
 | Mọi function khác | chưa record | UNKNOWN |
 
 ## 2565C (sub_2565C) — INFERRED overall (session-013, đọc FULL trực tiếp)
@@ -89,3 +90,14 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | Bulk nil-skip + 7E908 + 14 keys | :280-381 exact | B06 + build reproduced | keys content HYPOTHESIS (U04) | 74C8.c:280-381 | INFERRED |
 | Derives enabled/nav (&&exists) | :331-337, :407-414 exact | B07/B09 + truth tables | edge U05 | 74C8.c | INFERRED |
 | Plist write + cf-check + post | :416-419 exact | reproduced + U-new (cf indet.) | cf safety UNKNOWN | 74C8.c:416-419 | INFERRED |
+
+## 1FB5C (onHostRequest:) — INFERRED overall (session-018, đọc FULL trực tiếp)
+| Feature | Original (evidence) | Reconstruction (1FB5C.md) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Parse + gen++ + singletons | :65-87 exact | reproduced | 27670 mapping U01 | 1FB5C.c:65-87 | INFERRED |
+| Deactivate hide + ack-zero | :89-92 → :166-178 exact | B01/B10 reproduced | hide-fail UNKNOWN | 1FB5C.c | INFERRED |
+| Spike + ack(result) | :94-112 exact | B02 reproduced | return semantics U07 | 1FB5C.c:94-112 | INFERRED |
+| Fast re-present gate + chain | :113-148 exact | B03/B04 reproduced | renderSize-double U05 | 1FB5C.c:113-148 | INFERRED |
+| Dismiss/prepare/hostBundle/show | :151-194 exact | B05-B08 reproduced | bid-rỗng path U06 | 1FB5C.c:151-194 | INFERRED |
+| 89D8 6-args + acks gen-0 | :133, :98-192 exact | reproduced | 89D8 semantics U04 | 1FB5C.c | INFERRED |
+| LABEL_22 + 7B6D8 argless | :195-206 exact | B09 reproduced | built-array unused U03 | 1FB5C.c:195-206 | INFERRED |

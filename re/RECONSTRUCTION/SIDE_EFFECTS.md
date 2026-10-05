@@ -279,6 +279,66 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - FAILURE: không error path (không check return)
 - EVIDENCE: functions/202D0.md B08
 
+## SE-1FB5C-001 — request counter
+- FUNCTION: 1FB5C (1FB5C.c:85)
+- CONDITION: luôn (mọi notification, kể cả deactivate)
+- EFFECT: global mutation (++)
+- TARGET: `qword_163980`
+- DATA: —
+- TIMING: đồng bộ sau parse, trước singletons
+- THREAD: delivery thread
+- ORDER: đầu body
+- FAILURE: UNKNOWN
+- EVIDENCE: functions/1FB5C.md (INPUTS sau)
+
+## SE-1FB5C-002 — deactivate hide + ack-zero
+- FUNCTION: 1FB5C (1FB5C.c:89-92 → :166-178)
+- CONDITION: !activate (incl. nil/missing → 0)
+- EFFECT: ObjC call + IPC ack (via 9424)
+- TARGET: [DDz1 hide]; 9424(0, bid, nil×3, 0, ZeroRect) → (không 8D78 trực tiếp trong body)
+- DATA: bid ("?" nếu nil)
+- TIMING: đồng bộ
+- THREAD: delivery thread
+- ORDER: trước LABEL_11 log
+- FAILURE: UNKNOWN (hide fail?)
+- EVIDENCE: functions/1FB5C.md B01/B10
+
+## SE-1FB5C-003 — spike/show/fast/full DDz actions
+- FUNCTION: 1FB5C (1FB5C.c:94-194)
+- CONDITION: các sub-branches B02/B03-gate/B05/B06/B07
+- EFFECT: ObjC calls (showSpike, dismiss có điều kiện, showWithHostView, present, setAppContentFrame + getters)
+- TARGET: DDz1/DDz2 (bodies riêng)
+- DATA: bid, frame doubles, hostView v52
+- TIMING: đồng bộ tuần tự
+- THREAD: delivery thread
+- ORDER: theo TRACE 05-12
+- FAILURE: false → LABEL_10 (ack 0) / LABEL_11 (log)
+- EVIDENCE: functions/1FB5C.md B02-B08
+
+## SE-1FB5C-004 — acks gen-zero (×4 sites)
+- FUNCTION: 1FB5C → 9424 (1FB5C.c:98/:134/:167/:182)
+- CONDITION: spike / fast / LABEL_10 / show (mọi exit trừ LABEL_11-trực-tiếp? — LABEL_11 không ack riêng; ack đã phát trước)
+- EFFECT: IPC gián tiếp (9424 → dict → caller? — 9424 trong body này KHÔNG kèm 8D78 call-site; 9424.c:102 tự post host.state — cross-ref COMPARISON 2565C B08)
+- TARGET: host.state dict {activated=result, bid, sbPid, NO cpui keys (nil×3), gen 0, ZeroRect}
+- DATA: result ∈ {showSpike, present, 0, show}
+- TIMING: đồng bộ tại điểm ack
+- THREAD: delivery thread
+- ORDER: trước LABEL_11/22 tương ứng
+- FAILURE: UNKNOWN
+- EVIDENCE: functions/1FB5C.md B02/B04/B08/B10
+
+## SE-1FB5C-005 — success log + 7B6D8
+- FUNCTION: 1FB5C (1FB5C.c:195-208)
+- CONDITION: LABEL_22 (spike-ok / fast-ok / show-ok)
+- EFFECT: ObjC call (arg UNKNOWN — array built nhưng call argless) + log call
+- TARGET: 7B6D8(); 4D0F4("host.request")
+- DATA: v54=[bid] (built, use UNKNOWN — U03)
+- TIMING: đồng bộ cuối
+- THREAD: delivery thread
+- ORDER: sau ack, trước releases
+- FAILURE: UNKNOWN
+- EVIDENCE: functions/1FB5C.md B09/B11
+
 ## SE-9D64-001 — refused rollback
 - FUNCTION: 9D64 (9D64.c:744-774)
 - CONDITION: hostRefused==1 (boolValue) + (rollback đầy đủ chỉ nếu 163688==1 && 1635E8==1)
