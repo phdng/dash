@@ -51,5 +51,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-008] FUNCTION record 44C0 (đọc FULL trực tiếp 124 dòng; 7 branches; F-042 blocklist errata). Status INFERRED.
 - [x] [R-009] Tweak.x present/commit/ack bodies từ 10 records → RECONSTRUCTION/PresentCommitAck.m (APPROXIMATION synthesis session-022).
 - [x] [R-010] Tweak.x keyinput relay bodies từ EVIDENCE/keyinput_relay.md → RECONSTRUCTION/KeyinputRelay.m (APPROXIMATION synthesis session-023, KeyApp = HYPOTHESIS).
-- [ ] [R-011] Tweak.x bodies tiếp (prefs/license) hoặc FUNCTION records tiếp (4C34/163EC...) — quyết scope session sau.
+- [x] [R-011] Tweak.x prefs resolver bodies từ functions/74C8.md → RECONSTRUCTION/PrefsResolver.m (APPROXIMATION synthesis session-024).
+- [ ] [R-012] Tweak.x bodies tiếp (license) hoặc FUNCTION records tiếp (4C34/163EC...) — quyết scope session sau.
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
