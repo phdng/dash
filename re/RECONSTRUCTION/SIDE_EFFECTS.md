@@ -279,6 +279,42 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - FAILURE: không error path (không check return)
 - EVIDENCE: functions/202D0.md B08
 
+## SE-74C8-001 — clearpanes wipe (9 keys)
+- FUNCTION: 74C8 (74C8.c:100-204)
+- CONDITION: attributes non-nil && .done parse && mtime > done+0.5
+- EFFECT: file write (.done) + CFPreferences 9× nil + Synchronize + file delete (clearpanes)
+- TARGET: .done (`"%.3f"` atomic UTF-8); keys split_left/right/third, layout, frac_a/b/frac_layout, carplay_ui/_more (domain duodash.settings CurrentUser/AnyHost); file clearpanes
+- DATA: —
+- TIMING: đồng bộ đầu body
+- THREAD: caller thread
+- ORDER: trước sync/refresh
+- FAILURE: attrs nil / .done empty→0.5 / gate false → skip (không lỗi)
+- EVIDENCE: functions/74C8.md B01-B03 (F-041: 9 keys, đính chính 8)
+
+## SE-74C8-002 — sync + refresh (floor/keypane)
+- FUNCTION: 74C8 (74C8.c:207-209)
+- CONDITION: luôn (sau clear-phase)
+- EFFECT: CFPreferences AppSynchronize + helper calls 7EA4(v8)/8058(v9) (bodies riêng)
+- TARGET: domain duodash.settings; globals floor/keypane (trong callees)
+- DATA: args v8=sync-return, v9=floor-return (use UNKNOWN — U03)
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: sau clear, trước reads
+- FAILURE: UNKNOWN (callee internals)
+- EVIDENCE: functions/74C8.md (INPUTS call args)
+
+## SE-74C8-003 — plist publish + resolved post
+- FUNCTION: 74C8 (74C8.c:215-419)
+- CONDITION: luôn (reads → compute → build → write → post)
+- EFFECT: CFPreferences reads (enabled/bridgedApps/autostart/bulk/nav ×2) + file write (plist atomic) + Darwin notify post
+- TARGET: `/var/tmp/com.sensetechlab.appbridge.plist` (16 entries: 14 core + nav ×2); `com.sensetechlab.appbridge.resolved`
+- DATA: 14 keys exact + derives (enabled=value&&exists; autostart=85CDC; split_enabled hằng YES); nav gates (string-check; bool&&exists)
+- TIMING: đồng bộ cuối body
+- THREAD: caller thread
+- ORDER: sau compute; trước releases
+- FAILURE: write fail → vẫn post (INFERRED); reads nil → defaults/skip
+- EVIDENCE: functions/74C8.md B04-B11 + TRACE 06-18
+
 ## SE-218D8-001 — reset globals full-host
 - FUNCTION: 218D8 (218D8.c:359-377)
 - CONDITION: full-host route (B04 true)

@@ -26,6 +26,7 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | 2565C | RECONSTRUCTION/functions/2565C.md | INFERRED |
 | 218D8 | RECONSTRUCTION/functions/218D8.md | INFERRED |
 | 202D0 | RECONSTRUCTION/functions/202D0.md | INFERRED |
+| 74C8 | RECONSTRUCTION/functions/74C8.md | INFERRED |
 | Mọi function khác | chưa record | UNKNOWN |
 
 ## 2565C (sub_2565C) — INFERRED overall (session-013, đọc FULL trực tiếp)
@@ -64,3 +65,14 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | hostSlots call + captures | :225-238 exact block layout | B07 reproduced | 279F4 body cross-ref | 202D0.c:225-238 | INFERRED |
 | Delayed verify dispatch | :239-246 exact (v60s, main) | B07 reproduced | 27AC8 body cross-ref | 202D0.c:239-246 | INFERRED |
 | Deactivate (dismiss-cond/hide/log/teardown) | :257-264 exact | B08 reproduced | 76224 arg UNKNOWN (U04) | 202D0.c:257-264 | INFERRED |
+
+## 74C8 (sub_74C8) — INFERRED overall (session-016, đọc FULL trực tiếp)
+| Feature | Original (evidence) | Reconstruction (74C8.md) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Clearpanes one-shot + 9-key wipe | :100-204 exact | B01-B03 reproduced | đính chính 8→9 keys (F-041) | 74C8.c:100-204 | INFERRED |
+| Sync + 7EA4/8058 calls (args) | :207-209 exact | reproduced + U03 | arg use UNKNOWN | 74C8.c:207-209 | INFERRED |
+| Bridged filter (keep lỏng) | :210-271 exact | B04 reproduced | đính chính hypothesis đảo (F-041) | 74C8.c:210-271 | INFERRED |
+| Autostart raw + 85CDC no-arg | :272-279 exact | B05 + U02 | x0-carryover HYPOTHESIS | 74C8.c:272-279 | INFERRED |
+| Bulk nil-skip + 7E908 + 14 keys | :280-381 exact | B06 + build reproduced | keys content HYPOTHESIS (U04) | 74C8.c:280-381 | INFERRED |
+| Derives enabled/nav (&&exists) | :331-337, :407-414 exact | B07/B09 + truth tables | edge U05 | 74C8.c | INFERRED |
+| Plist write + cf-check + post | :416-419 exact | reproduced + U-new (cf indet.) | cf safety UNKNOWN | 74C8.c:416-419 | INFERRED |

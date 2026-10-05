@@ -205,3 +205,10 @@
 - AAAD0 (a1, out int64): giống hệt + `llround` (không strict-int: 1.6→2; không whitelist enum; không overflow-check). Range-check (nếu có) ở caller A9840.
 - A7E04 KHÔNG persist (đính chính hypothesis cũ SAI): conditional-unrefuse — stored-nonce (A761C đọc license.refused.plist dict[@"nonce"] NSString non-empty) == async-string → delete file (A78B8 removeItem error:0) + re-arm A7338, else no-op. Không write/chmod nào trong 4 file. A7338 = device-identify check + alert.
 - Đích file duy nhất: /var/mobile/Library/DuoDash/license.refused.plist (format dict nonce).
+
+## F-041 ERRATA + record 74C8 (session-016, EVIDENCE: functions/74C8.md)
+- Đính chính F-025: clearpanes wipe **9 keys** (đếm trực tiếp :139-192), không phải 8.
+- Đính chính hypothesis "filter đảo": đọc exact `!isString || !excluded → add` = giữ-lỏng (non-string pass-through, chỉ loại excluded-strings).
+- Mới: call args `7EA4(v8)/8058(v9)/85CDC()` hiện trong decompile dù callees argless (use UNKNOWN; x0-carryover HYPOTHESIS cho 85CDC).
+- Mới: `cf` indeterminate tại :417 (lớp U01 2565C, cần verify assembly).
+- Record 74C8: 12 branches B01-B11 + trace 18 bước; publish 14 keys + nav ×2; derives &&exists; plist + post luôn cuối; U01-U06.
