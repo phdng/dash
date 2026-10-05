@@ -25,6 +25,7 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | 2410C | RECONSTRUCTION/functions/2410C.md | INFERRED |
 | 2565C | RECONSTRUCTION/functions/2565C.md | INFERRED |
 | 218D8 | RECONSTRUCTION/functions/218D8.md | INFERRED |
+| 202D0 | RECONSTRUCTION/functions/202D0.md | INFERRED |
 | Mọi function khác | chưa record | UNKNOWN |
 
 ## 2565C (sub_2565C) — INFERRED overall (session-013, đọc FULL trực tiếp)
@@ -49,3 +50,17 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | Gen + block + dispatch | :601-653 exact captures | reproduced | none known | 218D8.c:601-653 | INFERRED |
 | Reshow loop + ack | :656-710 exact | B12/B13 reproduced | CPUI-skip INFERRED intent | 218D8.c:656-710 | INFERRED |
 | Exception handler | adb14/adb44 import, no body | U06 UNKNOWN | OPEN | — | UNKNOWN |
+
+## 202D0 (onHostRequestSplit:) — INFERRED overall (session-015, đọc FULL trực tiếp)
+| Feature | Original (evidence) | Reconstruction (202D0.md) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Debounce decrement (no in-body check) | :87-88 exact | B01 reproduced | consumer UNKNOWN | 202D0.c:87-88 | INFERRED |
+| userInfo double-read + frame cache | :89-104 exact | INPUTS + SE-202D0-002 | field mapping U02 | 202D0.c:89-104 | INFERRED |
+| Bids/bools parse (nil→empty/false) | :105-140 exact | INPUTS reproduced | layout absent CONFIRMED | 202D0.c:105-140 | INFERRED |
+| Hosted fallback (empty→pair) | :143-177 exact | B03 reproduced | none known | 202D0.c:143-177 | INFERRED |
+| Activate + gen++ | :179, :188 | B04 reproduced | none known | 202D0.c:179-188 | INFERRED |
+| envOnly short-circuit + in-place args | :189-196 exact | B05 reproduced | intent INFERRED | 202D0.c:189-196 | INFERRED |
+| Reapdelay read/trim/clamp | :198-224 exact (0,60] | B06 reproduced | none known | 202D0.c:198-224 | INFERRED |
+| hostSlots call + captures | :225-238 exact block layout | B07 reproduced | 279F4 body cross-ref | 202D0.c:225-238 | INFERRED |
+| Delayed verify dispatch | :239-246 exact (v60s, main) | B07 reproduced | 27AC8 body cross-ref | 202D0.c:239-246 | INFERRED |
+| Deactivate (dismiss-cond/hide/log/teardown) | :257-264 exact | B08 reproduced | 76224 arg UNKNOWN (U04) | 202D0.c:257-264 | INFERRED |

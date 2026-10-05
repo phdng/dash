@@ -171,6 +171,114 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - FAILURE: skip im lặng nếu bất kỳ null
 - EVIDENCE: functions/2565C.md B10
 
+## SE-202D0-001 — debounce decrement
+- FUNCTION: 202D0 (202D0.c:87-88)
+- CONDITION: `dword_162E70>=1`
+- EFFECT: global mutation (decrement, không check tiếp trong body)
+- TARGET: `dword_162E70`
+- DATA: -1
+- TIMING: đồng bộ đầu handler
+- THREAD: notification delivery thread (INFERRED)
+- ORDER: đầu tiên trong body
+- FAILURE: UNKNOWN (consumer ở nơi khác)
+- EVIDENCE: functions/202D0.md B01
+
+## SE-202D0-002 — frame cache overwrite
+- FUNCTION: 202D0 (202D0.c:101-104)
+- CONDITION: luôn (mỗi request)
+- EFFECT: global mutations (4 doubles, không gen-guard)
+- TARGET: `qword_163998/9A0/9A8/9B0`
+- DATA: từ 27670(userInfo) (mapping exact UNKNOWN — U02)
+- TIMING: đồng bộ
+- THREAD: delivery thread
+- ORDER: sau retain, trước keys parse
+- FAILURE: UNKNOWN
+- EVIDENCE: functions/202D0.md (INPUTS lần 1)
+
+## SE-202D0-003 — gen increment (activate)
+- FUNCTION: 202D0 (202D0.c:188)
+- CONDITION: activate branch
+- EFFECT: global mutation (monotonic ++)
+- TARGET: `qword_163980` (v52 = new gen, truyền in-place + delayed block)
+- DATA: —
+- TIMING: đồng bộ
+- THREAD: delivery thread
+- ORDER: trước in-place/host calls
+- FAILURE: UNKNOWN
+- EVIDENCE: functions/202D0.md B04/B05
+
+## SE-202D0-004 — gen increment (deactivate)
+- FUNCTION: 202D0 (202D0.c:259)
+- CONDITION: deactivate branch
+- EFFECT: global mutation (++)
+- TARGET: `qword_163980`
+- DATA: —
+- TIMING: đồng bộ
+- THREAD: delivery thread
+- ORDER: đầu deactivate block
+- FAILURE: UNKNOWN
+- EVIDENCE: functions/202D0.md B08
+
+## SE-202D0-005 — in-place attempt
+- FUNCTION: 202D0 → switchCarPlayUIInPlace:gen: (202D0.c:189-196)
+- CONDITION: envOnly=1 (skip khi envOnly=0)
+- EFFECT: ObjC call có điều kiện (success → skip host block)
+- TARGET: CNABSpringBoardObserver (self), args ([L,R,C] array, gen v52)
+- DATA: bids retains v48/v49/v50
+- TIMING: đồng bộ
+- THREAD: delivery thread
+- ORDER: sau gen++, trước reapdelay read
+- FAILURE: return 0 → rơi vào host block (không phải lỗi)
+- EVIDENCE: functions/202D0.md B05
+
+## SE-202D0-006 — file read reapdelay
+- FUNCTION: 202D0 (202D0.c:198-224)
+- CONDITION: host block (activate + (¬envOnly ∨ in-place fail))
+- EFFECT: file read + parse + clamp
+- TARGET: `/var/tmp/duodash_ab_reapdelay` (UTF-8, trim, double, clamp (0,60] else 0.0)
+- DATA: v60 delay giây
+- TIMING: đồng bộ
+- THREAD: delivery thread
+- ORDER: sau in-place, trước hostSlots
+- FAILURE: missing/empty/malformed → 0.0 (dispatch + verify ngay)
+- EVIDENCE: functions/202D0.md B06
+
+## SE-202D0-007 — hostSlots call
+- FUNCTION: 202D0 → hostSlots:skipEvict:onHosted: (202D0.c:225-238)
+- CONDITION: host block
+- EFFECT: ObjC call (sync; async boundaries nằm trong 218D8)
+- TARGET: self, args (v63=[L,R,C] array, v69=skipEvict bool, v74=279F4-block(delay v60, old-bids copy))
+- DATA: v62=copy hostedSlotBids (old)
+- TIMING: đồng bộ (218D8 nội bộ dispatch tiếp)
+- THREAD: delivery thread
+- ORDER: sau reapdelay, trước delayed-verify schedule
+- FAILURE: xử lý trong 218D8 (record riêng)
+- EVIDENCE: functions/202D0.md B07; functions/218D8.md
+
+## SE-202D0-008 — delayed verify schedule
+- FUNCTION: 202D0 (202D0.c:239-246)
+- CONDITION: host block (sau hostSlots, unconditional)
+- EFFECT: dispatch_after lên main (block 27AC8 gen-guard)
+- TARGET: _dispatch_main_q, delay v60*1e9 ns, block captures gen v65=163980
+- DATA: —
+- TIMING: async after v60s (0 = gần như ngay)
+- THREAD: delivery → main
+- ORDER: sau hostSlots
+- FAILURE: UNKNOWN (dispatch fail?)
+- EVIDENCE: functions/202D0.md B07
+
+## SE-202D0-009 — deactivate teardown
+- FUNCTION: 202D0 (202D0.c:259-264)
+- CONDITION: !activate (incl. nil/missing → 0)
+- EFFECT: ObjC calls + log + teardown (conditional dismiss + unconditional hide)
+- TARGET: [DDz2 dismiss] (chỉ nếu 23454 file tồn tại); [DDz1 hide] (luôn); 4D0F4("split.deactivate"); 76224(v61)
+- DATA: v61 = 4D0F4 return (semantics UNKNOWN — U04)
+- TIMING: đồng bộ
+- THREAD: delivery thread
+- ORDER: sau gen++
+- FAILURE: không error path (không check return)
+- EVIDENCE: functions/202D0.md B08
+
 ## SE-218D8-001 — reset globals full-host
 - FUNCTION: 218D8 (218D8.c:359-377)
 - CONDITION: full-host route (B04 true)
