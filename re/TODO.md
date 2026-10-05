@@ -35,4 +35,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 
 ## P4 — Cleanup/docs
 - [x] [P4-1] Git init + commit local re/ only (binaries Applications/ + Library/ untracked; không remote/push). → session-006.
-- [ ] [P4-2] Chuẩn hóa EVIDENCE/ trích dẫn offset/file:line.
+- [x] [P4-2] EVIDENCE chuẩn hóa — PARTIAL (audit session-009: mọi file có nguồn subagent + claims chính có file:line trong FINDINGS F-001..F-036; EVIDENCE mới rút gọn giữ detail, citations đầy đủ nhất ở notify_matrix/prefs_split_autostart; full verbatim subagent reports không lưu — chấp nhận mất chi tiết phụ).

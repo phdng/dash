@@ -69,6 +69,12 @@ Gen-guard cửa vào (stale silent-drop) → refused (geo-verdict + license map 
 ## B-24 DDz phân công + scene-VC layer (CONFIRMED session-008, EVIDENCE/ddz_inventory.md)
 DDz1 = shell/view (window lifecycle, splash/notice, layout, swap/mirror, maximize 11); DDz2 = hosting/state (getters, host/spike chain, aux scene, evict, dismiss+reset); DDz1 kéo DDz2 (5 sites), ngược 1. D684/D4C4 = scene-VC layer thấp hơn (không gọi DDz): fast re-layout vs slow build 2 họ + failure reasons + foreground request. DDz3 = picker/overlay UI trên cùng (153 methods; buildKitLevel UNKNOWN >3000 instr).
 
+## B-25 spikeHostSlots: nội bộ (CONFIRMED session-009, EVIDENCE/spike_hostslots.md)
+skipEvict=1 ức chế duy nhất evictFromPhone (3CC44:311, kể cả flag tồn tại); =0 vẫn không evict nếu flag vắng; không forward vào hàm con. 3CC44: slots 0..3 (≥4 → nil), loop create (sanitized bids + natives), dismiss + post cpdisconnect chỉ khi nil, IPC-FS lscape/tripped/inflight/respring. 3BBF0: CPUI → tag-7020 view; SB → entity/VC chain (3 degrade reasons) hoặc placeholder; bid rỗng → placeholder. 3C1F0 degrade = unhost (removeFromSuperview + invalidate, không kill) + placeholder. 3D4FC = delayed geometry pushes (delays off_154160, captures gen/size/orient/bid).
+
+## B-26 Evict helpers verdict (CONFIRMED session-009, EVIDENCE/evict_helpers.md)
+85B8 = logical evict prefs-only (xóa bid khỏi ui[_more] + sync + regenerate/notify; callers prune/evict/in-place). 7764C = liveness probe read-only (pid+path, SB-gated, count/-1; -1 truthy khi ép boolean). Nhánh evict = unhost mềm có điều kiện liveness; kill đồng bộ thuộc 2410C→763E0 / chain 7792C.
+
 ## STOP-CONDITIONS VERDICT (session-008)
 - Hook map tương đối đầy đủ: PASS (trừ 10 SB hook-fn P0-3 blocked — F-018).
 - Initialization flow được hiểu: PASS (F-011, 4 ctors + role blocks + once lồng).

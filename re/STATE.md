@@ -1,25 +1,25 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-008_
+_Last updated: 2026-10-05 session-009_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-008 đóng Q-11 lõi cuối: async host 2410C/2565C (F-033) + DDz inventory 251 methods + D684 (F-034) + STOP VERDICT (static complete, overall incomplete). Chỉ còn tàn dư Q-11, Q-10 validators, Q-12/Q-13, P4-2, dynamic verify.
+Session-009 đóng spikeHostSlots: nội bộ + skipEvict truth (F-035) + kill-vs-unhost verdict (F-036) + P4-2 partial. Chỉ còn evictFromPhone, Q-10 validators, Q-12/Q-13, Tweak.x bodies, dynamic verify.
 
 ## CURRENT PHASE:
-Phase 1-3 DONE (trừ P0-3 blocked). Phase 4 static HOÀN TẤT CƠ BẢN (tàn dư: spikeHostSlots nội bộ, 85B8/7764C, DDz3 bodies, Q-10 validators, Q-12/Q-13); còn P4-2, dynamic verify.
+Phase 1-4 static HOÀN TẤT CƠ BẢN (tàn dư: evictFromPhone, DDz3 bodies, Q-10 validators, Q-12/Q-13); P0-P3 + P4-1 + P4-2(partial) DONE; còn Tweak.x bodies mở rộng, dynamic verify.
 
-## LAST COMPLETED TASK (session-008):
-- 2 subagents (2410C/2565C, DDz inventory + D684) + persist 2 EVIDENCE + FINDINGS/BEHAVIOR/OPEN_QUESTIONS + STOP verdict.
+## LAST COMPLETED TASK (session-009):
+- 2 subagents (spikeHostSlots chain, 85B8/7764C) + persist 2 EVIDENCE + FINDINGS/BEHAVIOR/OPEN_QUESTIONS + P4-2 audit (partial).
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-008 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-009 (đang làm).
 
-## NEXT TASK (session-009):
-1. spikeHostSlots: nội bộ (3CC44 FULL) — mảnh hosting cuối.
-2. 85B8 + 7764C — đóng kill-vs-unhost.
-3. P4-2 EVIDENCE chuẩn hóa + Tweak.x bodies mở rộng.
+## NEXT TASK (session-010):
+1. evictFromPhone (3AE50 FULL) — mảnh skipEvict cuối.
+2. Tweak.x bodies: present/commit/ack path.
+3. AA9FC/AAAD0 validators (Q-10) — nhỏ.
 
 ## BLOCKERS:
 - P0-3 blocked (raw asm 27E20). Không device. Git local-only. Q-12/Q-13 UNKNOWN.
@@ -38,9 +38,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-008):
-- Mới: `EVIDENCE/async_host_2410C.md`, `EVIDENCE/ddz_inventory.md`, `LOG/session-008.md`.
-- Sửa: FINDINGS (+F-033/F-034), BEHAVIOR (+B-23/B-24 + verdict), OPEN_QUESTIONS (Q-11).
+## FILES CHANGED (session-009):
+- Mới: `EVIDENCE/spike_hostslots.md`, `EVIDENCE/evict_helpers.md`, `LOG/session-009.md`.
+- Sửa: FINDINGS (+F-035/F-036), BEHAVIOR (+B-25/B-26), TODO (P4-2), OPEN_QUESTIONS (Q-11).
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).

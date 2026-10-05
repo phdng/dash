@@ -168,3 +168,17 @@
 - D684 (626 dòng, callers D4C4+E7DC): fast path (có state+VC: update rect/gen + BD18 + E7F4 + ECB8 + EE4C/ED5C + after 50ms) / slow path (build VC mới 2 họ DB/CAR với verify type-encoding; reasons no_* via FB9C; attach + state 5 keys + foreground + push). D4C4 trigger (cả hai → D684 ngay; thiếu → C2A4 → CB08 async hoặc D684 báo lỗi).
 - DDz3 (153, instance-only, không +shared): picker/overlay UI — handles/gutter/drag, grid/tiles, arrange drag-drop, commit pick, resize, chips/settings/kit levels; buildKitLevel:pane: 0x63CE4 fallback >3000 instr (prologue + bubble helpers, nội dung UNKNOWN); hàng trăm call-sites → DDz1/DDz2 (tầng UI trên cùng, HYPOTHESIS).
 - Tool caveat: headers "Called by: none" không đáng tin tuyệt đối (objc_msgSend không resolve; vd present gọi nudgePresentAfterShow/startLivePresent nhưng headers ghi none).
+
+## F-035 CONFIRMED (session-009): spikeHostSlots: nội bộ + skipEvict truth (EVIDENCE/spike_hostslots.md)
+- skipEvict (bool a6) chỉ 1 use cả chain: `3CC44:311 !a6 && exists(split_evict) → evictFromPhone`. =1 ức chế nguyên vẹn evictFromPhone kể cả flag tồn tại; =0 vẫn không evict nếu flag vắng. Không forward vào hàm con (3BBF0/3C1F0/3D4FC không có param). Nội bộ evictFromPhone UNKNOWN.
+- 3CC44: v14=min(counts) 0..3 (≥4 → nil, không tạo/dismiss/notify); loop spikeCreateSlot (sanitized bids + natives) → addObject; dismiss + post cpdisconnect chỉ khi nil; DDz1 không trực tiếp; notify duy nhất cpdisconnect; IPC-FS lscape/.tripped/.inflight/respring (+372CC); globals gen/slots/flags/reset + AB-file override.
+- 3BBF0: 163D88=1 + guard index≤2 + ghi bid/size; CPUI → UIView tag 7020 (fallback carPlayDisplaySize); SB → SBApplicationController/entity/VC (class nil → nil; app nil → clear + placeholder 36E98; evict-state reset; 3 degradeSlot reasons; VC ivar + occlusions/lifecycle + view + mode/grabber); bid rỗng → placeholder. DDz1 duy nhất carPlayDisplaySize. Error → placeholder (trừ 2 nil).
+- 3C1F0 degradeSlot (unhost + placeholder): removeFromSuperview + invalidate (không kill) + ivar nil + clear bid + placeholder 36E98. Không DDz1/notify.
+- 3D4FC geometry pushes: guard slot≤2/bid/CPUI → enumerate off_154160 delays → dispatch_after(main, 3DC38) captures gen/size/orient/bid. Không tạo/xóa, không notify, chỉ đọc globals.
+- Debug: breakpoint duy nhất phân biệt skipEvict = 3CC44:311 (sửa giả thiết cũ "forward nguyên vẹn").
+
+## F-036 CONFIRMED (session-009): kill-vs-unhost đóng cho 85B8/7764C (EVIDENCE/evict_helpers.md)
+- **85B8(bid): prefs-only logical evict, KHÔNG kill.** Đọc ui+more (7044/70FC/7E730) → nếu bid!=main hoặc ∈list → mutableCopy−bid → 84D8 (SetAppValue ui+more + Sync + 74C8 regenerate/notify). No-op khi bid==main&&∉list / empty. Callers: 20010 (prune-once failed bid), 25C4C (evict), 26FE4 (in-place chain).
+- **7764C(snapshot,filter): probe liveness, KHÔNG kill/unhost/prefs.** NSArray<{pid,path,bid}> + filter (nil=rỗng match all); SpringBoard-only gate (ngoài → -1); pid>=2 + proc_pidpath khớp path → counter++; return count/-1. Read-only (retain/release + stack). -1 cũng truthy khi ép boolean (fail-closed?/bug UNKNOWN). 25C4C:113 gọi bỏ kết quả (tàn dư UNKNOWN).
+- Callers: 25C4C:66 (đk evict) / :84 (evict) / :113 (bỏ kq); 25FE0:51 (any-live → retry); 26FE4:114+152 (cặp chain khác + rebuild + ack in-place). Headers khớp grep, không caller ẩn.
+- Nhánh evict = unhost mềm có điều kiện liveness; kill đồng bộ do 2410C→763E0 hoặc chain 7792C (không từ 2 helpers).
