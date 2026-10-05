@@ -170,3 +170,75 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: sau ack + 4D0F4 log
 - FAILURE: skip im lặng nếu bất kỳ null
 - EVIDENCE: functions/2565C.md B10
+
+## SE-218D8-001 — reset globals full-host
+- FUNCTION: 218D8 (218D8.c:359-377)
+- CONDITION: full-host route (B04 true)
+- EFFECT: global mutations (17 stores: 162ED8/162EDA/163C18/163AF1/162E90/163AF2/162E98/162EA0/163AF3/163AF8/163B00/163B08/163B10/163AF0/163B18/163B20/162E80/162E88/v158/v159)
+- TARGET: như trên (values: 256/2/0/0/2/0/-0.5/-0.5/0/0/0/0/fmin-check/0/0/0/50/50/0/0)
+- DATA: —
+- TIMING: đồng bộ sau geometry, trước knobs
+- THREAD: thread caller
+- ORDER: trước SE-218D8-002
+- FAILURE: UNKNOWN
+- EVIDENCE: functions/218D8.md (full-host reset)
+
+## SE-218D8-002 — knob overrides (file reads + global writes)
+- FUNCTION: 218D8 (218D8.c:381-550)
+- CONDITION: full-host route; nopanepad? hard-defaults : 4 file reads
+- EFFECT: file reads (7 knob paths) + global mutations (162EA8/162EB0/162E90/163AF2/163AF8/163B00/163B08/163AF3/163AF1 + locals)
+- TARGET: /var/tmp/duodash_ab_{nopanepad,panepad,nopaneround,layout,panefracs,paneratio,noratio}
+- DATA: clamps (0,40]/13.0/1..8/"a,b"/1..99 + fallbacks 4.0/73E8/81EC/8154/80D0)
+- TIMING: đồng bộ
+- THREAD: thread caller
+- ORDER: sau reset, trước log/gen/dispatch
+- FAILURE: missing/empty/malformed → defaults (không throw)
+- EVIDENCE: functions/218D8.md B07-B10
+
+## SE-218D8-003 — geometry log async
+- FUNCTION: 218D8 → ABB7C block → queue 1652F0 (218D8.c:553-600)
+- CONDITION: 163AC0.w/h>=1 (×2 redundant) && queue tồn tại && ABAEC dedup cả 2 queues miss
+- EFFECT: async dispatch (fire-and-forget) + IPC gián tiếp (env telemetry — INFERRED)
+- TARGET: queue qword_1652F0, block {ABB7C, format 9-doubles + captures}
+- DATA: llround sizes + 163AD0 + v127/v119/v58/v109 + consts 160.0/80.0
+- TIMING: dispatch_async, không delay
+- THREAD: caller → queue 1652F0
+- ORDER: sau knobs, trước gen
+- FAILURE: gate false → skip im lặng
+- EVIDENCE: functions/218D8.md B11
+
+## SE-218D8-004 — gen pair + dispatch host block
+- FUNCTION: 218D8 → A8424 (218D8.c:601-653)
+- CONDITION: full-host route (sau log)
+- EFFECT: global mutations (163980++/163978=) + async dispatch (block 2410C + captures DDz2/DDz1/onHosted/geometry/skipEvict/splash/"host")
+- TARGET: qword_163980/163978; queue via A8424 (165118 hoặc sync fallback)
+- DATA: v92=new gen; block v138 (+48 onHosted copy, +168 skipEvict, +169 splash)
+- TIMING: dispatch (async/sync theo A8424)
+- THREAD: caller → target queue
+- ORDER: cuối full-host path (trước releases)
+- FAILURE: UNKNOWN (A8424 fail path)
+- EVIDENCE: functions/218D8.md (gen + block setup + A8424)
+
+## SE-218D8-005 — reshow posts (89D8 per-slot + 9424 ack)
+- FUNCTION: 218D8 (218D8.c:659-706)
+- CONDITION: reshow route (B04 false: hosting + !visible + identical + flags ok)
+- EFFECT: NSDistributedNotification posts (gián tiếp via 89D8 → uiapp.state; via 9424 → 8D78 host.state) + cpuiGen++
+- TARGET: uiapp.state per-slot (89D8 bid,1,orient,1,w,h); host.state dict (9424 v105=162E60++)
+- DATA: sizes 163D90 fallback unk_1639D8; cpuiBid/More via 234A0/23AB0
+- TIMING: đồng bộ trong body
+- THREAD: thread caller
+- ORDER: loop 89D8 → 70248 → 234A0/23AB0 → 9424 → touch → 4D0F4
+- FAILURE: slot CPUI-flagged trong phạm vi → skip 89D8 (không lỗi)
+- EVIDENCE: functions/218D8.md B12/B13
+
+## SE-218D8-006 — refused notices (full-host errors)
+- FUNCTION: 218D8 → 97A0 (218D8.c:325,349)
+- CONDITION: no-display (empty + !prepareShell) / degenerate (w<1||h<1)
+- EFFECT: NSDistributedNotification post (gián tiếp 97A0→8D78 host.state refused)
+- TARGET: host.state {hostRefused:1, refuseReason ∈ {"no-display","degenerate-content"}}
+- DATA: —
+- TIMING: đồng bộ (no-display → goto LABEL_115 return)
+- THREAD: thread caller
+- ORDER: trong geometry phase
+- FAILURE: degenerate fallthrough tiếp tục (INFERRED — U04 218D8)
+- EVIDENCE: functions/218D8.md B05/B06

@@ -24,6 +24,7 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 |---|---|---|
 | 2410C | RECONSTRUCTION/functions/2410C.md | INFERRED |
 | 2565C | RECONSTRUCTION/functions/2565C.md | INFERRED |
+| 218D8 | RECONSTRUCTION/functions/218D8.md | INFERRED |
 | Mọi function khác | chưa record | UNKNOWN |
 
 ## 2565C (sub_2565C) — INFERRED overall (session-013, đọc FULL trực tiếp)
@@ -35,3 +36,16 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | cpui fetch + 9424 dict + ack | :110-128 + 9424.c:45-102 exact | B07/B08 + TRACE 11a-11f | none known | 2565C.c, 9424.c | INFERRED |
 | onHosted 3-layer gate | :132-140 exact | B10 reproduced | nil-skip INFERRED | 2565C.c:132-140 | INFERRED |
 | Timing/reentrancy/stale | sync body, no lock, no guard | TIMING/REENTRANCY | v3-nil edge UNKNOWN (U02) | — | INFERRED |
+
+## 218D8 (hostSlots:skipEvict:onHosted:) — INFERRED overall (session-014, đọc FULL trực tiếp)
+| Feature | Original (evidence) | Reconstruction (218D8.md) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Slot-count/layout match gate | :183-201 (double 73E8 call) | B01 reproduced | second-call discard INFERRED side-effect-free | 218D8.c:183-201 | INFERRED |
+| Dirty loop + flags + CPUI loop | :202-296 exact | B02/B03 reproduced | 3DD4C/flag-bits semantics UNKNOWN (U01/U02) | 218D8.c:202-296 | INFERRED |
+| 7-way decision | :306-313 exact | B04 reproduced | none known | 218D8.c:306-313 | INFERRED |
+| Full-host geometry + errors | :314-352 exact | B05/B06 reproduced | B06 fallthrough INFERRED (U04) | 218D8.c:314-352 | INFERRED |
+| Reset + 7 knob files | :359-550 exact clamps | reset + B07-B10 reproduced | &stru_20+18 value UNKNOWN (U03) | 218D8.c:359-550 | INFERRED |
+| Geometry log gate + async | :552-600 exact | B11 reproduced | consts/ABAEC INFERRED | 218D8.c:552-600 | INFERRED |
+| Gen + block + dispatch | :601-653 exact captures | reproduced | none known | 218D8.c:601-653 | INFERRED |
+| Reshow loop + ack | :656-710 exact | B12/B13 reproduced | CPUI-skip INFERRED intent | 218D8.c:656-710 | INFERRED |
+| Exception handler | adb14/adb44 import, no body | U06 UNKNOWN | OPEN | — | UNKNOWN |
