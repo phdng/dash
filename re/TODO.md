@@ -49,5 +49,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-006] FUNCTION record 20010 (đọc FULL trực tiếp 91 dòng; 5 branches B01-B05 + dead-read why; U01-U06). Status INFERRED.
 - [x] [R-007] FUNCTION record 27E20 (đọc FULL trực tiếp 711 dòng 3 passes; 15 branches B01-B15 + U01-U08; reentry-duplicate phát hiện). Status INFERRED.
 - [x] [R-008] FUNCTION record 44C0 (đọc FULL trực tiếp 124 dòng; 7 branches; F-042 blocklist errata). Status INFERRED.
-- [ ] [R-009] Tweak.x bodies từ records (present/commit/ack/hosting/prefs/keyinput) hoặc FUNCTION records tiếp theo (ưu tiên: 4C34 chia nhỏ → 163EC) — quyết scope session sau.
+- [x] [R-009] Tweak.x present/commit/ack bodies từ 10 records → RECONSTRUCTION/PresentCommitAck.m (APPROXIMATION synthesis session-022).
+- [ ] [R-010] Tweak.x bodies tiếp (keyinput/prefs/license) hoặc FUNCTION records tiếp (4C34/163EC...) — quyết scope session sau.
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
