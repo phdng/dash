@@ -63,6 +63,23 @@ hostSlots: dirty-check → reshow (fast path) hoặc full-host (errors refused v
 ## B-22 Spawn/teardown + KB observers + poll helpers (CONFIRMED session-007, EVIDENCE/spawn_teardown_kb.md)
 Spawn: size register (BD18) + gen-evict (BBF8) + event-launch DB/CAR (C37C 3 tầng + reasons) + confine/retry/timeout (BFF4 + acks) + waiter 50ms (CB08) + router (D4C4: fast D684 hay CB08) + lazy containers (CCEC). Teardown: 1 bid (D154: background+detach+tombstone) / toàn cục (CE5C) / abort-reset (B9A8 + grace 3s). Dock-hide ticker 1s (B144 + nodockhide + pid-alive). KB: onKbShow/onKbHide no-op; onDismiss force-resign; onEndEditing conditional-teardown + post end. Poll: resolution probe → prefs + ble notify (365D4); notice flush (371AC); present nudge + knob (370F8).
 
+## B-23 Async host-execution (CONFIRMED session-008, EVIDENCE/async_host_2410C.md)
+Gen-guard cửa vào (stale silent-drop) → refused (geo-verdict + license map + refused-notice + notice.state file) hoặc host (snapshot → dismiss đồng bộ → prepareShell → geometry → parse globals → build bids/natives → CPUI filter → symmetric-diff → block 2565C → union evict → evict-delay hoặc direct). Evict-delay: resolve → kill(9) đồng bộ → tombstone → 100ms/20retries gen+pid poll → kill/unhost → present + onHosted (chỉ success + connected). skipEvict forward vào spikeHostSlots (logic trong UNKNOWN). 2565C quyết định slots hiển thị (count khớp + showLayoutPanes YES) → ack + onHosted. Không notify_post/CFPrefs trực tiếp; không present view trong 2410C.
+
+## B-24 DDz phân công + scene-VC layer (CONFIRMED session-008, EVIDENCE/ddz_inventory.md)
+DDz1 = shell/view (window lifecycle, splash/notice, layout, swap/mirror, maximize 11); DDz2 = hosting/state (getters, host/spike chain, aux scene, evict, dismiss+reset); DDz1 kéo DDz2 (5 sites), ngược 1. D684/D4C4 = scene-VC layer thấp hơn (không gọi DDz): fast re-layout vs slow build 2 họ + failure reasons + foreground request. DDz3 = picker/overlay UI trên cùng (153 methods; buildKitLevel UNKNOWN >3000 instr).
+
+## STOP-CONDITIONS VERDICT (session-008)
+- Hook map tương đối đầy đủ: PASS (trừ 10 SB hook-fn P0-3 blocked — F-018).
+- Initialization flow được hiểu: PASS (F-011, 4 ctors + role blocks + once lồng).
+- Core behavior tái hiện: PASS static (B-01..B-24 behavioral models).
+- Persistent state/preferences hiểu: PASS (CF domain + cache plist + import/defaults + notice/license/blob).
+- Inter-component communication hiểu: PASS (NSDistributed + notifyd + NSNotification + files).
+- Important edge cases kiểm tra: PARTIAL (static paths CONFIRMED; chưa runtime).
+- Unknowns liệt kê rõ: PASS (OPEN_QUESTIONS Q-03/Q-09..Q-14 + HYPOTHESES UNKNOWN).
+- Tests/observations ghi lại: PARTIAL (static asserts pass; dynamic pending).
+=> **RECONSTRUCTION STATIC COMPLETE; RECONSTRUCTION INCOMPLETE overall (thiếu dynamic verify + P0-3 + bodies: spikeHostSlots nội bộ, 85B8/7764C, DDz3 buildKitLevel, AA-validators, A7E04, opaque blocks/schedulers).**
+
 ## B-19 SiriProbe (CONFIRMED session-006, EVIDENCE/siriprobe.md)
 Latch + master enable → dlopen fallback → 7 hooks validate-signature + counters + cache reload + 3 notify blocks. Gate file-exists throttle 0.5s. Swallow chỉ 4 hooks nút (off-vắng + gate==1: bid==6 voicecmd hợp lệ, hoặc file swallow + id khớp/rỗng). 88BC8 luôn post voicecmd.press trước cả khi swallow. 88EA0 log-only; prewarm/voiceTrigger passthrough. Logger backtrace sink UNKNOWN. Voicecmd cache (enabled cần key+true; selected reverse-DNS; reload 2s-cache). fakepress từ prefs-UI test; rescan pipeline quét VoiceHandlers + migrate + post listchanged.
 
