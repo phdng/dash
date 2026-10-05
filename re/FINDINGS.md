@@ -183,6 +183,17 @@
 - Callers: 25C4C:66 (đk evict) / :84 (evict) / :113 (bỏ kq); 25FE0:51 (any-live → retry); 26FE4:114+152 (cặp chain khác + rebuild + ack in-place). Headers khớp grep, không caller ẩn.
 - Nhánh evict = unhost mềm có điều kiện liveness; kill đồng bộ do 2410C→763E0 hoặc chain 7792C (không từ 2 helpers).
 
+## F-039 CONFIRMED (session-011): DDz3 picker→host bridge (EVIDENCE/ddz3_commit.md)
+- Chain: onTilePressed: (lọc long-press/swipe/arrange-exit + bid ∈ apps) → close + commitPick: → resolveSlotBids (DDz2 fallback + plist fallback + dedup layout) → guard openSlot → setObject → dedup trùng pane (hủy, giữ cũ) → validate 6A13C (clear/cài/lỗi-SB pass; chưa-cài drop) → why 2 bước "picked %@ for slot %ld" → commitSlotBids:why:.
+- commitSlotBids: guard count≥3 → bakeLiveSwap TRƯỚC (ratio nhánh layout==2 / fracs nhánh còn lại + swap-reorder) → SetValue left/right/third + Sync → CarPlay reconcile (giữ main nếu đang pick + filter more + 84D8 nếu đổi) → luôn 74C8 (write plist + post resolved). **Host không gọi trực tiếp** (grep corpus); host nhận via plist + notify (17344 debounce 350ms, CFNotification, Darwin 29198).
+- resolvePairL:R: legacy 2-pane không caller (tàn dư). bake ratio integer elided (UNKNOWN). why 4 giá trị (picked/gutter-swap/gutter-drag/layout-apply), không persist (HYPOTHESIS log/debug).
+- Đường song song: commitGutterFrac (không qua commitSlotBids), commitSwapOfPositions (qua commitSlotBids), onLayoutTilePressed (qua 746C, không qua commitSlotBids).
+
+## F-040 CONFIRMED (session-011): cpuiGen lifecycle (EVIDENCE/cpuigen_trace.md)
+- qword_162E60: grep duy nhất 5 hits (1 đọc + 4 ghi post-increment: 27C88/26FE4/2565C/218D8). Không store khởi tạo → BSS zero (HYPOTHESIS). Tất cả lấy từ counter nội bộ (không userInfo/timestamp).
+- Consume duy nhất 9424:a6 → dict["cpuiGen"] (length||count) → post host.state (1FB5C truyền 0 cứng — chỉ 4 sites split dùng counter). Readers: 20010 (status → stale-check) + 9D64 (lưu/echo/spawn).
+- Stale-check duy nhất 20010:69 (!ok && incoming+1==counter) → dedup per-gen → 85B8 retry. Forward DDz1 trước, độc lập. Chiều ngược 986C echo cpuiGen vào cpui.status.
+
 ## F-037 CONFIRMED (session-010): evictFromPhone = Home-transition, không kill (EVIDENCE/evict_from_phone.md)
 - Wrapper nil-completion (3AE48:11) → Then: (3AE50): guard exactly-once (3F088) → skip nếu noevict (60-64) → skip nếu skipfrontmost + frontmost (66-75, via 3EDFC/3EFD4) → SBMainWorkspace + SBHomeScreenEntity (nil → skip, 81-92) → createRequestWithOptions:0 + modifyApplicationContext setActivatingEntity:Home via 3F100 (94-115) → gắn completion + watchdog 2s nếu a3!=nil (CF version selector swap, 116-164, forwarders 3F164/3F170) → executeTransitionRequest: (166) → gọi v4 nếu v20==0 (167-168) + dọn (169-186).
 - KHÔNG: kill/pid/signal/proc_pidpath; gọi DDz khác/spike/cnab/dismiss/removeFromSuperview/resign/unhost; notify_post; CFPrefs; ghi prefs/globals/files (chỉ đọc 2 flags); unlink/write/open.

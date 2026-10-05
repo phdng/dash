@@ -75,6 +75,12 @@ skipEvict=1 ức chế duy nhất evictFromPhone (3CC44:311, kể cả flag tồ
 ## B-26 Evict helpers verdict (CONFIRMED session-009, EVIDENCE/evict_helpers.md)
 85B8 = logical evict prefs-only (xóa bid khỏi ui[_more] + sync + regenerate/notify; callers prune/evict/in-place). 7764C = liveness probe read-only (pid+path, SB-gated, count/-1; -1 truthy khi ép boolean). Nhánh evict = unhost mềm có điều kiện liveness; kill đồng bộ thuộc 2410C→763E0 / chain 7792C.
 
+## B-29 Picker→host bridge (CONFIRMED session-011, EVIDENCE/ddz3_commit.md)
+Tile (lọc gesture + bid ∈ apps) → close + commitPick (resolve 3-slot + guard openSlot + dedup trùng-pane-hủy + validate cài đặt) → why → commitSlotBids (guard count + bake geometry TRƯỚC + persist bids + CarPlay reconcile + luôn republish) → plist + post resolved → host observers (debounce/async) → hostSlots khi cần. resolvePairL:R: legacy không caller. Đường song song gutter/swap/layout không qua commitSlotBids. why 4 giá trị, không persist.
+
+## B-30 cpuiGen lifecycle (CONFIRMED session-011, EVIDENCE/cpuigen_trace.md)
+Monotonic host counter (BSS-zero HYPOTHESIS): 4 post-increments (27C88 có guard + return echo / 26FE4 tail / 2565C completion / 218D8 reshow) → 9424 → host.state; đọc tại status (stale-check !ok && incoming+1==counter → dedup + retry) + hostState (lưu/echo/spawn). Forward DDz1 độc lập stale-check. Echo ngược qua cpui.status.
+
 ## B-27 evictFromPhone (CONFIRMED session-010, EVIDENCE/evict_from_phone.md)
 Wrapper nil-completion → Then: (guards noevict/skipfrontmost-frontmost → SB workspace/entity → request + setActivatingEntity:Home → completion + watchdog 2s nếu có a3 → execute → gọi v4 + dọn). Không kill/prefs/views trực tiếp. Callers: split-gate (3CC44) + evict-rồi-host / fire-and-forget (3B2D8). Ba hệ thống evict riêng biệt: evictFromPhone (SB transition), 7792C (SIGKILL reaper), 85B8 (prefs logical).
 
@@ -91,6 +97,11 @@ AA9FC: NSNumber + finite (loại Inf/NaN), ghi out double-bits khi pass. AAAD0: 
 - Unknowns liệt kê rõ: PASS (OPEN_QUESTIONS Q-03/Q-09..Q-14 + HYPOTHESES UNKNOWN).
 - Tests/observations ghi lại: PARTIAL (static asserts pass; dynamic pending).
 => **RECONSTRUCTION STATIC COMPLETE; RECONSTRUCTION INCOMPLETE overall (thiếu dynamic verify + P0-3 + bodies: spikeHostSlots nội bộ, 85B8/7764C, DDz3 buildKitLevel, AA-validators, A7E04, opaque blocks/schedulers).**
+
+## FINAL STATIC VERDICT (session-011 — cập nhật STOP session-008)
+- Đã đóng thêm từ session-008: picker→host bridge (B-29), cpuiGen lifecycle (B-30), spikeHostSlots: nội bộ + skipEvict truth (B-25), kill-vs-unhost (B-26), evictFromPhone (B-27), validators + unrefuse (B-28).
+- Static coverage còn thiếu (liệt kê đóng, không mở rộng thêm nếu không có artifacts mới): P0-3 (10 SB hook-fn), DDz3 buildKitLevel + ~148 bodies, DDz4, a3 codes, snapshot nguồn, AA mapping số tuyệt đối, whitelist 16 strings, threshold 46340, opaque stru blocks, schedulers Q-13, entitlements Q-09, MITM server-side, dynamic verify toàn bộ.
+- Kết luận giữ nguyên: **STATIC COMPLETE ở mức behavioral model cho mọi subsystem chính; INCOMPLETE overall.** Không tuyên bố hoàn thành để tránh giả vờ (STOP CONDITIONS rule).
 
 ## B-19 SiriProbe (CONFIRMED session-006, EVIDENCE/siriprobe.md)
 Latch + master enable → dlopen fallback → 7 hooks validate-signature + counters + cache reload + 3 notify blocks. Gate file-exists throttle 0.5s. Swallow chỉ 4 hooks nút (off-vắng + gate==1: bid==6 voicecmd hợp lệ, hoặc file swallow + id khớp/rỗng). 88BC8 luôn post voicecmd.press trước cả khi swallow. 88EA0 log-only; prewarm/voiceTrigger passthrough. Logger backtrace sink UNKNOWN. Voicecmd cache (enabled cần key+true; selected reverse-DNS; reload 2s-cache). fakepress từ prefs-UI test; rescan pipeline quét VoiceHandlers + migrate + post listchanged.

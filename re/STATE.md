@@ -1,28 +1,28 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-010_
+_Last updated: 2026-10-05 session-011 (FINAL static)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-010 đóng evictFromPhone (F-037) + AA validators/A7E04 đính chính (F-038) + Tweak.x present/commit/ack bodies. Chỉ còn DDz3 bodies, Q-10 tàn dư, Q-12/Q-13, dynamic verify.
+Session-011 FINAL static: DDz3 picker→host bridge (F-039) + cpuiGen lifecycle (F-040). Mọi subsystem chính đã có behavioral model. Tàn dư liệt kê đóng. Tag static-complete.
 
 ## CURRENT PHASE:
-Phase 1-4 static HOÀN TẤT CƠ BẢN (tàn dư: DDz3 bodies/buildKitLevel, Q-10 mapping số/whitelist/MITM, Q-12/Q-13); P0-P4 DONE (P4-2 partial); còn Tweak.x bodies chi tiết, dynamic verify.
+Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
 
-## LAST COMPLETED TASK (session-010):
-- 2 subagents (evictFromPhone, AA-validators/A7E04) + persist 2 EVIDENCE + FINDINGS/BEHAVIOR/OPEN_QUESTIONS + Tweak.x bodies.
+## LAST COMPLETED TASK (session-011):
+- 2 subagents (DDz3 commit chain, cpuiGen trace) + persist 2 EVIDENCE + FINDINGS/BEHAVIOR/OPEN_QUESTIONS + FINAL verdict + tag.
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-010 (đang làm).
+Checkpoint: tag + commit + STATE/TODO/LOG session-011 (đang làm).
 
-## NEXT TASK (session-011):
-1. DDz3 bodies trọng tâm: commitSlotBids/resolveSlotBids/commitPick.
-2. 162E60 setter trace (cpuiGen nguồn).
-3. Đóng project static: FINAL verdict + tag.
+## NEXT TASK (session-012, nếu có artifacts mới/yêu cầu):
+1. Dynamic verify trên device (TESTS.md dynamic list).
+2. Đào sâu tàn dư theo ưu tiên user.
+3. RECONSTRUCTION code bodies (cần toolchain + scope).
 
 ## BLOCKERS:
-- P0-3 blocked (raw asm 27E20). Không device. Git local-only. Q-12/Q-13 UNKNOWN.
+- P0-3 blocked (raw asm 27E20). Không device. Git local-only. Tàn dư đóng ở LOG-011.
 
 ## IMPORTANT DISCOVERIES:
 - `DuoDash.plist` Filter: Bundles=[springboard,Preferences,CarPlayApp,UIKit] Mode:Any + Executables=[mediaserverd,kbd]. CONFIRMED.
@@ -38,9 +38,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-010):
-- Mới: `EVIDENCE/evict_from_phone.md`, `EVIDENCE/aa_validators.md`, `LOG/session-010.md`.
-- Sửa: FINDINGS (+F-037/F-038), BEHAVIOR (+B-27/B-28), OPEN_QUESTIONS (Q-10/Q-11), RECONSTRUCTION/Tweak.x.
+## FILES CHANGED (session-011):
+- Mới: `EVIDENCE/ddz3_commit.md`, `EVIDENCE/cpuigen_trace.md`, `LOG/session-011.md`.
+- Sửa: FINDINGS (+F-039/F-040), BEHAVIOR (+B-29/B-30 + FINAL), OPEN_QUESTIONS (Q-11).
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).
