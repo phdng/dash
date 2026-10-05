@@ -279,6 +279,66 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - FAILURE: không error path (không check return)
 - EVIDENCE: functions/202D0.md B08
 
+## SE-9D64-001 — refused rollback
+- FUNCTION: 9D64 (9D64.c:744-774)
+- CONDITION: hostRefused==1 (boolValue) + (rollback đầy đủ chỉ nếu 163688==1 && 1635E8==1)
+- EFFECT: global mutations (11 stores) + ticker call + notification userInfo read
+- TARGET: 1635E8=0; 1635F0=163689; 1634B8/C0/C8←1634D0/D8/E0 (storeStrong); 162DE8←163690; 162DF8←163DF0 (literal, anomaly U02); 1636A0←163698; 1636B0←1636A8; 1636C0←1636B8; 1634E8←1634F0; 1634F8←163500; 163628←1636C8; B144("host refused")
+- DATA: refuseReason string-or-"?" (đọc, không persist)
+- TIMING: đồng bộ
+- THREAD: delivery thread
+- ORDER: đầu refused branch, trước releases/return
+- FAILURE: guards false → skip rollback (vẫn return sạch)
+- EVIDENCE: functions/9D64.md B00/B15
+
+## SE-9D64-002 — header + base state writes
+- FUNCTION: 9D64 (9D64.c:205-214, :337-347, :402-448, :456-458, :502-504)
+- CONDITION: normal path (các sub-branches tương ứng)
+- EFFECT: global mutations (sbPid, killed-dict, base bid/rect/gen, pending bid, cpui gen marker, sets clear)
+- TARGET: 1635E8=0; 1635EC=int-or-0; 163570=copy-or-0; 163528/ymmword_163668/1636E8/163538/1636F0/1636E0/163540; 1637A0; 1635A0/1635A8 (clear/add/set)
+- DATA: từ userInfo (sbPid/activated/bid/cpui*) + computed (rects, filtered dicts)
+- TIMING: đồng bộ theo call trace
+- THREAD: delivery thread
+- ORDER: theo TRACE 02-16
+- FAILURE: invalid → defaults/skip (B05/B06 guards)
+- EVIDENCE: functions/9D64.md B02/B04/B06/B09/B11
+
+## SE-9D64-003 — B768 async notify block
+- FUNCTION: 9D64 (9D64.c:230-246)
+- CONDITION: activated && bid valid && 1635F0==1
+- EFFECT: async block (copy bid) → main-or-direct invoke (body B768: SB visible+dock — record F-032)
+- TARGET: main queue (nếu không phải main) với block {B768, copy bid}
+- DATA: bid copy
+- TIMING: async có điều kiện thread
+- THREAD: delivery → (main?)
+- ORDER: sau header, trước LABEL_20
+- FAILURE: UNKNOWN (block fail?)
+- EVIDENCE: functions/9D64.md B03
+
+## SE-9D64-004 — spawn/teardown callees (gom, bodies ở F-032)
+- FUNCTION: 9D64 → BBF8/BCDC/BD18/BEE4/BFF4/C2A4/C37C/CB08/D01C/D154/D4C4/CE5C/B9A8 (9D64.c:354-727)
+- CONDITION: từng sub-branch (base-rect chain, cpuiMore classify, GC, spawn, !activated)
+- EFFECT: invocations (evict/register/launch/wait/teardown/spawn/abort — semantics ở EVIDENCE/spawn_teardown_kb.md, không duplicate)
+- TARGET: như callee records
+- DATA: bid/gen/rect args exact trong 9D64.md TRACE
+- TIMING: đồng bộ trong body (CB08 nội bộ async — record callee)
+- THREAD: delivery thread
+- ORDER: theo TRACE 10/16
+- FAILURE: graceful fallbacks (C2A4-nil→C37C; BE34→BFF4; LABEL_152 skips)
+- EVIDENCE: functions/9D64.md B06-B13; EVIDENCE/spawn_teardown_kb.md
+
+## SE-9D64-005 — acks + ticker (986C ×2, B144 ×2)
+- FUNCTION: 9D64 (9D64.c:419-422, :608-613, :734, :769)
+- CONDITION: already-hosted / is_base_app / epilogue / refused-rollback
+- EFFECT: IPC gián tiếp (986C→8D78 cpui.status {gen,bid,ok,why}) + ticker calls (B144 dock-hide, không phải ack)
+- TARGET: cpui.status reasons {"already", "is_base_app"}; ticker labels {"host.state", "host refused"}
+- DATA: gen v137 (=cpuiGen incoming), bid
+- TIMING: đồng bộ
+- THREAD: delivery thread
+- ORDER: tại điểm ack + epilogue
+- FAILURE: UNKNOWN
+- EVIDENCE: functions/9D64.md B08/B11/B14/B15; EVIDENCE/cnab_observers.md §8.5
+
 ## SE-74C8-001 — clearpanes wipe (9 keys)
 - FUNCTION: 74C8 (74C8.c:100-204)
 - CONDITION: attributes non-nil && .done parse && mtime > done+0.5

@@ -27,6 +27,7 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | 218D8 | RECONSTRUCTION/functions/218D8.md | INFERRED |
 | 202D0 | RECONSTRUCTION/functions/202D0.md | INFERRED |
 | 74C8 | RECONSTRUCTION/functions/74C8.md | INFERRED |
+| 9D64 | RECONSTRUCTION/functions/9D64.md | INFERRED |
 | Mọi function khác | chưa record | UNKNOWN |
 
 ## 2565C (sub_2565C) — INFERRED overall (session-013, đọc FULL trực tiếp)
@@ -65,6 +66,18 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | hostSlots call + captures | :225-238 exact block layout | B07 reproduced | 279F4 body cross-ref | 202D0.c:225-238 | INFERRED |
 | Delayed verify dispatch | :239-246 exact (v60s, main) | B07 reproduced | 27AC8 body cross-ref | 202D0.c:239-246 | INFERRED |
 | Deactivate (dismiss-cond/hide/log/teardown) | :257-264 exact | B08 reproduced | 76224 arg UNKNOWN (U04) | 202D0.c:257-264 | INFERRED |
+
+## 9D64 (onHostState:) — INFERRED overall (session-017, đọc FULL trực tiếp)
+| Feature | Original (evidence) | Reconstruction (9D64.md) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Refused gate + rollback 11 stores | :198-205, :744-774 exact | B00/B15 reproduced | :762 anomaly UNKNOWN (U02) | 9D64.c | INFERRED |
+| Header sbPid/activated/bid | :206-222 exact | B02 reproduced | none known | 9D64.c:206-222 | INFERRED |
+| Activated-else + bid-checks + split-notify | :223-246 exact | B01/B02/B03 reproduced | none known | 9D64.c:223-246 | INFERRED |
+| cpuiKilled filter + store | :247-349 exact predicates | B04 reproduced (LABEL_20) | none known | 9D64.c:247-349 | INFERRED |
+| Activated/cpuiBid gate + B9A8 | :350-356 exact | B05 reproduced | v126/v127 alias INFERRED (U01) | 9D64.c:350-356 | INFERRED |
+| Base-rect fast/already/evict/store | :357-490 exact | B06-B10 reproduced | CB08 elided args UNKNOWN (U03) | 9D64.c:357-490 | INFERRED |
+| cpuiMore 2-pass classify | :492-638 exact | B11 reproduced | CE5C-arg UNKNOWN (U04) | 9D64.c:492-638 | INFERRED |
+| GC + spawn + epilogue | :640-735 exact | B12-B14 reproduced | D4C4 rect-passing UNKNOWN (U05) | 9D64.c:640-735 | INFERRED |
 
 ## 74C8 (sub_74C8) — INFERRED overall (session-016, đọc FULL trực tiếp)
 | Feature | Original (evidence) | Reconstruction (74C8.md) | Difference | Evidence | Status |
