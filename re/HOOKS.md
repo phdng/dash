@@ -1,7 +1,7 @@
 # HOOKS.md — Hook Mapping (Phase 3, static)
 
 ## §0 Init chain (CONFIRMED session-002, thay H-001/H-002)
-dyld `__init_offsets` (slice0) = {44C0, 7F010, 842EC, 9460C}. 44C0 dispatch theo role (AC5FC suffixes F-012) qua blocks (memory invoke table): role1→4C34, role2→4A80 (+4760), role3→49A8→4A08→once→163EC, role4→48FC, role5-listed→4838→4888→once→455D0+4CBDC, role6→47C4→once→4C858. Mọi role ctor mở đầu `dispatch_once(165508/146AB8)` = AC7A4 (role-name + `byte_168D19` master + latch memcpy). Lồng tiếp: 4C34:1278→27E20; 27E20:282→4DEB4 (BKS blank hook); 4760→4D0B8 stub.
+dyld `__init_offsets` (slice0) = {44C0, 7F010, 842EC, 9460C}. 44C0 dispatch theo role (AC5FC suffixes F-012) qua blocks (memory invoke table): role1→4C34, role2→4A80 (+4760), role3→49A8→4A08→once→163EC, role4→48FC, role5-unlisted→4838→4888→once→455D0+4CBDC (F-042: exclusion, không phải allowlist), role6→47C4→once→4C858. Mọi role ctor mở đầu `dispatch_once(165508/146AB8)` = AC7A4 (role-name + `byte_168D19` master + latch memcpy). Lồng tiếp: 4C34:1278→27E20; 27E20:282→4DEB4 (BKS blank hook); 4760→4D0B8 stub.
 
 ## Direct MSHook (CONFIRMED, 17 grep hits)
 | ID | Site | API | Class | Selector | Hook fn | Orig | Guard |

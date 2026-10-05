@@ -42,7 +42,8 @@
 
 ## F-011 CONFIRMED (session-002): dyld init = 4 ctors, role dispatch qua blocks
 - FAT binary 2 slices; `__init_offsets` slice0 = {0x44C0, 0x7F010, 0x842EC, 0x9460C} (dump hex session-002). 7F010/9460C = thunk `return AC5FC()`; 842EC = role==1 → `++dword_164C74`.
-- Block invoke table (memory `0012CBD8--00146AD8.txt:7-20`): 12CBD8→4C34 (role1 SpringBoard/main), 12CBF8→4A80 (role2 Prefs/main), 12CC18→49A8 (role3/global), 12CC58→48FC (role4/global), 12CC78→4838 (role5-listed/main), 12CC98→47C4 (role6 kbd/main), 12CC38→4A08 (từ 49A8).
+- Block invoke table (memory `0012CBD8--00146AD8.txt:7-20`): 12CBD8→4C34 (role1 SpringBoard/main), 12CBF8→4A80 (role2 Prefs/main), 12CC18→49A8 (role3/global), 12CC58→48FC (role4/global), 12CC78→4838
+(role5-unlisted/main; F-042 đính chính: exclusion, shorthand cũ "listed" sai), 12CC98→47C4 (role6 kbd/main), 12CC38→4A08 (từ 49A8).
 - `stru_146AB8` invoke = AC7A4 (pointers.txt:51415); `dispatch_once(165508/146AB8)` ở đầu 47C4/4838/48FC/49A8/4A80/4C34 → AC7A4 chạy trước mọi role body: set role-name + `byte_168D19` + latch memcpy.
 - Chuỗi once lồng nhau: 4A08→163EC (12CD20/163600); 4C34:1278→27E20 (12D378/163A78); 27E20:282→4DEB4 (12DD08/164448); 4888(←4838) →455D0 (12DA78/163F70) +4CBDC (12DAB8/164088); 47C4→4C858 (12DA98/164080); 4760(roles2+5)→4D0B8 stub (12DCE8/164430).
 
@@ -212,3 +213,7 @@
 - Mới: call args `7EA4(v8)/8058(v9)/85CDC()` hiện trong decompile dù callees argless (use UNKNOWN; x0-carryover HYPOTHESIS cho 85CDC).
 - Mới: `cf` indeterminate tại :417 (lớp U01 2565C, cần verify assembly).
 - Record 74C8: 12 branches B01-B11 + trace 18 bước; publish 14 keys + nav ×2; derives &&exists; plist + post luôn cuối; U01-U06.
+
+## F-042 ERRATA + record 44C0 (session-021, EVIDENCE: functions/44C0.md)
+- Đính chính shorthand "role5-listed→4838" (HOOKS.md:4, F-011): `off_12CCC0` là EXCLUSION list 4 entries — match → releases + return (KHÔNG dispatch); full-mismatch → 4760() + dispatch 12CC78. Trace tay 5 iters (:68-87). Contents 4 entries UNKNOWN.
+- Record 44C0: role-switch (1/2/3 main-main-global; 4 global; 5 bundle-gate + Siri-exclusion + blocklist-scan; 6 main; default silent) + LABEL_12/LABEL_14 dispatches; 4760() đồng bộ roles 2 + 5-unlisted; pool balanced; QOS 17 (INFERRED UTILITY); U01-U05.

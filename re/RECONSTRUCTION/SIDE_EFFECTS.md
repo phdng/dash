@@ -279,6 +279,18 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - FAILURE: không error path (không check return)
 - EVIDENCE: functions/202D0.md B08
 
+## SE-44C0-001 — role dispatches + 4760 calls
+- FUNCTION: 44C0 (44C0.c:29-123)
+- CONDITION: role = AC5FC() (1..6; default silent)
+- EFFECT: async dispatches (main: roles 1/2/5-unlisted/6; global-QOS17: roles 3/4) + sync 4760() calls (roles 2 + 5-unlisted) + pool push/pop (role5)
+- TARGET: blocks 12CBD8/12CBF8/12CC18/12CC58/12CC78/12CC98 (→4C34/4A80/49A8/48FC/4838/47C4 — F-011)
+- DATA: role5 bundle-path/bid gates (siri-exclusion + blocklist-scan → unlisted-only dispatch)
+- TIMING: dispatches fire-and-forget (không delay)
+- THREAD: dyld init thread → main/global queues
+- ORDER: role? → (4760?) → dispatch
+- FAILURE: role 0 (fail-cache) → silent; bundle-path false / siri / listed → silent return (đã releases)
+- EVIDENCE: functions/44C0.md B01-B07 + TRACE
+
 ## SE-27E20-001 — tmp migrator (carnav_* → duodash_*)
 - FUNCTION: 27E20 (27E20.c:110-196)
 - CONDITION: opendir ok + calloc ok + prefix match + cap 256 + snprintf bounds + lstat-missing + rename-ok-or-copy-fallback

@@ -31,6 +31,7 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | 1FB5C | RECONSTRUCTION/functions/1FB5C.md | INFERRED |
 | 20010 | RECONSTRUCTION/functions/20010.md | INFERRED |
 | 27E20 | RECONSTRUCTION/functions/27E20.md | INFERRED |
+| 44C0 | RECONSTRUCTION/functions/44C0.md | INFERRED |
 | Mọi function khác | chưa record | UNKNOWN |
 
 ## 2565C (sub_2565C) — INFERRED overall (session-013, đọc FULL trực tiếp)
@@ -122,3 +123,11 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | Darwin ×8 + NavData + purge | :312-387 exact | B12/B13 reproduced | none known | 27E20.c:312-387 | INFERRED |
 | Keyinput once + purge/reset/post | :388-451 exact | B14 reproduced | none known | 27E20.c:388-451 | INFERRED |
 | Config-repair + republish | :452-709 exact | B15 reproduced | formats verbatim kept | 27E20.c:452-709 | INFERRED |
+
+## 44C0 (role dispatcher) — INFERRED overall (session-021, đọc FULL trực tiếp)
+| Feature | Original (evidence) | Reconstruction (44C0.md) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Role-switch + dispatches | :29-123 exact | B01-B03/B06/B07 reproduced | default v0==0 INFERRED unreachable | 44C0.c:29-123 | INFERRED |
+| Role5 bundle-gate + Siri-exclusion | :39-67, :93-97 exact literals | B03/B04 reproduced | none known | 44C0.c:39-67 | INFERRED |
+| Blocklist scan (exclusion!) | :68-91 exact (trace 5 iters) | B05 reproduced | contents UNKNOWN (U01); F-042 errata | 44C0.c:68-91 | INFERRED |
+| 4760 sync + pool balance + QOS | :41/:76/:85/:89/:96/:112/:34/:116 exact | reproduced | QOS INFERRED; balance INFERRED | 44C0.c | INFERRED |
