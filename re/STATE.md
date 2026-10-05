@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-018 (function-level reconstruction)_
+_Last updated: 2026-10-05 session-019 (function-level reconstruction)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-018 (budget 1 function): FUNCTION record 1FB5C (FULL trực tiếp 214 dòng; 11 branches + 2-route trace; U01-U07, phát hiện nil→"?" + argless-call). INFERRED, không VERIFIED.
+Session-019 (budget 1 function): FUNCTION record 20010 (FULL trực tiếp 91 dòng, nhỏ nhất; 5 branches + dead-read why; forward-trước-check). INFERRED, không VERIFIED.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
 
-## LAST COMPLETED TASK (session-018):
-- FUNCTION record 1FB5C (FULL direct read) + SIDE_EFFECTS +5 + COMPARISON +1FB5C + TODO R-005 + handoff (20010 hoặc Tweak.x bodies).
+## LAST COMPLETED TASK (session-019):
+- FUNCTION record 20010 (FULL direct read) + SIDE_EFFECTS +3 + COMPARISON +20010 + TODO R-006 + handoff (27E20 hoặc Tweak.x bodies).
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-018 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-019 (đang làm).
 
-## NEXT TASK (session-019):
-1. R-006: record 20010 HOẶC Tweak.x bodies (quyết scope đầu session).
+## NEXT TASK (session-020):
+1. R-007: record 27E20 HOẶC Tweak.x bodies (quyết scope đầu session).
 2. Không mở rộng scope (SESSION BUDGET).
 
 ## BLOCKERS:
@@ -37,9 +37,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-018):
-- Mới: `RECONSTRUCTION/functions/1FB5C.md`, `LOG/session-018.md`.
-- Sửa: SIDE_EFFECTS.md (+5), COMPARISON.md (+1FB5C), TODO (R-005), STATE.
+## FILES CHANGED (session-019):
+- Mới: `RECONSTRUCTION/functions/20010.md`, `LOG/session-019.md`.
+- Sửa: SIDE_EFFECTS.md (+3), COMPARISON.md (+20010), TODO (R-006), STATE.
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).

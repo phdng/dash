@@ -29,6 +29,7 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | 74C8 | RECONSTRUCTION/functions/74C8.md | INFERRED |
 | 9D64 | RECONSTRUCTION/functions/9D64.md | INFERRED |
 | 1FB5C | RECONSTRUCTION/functions/1FB5C.md | INFERRED |
+| 20010 | RECONSTRUCTION/functions/20010.md | INFERRED |
 | Mọi function khác | chưa record | UNKNOWN |
 
 ## 2565C (sub_2565C) — INFERRED overall (session-013, đọc FULL trực tiếp)
@@ -101,3 +102,10 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | Dismiss/prepare/hostBundle/show | :151-194 exact | B05-B08 reproduced | bid-rỗng path U06 | 1FB5C.c:151-194 | INFERRED |
 | 89D8 6-args + acks gen-0 | :133, :98-192 exact | reproduced | 89D8 semantics U04 | 1FB5C.c | INFERRED |
 | LABEL_22 + 7B6D8 argless | :195-206 exact | B09 reproduced | built-array unused U03 | 1FB5C.c:195-206 | INFERRED |
+
+## 20010 (onCarPlayUIStatus:) — INFERRED overall (session-019, đọc FULL trực tiếp)
+| Feature | Original (evidence) | Reconstruction (20010.md) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| 4 userInfo reads + bid gate | :33-51 exact | B01 reproduced | why dead-read U03 | 20010.c:33-51 | INFERRED |
+| Async handoff (main-or-async) | :53-68 exact | B02 reproduced | 37924 body cross-ref U02 | 20010.c:53-68 | INFERRED |
+| Stale-check + dedup + prune | :69-85 exact | B03-B05 reproduced | set names U05 | 20010.c:69-85 | INFERRED |

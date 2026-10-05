@@ -279,6 +279,42 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - FAILURE: không error path (không check return)
 - EVIDENCE: functions/202D0.md B08
 
+## SE-20010-001 — prune-set reset
+- FUNCTION: 20010 (20010.c:71-80)
+- CONDITION: stale-fail (!ok && gen+1==counter) + (!set || set-gen != incoming)
+- EFFECT: global mutations (new set + lastFailedGen)
+- TARGET: `qword_163990` (release old, = new NSMutableSet); `qword_163988` (= incoming gen)
+- DATA: —
+- TIMING: đồng bộ sau forward, trước prune-check
+- THREAD: delivery thread
+- ORDER: trong B04
+- FAILURE: UNKNOWN
+- EVIDENCE: functions/20010.md B04
+
+## SE-20010-002 — prune-once (85B8)
+- FUNCTION: 20010 → 85B8 (20010.c:81-85)
+- CONDITION: stale-fail + set chưa chứa bid
+- EFFECT: call (add + logical evict prefs — body F-036)
+- TARGET: set addObject bid; 85B8(bid) → ui[_more] removal + sync + regenerate
+- DATA: bid (NSString non-empty, đã guard)
+- TIMING: đồng bộ
+- THREAD: delivery thread
+- ORDER: sau reset-check
+- FAILURE: đã prune → skip im lặng
+- EVIDENCE: functions/20010.md B05; F-036 (85B8 prefs-only)
+
+## SE-20010-003 — async handoff block
+- FUNCTION: 20010 (20010.c:53-68)
+- CONDITION: bid valid (B01) — TRƯỚC và ĐỘC LẬP stale-check
+- EFFECT: async có điều kiện (main? direct : dispatch_async main)
+- TARGET: block {37924, copy bid, gen, ok} → DDz1 noteCarPlayUIStatus (cross-ref)
+- DATA: bid copy, gen ULL, ok bool
+- TIMING: đồng bộ build, async invoke nếu không main
+- THREAD: delivery → (main?)
+- ORDER: sau guard, trước stale-check
+- FAILURE: UNKNOWN (block fail?)
+- EVIDENCE: functions/20010.md B02
+
 ## SE-1FB5C-001 — request counter
 - FUNCTION: 1FB5C (1FB5C.c:85)
 - CONDITION: luôn (mọi notification, kể cả deactivate)
