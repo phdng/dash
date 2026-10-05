@@ -1,28 +1,28 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-006_
+_Last updated: 2026-10-05 session-007_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-006 đóng P3-4 (SiriProbe swallow/log/fakepress/voicecmd — F-029) + P3-5 (version/device/language — F-030) + Q-10 partial (info-schema) + P4-1 (git init + commit local re/). Chỉ còn Q-11 callees, Q-12/Q-13, P4-2, RECONSTRUCTION bodies.
+Session-007 đóng Q-11 hosting engine (F-031) + spawn/teardown/KB/poll (F-032) + P2-5 Tweak.x APPROXIMATION. Chỉ còn 2410C/DDz-core, Q-10 validators, Q-12/Q-13, P4-2, dynamic verify.
 
 ## CURRENT PHASE:
-Phase 1-3 DONE (trừ P0-3 blocked). Phase 4: P0-P3 static GẦN HOÀN TẤT (chỉ còn Q-11 callees, Q-12 blocks, Q-13 schedulers); còn P2-5 bodies, P4-2, dynamic verify.
+Phase 1-3 DONE (trừ P0-3 blocked). Phase 4 static GẦN HOÀN TẤT (chỉ còn 2410C/2565C async, DDz classes, Q-10 validators, Q-12/Q-13); còn P4-2, dynamic verify.
 
-## LAST COMPLETED TASK (session-006):
-- 2 subagents (siriprobe, version/device+A9840) + persist EVIDENCE/siriprobe.md + EVIDENCE/version_device_ainfo.md + FINDINGS/BEHAVIOR/TODO/OPEN_QUESTIONS + git init/add re/.
+## LAST COMPLETED TASK (session-007):
+- 2 subagents (hosting engine, spawn/teardown+KB+poll) + persist 2 EVIDENCE + Tweak.x APPROXIMATION + FINDINGS/BEHAVIOR/TODO/OPEN_QUESTIONS.
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-006 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-007 (đang làm).
 
-## NEXT TASK (session-007):
-1. Q-11 callees: hostSlots/hostSplit/switchInPlace + B*/C*/D* spawn/teardown.
-2. RECONSTRUCTION mở rộng: Tweak.x entry/init/prefs/IPC (APPROXIMATION).
-3. P4-2 EVIDENCE chuẩn hóa.
+## NEXT TASK (session-008):
+1. 2410C async body (slots/evict/DDz present) — Q-11 lõi cuối.
+2. DDz1/DDz2 class inventory + D684.
+3. Đánh giá STOP conditions → coverage verdict.
 
 ## BLOCKERS:
-- P0-3 blocked (raw asm 27E20). Không device. Git local-only (không remote/push). Q-12/Q-13 UNKNOWN.
+- P0-3 blocked (raw asm 27E20). Không device. Git local-only. Q-12/Q-13 UNKNOWN.
 
 ## IMPORTANT DISCOVERIES:
 - `DuoDash.plist` Filter: Bundles=[springboard,Preferences,CarPlayApp,UIKit] Mode:Any + Executables=[mediaserverd,kbd]. CONFIRMED.
@@ -38,9 +38,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-006):
-- Mới: `EVIDENCE/siriprobe.md`, `EVIDENCE/version_device_ainfo.md`, `LOG/session-006.md`, `.git/` (init, track re/ only).
-- Sửa: FINDINGS (+F-029/F-030), BEHAVIOR (+B-19/B-20), TODO (P3-4/P3-5), OPEN_QUESTIONS (Q-10 partial).
+## FILES CHANGED (session-007):
+- Mới: `EVIDENCE/hosting_engine.md`, `EVIDENCE/spawn_teardown_kb.md`, `RECONSTRUCTION/Tweak.x`, `LOG/session-007.md`.
+- Sửa: FINDINGS (+F-031/F-032), BEHAVIOR (+B-21/B-22), TODO (P2-5), OPEN_QUESTIONS (Q-11).
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).

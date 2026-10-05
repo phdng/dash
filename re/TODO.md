@@ -24,7 +24,7 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [P2-2] Behavioral model keyinput relay (focus intercept + seed/apply + dismiss/fallback + password bypass + keypane OFF). → BEHAVIOR B-17, EVIDENCE/keyinput_relay.md.
 - [x] [P2-3] Behavioral model CarPlay elig cloak (mutate + synth + injector + icon/name) + dock/focus/statusbar. → BEHAVIOR B-18, EVIDENCE/elig_cloak.md.
 - [x] [P2-4] Behavioral model split/autostart/disconnect (split_enabled YES + 12s SIGKILL + pane_unload SIGKILL + autostart observe-only). → B-15, EVIDENCE/prefs_split_autostart.md.
-- [ ] [P2-5] Dựng `RECONSTRUCTION/` skeleton — PARTIAL (DuoDashShared.h APPROXIMATION constants session-002; còn Tweak.x bodies).
+- [x] [P2-5] RECONSTRUCTION skeleton — Shared.h (constants) + Tweak.x (init/prefs/IPC/hooks/kill APPROXIMATION). Chưa bodies chi tiết, chưa compile.
 
 ## P3 — Edge cases
 - [x] [P3-1] Toggle matrix `/var/tmp/duodash_*` (~100 knobs: ~80 KILL + ~25 VALUE + ~10 ONESHOT + 4 đảo semantics). → EVIDENCE/toggle_matrix.md.
