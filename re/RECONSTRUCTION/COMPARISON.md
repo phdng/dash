@@ -23,5 +23,15 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | Function | Record | Status |
 |---|---|---|
 | 2410C | RECONSTRUCTION/functions/2410C.md | INFERRED |
-| 2565C | tóm tắt trong 2410C.md B13; record riêng PENDING | UNKNOWN (pending session sau) |
+| 2565C | RECONSTRUCTION/functions/2565C.md | INFERRED |
 | Mọi function khác | chưa record | UNKNOWN |
+
+## 2565C (sub_2565C) — INFERRED overall (session-013, đọc FULL trực tiếp)
+| Feature | Original (evidence) | Reconstruction (2565C.md) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| spike/show gate + success/fail route | :45-51 exact | B01 reproduced | none known | 2565C.c:45-51 | INFERRED |
+| Natives loop + persist + splash | :53-81 exact | B02/B03 reproduced | loop luôn 3 lần (padding/cắt) INFERRED | 2565C.c:53-81 | INFERRED |
+| Fail teardown + 52338/746C | :85-108 exact | B05/B06 reproduced | v13 uninit? UNKNOWN (U01) | 2565C.c:85-108 | INFERRED |
+| cpui fetch + 9424 dict + ack | :110-128 + 9424.c:45-102 exact | B07/B08 + TRACE 11a-11f | none known | 2565C.c, 9424.c | INFERRED |
+| onHosted 3-layer gate | :132-140 exact | B10 reproduced | nil-skip INFERRED | 2565C.c:132-140 | INFERRED |
+| Timing/reentrancy/stale | sync body, no lock, no guard | TIMING/REENTRANCY | v3-nil edge UNKNOWN (U02) | — | INFERRED |

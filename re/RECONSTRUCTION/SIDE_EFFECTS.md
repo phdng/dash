@@ -1,4 +1,4 @@
-# SIDE_EFFECTS.md — Side-effect ledger (starter session-012, function 2410C)
+# SIDE_EFFECTS.md — Side-effect ledger (starter session-012: 2410C; session-013: +2565C)
 _Quy ước: mỗi record có ID/FUNCTION/CONDITION/EFFECT/TARGET/DATA/TIMING/THREAD/ORDER/FAILURE/EVIDENCE._
 _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime test)._
 
@@ -110,3 +110,63 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: theo CALL TRACE 2410C.md
 - FAILURE: UNKNOWN từng field
 - EVIDENCE: RECONSTRUCTION/functions/2410C.md
+
+## SE-2565C-001 — natives/slot globals (success)
+- FUNCTION: 2565C (2565C.c:53-74)
+- CONDITION: B01 success (count khớp + showLayoutPanes true)
+- EFFECT: global mutations (3 CGSize + 2 scalars)
+- TARGET: `unk_1639D0[0..2]`, `qword_1639C0`, `dword_1639BC`
+- DATA: natives copy/pad-Zero; 1639C0=expected; 1639BC=1639B8
+- TIMING: đồng bộ trong body
+- THREAD: thread của caller (queue 165118 hoặc main)
+- ORDER: sau spike/show, trước 7B6D8
+- FAILURE: UNKNOWN
+- EVIDENCE: RECONSTRUCTION/functions/2565C.md B01/B02
+
+## SE-2565C-002 — splash teardown (fail)
+- FUNCTION: 2565C (2565C.c:85-106)
+- CONDITION: B01 fail + `byte_164508==1`
+- EFFECT: view teardown + global clears + layout calls
+- TARGET: splash root view (removeFromSuperview), 164508/164500/164510, via 52338 + 746C(layout=164518)
+- DATA: setGen+1 trước remove; v13 retained root
+- TIMING: đồng bộ
+- THREAD: thread caller
+- ORDER: trong fail branch, trước ack
+- FAILURE: v13 uninitialized nếu B05 false? (U01 — cần verify assembly)
+- EVIDENCE: RECONSTRUCTION/functions/2565C.md B05/B06
+
+## SE-2565C-003 — cpuiGen increment
+- FUNCTION: 2565C (2565C.c:127)
+- CONDITION: luôn (cả success lẫn fail)
+- EFFECT: global mutation (monotonic counter)
+- TARGET: `qword_162E60++` (giá trị cũ vào IPC)
+- DATA: —
+- TIMING: đồng bộ trước 9424
+- THREAD: thread caller
+- ORDER: sau fetch cpui (B07), trước 9424
+- FAILURE: UNKNOWN (overflow/wrap không xử lý)
+- EVIDENCE: EVIDENCE/cpuigen_trace.md (H3); functions/2565C.md
+
+## SE-2565C-004 — host.state ack
+- FUNCTION: 2565C → 9424 → 8D78 (2565C.c:128; 9424.c:45-102)
+- CONDITION: luôn (dict đầy/vơi theo B08)
+- EFFECT: NSDistributedNotification post (deliverImmediately — INFERRED từ 8D78 wrapper)
+- TARGET: `com.sensetechlab.appbridge.host.state`, dict {activated, bundleIdentifier, sbPid} + cond {cpuiBid/cpuiRectX/Y/W/H, cpuiMore, cpuiGen, cpuiKilled}
+- DATA: v11=success flag; gen=162E60++ (xem SE-2565C-003)
+- TIMING: đồng bộ trong body
+- THREAD: thread caller
+- ORDER: sau fetch + increment, trước 4D0F4/onHosted
+- FAILURE: UNKNOWN
+- EVIDENCE: functions/2565C.md B08 + CALL TRACE 11a-11f
+
+## SE-2565C-005 — onHosted callback
+- FUNCTION: 2565C (2565C.c:132-140)
+- CONDITION: v11 && +64 non-null && v10 non-null (3 lớp)
+- EFFECT: block invocation (1 arg = copy hostedSlotBids)
+- TARGET: onHosted block từ 218D8 a5
+- DATA: v10
+- TIMING: đồng bộ trong body
+- THREAD: thread caller
+- ORDER: sau ack + 4D0F4 log
+- FAILURE: skip im lặng nếu bất kỳ null
+- EVIDENCE: functions/2565C.md B10

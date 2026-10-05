@@ -1,25 +1,24 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-012 (objective mới: function-level reconstruction)_
+_Last updated: 2026-10-05 session-013 (function-level reconstruction)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-012 (objective mới): FUNCTION record đầu tiên 2410C (contract + call trace + state machine + transition table, INFERRED) + SIDE_EFFECTS.md (9 records) + COMPARISON.md starter. Không có gì VERIFIED.
+Session-013 (budget 1 function): FUNCTION record 2565C (đọc FULL trực tiếp + 9424 FULL; 10 branches + 17-step trace; U01 v13-uninit phát hiện mới). INFERRED, không VERIFIED.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
 
-## LAST COMPLETED TASK (session-012):
-- FUNCTION record 2410C + SIDE_EFFECTS.md + COMPARISON.md + TODO section R + handoff exact (2565C next).
+## LAST COMPLETED TASK (session-013):
+- FUNCTION record 2565C (FULL direct read) + SIDE_EFFECTS +5 + COMPARISON +2565C + TODO R-003 + handoff (218D8 next).
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-012 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-013 (đang làm).
 
-## NEXT TASK (session-013):
-1. R-003: FUNCTION record 2565C (theo HANDOFF trong LOG-012).
-2. R-004 bắt đầu: 218D8 record (nếu còn sức).
-3. Không mở rộng scope ngoài 1-2 functions/session (SESSION BUDGET rule).
+## NEXT TASK (session-014):
+1. R-004: FUNCTION record 218D8 (theo HANDOFF LOG-013).
+2. Không mở rộng scope (SESSION BUDGET).
 
 ## BLOCKERS:
 - P0-3 blocked (raw asm 27E20). Không device. Git local-only. Tàn dư đóng ở LOG-011.
@@ -38,9 +37,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-012):
-- Mới: `RECONSTRUCTION/functions/2410C.md`, `RECONSTRUCTION/SIDE_EFFECTS.md`, `RECONSTRUCTION/COMPARISON.md`, `LOG/session-012.md`.
-- Sửa: TODO (section R), STATE.
+## FILES CHANGED (session-013):
+- Mới: `RECONSTRUCTION/functions/2565C.md`, `LOG/session-013.md`.
+- Sửa: SIDE_EFFECTS.md (+5), COMPARISON.md (+2565C), TODO (R-003), STATE.
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).

@@ -40,5 +40,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 ## R — Function-level 1:1 reconstruction (session-012+, PRIMARY OBJECTIVE mới)
 - [x] [R-001] FUNCTION record 2410C (contract + call trace + state machine + transition table) → RECONSTRUCTION/functions/2410C.md. Status INFERRED.
 - [x] [R-002] SIDE_EFFECTS.md starter (SE-2410C-001..009) + COMPARISON.md starter (2410C rows).
-- [ ] [R-003] FUNCTION record 2565C (present-commit, tách từ B13 tóm tắt).
+- [x] [R-003] FUNCTION record 2565C (đọc FULL trực tiếp 146 dòng + 9424 108 dòng; branches + args + fail paths). Status INFERRED.
+- [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
