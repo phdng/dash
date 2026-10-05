@@ -1,4 +1,4 @@
-// RECONSTRUCTION/Tweak.x — APPROXIMATION skeleton (session-007)
+// RECONSTRUCTION/Tweak.x — APPROXIMATION skeleton (session-007, bodies session-010)
 // Behavior-equivalent intent; KHÔNG compile ở đây (không toolchain).
 // Mọi hằng số + thứ tự từ EVIDENCE (F-011 init, HOOKS hooks, F-025 prefs, F-026/F-031 IPC).
 // Semantics phải giữ: dispatch_once guards, main-vs-global queues, getenv idempotence,
@@ -59,7 +59,32 @@
 // UIApp keyboard/orientation 43 + AZ* spoof 7 (163ED8→0).
 // _UIKeyboardLayerHostView ×3 (dời native kb màn ngoài).
 
-// ---- Kill semantics (F-025) ----
+// ---- Kill semantics (F-025/F-036/F-037) ----
 // SIGKILL sau sysctl+proc_pidpath verify (763E0/7792C). Disconnect 12s
 // (override file, gates, gen-cancel). pane_unload diff (frontmost-exempt).
 // autostart observe-only + gated trigger (scheduler UNKNOWN — Q-13).
+// Ba hệ thống evict riêng biệt: evictFromPhone = SB Home-transition
+// (guards noevict/skipfrontmost, watchdog 2s, không kill/prefs/views);
+// 7792C = SIGKILL reaper (gates pane_unload/noreap/sleeping/frontmost);
+// 85B8 = prefs logical evict (xóa bid khỏi ui[_more] + sync + regenerate).
+// 7764C = liveness probe read-only (pid+path, SB-gated, count/-1).
+
+// ---- Present/commit/ack path (F-033/B-23, session-010 bodies) ----
+// 2410C async (gen-guard cửa vào, stale silent-drop):
+//   refused (!a2||a3): geo-verdict + license map + refused-notice flow +
+//     notice.state file (mkdir+write+chmod). Không host app.
+//   host: snapshot old bids/CPUI → DDz2 dismiss đồng bộ → reset cờ →
+//     prepareShell (fail → no-display-postanswer) → 369E8 + setAppContentFrame:
+//     → parse answer globals → build bids/natives (pad, overflow bỏ) →
+//     CPUI filter 22E40 → symmetric-diff → block 2565C → union evict →
+//     evict-delay (77244 resolve → 763E0 kill(9) đồng bộ → tombstone 163970 →
+//       25EDC 100ms/20retries → 25FE0 gen+pid poll → 25C4C unhost mềm +
+//       carPlayConnected gate → 2565C) hoặc direct (gọi 2565C ngay).
+//   skipEvict forward vào spikeHostSlots: (suppress evictFromPhone — F-035).
+//   onHosted: chỉ success (v11), delay nếu evict.
+// 2565C present-commit (quyết định slots hiển thị):
+//   spikeHostSlots(bids,natives,carPlayUI,skipEvict) + showLayoutPanes →
+//   success: copy sizes/slotCount/7B6D8/splash/v10; fail: teardown splash.
+//   → 9424(v11: activated/bid/sbPid/cpuiBid/Rect/More/Gen/Killed) →
+//   8D78 post host.state → 4D0F4 log → onHosted(copy hostedSlotBids).
+// 2410C tự nó: không present view, không notify_post/CFPrefs trực tiếp.

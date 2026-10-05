@@ -182,3 +182,15 @@
 - **7764C(snapshot,filter): probe liveness, KHÔNG kill/unhost/prefs.** NSArray<{pid,path,bid}> + filter (nil=rỗng match all); SpringBoard-only gate (ngoài → -1); pid>=2 + proc_pidpath khớp path → counter++; return count/-1. Read-only (retain/release + stack). -1 cũng truthy khi ép boolean (fail-closed?/bug UNKNOWN). 25C4C:113 gọi bỏ kết quả (tàn dư UNKNOWN).
 - Callers: 25C4C:66 (đk evict) / :84 (evict) / :113 (bỏ kq); 25FE0:51 (any-live → retry); 26FE4:114+152 (cặp chain khác + rebuild + ack in-place). Headers khớp grep, không caller ẩn.
 - Nhánh evict = unhost mềm có điều kiện liveness; kill đồng bộ do 2410C→763E0 hoặc chain 7792C (không từ 2 helpers).
+
+## F-037 CONFIRMED (session-010): evictFromPhone = Home-transition, không kill (EVIDENCE/evict_from_phone.md)
+- Wrapper nil-completion (3AE48:11) → Then: (3AE50): guard exactly-once (3F088) → skip nếu noevict (60-64) → skip nếu skipfrontmost + frontmost (66-75, via 3EDFC/3EFD4) → SBMainWorkspace + SBHomeScreenEntity (nil → skip, 81-92) → createRequestWithOptions:0 + modifyApplicationContext setActivatingEntity:Home via 3F100 (94-115) → gắn completion + watchdog 2s nếu a3!=nil (CF version selector swap, 116-164, forwarders 3F164/3F170) → executeTransitionRequest: (166) → gọi v4 nếu v20==0 (167-168) + dọn (169-186).
+- KHÔNG: kill/pid/signal/proc_pidpath; gọi DDz khác/spike/cnab/dismiss/removeFromSuperview/resign/unhost; notify_post; CFPrefs; ghi prefs/globals/files (chỉ đọc 2 flags); unlink/write/open.
+- Callers: 3CC44:312 (skipEvict gate) + 3B2D8:189 (evict-rồi-host, completion 3EF20 gen-guard → buildScene + addSubview + handshake) + 3B2D8:211 (fire-and-forget sau buildScene). Trampolines B0820/B0840.
+- Đối lập 7792C (reaper kill(9) có gates) và 85B8 (prefs-only): 3 hệ thống evict riêng biệt, không chia sẻ bước nào.
+
+## F-038 CONFIRMED (session-010): AA validators + A7E04 unrefuse (EVIDENCE/aa_validators.md)
+- AA9FC (a1, out double-bits): chỉ NSNumber + finite bit-mask (loại Inf/NaN); reject NSString số; ghi out chỉ khi pass; silent 0. Pure.
+- AAAD0 (a1, out int64): giống hệt + `llround` (không strict-int: 1.6→2; không whitelist enum; không overflow-check). Range-check (nếu có) ở caller A9840.
+- A7E04 KHÔNG persist (đính chính hypothesis cũ SAI): conditional-unrefuse — stored-nonce (A761C đọc license.refused.plist dict[@"nonce"] NSString non-empty) == async-string → delete file (A78B8 removeItem error:0) + re-arm A7338, else no-op. Không write/chmod nào trong 4 file. A7338 = device-identify check + alert.
+- Đích file duy nhất: /var/mobile/Library/DuoDash/license.refused.plist (format dict nonce).

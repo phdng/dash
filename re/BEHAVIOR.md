@@ -75,6 +75,12 @@ skipEvict=1 ức chế duy nhất evictFromPhone (3CC44:311, kể cả flag tồ
 ## B-26 Evict helpers verdict (CONFIRMED session-009, EVIDENCE/evict_helpers.md)
 85B8 = logical evict prefs-only (xóa bid khỏi ui[_more] + sync + regenerate/notify; callers prune/evict/in-place). 7764C = liveness probe read-only (pid+path, SB-gated, count/-1; -1 truthy khi ép boolean). Nhánh evict = unhost mềm có điều kiện liveness; kill đồng bộ thuộc 2410C→763E0 / chain 7792C.
 
+## B-27 evictFromPhone (CONFIRMED session-010, EVIDENCE/evict_from_phone.md)
+Wrapper nil-completion → Then: (guards noevict/skipfrontmost-frontmost → SB workspace/entity → request + setActivatingEntity:Home → completion + watchdog 2s nếu có a3 → execute → gọi v4 + dọn). Không kill/prefs/views trực tiếp. Callers: split-gate (3CC44) + evict-rồi-host / fire-and-forget (3B2D8). Ba hệ thống evict riêng biệt: evictFromPhone (SB transition), 7792C (SIGKILL reaper), 85B8 (prefs logical).
+
+## B-28 Validators + unrefuse (CONFIRMED session-010, EVIDENCE/aa_validators.md)
+AA9FC: NSNumber + finite (loại Inf/NaN), ghi out double-bits khi pass. AAAD0: giống + llround (không strict-int/whitelist/overflow-check). A7E04 đính chính: không persist — conditional-unrefuse (stored nonce == async string → delete license.refused.plist + re-arm device check, else no-op).
+
 ## STOP-CONDITIONS VERDICT (session-008)
 - Hook map tương đối đầy đủ: PASS (trừ 10 SB hook-fn P0-3 blocked — F-018).
 - Initialization flow được hiểu: PASS (F-011, 4 ctors + role blocks + once lồng).
