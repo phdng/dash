@@ -279,6 +279,78 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - FAILURE: không error path (không check return)
 - EVIDENCE: functions/202D0.md B08
 
+## SE-27E20-001 — tmp migrator (carnav_* → duodash_*)
+- FUNCTION: 27E20 (27E20.c:110-196)
+- CONDITION: opendir ok + calloc ok + prefix match + cap 256 + snprintf bounds + lstat-missing + rename-ok-or-copy-fallback
+- EFFECT: FS scan + rename (hoặc copy thủ công + utimes, unlink nếu lỗi)
+- TARGET: /var/tmp (scan); `/var/tmp/<name>` → `/var/tmp/duodash_<name+7>`
+- DATA: copy 0x1000-chunks, mode 0666 (INFERRED), utimes giữ atime/mtime (nsec/1000)
+- TIMING: đồng bộ, bound 256 entries
+- THREAD: caller thread
+- ORDER: đầu body, trước 76224
+- FAILURE: opendir/calloc null → skip; snprintf>1023 / exists → skip entry; copy-fail → unlink dst
+- EVIDENCE: functions/27E20.md B01-B06
+
+## SE-27E20-002 — hooks install (MSHook + 10×4049C)
+- FUNCTION: 27E20 (27E20.c:257-274)
+- CONDITION: master+latch (B09) + !getenv(HOST_HOOKED) (B10)
+- EFFECT: function hook + method hooks (hook-fn/orig 4049C UNKNOWN — F-018) + env set
+- TARGET: objc_exception_throw → 4001C (orig off_163E30); 10 SB scene selectors; env DUODASH_AB_HOST_HOOKED=1
+- DATA: —
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: sau gate, trước display-once/observers
+- FAILURE: dlsym nil → skip MSHook (vẫn 4049C + tiếp tục)
+- EVIDENCE: functions/27E20.md B09/B10
+
+## SE-27E20-003 — observers + singletons + pollTick
+- FUNCTION: 27E20 (27E20.c:281-311)
+- CONDITION: B09 (không once-guard riêng — chạy mỗi lần gọi!)
+- EFFECT: once (4DEB4), alloc singletons (release old), observer registrations (887C×4, NSNotification×2), method call
+- TARGET: once 164448; 163E28/163A70; notifies uiapp.request/host.request(.split)/cpui.status/CarPlayIsConnectedDidChange/UIScreenDidDisconnect; [163A70 carPlayPollTick]
+- DATA: —
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: sau hooks, trước Darwin observers
+- FAILURE: UNKNOWN (alloc nil?)
+- EVIDENCE: functions/27E20.md B10/B11
+
+## SE-27E20-004 — Darwin observers (3+8+1) + NavData + purge + keyinput init
+- FUNCTION: 27E20 (27E20.c:199-225, :312-459)
+- CONDITION: dashboard gate (B07) / B09 / keyinput-once (B14)
+- EFFECT: observer registrations (Coalesce/Immediate exact) + NavData start + prefs purge (dock_mode nil+Sync) + keyinput purge/reset/post-dismiss
+- TARGET: 3 dashboard + 8 settings/keyinput + cproleup notifies; CNABNavData; navbubble_dock_mode key; seed/out plists + card state + keyinput.dismiss post
+- DATA: —
+- TIMING: đồng bộ (delivery async sau này)
+- THREAD: caller thread
+- ORDER: xen kẽ observers/alloc (B11-B15)
+- FAILURE: UNKNOWN (double-register khi reentry — U07)
+- EVIDENCE: functions/27E20.md B07/B12-B15
+
+## SE-27E20-005 — dashboard retire (prefs)
+- FUNCTION: 27E20 (27E20.c:226-248)
+- CONDITION: !290F4(retired) || retired==0
+- EFFECT: CFPreferences writes (2 keys) + Synchronize
+- TARGET: dashboard_mode_enabled=False, dashboard_mode_retired=True (CurrentUser/AnyHost)
+- DATA: —
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: sau dashboard observers, trước counters/gate
+- FAILURE: Sync fail → tiếp tục (không check — INFERRED)
+- EVIDENCE: functions/27E20.md B08
+
+## SE-27E20-006 — config-repair + republish
+- FUNCTION: 27E20 (27E20.c:460-709)
+- CONDITION: B09 (không once riêng)
+- EFFECT: file read/parse (record) + knob check + prefs snapshot/compute/write-back + Sync + file write record + mkdir + republish call + bringup call
+- TARGET: config_repair.record (read + write `at/result/fixes/sync/last_*` + `\n`); off_154208 keys (via 7E908 writes); DuoDash dir; 74C8(); 7B29C("springboard.bringup")
+- DATA: formats verbatim trong record; knob noconfigrepair → skipped-record
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: cuối body
+- FAILURE: record missing → "none"; knob → skip; sync ok/failed ghi vào record (không abort)
+- EVIDENCE: functions/27E20.md B15
+
 ## SE-20010-001 — prune-set reset
 - FUNCTION: 20010 (20010.c:71-80)
 - CONDITION: stale-fail (!ok && gen+1==counter) + (!set || set-gen != incoming)

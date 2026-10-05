@@ -30,6 +30,7 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | 9D64 | RECONSTRUCTION/functions/9D64.md | INFERRED |
 | 1FB5C | RECONSTRUCTION/functions/1FB5C.md | INFERRED |
 | 20010 | RECONSTRUCTION/functions/20010.md | INFERRED |
+| 27E20 | RECONSTRUCTION/functions/27E20.md | INFERRED |
 | Mọi function khác | chưa record | UNKNOWN |
 
 ## 2565C (sub_2565C) — INFERRED overall (session-013, đọc FULL trực tiếp)
@@ -109,3 +110,15 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | 4 userInfo reads + bid gate | :33-51 exact | B01 reproduced | why dead-read U03 | 20010.c:33-51 | INFERRED |
 | Async handoff (main-or-async) | :53-68 exact | B02 reproduced | 37924 body cross-ref U02 | 20010.c:53-68 | INFERRED |
 | Stale-check + dedup + prune | :69-85 exact | B03-B05 reproduced | set names U05 | 20010.c:69-85 | INFERRED |
+
+## 27E20 (host ctor) — INFERRED overall (session-020, đọc FULL trực tiếp)
+| Feature | Original (evidence) | Reconstruction (27E20.md) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Preamble + tmp migrator (cap/bounds/copy) | :107-196 exact | B01-B06 reproduced | v10/v11 indet. (U01); modes U05 | 27E20.c:107-196 | INFERRED |
+| 76224 call + onces + dashboard obs. | :198-225 exact | reproduced | 76224 body cross-ref U02 | 27E20.c:198-225 | INFERRED |
+| Dashboard retire (2 keys + Sync) | :226-248 exact | B08 reproduced | 290F4 cross-ref | 27E20.c:226-248 | INFERRED |
+| Master/latch gate + host hooks | :249-280 exact | B09/B10 reproduced | 4049C args U04 (F-018) | 27E20.c:249-280 | INFERRED |
+| Display once + observers alloc | :281-311 exact | B11 reproduced | none known | 27E20.c:281-311 | INFERRED |
+| Darwin ×8 + NavData + purge | :312-387 exact | B12/B13 reproduced | none known | 27E20.c:312-387 | INFERRED |
+| Keyinput once + purge/reset/post | :388-451 exact | B14 reproduced | none known | 27E20.c:388-451 | INFERRED |
+| Config-repair + republish | :452-709 exact | B15 reproduced | formats verbatim kept | 27E20.c:452-709 | INFERRED |

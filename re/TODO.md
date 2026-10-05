@@ -47,5 +47,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-004b3] FUNCTION record 9D64 (đọc FULL trực tiếp 775 dòng 3 passes; 16 branches B00-B15 + trace 19 bước; U01-U08). Status INFERRED.
 - [x] [R-005] FUNCTION record 1FB5C (đọc FULL trực tiếp 214 dòng; 11 branches B01-B11 + 2-route trace; U01-U07). Status INFERRED.
 - [x] [R-006] FUNCTION record 20010 (đọc FULL trực tiếp 91 dòng; 5 branches B01-B05 + dead-read why; U01-U06). Status INFERRED.
-- [ ] [R-007] FUNCTION record tiếp theo (ưu tiên: 27E20 init) hoặc Tweak.x bodies từ records (quyết scope session sau).
+- [x] [R-007] FUNCTION record 27E20 (đọc FULL trực tiếp 711 dòng 3 passes; 15 branches B01-B15 + U01-U08; reentry-duplicate phát hiện). Status INFERRED.
+- [ ] [R-008] FUNCTION records tiếp theo (ưu tiên: 44C0 dispatcher → 4C34 mega-ctor (chia nhỏ) → 163EC) hoặc Tweak.x bodies từ records (quyết scope session sau).
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
