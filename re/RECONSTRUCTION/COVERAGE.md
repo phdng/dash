@@ -26,8 +26,8 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | spikeHostSlots: internals | SpikeHosting.m (F-035) | SYNTH (APPROXIMATION) | session-037: 3CC44/3BBF0/3C1F0/3D4FC từ evidence |
 | hostSplit/switchInPlace | HostSplit.m (F-031) | SYNTH (APPROXIMATION) | session-038: 217EC/208F4/26FE4 từ evidence (218D8/279F4 cross-ref records) |
 | Spawn/teardown callees | SpawnTeardown.m + SpawnLaunch.m (F-032) | SYNTH partial | session-039 teardown (D154/CE5C/B9A8/BBF8/BCDC/BD18) + session-040 routing (D4C4/D01C/BFF4/BE34/C2A4/CB08); còn C37C/BEE4/B768/B144/CCEC/D684 + §B KB + §C poll |
-| DDz1/DDz2/DDz3 classes | EVIDENCE/ddz_inventory.md (F-034, 251 methods) | EVIDENCE-only | Chỉ inventory + 8 methods; DDz3 buildKitLevel UNKNOWN; DDz3 commit chain → dưới |
-| DDz3 commit chain | EVIDENCE/ddz3_commit.md (F-039) | EVIDENCE-only | 5 files đã đọc, chưa tách record |
+| DDz1/DDz2 classes | DDzCore.m (F-034) | SYNTH (APPROXIMATION) | session-048: maps 63+35 + 8 central + cross-links + division (DDz3 UI + buildKitLevel còn EVIDENCE-only) |
+| DDz3 commit chain | DDzCommit.m (F-039) | SYNTH (APPROXIMATION) | session-046: 5 files picker→prefs bridge |
 | cpuiGen lifecycle | EVIDENCE/cpuigen_trace.md (F-040) | EVIDENCE-only | 5 hits đóng, BSS-init HYPOTHESIS |
 | Evict (3 hệ thống) | EVIDENCE/evict_helpers.md + evict_from_phone.md (F-036/F-037) | EVIDENCE-only | 85B8/7764C verdict + Home-transition; 7792C/763E0 cross-ref |
 
