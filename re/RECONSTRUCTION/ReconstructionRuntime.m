@@ -1,4 +1,4 @@
-// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-071)
+// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-072)
 // This file intentionally implements only behavior whose data-flow can be represented without
 // unresolved private classes/functions. Unknown filtering/computation remains documented in the
 // synthesis files rather than being silently guessed here.
@@ -8,7 +8,13 @@
 #import <dispatch/dispatch.h>
 #import <mach-o/dyld.h>
 #import <notify.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
+
+// libproc is linked explicitly by the Theos target. Keeping the declaration local avoids
+// depending on private headers while matching the public libproc symbol used by sub_7764C.
+extern int proc_pidpath(int pid, void *buffer, uint32_t buffersize);
 
 static CFStringRef const kDDSettingsDomain = CFSTR("com.sensetechlab.duodash.settings");
 static NSString * const kDDClearPanes = @"/var/tmp/duodash_ab_clearpanes";
@@ -129,6 +135,70 @@ NSInteger DDReadBridgedFontFloor(void) {
     CFTypeRef cfValue = (__bridge CFTypeRef)value;
     if (CFGetTypeID(cfValue) != CFNumberGetTypeID()) return 0;
     return DDValidatedFontFloor([value integerValue]);
+}
+
+NSInteger DDValidateIntegerValue(id _Nullable candidate,
+                                 NSInteger minimum,
+                                 NSInteger maximum,
+                                 NSInteger fallback,
+                                 DDIntegerValidationStatus * _Nullable status) {
+    // sub_7E63C: nil=>status0/default; integer CFNumber=>1; NSString=>2;
+    // float NSNumber/other/out-of-range=>3/default. NSString uses integerValue directly,
+    // including its permissive coercion behavior.
+    DDIntegerValidationStatus resultStatus = DDIntegerValidationMissing;
+    NSInteger result = fallback;
+
+    if (candidate) {
+        DDIntegerValidationStatus candidateStatus = DDIntegerValidationError;
+        BOOL supported = NO;
+
+        if ([candidate isKindOfClass:[NSNumber class]]) {
+            CFTypeRef cfValue = (__bridge CFTypeRef)candidate;
+            if (CFGetTypeID(cfValue) == CFNumberGetTypeID() &&
+                !CFNumberIsFloatType((CFNumberRef)cfValue)) {
+                candidateStatus = DDIntegerValidationNumber;
+                supported = YES;
+            }
+        } else if ([candidate isKindOfClass:[NSString class]]) {
+            candidateStatus = DDIntegerValidationString;
+            supported = YES;
+        }
+
+        if (supported) {
+            NSInteger parsed = [candidate integerValue];
+            if (parsed >= minimum && parsed <= maximum) {
+                result = parsed;
+                resultStatus = candidateStatus;
+            } else {
+                resultStatus = DDIntegerValidationError;
+            }
+        } else {
+            resultStatus = DDIntegerValidationError;
+        }
+    }
+
+    if (status) *status = resultStatus;
+    return result;
+}
+
+NSInteger DDNormalizeIntegerSetting(NSDictionary *source,
+                                    NSString *key,
+                                    NSInteger minimum,
+                                    NSInteger maximum,
+                                    NSInteger fallback,
+                                    NSString *fixName,
+                                    NSMutableDictionary *writes,
+                                    NSMutableArray *fixes) {
+    // sub_7EEDC repairs only status 2/3: string coercion is canonicalized to NSNumber,
+    // while invalid/out-of-range values are replaced with fallback. Missing and already-valid
+    // integer NSNumber values do not produce a write/fix entry.
+    DDIntegerValidationStatus status = DDIntegerValidationMissing;
+    NSInteger value = DDValidateIntegerValue(source[key], minimum, maximum, fallback, &status);
+    if ((((NSInteger)status) & ~((NSInteger)1)) == 2) {
+        writes[key] = @(value);
+        [fixes addObject:fixName];
+    }
+    return value;
 }
 
 static void DDClearPanesIfNeeded(void) {
@@ -315,6 +385,47 @@ BOOL DDEvictCarPlayUIBundle(NSString *bundleIdentifier) {
     NSMutableArray<NSString *> *nextMore = [more mutableCopy];
     [nextMore removeObject:bundleIdentifier];
     return DDSetCarPlayUI(isMain ? @"" : main, nextMore);
+}
+
+NSInteger DDCountLiveSnapshotEntries(NSArray * _Nullable snapshot,
+                                     NSString * _Nullable bundleIdentifierFilter) {
+    // sub_7764C is a read-only liveness probe. Its once gate (771D4) resolves to an exact
+    // main-bundle identifier comparison, not the executable-suffix role detector.
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier ?: @"";
+    if (![bundleIdentifier isEqualToString:@"com.apple.springboard"]) {
+        // The decompile returns 0xFFFFFFFFLL here. Preserve that 64-bit numeric sentinel;
+        // original callers truncate to unsigned int and treat any nonzero value as truthy.
+        return (NSInteger)UINT32_MAX;
+    }
+
+    uint32_t liveCount = 0;
+    for (id item in snapshot) {
+        if (![item isKindOfClass:[NSDictionary class]]) continue;
+
+        NSDictionary *entry = item;
+        id pidValue = entry[@"pid"];
+        id pathValue = entry[@"path"];
+        id bidValue = entry[@"bid"];
+        if (![pidValue isKindOfClass:[NSNumber class]]) continue;
+        if (![pathValue isKindOfClass:[NSString class]]) continue;
+
+        if (bundleIdentifierFilter.length > 0) {
+            if (![bidValue isKindOfClass:[NSString class]]) continue;
+            if (![bidValue isEqualToString:bundleIdentifierFilter]) continue;
+        }
+
+        int pid = [pidValue intValue];
+        if (pid < 2) continue;
+
+        char buffer[4096] = {0};
+        if (proc_pidpath(pid, buffer, (uint32_t)sizeof(buffer)) < 1) continue;
+
+        const char *expectedPath = [pathValue UTF8String];
+        if (expectedPath && strcmp(buffer, expectedPath) == 0) {
+            liveCount++;
+        }
+    }
+    return (NSInteger)liveCount;
 }
 
 static void DDReloadAppBridge(CFNotificationCenterRef center,

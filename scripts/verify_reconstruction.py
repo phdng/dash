@@ -38,6 +38,8 @@ makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
 for source in ["Tweak.x", "ReconstructionRuntime.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
+if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
+    raise SystemExit("Makefile must link libproc for the reconstructed 7764C liveness probe")
 
 with (ROOT / "DuoDashReconstruction.plist").open("rb") as fh:
     filter_plist = plistlib.load(fh)
@@ -64,10 +66,20 @@ for contract in [
     "DDCachedAutostartEnabled",
     "DDReadKeyPaneEnabled",
     "DDReadBridgedFontFloor",
+    "DDValidateIntegerValue",
+    "DDNormalizeIntegerSetting",
+    "CFNumberIsFloatType",
+    "DDIntegerValidationString",
+    "DDIntegerValidationError",
     "DDSetAppBridgeLayout",
     "DDSetCarPlayUI",
     "DDToggleAppBridgeAutostart",
     "DDEvictCarPlayUIBundle",
+    "DDCountLiveSnapshotEntries",
+    "proc_pidpath",
+    "com.apple.springboard",
+    "UINT32_MAX",
+    "strcmp(buffer, expectedPath) == 0",
     "DDReconstructionStart",
     "appbridge_split_enabled",
     "com.sensetechlab.appbridge.resolved",

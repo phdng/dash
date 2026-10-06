@@ -24,6 +24,8 @@ The current runtime implements the evidence-backed, compile-safe surface:
 9. Prefs-only logical CarPlay UI eviction matching `85B8` (no kill/view teardown).
 10. Exact compile-safe cache readers matching `7044`, `70FC`, and `836C`.
 11. Pure prefs readers matching `8058` (missing keypane => ON) and the `7EA4` font-floor override/parser (valid range 8..96); private per-host UI broadcasts remain excluded.
+12. Read-only liveness probe matching `7764C`: SpringBoard bundle gate, `{pid,path,bid}` type checks, optional bundle-id filter, `proc_pidpath` + exact path compare, and the original non-SpringBoard sentinel. The target links `libproc`; no private SpringBoard classes are used by this helper.
+13. Pure integer validation/self-healing helpers matching `7E63C/7EEDC`: exact status classes (missing/number/string/error), integer-only CFNumber acceptance, inclusive bounds, NSString coercion, and writes/fixes only for status 2/3. These helpers are not yet wired into full `7E908` because some decompiled call-site bounds remain unresolved.
 
 Where the original calls unresolved helpers (for example app filtering and normalized split geometry), the runtime preserves typed raw values instead of inventing behavior.
 

@@ -30,7 +30,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | DDz3 UI (153 methods) | DDzPicker.m (F-034 §6) | SYNTH-map (APPROXIMATION) | session-049: cluster map, bodies HYPOTHESIS (commit bodies ở DDzCommit.m; buildKitLevel asm-only UNKNOWN) |
 | DDz3 commit chain | DDzCommit.m (F-039) | SYNTH (APPROXIMATION) | session-046: 5 files picker→prefs bridge |
 | cpuiGen lifecycle | Cpuigen.m (F-040) | SYNTH (APPROXIMATION) | session-050: 5 hits + idiom + consume/stale-check từ evidence (init/reset UNKNOWN) |
-| Evict (3 hệ thống) | Evict.m + ReconstructionRuntime.m (F-036/F-037) | SYNTH + BUILDABLE PARTIAL | session-071 promotes exact prefs-only 85B8 logical evict; 7764C liveness + 3AE48/3AE50 Home-transition remain synthesis/private-runtime scope |
+| Evict (3 hệ thống) | Evict.m + ReconstructionRuntime.m (F-036/F-037) | SYNTH + BUILDABLE PARTIAL | session-071 promotes exact prefs-only 85B8; session-072 promotes read-only 7764C liveness probe with libproc. 3AE48/3AE50 Home-transition remains synthesis/private SpringBoard scope |
 
 ## C. Prefs / settings
 | Subsystem | Artifact | Status | Ghi chú |
@@ -40,7 +40,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Prefs UI spec + CN controllers | F-009/F-015 (inventory) | EVIDENCE-only | CN* bodies (~32 methods) chưa đọc |
 | Toggle matrix (~100 knobs) | EVIDENCE/toggle_matrix.md (F-025/P3-1) | EVIDENCE-only | Chưa bake hết vào bodies (mới refs chính) |
 | Migration/defaults (TrueDash) | Migration.m (F-019/F-020) | SYNTH (APPROXIMATION) | session-035 từ 4C34_import_defaults.md (license branch cross-ref License.m) |
-| Cache/pure-pref helpers | ReconstructionRuntime.m (7044/70FC/836C/8058/7EA4) | BUILDABLE PARTIAL | session-071: exact resolved-cache readers, keypane default semantics, font-floor override/parser 8..96; 29400/291F4 private DDz2+8C28 broadcasts omitted |
+| Cache/pure-pref helpers | ReconstructionRuntime.m (7044/70FC/836C/8058/7EA4/7E63C/7EEDC) | BUILDABLE PARTIAL | s071 exact cache/keypane/font-floor; s072 adds integer validator + self-healing writes/fixes. Full 7E908 still partial because blacklist 7E568 + some numeric bounds remain unresolved; 29400/291F4 private broadcasts omitted |
 | Language flow | LocaleFlow.m (F-030/B-20) | SYNTH (APPROXIMATION) | session-053 §A: write/post + read-4-tầng + whitelist-17 + 6 observers (Q-10 §B ở License.m) |
 
 ## D. CarPlay cloak / keyboard / display
