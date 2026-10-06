@@ -66,5 +66,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-023] Tweak.x Respring/latch bodies từ F-023/B-14 + notify/toggle rows → RECONSTRUCTION/Respring.m (APPROXIMATION synthesis session-036).
 - [x] [R-024] Tweak.x spikeHostSlots bodies từ EVIDENCE/spike_hostslots.md (F-035: 3CC44/3BBF0/3C1F0/3D4FC) → RECONSTRUCTION/SpikeHosting.m (APPROXIMATION synthesis session-037).
 - [x] [R-025] Tweak.x hostSplit/switchInPlace bodies từ EVIDENCE/hosting_engine.md §§2-3 (F-031: 217EC/208F4/26FE4) → RECONSTRUCTION/HostSplit.m (APPROXIMATION synthesis session-038; 218D8/279F4 cross-ref).
-- [ ] [R-026] spawn/teardown callees HOẶC scope khác — quyết scope session sau.
+- [x] [R-026] Tweak.x teardown/evict bodies từ EVIDENCE/spawn_teardown_kb.md §A (F-032: D154/CE5C/B9A8/BBF8/BCDC/BD18) → RECONSTRUCTION/SpawnTeardown.m (APPROXIMATION synthesis session-039).
+- [ ] [R-027] spawn launch-route (C37C/BFF4/D01C/D4C4 + BE34/C2A4/CB08/BEE4/B768/B144) HOẶC scope khác — quyết scope session sau.
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
