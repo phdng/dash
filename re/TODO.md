@@ -24,7 +24,7 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [P2-2] Behavioral model keyinput relay (focus intercept + seed/apply + dismiss/fallback + password bypass + keypane OFF). → BEHAVIOR B-17, EVIDENCE/keyinput_relay.md.
 - [x] [P2-3] Behavioral model CarPlay elig cloak (mutate + synth + injector + icon/name) + dock/focus/statusbar. → BEHAVIOR B-18, EVIDENCE/elig_cloak.md.
 - [x] [P2-4] Behavioral model split/autostart/disconnect (split_enabled YES + 12s SIGKILL + pane_unload SIGKILL + autostart observe-only). → B-15, EVIDENCE/prefs_split_autostart.md.
-- [x] [P2-5] RECONSTRUCTION skeleton — Shared.h (constants) + Tweak.x (init/prefs/IPC/hooks/kill APPROXIMATION). Chưa bodies chi tiết, chưa compile.
+- [x] [P2-5] RECONSTRUCTION skeleton — Shared.h + Tweak.x + subsystem synthesis. Session-070 nâng phần evidence-safe thành buildable runtime; private-hook bodies vẫn chưa compile cho tới khi resolve contracts.
 
 ## P3 — Edge cases
 - [x] [P3-1] Toggle matrix `/var/tmp/duodash_*` (~100 knobs: ~80 KILL + ~25 VALUE + ~10 ONESHOT + 4 đảo semantics). → EVIDENCE/toggle_matrix.md.
@@ -99,3 +99,5 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [ ] [R-056] scope khác — quyết scope session sau (chỉ còn blocked/infeasible: P0-3 raw asm, P1 4C34 thiếu decompile, TESTS dynamic cần device, Q-09/Q-10/Q-12/Q-13).
 - [x] [R-004] SUPERSEDED — covered bởi R-004a (218D8) + R-004b1 (202D0) + R-004b2 (74C8) + R-004b3 (9D64), tất cả done. (Ghi nhận session-069.)
 - [x] [R-056] Integrity audit session-069: LOG 001-068 complete (68/68) + R-artifacts present (42/42) + TESTS static documented-pass; STEADY-STATE — static scope cạn (chỉ còn blocked/infeasible).
+- [x] [R-057] Buildable reconstruction phase-1 (session-070): Theos target + exact Substrate filter + compile-safe role detect + AppBridge prefs/cache/notify runtime + local structural verifier + GitHub Actions build.
+- [ ] [R-058] Promote next evidence-safe subsystem into executable target after CI is green: prefs setters / notify fabric first; do not fake unresolved private UIKit/SpringBoard symbols.

@@ -1,26 +1,26 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-069 (function-level reconstruction — STEADY STATE)_
+_Last updated: 2026-10-06 session-070 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-STEADY STATE (từ session-069): static reconstruction hoàn tất trong điều kiện artifacts hiện có — 11 function records (INFERRED) + 30 synthesis files (APPROXIMATION) + ledger/COMPARISON/COVERAGE đầy đủ; integrity audit pass (LOG 68/68, artifacts 42/42). Chỉ mở scope mới khi có artifacts mới (device jailbroken / decompile thêm / entitlements / MITM captures).
+BUILDABLE SCAFFOLD (session-070): static reconstruction vẫn đầy đủ như session-069, đồng thời đã có Theos target thật. Build target chỉ chứa phần compile-safe có evidence: role detect + SpringBoard startup + AppBridge prefs/cache/notify. 30 synthesis modules còn lại vẫn giữ APPROXIMATION/UNKNOWN rõ ràng, không bị fake-stub để qua compiler.
 
 ## CURRENT PHASE:
-Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
+Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang mở. Mục tiêu là promote từng subsystem từ synthesis sang runtime compile-safe mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-069):
-- Integrity audit (LOG/artifacts/TESTS) + R-004 superseded + R-056 steady-state declaration.
+## LAST COMPLETED TASK (session-070):
+- Thêm ReconstructionRuntime, Theos Makefile/control/filter, local verifier và GitHub Actions macOS build.
 
 ## CURRENT TASK:
-STANDBY — không session routine nữa. Mở session mới chỉ khi: (a) artifacts mới, (b) user yêu cầu verify/sửa cụ thể, (c) phát hiện inconsistency trong audit.
+- Làm compiler CI xanh, sau đó mở rộng runtime từng subsystem theo evidence.
 
 ## NEXT TASK:
-- Chờ artifacts mới (device / decompile / entitlements / MITM) để mở: P0-3 raw asm, P1 4C34 record, TESTS dynamic, Q-09/Q-10/Q-12/Q-13.
+- Chạy GitHub Actions “Build Reconstruction”; nếu xanh, ưu tiên prefs setters / notify fabric trước private UIKit/SpringBoard hooks. Artifact mới vẫn cần cho P0-3, Q-09/Q-10/Q-12/Q-13 và dynamic verify.
 
 ## BLOCKERS:
-- P0-3 blocked (raw asm 27E20). Không device. Git local-only. Tàn dư đóng ở LOG-011.
+- Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
 
 ## IMPORTANT DISCOVERIES:
 - `DuoDash.plist` Filter: Bundles=[springboard,Preferences,CarPlayApp,UIKit] Mode:Any + Executables=[mediaserverd,kbd]. CONFIRMED.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-069):
-- Mới: `LOG/session-069.md`.
-- Sửa: TODO (R-004 superseded, R-056), STATE (steady-state).
+## FILES CHANGED (session-070):
+- Mới: root Theos build files, `.github/workflows/build.yml`, `scripts/verify_reconstruction.py`, `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `RECONSTRUCTION/BUILD.md`, `LOG/session-070.md`.
+- Sửa: `Tweak.x`, `DuoDashShared.h`, `.gitignore`, STATE/TODO/TESTS/COVERAGE.
 
 ## TEST STATUS:
-Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).
+Static asserts cũ vẫn pass. `python scripts/verify_reconstruction.py` pass trên workspace; Theos compiler build được giao cho GitHub Actions macOS; dynamic device tests vẫn pending.

@@ -12,7 +12,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Host ctor 27E20 | functions/27E20.md | RECORD (INFERRED) | + P0-3 blocked (4049C args) |
 | CarPlay ctor 163EC | functions/163EC.md | RECORD (INFERRED) | session-033 FULL direct read (529 dòng, B01-B11) + SE-163EC-001..006 |
 | UIApp/IPC/kbd/display ctors | — (EVIDENCE: session-002 + F-011 once-chain) | EVIDENCE-only | 455D0/4CBDC/4C858/4DEB4/4D0B8/7F010/842EC/9460C |
-| Tweak.x init section | Tweak.x (init) | SYNTH (APPROXIMATION) | Từ F-011/HOOKS, chưa bodies chi tiết |
+| Tweak.x init section | Tweak.x + ReconstructionRuntime.m | BUILDABLE SYNTH (APPROXIMATION) | session-070: ctor thật + AC5FC-style role detect; executable target hiện chỉ activate prefs/cache publisher ở SpringBoard |
 
 ## B. AppBridge hosting (split/layout/panes)
 | Subsystem | Artifact | Status | Ghi chú |
@@ -35,7 +35,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 ## C. Prefs / settings
 | Subsystem | Artifact | Status | Ghi chú |
 |---|---|---|---|
-| Resolver/publisher 74C8 | functions/74C8.md + PrefsResolver.m | RECORD + SYNTH | + F-041 errata baked in |
+| Resolver/publisher 74C8 | functions/74C8.md + PrefsResolver.m + ReconstructionRuntime.m | RECORD + SYNTH + BUILDABLE PARTIAL | + F-041 errata; runtime phase-1 implements clearpanes/cache/notify + typed raw prefs, unresolved normalize/filter helpers deliberately omitted |
 | Setters (746C/84D8/637E8) | PrefsResolver.m (cross-ref) | SYNTH (cross-ref) | Bodies trong EVIDENCE, chưa tách record |
 | Prefs UI spec + CN controllers | F-009/F-015 (inventory) | EVIDENCE-only | CN* bodies (~32 methods) chưa đọc |
 | Toggle matrix (~100 knobs) | EVIDENCE/toggle_matrix.md (F-025/P3-1) | EVIDENCE-only | Chưa bake hết vào bodies (mới refs chính) |
@@ -89,7 +89,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | SIDE_EFFECTS.md (ledger SE-*) | Có cho 11 records + slices synthesis s1-s11; P4 ledger DONE session-068 (mọi subsystem có bodies đã có rows hoặc no-rows verdict: PresentCommitAck s067, Tweak.x-init s068; Shared.h constants — không behavior) |
 | COMPARISON.md (matrix) | Có cho 11 records + 28 synthesis sections (s1-s11); P4 DONE cùng điều kiện trên |
 | TESTS.md (static asserts + dynamic list) | Static pass; dynamic pending (cần device) |
-| Tweak.x (skeleton) + Shared.h | APPROXIMATION skeleton |
+| Tweak.x + Shared.h + ReconstructionRuntime | Buildable APPROXIMATION phase-1; Theos target + GitHub Actions session-070. Remaining synthesis modules are evidence-only until promoted safely |
 
 ## Ưu tiên lấp GAP (đề xuất cho sessions tới, theo PRIORITY P0>P1>P2>P4)
 1. ~~**P1**: record 163EC~~ — DONE session-033 (functions/163EC.md + SE/COMPARISON rows).

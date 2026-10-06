@@ -1,7 +1,11 @@
-// RECONSTRUCTION/DuoDashShared.h — APPROXIMATION skeleton (session-002)
-// Mọi hằng số CONFIRMED static; behavior bodies chưa implement.
+// RECONSTRUCTION/DuoDashShared.h — buildable reconstruction surface
+// Constants are backed by static evidence; runtime bodies remain explicitly APPROXIMATION
+// unless a source record says otherwise.
 
 #pragma once
+
+#import <Foundation/Foundation.h>
+#import <CoreFoundation/CoreFoundation.h>
 
 // Prefs domain chính (F-004)
 #define DD_SETTINGS_DOMAIN @"com.sensetechlab.duodash.settings"
@@ -30,12 +34,14 @@
 #define DD_KEYINPUT_OUT @"/var/tmp/duodash_keyinput_out.plist"
 #define DD_KEYINPUT_KB @"/var/tmp/duodash_keyinput_kb.plist"
 
-// Init roles (F-012): 1 SpringBoard / 2 Preferences / 3 CarPlay.app /
-// 4 mediaserverd / 6 kbd / else 5 appbridge_uiapp. Master enable byte_168D19
-// set bởi AC7A4 qua dispatch_once(165508/146AB8) — F-011.
-typedef NS_ENUM(int, DDRole) {
-    DDRoleBridge = 1, DDRolePrefsRefresh = 2, DDRoleAppBridgeCP = 3,
-    DDRoleCarPlay = 4, DDRoleUIApp = 5, DDRoleKbdPoc = 6,
+// Init roles (F-012): values are the observed AC5FC role codes.
+typedef NS_ENUM(NSInteger, DDRole) {
+    DDRoleSpringBoard = 1,
+    DDRolePreferences = 2,
+    DDRoleCarPlayApp = 3,
+    DDRoleMediaServerd = 4,
+    DDRoleUIApp = 5,
+    DDRoleKbd = 6,
 };
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,

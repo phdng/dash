@@ -1,0 +1,9 @@
+Package: com.sensetechlab.duodash.reconstruction
+Name: DuoDash Reconstruction
+Version: 0.1.0
+Architecture: iphoneos-arm
+Description: Buildable static-evidence reconstruction scaffold for DuoDash.
+Maintainer: Reconstruction Project
+Author: Reconstruction Project
+Section: Tweaks
+Depends: mobilesubstrate

@@ -1,10 +1,11 @@
-// RECONSTRUCTION/Tweak.x — APPROXIMATION skeleton (session-007, bodies session-010)
-// Behavior-equivalent intent; KHÔNG compile ở đây (không toolchain).
+// RECONSTRUCTION/Tweak.x — buildable APPROXIMATION entrypoint (session-070)
+// The ctor now boots the compile-safe runtime; unresolved private-hook bodies remain documented below.
 // Mọi hằng số + thứ tự từ EVIDENCE (F-011 init, HOOKS hooks, F-025 prefs, F-026/F-031 IPC).
 // Semantics phải giữ: dispatch_once guards, main-vs-global queues, getenv idempotence,
 // byte_168D19 master enable, orig call-through mặc định.
 
 #import "DuoDashShared.h" // DD_* domains/notifies/paths/roles
+#import "ReconstructionRuntime.h"
 
 // ---- P0 init (F-011/F-012) ----
 // dyld __init_offsets (slice0): 44C0, 7F010, 842EC, 9460C.
@@ -23,9 +24,12 @@
 //   27E20:282→4DEB4 (12DD08, BKS blank hook); 4888→455D0 (12DA78)
 //   +4CBDC (12DAB8); 47C4→4C858 (12DA98); 4760→4D0B8 stub (12DCE8).
 %ctor {
-    // APPROXIMATION: Logos %ctor ~ 44C0 dispatcher.
-    // Hỏi AC5FC() role rồi dispatch_async block tương ứng (queue như trên).
-    // Idempotence: setenv DUODASH_AB_*_HOOKED ở mỗi ctor chuyên biệt.
+    @autoreleasepool {
+        // Compile-safe phase: exact role detection + reconstructed prefs/cache publisher.
+        // Private role-specific hooks stay out of the executable target until their contracts
+        // can be expressed without unresolved symbols.
+        DDReconstructionStart();
+    }
 }
 
 // ---- Prefs publish (F-025/B-15) ----

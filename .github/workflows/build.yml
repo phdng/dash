@@ -1,0 +1,57 @@
+name: Build Reconstruction
+
+on:
+  push:
+    paths:
+      - "Makefile"
+      - "control"
+      - "DuoDashReconstruction.plist"
+      - "re/RECONSTRUCTION/**"
+      - "scripts/verify_reconstruction.py"
+      - ".github/workflows/build.yml"
+  pull_request:
+    paths:
+      - "Makefile"
+      - "control"
+      - "DuoDashReconstruction.plist"
+      - "re/RECONSTRUCTION/**"
+      - "scripts/verify_reconstruction.py"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env:
+      THEOS: ${{ github.workspace }}/.theos-sdk
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify reconstruction structure
+        run: python3 scripts/verify_reconstruction.py
+
+      - name: Install Theos prerequisites
+        run: brew install ldid xz
+
+      - name: Install Theos
+        run: git clone --recursive --depth 1 https://github.com/theos/theos.git "$THEOS"
+
+      - name: Build tweak
+        run: make clean all
+
+      - name: Collect dylib
+        run: |
+          mkdir -p dist
+          dylib="$(find .theos/obj -type f -name 'DuoDashReconstruction.dylib' -print -quit)"
+          test -n "$dylib"
+          cp "$dylib" dist/DuoDashReconstruction.dylib
+          cp DuoDashReconstruction.plist dist/DuoDashReconstruction.plist
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDashReconstruction
+          path: dist/
+          if-no-files-found: error
