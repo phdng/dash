@@ -36,6 +36,17 @@ typedef struct {
     DDAuxSceneSettingsPlan settingsPlan;
 } DDAuxSceneSettingsAttempt;
 
+typedef NS_ENUM(NSInteger, DDSceneIdentityRouteKind) {
+    DDSceneIdentityRouteNone = 0,
+    DDSceneIdentityRouteHostSlot = 1,
+    DDSceneIdentityRouteAux = 2,
+};
+
+typedef struct {
+    DDSceneIdentityRouteKind kind;
+    NSInteger slotIndex;
+} DDSceneIdentityRoute;
+
 typedef struct {
     BOOL valid;
     double boundsWidth;
@@ -171,6 +182,9 @@ FOUNDATION_EXPORT DDAuxSceneSettingsAttempt DDBeginAuxSceneSettingsAttempt(BOOL 
                                                                           BOOL privateExecutorMethodSupported);
 FOUNDATION_EXPORT BOOL DDBeginAuxSceneSettingsApply(uint64_t capturedGeneration);
 FOUNDATION_EXPORT BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGeneration);
+FOUNDATION_EXPORT BOOL DDBundleIdentifierMatchesAux(NSString * _Nullable bundleIdentifier);
+FOUNDATION_EXPORT DDSceneIdentityRoute DDResolveFBSUpdateIdentityRoute(NSString * _Nullable bundleIdentifier);
+FOUNDATION_EXPORT DDSceneIdentityRoute DDResolveAVCSceneHandleIdentityRoute(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);

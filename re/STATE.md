@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-06 session-081 (buildable reconstruction phase)_
+_Last updated: 2026-10-06 session-082 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-12 (session-081): GitHub Actions session-080 batch đã xanh. Executable target hiện thêm exact aux retry/settings state machine từ 3C368/3E604/3E670/3EA0C: 0.1/0.5/1.5 retry descriptors, generation/applied/in-flight/attempt/budget state, 8-attempt cap, và explicit two-phase external apply completion. Private aux scene lookup/updateSettings invocation vẫn giữ explicit gap.
+BUILDABLE RUNTIME PHASE-13 (session-082): GitHub Actions session-081 batch đã xanh. Executable target hiện thêm pure post-identity scene routing từ 400D0/4138C/41CBC/41E08/3FB54/3FFC0: 400D0 chỉ route host slot non-CarPlay trước aux; 4138C ưu tiên bất kỳ configured host slot trước aux. Caller phải supply bundle identity; private 3FBC8 traversal và settings/layout executors vẫn giữ explicit gap.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-081):
-- R-080 exact aux create-kick retry metadata + 3E428/3E604/3E670/3EA0C state machine with explicit external executor begin/complete transition.
+## LAST COMPLETED TASK (session-082):
+- R-081 pure post-identity routing descriptors for 400D0/4138C with exact non-CarPlay-vs-any-host-slot precedence and aux fallback.
 
 ## CURRENT TASK:
-- Chờ compiler gate cho session-081 changes; final local structural checks chạy sau tracking/log update.
+- Chờ compiler gate cho session-082 changes; final local structural checks chạy sau tracking/log update.
 
 ## NEXT TASK:
-- Sau CI xanh, R-081 inspect post-identity routing quanh 400D0/4138C + 3FBC8/3FFC0; chỉ promote pure bundle/slot/aux routing decisions khi caller đã supply identity, không reconstruct private scene/client traversal và không gọi settings/layout executor. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
+- Sau CI xanh, R-082 inspect pure size/orientation routing quanh 41D80/41E94/40514 với caller-supplied identity/settings snapshots; chỉ promote complete data decisions, không synthesize FBSSceneSettingsDiff/private settings mutation/scene executors. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-081):
+## FILES CHANGED (session-082):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-081.md`.
+- Mới: `LOG/session-082.md`.
 
 ## TEST STATUS:
-Session-080 GitHub Actions build GREEN (user-confirmed). Session-081 local verifier + py_compile + `git diff --check` PASS after final docs/log edits; CatDesk standard verifier = NOT_CONFIGURED (expected for this Theos-only repo without Cargo.toml/package.json/Python project manifest). Current Objective-C aux state-machine edits need next macOS CI run; dynamic device tests vẫn pending.
+Session-081 GitHub Actions build GREEN (user-confirmed). Session-082 local verifier + py_compile + `git diff --check` PASS after final docs/log edits; CatDesk standard verifier = NOT_CONFIGURED (expected for this Theos-only repo without Cargo.toml/package.json/Python project manifest). Current Objective-C routing descriptors need next macOS CI run; dynamic device tests vẫn pending.

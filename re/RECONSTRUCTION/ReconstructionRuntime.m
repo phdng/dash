@@ -1198,6 +1198,63 @@ BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGeneration) {
     return YES;
 }
 
+static NSInteger DDConfiguredHostSlotIndexForBundleIdentifier(NSString *bundleIdentifier,
+                                                               BOOL includeCarPlayUI) {
+    // Post-identity half shared by 41E08/4138C. The caller supplies the already-resolved
+    // bundle identity; this deliberately does not reproduce 3FBC8 scene/client traversal.
+    if (bundleIdentifier.length == 0) return NSNotFound;
+    for (NSUInteger index = 0; index < 3; index++) {
+        NSString *hosted = gDDHostMirrorBids[index] ?: @"";
+        if (hosted.length == 0) continue;
+        if (!includeCarPlayUI && gDDHostMirrorCarPlayUI[index]) continue;
+        if ([bundleIdentifier isEqualToString:hosted]) return (NSInteger)index;
+    }
+    return NSNotFound;
+}
+
+BOOL DDBundleIdentifierMatchesAux(NSString *bundleIdentifier) {
+    // Exact post-identity equality from 3FFC0: both strings must be non-empty.
+    return bundleIdentifier.length > 0 && gDDAuxBundleIdentifier.length > 0 &&
+           [bundleIdentifier isEqualToString:gDDAuxBundleIdentifier];
+}
+
+static DDSceneIdentityRoute DDSceneIdentityRouteNoneValue(void) {
+    DDSceneIdentityRoute route = { DDSceneIdentityRouteNone, -1 };
+    return route;
+}
+
+DDSceneIdentityRoute DDResolveFBSUpdateIdentityRoute(NSString *bundleIdentifier) {
+    // 400D0 first gates on active hosting + 41CBC. After 3FBC8 has supplied identity,
+    // host routing accepts only non-CarPlay slots (41E08), with aux as the fallback (3FB54/3FFC0).
+    DDSceneIdentityRoute route = DDSceneIdentityRouteNoneValue();
+    if (!gDDHostMirrorActive || bundleIdentifier.length == 0) return route;
+
+    NSInteger slotIndex = DDConfiguredHostSlotIndexForBundleIdentifier(bundleIdentifier, NO);
+    if (slotIndex != NSNotFound) {
+        route.kind = DDSceneIdentityRouteHostSlot;
+        route.slotIndex = slotIndex;
+        return route;
+    }
+    if (DDBundleIdentifierMatchesAux(bundleIdentifier)) route.kind = DDSceneIdentityRouteAux;
+    return route;
+}
+
+DDSceneIdentityRoute DDResolveAVCSceneHandleIdentityRoute(NSString *bundleIdentifier) {
+    // 4138C differs from 400D0: its first slot loop does not exclude CarPlay slots.
+    // Only when no configured slot matches does the callback route the identity to aux.
+    DDSceneIdentityRoute route = DDSceneIdentityRouteNoneValue();
+    if (!gDDHostMirrorActive || bundleIdentifier.length == 0) return route;
+
+    NSInteger slotIndex = DDConfiguredHostSlotIndexForBundleIdentifier(bundleIdentifier, YES);
+    if (slotIndex != NSNotFound) {
+        route.kind = DDSceneIdentityRouteHostSlot;
+        route.slotIndex = slotIndex;
+        return route;
+    }
+    if (DDBundleIdentifierMatchesAux(bundleIdentifier)) route.kind = DDSceneIdentityRouteAux;
+    return route;
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.
@@ -1302,13 +1359,8 @@ NSDictionary *DDCurrentHostSlotMirror(void) {
 }
 
 static NSInteger DDHostMirrorIndexForBundle(NSString *bundleIdentifier) {
-    if (!gDDHostMirrorActive || bundleIdentifier.length == 0) return NSNotFound;
-    for (NSUInteger index = 0; index < 3; index++) {
-        NSString *bid = gDDHostMirrorBids[index] ?: @"";
-        if (bid.length == 0 || gDDHostMirrorCarPlayUI[index]) continue;
-        if ([bid isEqualToString:bundleIdentifier]) return (NSInteger)index;
-    }
-    return NSNotFound;
+    if (!gDDHostMirrorActive) return NSNotFound;
+    return DDConfiguredHostSlotIndexForBundleIdentifier(bundleIdentifier, NO);
 }
 
 static NSArray<NSString *> *DDHostMirrorNonCarPlayBundleIdentifiers(void) {
