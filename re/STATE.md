@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-027 (function-level reconstruction)_
+_Last updated: 2026-10-05 session-028 (function-level reconstruction)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-027 (synthesis, không function mới): Tweak.x SiriProbe bodies từ evidence → SiriProbe.m (APPROXIMATION).
+Session-028 (synthesis, không function mới): Tweak.x CarSleeper daemon bodies từ evidence → CarSleeper.m (APPROXIMATION).
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
 
-## LAST COMPLETED TASK (session-027):
-- Tweak.x SiriProbe bodies (synthesis từ evidence, APPROXIMATION) + TODO R-014 + handoff (R-015 scope-open).
+## LAST COMPLETED TASK (session-028):
+- Tweak.x CarSleeper daemon bodies (synthesis từ evidence, APPROXIMATION) + TODO R-015 + handoff (R-016 scope-open).
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-027 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-028 (đang làm).
 
-## NEXT TASK (session-028):
-1. R-015: Tweak.x bodies tiếp HOẶC record 4C34 (quyết scope đầu session).
+## NEXT TASK (session-029):
+1. R-016: Tweak.x keyboard-hook bodies HOẶC record 4C34 (quyết scope đầu session).
 2. Không mở rộng scope (SESSION BUDGET).
 
 ## BLOCKERS:
@@ -37,9 +37,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-027):
-- Mới: `RECONSTRUCTION/SiriProbe.m`, `LOG/session-027.md`.
-- Sửa: TODO (R-014), STATE.
+## FILES CHANGED (session-028):
+- Mới: `RECONSTRUCTION/CarSleeper.m`, `LOG/session-028.md`.
+- Sửa: TODO (R-015), STATE.
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).
