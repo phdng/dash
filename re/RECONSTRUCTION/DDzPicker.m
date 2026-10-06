@@ -1,0 +1,36 @@
+// RECONSTRUCTION/DDzPicker.m — APPROXIMATION synthesis (session-049)
+// Source: EVIDENCE/ddz_inventory.md §6 (F-034; DDz3 153 methods cluster map —
+//   tên methods CONFIRMED, diễn giải thân HYPOTHESIS).
+// KHÔNG compile ở đây (không toolchain iOS). UNKNOWN giữ nguyên.
+// Semantics phải giữ ở mức MAP (không bodies): cụm chức năng theo addr-range,
+//   commit-chain cross-ref (không duplicate), tầng-UI-trên-cùng điều phối shell+hosting,
+//   buildKitLevel asm-only (không suy thân), song-song commit paths.
+
+#import "DuoDashShared.h"
+// Commit chain bodies: DDzCommit.m (5F044/5F224/5F538/5F74C/5F8A4 + why + parallel).
+// Shell/hosting classes: DDzCore.m (DDz1 63 + DDz2 35 + division + cross-links).
+
+// ---- DDz3 = app-picker/overlay UI controller (153 methods, 0x524d4–0x69c4c, instance-only, không +shared) ----
+static void DDz3Map(void) {
+    // Cụm (addr-range + vai trò; thân HYPOTHESIS):
+    //   init host/slotBids (2) → handles/pills/gutter + drag (17: 52A18–5794C) →
+    //   open/close/dismiss picker (57B28–59ABC) → scroll/grid/tile (59C54–5B950) →
+    //   arrange drag-drop (5B9AC–5ECD0) → commit pick/slotBids + resolvePair
+    //   (5EDC4–5F8A4 — BODIES Ở DDzCommit.m) → resize chrome/ghosts (5FD10–60F6C) →
+    //   settings/env/swap/font chips (62194–62D88) → pane chips/kit rows/levels
+    //   (63084–63BD8) → buildKitLevel:pane: 0x63CE4 (asm-only, dưới) →
+    //   layout tiles/settings/kit present/close/applyRatio (67C30–69C4C).
+    // DDz3→DDz1/DDz2 hàng trăm call-sites (startLivePresent/stopLivePresent/dropOverdue/
+    //   dropSplash/teardownWindow/present/layoutGutterStripMatInHost/replacePaneAtSlot/
+    //   swap/maximize/buildShellIfNeeded/installContent/resetHostingState/hostBundleId/
+    //   spikeCreateSlot/spikeHostSlots...) — tầng UI trên cùng điều phối shell+hosting
+    //   (HYPOTHESIS kiến trúc, data CONFIRMED).
+}
+
+// ---- buildKitLevel:pane: 0x63CE4 (asm-only, không decompile) ----
+static void DDBuildKitLevel(void) {
+    // Head 40 dòng đầu asm: callers none, ~100 callees (63CE4.asm:1-7),
+    //   prologue stack 0xB90 + objc_initWeak +
+    //   bubblePaneSelectableForOpenSlot/bubblePaneIdForOpenSlot (63D3C-63D5C).
+    // Nội dung đầy đủ UNKNOWN — không suy thân, không placeholder semantics.
+}

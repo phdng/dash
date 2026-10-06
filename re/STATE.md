@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-048 (function-level reconstruction)_
+_Last updated: 2026-10-05 session-049 (function-level reconstruction)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-048 (synthesis, không function mới): Tweak.x DDz1/DDz2 class bodies từ evidence → DDzCore.m (APPROXIMATION).
+Session-049 (synthesis-map, không function mới): Tweak.x DDz3 UI-cluster map từ evidence → DDzPicker.m (APPROXIMATION).
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
 
-## LAST COMPLETED TASK (session-048):
-- Tweak.x DDz1/DDz2 class bodies (synthesis từ evidence, APPROXIMATION) + TODO R-035 + handoff (R-036 scope-open).
+## LAST COMPLETED TASK (session-049):
+- Tweak.x DDz3 UI-cluster map (synthesis từ evidence, APPROXIMATION) + TODO R-036 + handoff (R-037 scope-open).
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-048 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-049 (đang làm).
 
-## NEXT TASK (session-049):
-1. R-036: scope khác (quyết scope đầu session — GAPs: DDz3 UI, P4 rows, COVERAGE touch-up 042-045, P1 4C34 infeasible, blocked P0-3).
+## NEXT TASK (session-050):
+1. R-037: scope khác (quyết scope đầu session — GAPs: P4 rows, COVERAGE touch-up 042-045, P1 4C34 infeasible, blocked P0-3).
 2. Không mở rộng scope (SESSION BUDGET).
 
 ## BLOCKERS:
@@ -37,9 +37,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-048):
-- Mới: `RECONSTRUCTION/DDzCore.m`, `LOG/session-048.md`.
-- Sửa: COVERAGE DDz rows, TODO (R-035), STATE.
+## FILES CHANGED (session-049):
+- Mới: `RECONSTRUCTION/DDzPicker.m`, `LOG/session-049.md`.
+- Sửa: COVERAGE DDz3 row, TODO (R-036), STATE.
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).
