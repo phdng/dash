@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-052 (function-level reconstruction)_
+_Last updated: 2026-10-05 session-053 (function-level reconstruction)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-052 (synthesis, không function mới): Tweak.x KB-observer bodies từ evidence → KBObservers.m (APPROXIMATION).
+Session-053 (synthesis, không function mới): Tweak.x locale/version-device bodies từ evidence → LocaleFlow.m (APPROXIMATION).
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
 
-## LAST COMPLETED TASK (session-052):
-- Tweak.x KB-observer bodies (synthesis từ evidence, APPROXIMATION) + TODO R-039 + handoff (R-040 scope-open).
+## LAST COMPLETED TASK (session-053):
+- Tweak.x locale/version-device bodies (synthesis từ evidence, APPROXIMATION) + TODO R-040 + handoff (R-041 scope-open).
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-052 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-053 (đang làm).
 
-## NEXT TASK (session-053):
-1. R-040: scope khác (quyết scope đầu session — GAPs: P4 rows cần audit định cỡ, P1 4C34 infeasible, blocked P0-3).
+## NEXT TASK (session-054):
+1. R-041: scope khác (quyết scope đầu session — GAPs: P4 rows cần audit định cỡ, P1 4C34 infeasible, blocked P0-3).
 2. Không mở rộng scope (SESSION BUDGET).
 
 ## BLOCKERS:
@@ -37,9 +37,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-052):
-- Mới: `RECONSTRUCTION/KBObservers.m`, `LOG/session-052.md`.
-- Sửa: KeyinputRelay line-14, TODO (R-039), STATE.
+## FILES CHANGED (session-053):
+- Mới: `RECONSTRUCTION/LocaleFlow.m`, `LOG/session-053.md`.
+- Sửa: COVERAGE language row, TODO (R-040), STATE.
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).

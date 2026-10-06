@@ -40,7 +40,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Prefs UI spec + CN controllers | F-009/F-015 (inventory) | EVIDENCE-only | CN* bodies (~32 methods) chưa đọc |
 | Toggle matrix (~100 knobs) | EVIDENCE/toggle_matrix.md (F-025/P3-1) | EVIDENCE-only | Chưa bake hết vào bodies (mới refs chính) |
 | Migration/defaults (TrueDash) | Migration.m (F-019/F-020) | SYNTH (APPROXIMATION) | session-035 từ 4C34_import_defaults.md (license branch cross-ref License.m) |
-| Language flow | F-030/B-20 (17 locales, 6 observers) | EVIDENCE-only | Chưa synthesis riêng (nhỏ, gộp được vào Prefs) |
+| Language flow | LocaleFlow.m (F-030/B-20) | SYNTH (APPROXIMATION) | session-053 §A: write/post + read-4-tầng + whitelist-17 + 6 observers (Q-10 §B ở License.m) |
 
 ## D. CarPlay cloak / keyboard / display
 | Subsystem | Artifact | Status | Ghi chú |
