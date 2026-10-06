@@ -86,5 +86,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-043] P4 slice-2: SIDE_EFFECTS (SE-POLL-001..003 + SE-CNAB-001..003) + COMPARISON (2 sections PollFlush/CNABConn) — session-056, không claim mới.
 - [x] [R-044] P4 slice-3: SIDE_EFFECTS (SE-SPIKE-001..004 + SE-HSPLIT-001..003) + COMPARISON (2 sections SpikeHosting/HostSplit) — session-057, không claim mới.
 - [x] [R-045] P4 slice-4: SIDE_EFFECTS (SE-EVICT-001..003 + SE-CPUIGEN-001..002) + COMPARISON (2 sections Evict/Cpuigen) — session-058, không claim mới.
-- [ ] [R-046] scope khác — quyết scope session sau (GAPs còn lại: P4 slices tiếp theo — spawn cluster/DDz/prefs+misc?, P1 4C34 infeasible, blocked P0-3).
+- [x] [R-046] P4 slice-5a: SIDE_EFFECTS (SE-SPAWN-001..006) + COMPARISON (2 sections SpawnTeardown/SpawnLaunch) — session-059, không claim mới.
+- [ ] [R-047] scope khác — quyết scope session sau (GAPs còn lại: P4 slice-5b EventLaunch/SpawnMisc/FastRelayout + DDz/prefs+misc slices?, P1 4C34 infeasible, blocked P0-3).
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.

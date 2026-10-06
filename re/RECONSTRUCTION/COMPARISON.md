@@ -203,3 +203,17 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | Counter lifecycle | 4 post-increments cùng idiom; BSS-init | SE-CPUIGEN-001 reproduced | init/reset UNKNOWN | F-040 H2-H5 | INFERRED |
 | Consume + readers | 9424:a6 duy nhất; 20010 + 9D64 readers/echo | SE-CPUIGEN-002 reproduced | reshow-ngữ-nghĩa HYPOTHESIS | F-040 H1 + 9424 | INFERRED |
 | Stale-check duy nhất | 20010:69 → dedup + 85B8 retry | reproduced | — | F-040 20010:69-85 | INFERRED |
+
+## SpawnTeardown (synthesis bodies) — INFERRED overall (session-059, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (SpawnTeardown.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Teardown một bid | D154 background + detach + tombstone-gated | SE-SPAWN-001 reproduced | v5/v28 + helper-bodies UNKNOWN | F-032 D154 | INFERRED |
+| Teardown toàn cục | CE5C snapshot-loop + clears | SE-SPAWN-002 reproduced | call-arg ignored (U04 9D64) | F-032 CE5C | INFERRED |
+| Abort + support | B9A8 2 nhánh + BBF8/BCDC/BD18 | SE-SPAWN-003 reproduced | grace-evict + gen-value HYPOTHESIS | F-032 B9A8+ | INFERRED |
+
+## SpawnLaunch (synthesis bodies) — INFERRED overall (session-059, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (SpawnLaunch.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Router + gate | D4C4 fast/waiter + D01C base-gate | SE-SPAWN-004 reproduced | rect-passing UNKNOWN (U05 9D64) | F-032 D4C4/D01C | INFERRED |
+| Dispatcher | BFF4 confine/retry/timeout + acks | SE-SPAWN-005 reproduced | env-helper bodies UNKNOWN | F-032 BFF4 | INFERRED |
+| Predicates + waiter | BE34/C2A4 pure + CB08 50ms | SE-SPAWN-006 reproduced | retry-count + overflow HYPOTHESIS | F-032 BE34/C2A4/CB08 | INFERRED |

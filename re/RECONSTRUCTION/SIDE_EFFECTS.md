@@ -1010,3 +1010,75 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: increment → 9424 → post → readers
 - FAILURE: stale-check duy nhất 20010:69 (không site nào khác); forward-before-check (độc lập)
 - EVIDENCE: RECONSTRUCTION/Cpuigen.m (F-040; H1-H5)
+
+## SE-SPAWN-001 — teardown một bid
+- FUNCTION: D154(bid,a2) (D154.c:9; SpawnTeardown.m; caller 9D64 GC/spawn + CE5C)
+- CONDITION: VC=163578[bid] tồn tại (probe 13AB8); background-scene path khi VC + EEF0 + responds (else v14=0)
+- EFFECT: scene-background + detach view + conditional tombstone/evict
+- TARGET: block 13F90 + afters 15s (14040/1404C, điều kiện bit) → detach (10188/willMoveToParent/view-hide/removeFromSuperview/removeFromParent) → a2==1: 163590 add (tombstone) else xóa 163590 + F150 + xóa 163578[bid] + (v14==0&&bits) BBF8 → 163588-count==0 → 127B4()
+- DATA: v5/v28 nghĩa UNKNOWN; không post trực tiếp
+- TIMING: đồng bộ + after 15s schedules
+- THREAD: caller thread + timer blocks
+- ORDER: probe → background → detach → tombstone/evict → empty-check
+- FAILURE: v14==0-path (không background) vẫn detach
+- EVIDENCE: RECONSTRUCTION/SpawnTeardown.m (F-032)
+
+## SE-SPAWN-002 — teardown toàn cục
+- FUNCTION: CE5C() (CE5C.c:9; SpawnTeardown.m; caller 9D64 !activated)
+- CONDITION: unconditional (CCEC ensure trước)
+- EFFECT: per-bid teardown loop trên snapshot-copy + container clears
+- TARGET: copy allKeys 163588 → D154(key,0) từng key; copy 163590 → D154 từng object; removeAllObjects 163590 + 1635A8
+- DATA: arg call-site 9D64:727 ignored (armless — U04 9D64)
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: ensure → snapshot → loop → clear
+- FAILURE: N/A
+- EVIDENCE: RECONSTRUCTION/SpawnTeardown.m (F-032)
+
+## SE-SPAWN-003 — abort/reset + support globals
+- FUNCTION: B9A8(keep) + BBF8/BCDC/BD18 (SpawnTeardown.m)
+- CONDITION: B9A8 nhánh 163528 non-empty / 163550 non-empty / cả-hai-rỗng no-op; BBF8 key non-empty (+gen-match khi a2!=0); BCDC source non-nil; BD18 key non-empty + w,h>=1
+- EFFECT: abort bid hiện tại (clear state + grace delayed-evict HYPOTHESIS hoặc BBF8+15A94) + conditional-evict dicts + timer-cancel + size-register
+- TARGET: B9A8: ++1636E0, clear 163540/15278/163528/rect/1636E8/163538/1636F0 (+after 3s 15DA4 khi keep-match, else BBF8(bid,0)); BBF8: xóa 163510/163518; BCDC: cancel+nil 163558; BD18: 163510[key]=CGSize + ++163718 + 163518[key]=gen (UNKNOWN value)
+- DATA: BE34 predicate dùng trong B9A8 branches; không post trực tiếp
+- TIMING: đồng bộ (+after 3s grace khi keep)
+- THREAD: caller thread
+- ORDER: branch-select → clear → evict/cancel/register
+- FAILURE: guards-fail → no-op từng helper
+- EVIDENCE: RECONSTRUCTION/SpawnTeardown.m (F-032)
+
+## SE-SPAWN-004 — spawn router + base gate
+- FUNCTION: D4C4(bid,gen,rect) + D01C(bid,gen,retry,rect) (SpawnLaunch.m; caller 9D64/CB08-paths)
+- CONDITION: D01C gate 1637A0==gen (else no-op) + BE34 base-check (base → 986C/backoff, else D4C4); D4C4 fast khi 163588+163578 có bid (→D684), else C2A4-route
+- EFFECT: route spawn (fast re-layout / waiter / base-reject)
+- TARGET: D4C4: D684 ngay / CB08(copy,killed,20,E7C4,E7DC) / D684-telemetry-direct; D01C: 986C "is_base_app" (retry<=0) / after-100ms-14060 (còn retry) / D4C4 (non-base)
+- DATA: rect via v75 lookup (passing UNKNOWN — U05 9D64)
+- TIMING: đồng bộ route (+async waiter/retry)
+- THREAD: caller thread
+- ORDER: gate → base-check → fast/waiter/reject
+- FAILURE: gate-fail → no-op (D01C); C2A4-nil → D684 telemetry-direct
+- EVIDENCE: RECONSTRUCTION/SpawnLaunch.m (F-032)
+
+## SE-SPAWN-005 — launch dispatcher
+- FUNCTION: BFF4(bid,gen,retry,rect) (BFF4.c:9; SpawnLaunch.m)
+- CONDITION: gate 163528 non-empty + 1636E8==gen (else return); BE34 base? (base: retry<=0 → timeout-ack else after-100ms-15238; non-base: confine-test)
+- EFFECT: confine/retry/timeout dispatch + acks + retry schedules + env persist
+- TARGET: B9A8(0)+986C "launch_timeout" / after-100ms 15238 / 14CA0 confine-test → 163538=FAF0 + 14E74(bid,gen,30,rect) / B9A8(1)+986C "confine_failed"; ghi 163538
+- DATA: 13220 nil + 163720<=9 gate cho 14C80-path; post 986C (ack)
+- TIMING: đồng bộ + after-100ms retries
+- THREAD: caller thread + timer blocks
+- ORDER: gate → base/timeout-route → confine-route → ack/schedule
+- FAILURE: gate-fail → return silent; confine-false → confine_failed ack
+- EVIDENCE: RECONSTRUCTION/SpawnLaunch.m (F-032)
+
+## SE-SPAWN-006 — predicates + killed-waiter
+- FUNCTION: BE34 + C2A4 + CB08 (SpawnLaunch.m)
+- CONDITION: BE34 rỗng→nil (pure); C2A4 rỗng→nil + array/count/byte_163748/nodeathwait-vắng/14080==0 (else nil); CB08 check-pass + 14080!=0 → done-ngay / hết-retry → done / còn → after-50ms
+- EFFECT: predicate values (không side-effect) + waiter schedules
+- TARGET: BE34: isEqual/contains hướng-chứa ("base" tên HYPOTHESIS); C2A4: 163570[bid] array; CB08: after-50ms 1427C retained / lock-1423C + đọc 163560 + done
+- DATA: C2A4 chọn CB08-vs-C37C (D4C4/9D64:451-452); CB08 20 retries (D4C4:63), 9D64:473 count UNKNOWN
+- TIMING: đồng bộ predicates + async waiter
+- THREAD: caller thread + timer
+- ORDER: predicate → waiter → done/retry
+- FAILURE: CB08 check-false → return (không schedule); llround-UB HYPOTHESIS (AAAD0-style, không overflow-check)
+- EVIDENCE: RECONSTRUCTION/SpawnLaunch.m (F-032)
