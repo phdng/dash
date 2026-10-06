@@ -97,4 +97,5 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-054] Audit PresentCommitAck-overlap (covered bởi record rows → không rows riêng) + micro-synthesis 279F4/27AC8 từ hosting_engine §4 → RECONSTRUCTION/HostedCallbacks.m (APPROXIMATION session-067) + COVERAGE hosting-row note.
 - [x] [R-055] P4 close-out: audit Tweak.x-init overlap (covered bởi SE-44C0-001/COMPARISON-44C0/F-011 → không rows riêng; Shared.h constants — không behavior) + COVERAGE J/P4-#8 final — session-068, P4 ledger DONE (còn TESTS dynamic blocked).
 - [ ] [R-056] scope khác — quyết scope session sau (chỉ còn blocked/infeasible: P0-3 raw asm, P1 4C34 thiếu decompile, TESTS dynamic cần device, Q-09/Q-10/Q-12/Q-13).
-- [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
+- [x] [R-004] SUPERSEDED — covered bởi R-004a (218D8) + R-004b1 (202D0) + R-004b2 (74C8) + R-004b3 (9D64), tất cả done. (Ghi nhận session-069.)
+- [x] [R-056] Integrity audit session-069: LOG 001-068 complete (68/68) + R-artifacts present (42/42) + TESTS static documented-pass; STEADY-STATE — static scope cạn (chỉ còn blocked/infeasible).
