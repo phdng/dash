@@ -53,5 +53,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-010] Tweak.x keyinput relay bodies từ EVIDENCE/keyinput_relay.md → RECONSTRUCTION/KeyinputRelay.m (APPROXIMATION synthesis session-023, KeyApp = HYPOTHESIS).
 - [x] [R-011] Tweak.x prefs resolver bodies từ functions/74C8.md → RECONSTRUCTION/PrefsResolver.m (APPROXIMATION synthesis session-024).
 - [x] [R-012] Tweak.x license bodies từ F-006/B-09/F-016/F-030 + aa_validators → RECONSTRUCTION/License.m (APPROXIMATION synthesis session-025).
-- [ ] [R-013] Tweak.x bodies tiếp (carplay-cloak/keyboard/siriperfsleeper?) hoặc FUNCTION records tiếp (4C34/163EC...) — quyết scope session sau.
+- [x] [R-013] Tweak.x carplay-cloak bodies từ EVIDENCE/elig_cloak.md → RECONSTRUCTION/CarPlayCloak.m (APPROXIMATION synthesis session-026).
+- [ ] [R-014] Tweak.x bodies tiếp (keyboard/siri/sleeper?) hoặc FUNCTION records tiếp (4C34/163EC...) — quyết scope session sau.
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
