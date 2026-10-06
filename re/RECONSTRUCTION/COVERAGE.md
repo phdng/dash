@@ -22,7 +22,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Async execute 2410C | functions/2410C.md | RECORD (+state machine) | sâu nhất (878 dòng) |
 | Present-commit 2565C | functions/2565C.md | RECORD | + 9424 dict exact |
 | Single-app host 1FB5C | functions/1FB5C.md | RECORD | cặp với 202D0 |
-| Hosting observers/consumers | PresentCommitAck.m | SYNTH | 202D0→218D8→2410C→2565C→9424/onHosted |
+| Hosting observers/consumers | PresentCommitAck.m (+ HostedCallbacks.m s067) | SYNTH | 202D0→218D8→2410C→2565C→9424/onHosted; onHosted-blocks 279F4/27AC8 tách riêng; KHÔNG rows riêng (record rows cover — audit s067) |
 | spikeHostSlots: internals | SpikeHosting.m (F-035) | SYNTH (APPROXIMATION) | session-037: 3CC44/3BBF0/3C1F0/3D4FC từ evidence |
 | hostSplit/switchInPlace | HostSplit.m (F-031) | SYNTH (APPROXIMATION) | session-038: 217EC/208F4/26FE4 từ evidence (218D8/279F4 cross-ref records) |
 | Spawn/teardown callees | SpawnTeardown.m + SpawnLaunch.m + EventLaunch.m + PollFlush.m + SpawnMisc.m + FastRelayout.m (F-032) | SYNTH partial | s039 teardown + s040 routing + s042 event-launch C37C + s043 poll (22AD0/365D4/371AC/370F8) + s044 misc (B768/BEE4/CCEC/D684-note/B144) + s047 D684 bodies; còn §B KB observers (cross-ref KeyinputRelay.m) |

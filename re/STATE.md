@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-066 (function-level reconstruction)_
+_Last updated: 2026-10-05 session-067 (function-level reconstruction)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-066 (meta, không function mới): P4 slice-11 SIDE_EFFECTS/COMPARISON rows cho CarPlayCloak (INFERRED).
+Session-067 (synthesis+audit, không function mới): 279F4/27AC8 micro-bodies → HostedCallbacks.m (APPROXIMATION); PresentCommitAck không cần rows riêng.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
 
-## LAST COMPLETED TASK (session-066):
-- P4 slice-11 ledger rows (CarPlayCloak, INFERRED) + TODO R-053 + handoff (R-054 scope-open).
+## LAST COMPLETED TASK (session-067):
+- PresentCommitAck-overlap audit + 279F4/27AC8 micro-synthesis (APPROXIMATION) + TODO R-054 + handoff (R-055 scope-open).
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-066 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-067 (đang làm).
 
-## NEXT TASK (session-067):
-1. R-054: scope khác (quyết scope đầu session — P4 còn lại: PresentCommitAck (chồng records — audit trùng trước?) / Tweak.x-init, hoặc scope khác).
+## NEXT TASK (session-068):
+1. R-055: scope khác (quyết scope đầu session — P4 còn lại: Tweak.x-init (skeleton, ít side-effect), TESTS dynamic blocked, hoặc scope khác).
 2. Không mở rộng scope (SESSION BUDGET).
 
 ## BLOCKERS:
@@ -37,9 +37,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-066):
-- Mới: `LOG/session-066.md`.
-- Sửa: SIDE_EFFECTS (3 rows), COMPARISON (1 section), COVERAGE J + P4-#8, TODO (R-053), STATE.
+## FILES CHANGED (session-067):
+- Mới: `RECONSTRUCTION/HostedCallbacks.m`, `LOG/session-067.md`.
+- Sửa: COVERAGE hosting row, TODO (R-054), STATE.
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).

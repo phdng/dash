@@ -94,5 +94,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-051] P4 slice-9: SIDE_EFFECTS (SE-SIRI-001..003 + SE-SLEEP-001..002) + COMPARISON (2 sections SiriProbe/CarSleeper) — session-064, không claim mới.
 - [x] [R-052] P4 slice-10: SIDE_EFFECTS (SE-DATA-001..003 + SE-HUD-001..002) + COMPARISON (2 sections DataRouter/HudBle) — session-065, không claim mới.
 - [x] [R-053] P4 slice-11: SIDE_EFFECTS (SE-CLOAK-001..003) + COMPARISON (1 section CarPlayCloak) — session-066, không claim mới.
-- [ ] [R-054] scope khác — quyết scope session sau (GAPs còn lại: P4 slices tiếp theo — misc/present/init?, P1 4C34 infeasible, blocked P0-3).
+- [x] [R-054] Audit PresentCommitAck-overlap (covered bởi record rows → không rows riêng) + micro-synthesis 279F4/27AC8 từ hosting_engine §4 → RECONSTRUCTION/HostedCallbacks.m (APPROXIMATION session-067) + COVERAGE hosting-row note.
+- [ ] [R-055] scope khác — quyết scope session sau (GAPs còn lại: P4 slices tiếp theo — Tweak.x-init?, P1 4C34 infeasible, blocked P0-3).
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
