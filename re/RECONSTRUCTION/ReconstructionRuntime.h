@@ -112,6 +112,20 @@ typedef struct {
     BOOL shouldRecordUnsupportedType;
 } DDPrivateObjectIvarAccessPlan;
 
+typedef NS_ENUM(NSInteger, DDPrivateSceneIvarAction) {
+    DDPrivateSceneIvarActionNone = 0,
+    DDPrivateSceneIvarActionWrite = 1,
+    DDPrivateSceneIvarActionRecordUnsupported = 2,
+};
+
+typedef struct {
+    DDPrivateSceneIvarAction frameAction;
+    DDPrivateSceneIvarAction foregroundAction;
+    DDHostSlotSize frameSize;
+    BOOL foregroundValue;
+    BOOL shouldAttemptFailureBudgetDecrement;
+} DDSceneSettingsPrivateIvarPlan;
+
 typedef struct {
     BOOL valid;
     double boundsWidth;
@@ -284,6 +298,15 @@ FOUNDATION_EXPORT DDPrivateIntegerIvarWritePlan DDResolvePrivateIntegerIvarWrite
                                                                                      NSInteger typeEncodingFirstByte);
 FOUNDATION_EXPORT DDPrivateObjectIvarAccessPlan DDResolvePrivateObjectIvarAccessPlan(BOOL ivarFound,
                                                                                      NSInteger typeEncodingFirstByte);
+FOUNDATION_EXPORT NSString *DDBuildPrivateIvarDiagnosticKey(NSString * _Nullable className,
+                                                            NSString * _Nullable ivarName);
+FOUNDATION_EXPORT BOOL DDShouldInsertPrivateIvarDiagnostic(BOOL alreadyRecorded);
+FOUNDATION_EXPORT DDSceneSettingsPrivateIvarPlan DDResolveSceneSettingsPrivateIvarPlan(double frameWidth,
+                                                                                       double frameHeight,
+                                                                                       BOOL frameIvarFound,
+                                                                                       NSString * _Nullable frameTypeEncoding,
+                                                                                       BOOL foregroundIvarFound,
+                                                                                       NSString * _Nullable foregroundTypeEncoding);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);

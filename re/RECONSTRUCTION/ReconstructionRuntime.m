@@ -1505,6 +1505,64 @@ DDPrivateObjectIvarAccessPlan DDResolvePrivateObjectIvarAccessPlan(BOOL ivarFoun
     return plan;
 }
 
+NSString *DDBuildPrivateIvarDiagnosticKey(NSString *className, NSString *ivarName) {
+    // Pure key construction from 9C2C4. The original falls back to "nil" when the object is nil
+    // and to "?" when the ivar-name pointer is null, then formats the pair as <class>.<ivar>.
+    NSString *resolvedClassName = className ?: @"nil";
+    NSString *resolvedIvarName = ivarName ?: @"?";
+    return [NSString stringWithFormat:@"%@.%@", resolvedClassName, resolvedIvarName];
+}
+
+BOOL DDShouldInsertPrivateIvarDiagnostic(BOOL alreadyRecorded) {
+    // 9C2C4 lazily creates a mutable set and inserts only when containsObject: is false. The caller
+    // supplies that membership result; this helper never touches the original set or unfair lock.
+    return !alreadyRecorded;
+}
+
+DDSceneSettingsPrivateIvarPlan DDResolveSceneSettingsPrivateIvarPlan(double frameWidth,
+                                                                     double frameHeight,
+                                                                     BOOL frameIvarFound,
+                                                                     NSString *frameTypeEncoding,
+                                                                     BOOL foregroundIvarFound,
+                                                                     NSString *foregroundTypeEncoding) {
+    // Raw ARM64 for 41F50 reveals direct private-ivar writes omitted by the decompiler. Preserve the
+    // exact decisions as data only: frame accepts a {CGRect= prefix; foreground accepts exact c/B.
+    DDSceneSettingsPrivateIvarPlan plan = {
+        DDPrivateSceneIvarActionNone,
+        DDPrivateSceneIvarActionNone,
+        { frameWidth, frameHeight },
+        YES,
+        NO,
+    };
+
+    BOOL frameHandled = frameWidth <= 0.0;
+    if (frameWidth > 0.0) {
+        if (!frameIvarFound) {
+            frameHandled = NO;
+        } else if (frameTypeEncoding != nil && [frameTypeEncoding hasPrefix:@"{CGRect="]) {
+            plan.frameAction = DDPrivateSceneIvarActionWrite;
+            frameHandled = YES;
+        } else {
+            plan.frameAction = DDPrivateSceneIvarActionRecordUnsupported;
+            frameHandled = NO;
+        }
+    }
+
+    BOOL foregroundHandled = NO;
+    if (!foregroundIvarFound) {
+        foregroundHandled = NO;
+    } else if ([foregroundTypeEncoding isEqualToString:@"c"] ||
+               [foregroundTypeEncoding isEqualToString:@"B"]) {
+        plan.foregroundAction = DDPrivateSceneIvarActionWrite;
+        foregroundHandled = YES;
+    } else {
+        plan.foregroundAction = DDPrivateSceneIvarActionRecordUnsupported;
+    }
+
+    plan.shouldAttemptFailureBudgetDecrement = !(frameHandled && foregroundHandled);
+    return plan;
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.
