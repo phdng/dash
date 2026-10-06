@@ -71,5 +71,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-028] Refresh RECONSTRUCTION/COVERAGE.md (stale sau sessions 033-040: 163EC/spike/hostSplit/spawn/Migration/CrashReporting/Respring rows + priorities) — session-041 audit, không claim mới.
 - [x] [R-029] Tweak.x event-launch body từ EVIDENCE/spawn_teardown_kb.md §A item 9 (F-032: C37C 3 tiers + 9 fail reasons) → RECONSTRUCTION/EventLaunch.m (APPROXIMATION synthesis session-042).
 - [x] [R-030] Tweak.x poll/UI-flush bodies từ EVIDENCE/spawn_teardown_kb.md §C (F-032: 22AD0/365D4/371AC/370F8) → RECONSTRUCTION/PollFlush.m (APPROXIMATION synthesis session-043).
-- [ ] [R-031] BEE4/B768/B144 + CCEC/D684 HOẶC scope khác — quyết scope session sau.
+- [x] [R-031] Tweak.x misc bodies từ EVIDENCE/spawn_teardown_kb.md §A items 1,6,11,17 (F-032: B768/BEE4/CCEC/D684-note/B144) → RECONSTRUCTION/SpawnMisc.m (APPROXIMATION synthesis session-044; đóng 17/17 callees).
+- [ ] [R-032] scope khác — quyết scope session sau (GAPs còn lại: DDz3/DDz classes, evict helpers record hóa, P4 SIDE_EFFECTS/COMPARISON rows, P1 4C34 record, blocked P0-3).
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
