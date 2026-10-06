@@ -1563,6 +1563,50 @@ DDSceneSettingsPrivateIvarPlan DDResolveSceneSettingsPrivateIvarPlan(double fram
     return plan;
 }
 
+NSInteger DDResolveCurrentInterfaceOrientation(BOOL settingsObjectPresent,
+                                               BOOL interfaceOrientationSelectorSupported,
+                                               NSInteger currentOrientation) {
+    // Exact 3FA90 fallback: return the supplied orientation only when the settings object exists
+    // and responds to interfaceOrientation; otherwise the original returns nil/zero.
+    return (settingsObjectPresent && interfaceOrientationSelectorSupported) ? currentOrientation : 0;
+}
+
+DDFBSSceneSettingsUpdateDecision DDResolveFBSSceneSettingsUpdateDecision(DDHostSlotSize targetSize,
+                                                                         BOOL slotSettingsMarked,
+                                                                         BOOL frameSelectorSupported,
+                                                                         double currentFrameWidth,
+                                                                         NSInteger desiredOrientation,
+                                                                         NSInteger currentOrientation) {
+    // Pure post-41F50 decision from 400D0. This reports whether the original would request 3F5C0;
+    // it never calls the private updateSettings executor or mutates the per-slot/counter state.
+    DDFBSSceneSettingsUpdateDecision decision = {
+        NO,
+        DDFBSSceneSettingsUpdateReasonNone,
+        targetSize,
+    };
+    if (targetSize.width <= 0.0) return decision;
+
+    if (!slotSettingsMarked) {
+        decision.shouldRequestUpdate = YES;
+        decision.reason = DDFBSSceneSettingsUpdateReasonSlotNotMarked;
+        return decision;
+    }
+
+    double effectiveCurrentFrameWidth = frameSelectorSupported ? currentFrameWidth : 0.0;
+    if (fabs(effectiveCurrentFrameWidth - targetSize.width) > 0.5) {
+        decision.shouldRequestUpdate = YES;
+        decision.reason = DDFBSSceneSettingsUpdateReasonFrameWidthMismatch;
+        return decision;
+    }
+
+    if (desiredOrientation != 0 && currentOrientation != 0 &&
+        currentOrientation != desiredOrientation) {
+        decision.shouldRequestUpdate = YES;
+        decision.reason = DDFBSSceneSettingsUpdateReasonOrientationMismatch;
+    }
+    return decision;
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.

@@ -126,6 +126,19 @@ typedef struct {
     BOOL shouldAttemptFailureBudgetDecrement;
 } DDSceneSettingsPrivateIvarPlan;
 
+typedef NS_ENUM(NSInteger, DDFBSSceneSettingsUpdateReason) {
+    DDFBSSceneSettingsUpdateReasonNone = 0,
+    DDFBSSceneSettingsUpdateReasonSlotNotMarked = 1,
+    DDFBSSceneSettingsUpdateReasonFrameWidthMismatch = 2,
+    DDFBSSceneSettingsUpdateReasonOrientationMismatch = 3,
+};
+
+typedef struct {
+    BOOL shouldRequestUpdate;
+    DDFBSSceneSettingsUpdateReason reason;
+    DDHostSlotSize targetSize;
+} DDFBSSceneSettingsUpdateDecision;
+
 typedef struct {
     BOOL valid;
     double boundsWidth;
@@ -307,6 +320,15 @@ FOUNDATION_EXPORT DDSceneSettingsPrivateIvarPlan DDResolveSceneSettingsPrivateIv
                                                                                        NSString * _Nullable frameTypeEncoding,
                                                                                        BOOL foregroundIvarFound,
                                                                                        NSString * _Nullable foregroundTypeEncoding);
+FOUNDATION_EXPORT NSInteger DDResolveCurrentInterfaceOrientation(BOOL settingsObjectPresent,
+                                                                 BOOL interfaceOrientationSelectorSupported,
+                                                                 NSInteger currentOrientation);
+FOUNDATION_EXPORT DDFBSSceneSettingsUpdateDecision DDResolveFBSSceneSettingsUpdateDecision(DDHostSlotSize targetSize,
+                                                                                           BOOL slotSettingsMarked,
+                                                                                           BOOL frameSelectorSupported,
+                                                                                           double currentFrameWidth,
+                                                                                           NSInteger desiredOrientation,
+                                                                                           NSInteger currentOrientation);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);
