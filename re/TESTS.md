@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-072)
+## Build (session-073)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
 - [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime phase-1 chỉ bật ở SpringBoard.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-071 batch (user-confirmed before session-072 changes). Current session adds libproc + validator runtime code; next pushed CI run remains the compiler gate for these edits.
-- [x] Static runtime contracts through session-072: verifier checks prior prefs/cache contracts plus libproc linkage + 7764C liveness sentinel/path match and 7E63C/7EEDC integer validation/self-healing contracts.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-072 batch (user-confirmed before session-073 changes). Current session adds numeric cache wrappers + runtime-resolved distributed IPC/host-state publishers; next pushed CI run remains the compiler gate.
+- [x] Static runtime contracts through session-073: verifier additionally checks exact 8154/81EC bounds/defaults plus NSDistributed runtime lookup/add/post selectors and host.state/refused payload keys.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

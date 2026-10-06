@@ -1,4 +1,4 @@
-// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-072)
+// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-073)
 // This file intentionally implements only behavior whose data-flow can be represented without
 // unresolved private classes/functions. Unknown filtering/computation remains documented in the
 // synthesis files rather than being silently guessed here.
@@ -8,9 +8,11 @@
 #import <dispatch/dispatch.h>
 #import <mach-o/dyld.h>
 #import <notify.h>
+#import <objc/message.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 // libproc is linked explicitly by the Theos target. Keeping the declaration local avoids
 // depending on private headers while matching the public libproc symbol used by sub_7764C.
@@ -89,6 +91,20 @@ BOOL DDCachedAutostartEnabled(void) {
     NSDictionary *resolved = [NSDictionary dictionaryWithContentsOfFile:DD_APPBRIDGE_CACHE];
     id value = resolved[@"appbridge_autostart"];
     return [value respondsToSelector:@selector(boolValue)] ? [value boolValue] : NO;
+}
+
+NSInteger DDCachedFractionValue(NSString *key) {
+    // sub_8154: generic resolved-plist key -> 7E63C(value, 0, 99, 0, NULL).
+    NSDictionary *resolved = [NSDictionary dictionaryWithContentsOfFile:DD_APPBRIDGE_CACHE];
+    id value = resolved[key];
+    return DDValidateIntegerValue(value, 0, 99, 0, NULL);
+}
+
+NSInteger DDCachedFractionLayoutValue(void) {
+    // sub_81EC: fixed appbridge_split_frac_layout -> 7E63C(value, 0, 8, 0, NULL).
+    NSDictionary *resolved = [NSDictionary dictionaryWithContentsOfFile:DD_APPBRIDGE_CACHE];
+    id value = resolved[@"appbridge_split_frac_layout"];
+    return DDValidateIntegerValue(value, 0, 8, 0, NULL);
 }
 
 BOOL DDReadKeyPaneEnabled(void) {
@@ -426,6 +442,87 @@ NSInteger DDCountLiveSnapshotEntries(NSArray * _Nullable snapshot,
         }
     }
     return (NSInteger)liveCount;
+}
+
+static id _Nullable DDDistributedNotificationCenter(void) {
+    // sub_8900: runtime class lookup keeps this build free of private-framework linkage.
+    Class centerClass = NSClassFromString(@"NSDistributedNotificationCenter");
+    SEL defaultCenter = NSSelectorFromString(@"defaultCenter");
+    if (!centerClass || ![centerClass respondsToSelector:defaultCenter]) return nil;
+
+    id (*sendDefaultCenter)(id, SEL) = (void *)objc_msgSend;
+    return sendDefaultCenter(centerClass, defaultCenter);
+}
+
+BOOL DDPostDistributedNotification(NSString *name,
+                                   id _Nullable object,
+                                   NSDictionary * _Nullable userInfo) {
+    // sub_8C28 / sub_8D78: same post selector; callers differ only by object nil/non-nil.
+    id center = DDDistributedNotificationCenter();
+    SEL postSelector = NSSelectorFromString(@"postNotificationName:object:userInfo:deliverImmediately:");
+    if (!center || ![center respondsToSelector:postSelector]) return NO;
+
+    void (*post)(id, SEL, id, id, id, BOOL) = (void *)objc_msgSend;
+    post(center, postSelector, name, object, userInfo, YES);
+    return YES;
+}
+
+BOOL DDObserveDistributedNotification(NSString *name,
+                                      id observer,
+                                      SEL selector,
+                                      id _Nullable object) {
+    // sub_887C/sub_8934: addObserver:selector:name:object: with either nil or explicit object.
+    id center = DDDistributedNotificationCenter();
+    SEL addSelector = NSSelectorFromString(@"addObserver:selector:name:object:");
+    if (!center || ![center respondsToSelector:addSelector]) return NO;
+
+    void (*addObserver)(id, SEL, id, SEL, id, id) = (void *)objc_msgSend;
+    addObserver(center, addSelector, observer, selector, name, object);
+    return YES;
+}
+
+BOOL DDPostHostRefusedState(NSString * _Nullable reason) {
+    // sub_97A0: nil reason canonicalizes to "?".
+    NSDictionary *payload = @{
+        @"hostRefused": @YES,
+        @"refuseReason": reason ?: @"?",
+    };
+    return DDPostDistributedNotification(@"com.sensetechlab.appbridge.host.state", nil, payload);
+}
+
+BOOL DDPostHostState(BOOL activated,
+                     NSString * _Nullable bundleIdentifier,
+                     NSString * _Nullable carPlayUIBundleIdentifier,
+                     NSArray * _Nullable carPlayUIMore,
+                     NSArray * _Nullable killedBundleIdentifiers,
+                     uint64_t carPlayUIGeneration,
+                     double rectX,
+                     double rectY,
+                     double rectWidth,
+                     double rectHeight) {
+    // sub_9424 exact dictionary schema/order-independent semantics.
+    NSMutableDictionary *payload = [@{
+        @"activated": @(activated),
+        @"bundleIdentifier": bundleIdentifier ?: @"",
+        @"sbPid": @(getpid()),
+    } mutableCopy];
+
+    BOOL hasMain = carPlayUIBundleIdentifier.length > 0;
+    BOOL hasMore = carPlayUIMore.count > 0;
+    if (hasMain) {
+        payload[@"cpuiBid"] = carPlayUIBundleIdentifier;
+        payload[@"cpuiRectX"] = @(rectX);
+        payload[@"cpuiRectY"] = @(rectY);
+        payload[@"cpuiRectW"] = @(rectWidth);
+        payload[@"cpuiRectH"] = @(rectHeight);
+    }
+    if (hasMore) payload[@"cpuiMore"] = [carPlayUIMore copy];
+    if (hasMain || hasMore) payload[@"cpuiGen"] = @(carPlayUIGeneration);
+    if (killedBundleIdentifiers.count > 0 && (hasMain || hasMore)) {
+        payload[@"cpuiKilled"] = [killedBundleIdentifiers copy];
+    }
+
+    return DDPostDistributedNotification(@"com.sensetechlab.appbridge.host.state", nil, payload);
 }
 
 static void DDReloadAppBridge(CFNotificationCenterRef center,
