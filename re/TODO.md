@@ -74,5 +74,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-031] Tweak.x misc bodies từ EVIDENCE/spawn_teardown_kb.md §A items 1,6,11,17 (F-032: B768/BEE4/CCEC/D684-note/B144) → RECONSTRUCTION/SpawnMisc.m (APPROXIMATION synthesis session-044; đóng 17/17 callees).
 - [x] [R-032] Tweak.x evict bodies từ EVIDENCE/evict_helpers.md + evict_from_phone.md (F-036/F-037: 85B8/7764C/3AE48/3AE50 + caller matrix + 3-hệ verdicts) → RECONSTRUCTION/Evict.m (APPROXIMATION synthesis session-045; kill cross-ref Tweak.x).
 - [x] [R-033] Tweak.x DDz3 commit-chain bodies từ EVIDENCE/ddz3_commit.md (F-039: 5F044/5F224/5F538/5F74C/5F8A4 + why strings + parallel paths) → RECONSTRUCTION/DDzCommit.m (APPROXIMATION synthesis session-046).
-- [ ] [R-034] scope khác — quyết scope session sau (GAPs còn lại: DDz inventory 251 methods, P4 SIDE_EFFECTS/COMPARISON rows, P1 4C34 record — infeasible thiếu decompile, blocked P0-3).
+- [x] [R-034] Tweak.x D684 fast/slow bodies từ EVIDENCE/ddz_inventory.md §4 (F-034: fast-vs-slow + 2 họ entity + 14 fail reasons + trigger 3 đường) → RECONSTRUCTION/FastRelayout.m (APPROXIMATION synthesis session-047; lấp D684-UNKNOWN ở SpawnLaunch/SpawnMisc/9D64-U05).
+- [ ] [R-035] scope khác — quyết scope session sau (GAPs còn lại: DDz1/DDz2/DDz3 class synthesis, P4 SIDE_EFFECTS/COMPARISON rows, COVERAGE touch-up 042-047, P1 4C34 infeasible, blocked P0-3).
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
