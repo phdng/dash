@@ -1082,3 +1082,63 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: predicate → waiter → done/retry
 - FAILURE: CB08 check-false → return (không schedule); llround-UB HYPOTHESIS (AAAD0-style, không overflow-check)
 - EVIDENCE: RECONSTRUCTION/SpawnLaunch.m (F-032)
+
+## SE-EVLAUNCH-001 — event-launch 3 tiers + acks
+- FUNCTION: C37C(bid,gen,rect) (C37C.c 324 dòng; EventLaunch.m; caller 9D64 C2A4-nil fallback)
+- CONDITION: tier-0 BE34-base / tier-1 cached-validator (F654+1439C+145F8 true) / tier-2 heavy (noeventlaunch vắng)
+- EFFECT: launch attempt + ack (BFF4 retry 0/30) hoặc fail-ack + telemetry-reasons
+- TARGET: BFF4(bid,gen,0) (base) / 163530=copy + BFF4(bid,gen,30) (cached/success) / B9A8(0) + 986C "no_launch_route" + 9 reasons (fail); heavy: DB/CAR introspect + mode/validate + build + handleEvent:
+- DATA: OS-class HYPOTHESIS; F654/1439C/145F8/build-helpers/v25/knob UNKNOWN
+- TIMING: đồng bộ (tiers) + BFF4 async retries
+- THREAD: caller thread
+- ORDER: base → cached → heavy → ack
+- FAILURE: heavy-fail → no_launch_route + reason (9 taxonomy); base/cached → BFF4 trực tiếp
+- EVIDENCE: RECONSTRUCTION/EventLaunch.m (F-032 item 9)
+
+## SE-SPAWNMISC-001 — active-notify + view predicate
+- FUNCTION: B768 + BEE4 (SpawnMisc.m)
+- CONDITION: B768 unconditional (nil-safe selectors); BEE4 view+superview non-nil (else return nil)
+- EFFECT: SB notify + dock refresh (B768) / view position-check/move + out-flag (BEE4)
+- TARGET: B768: _bundleIdentifierDidBecomeVisible + setActiveBundleIdentifier:animated: + _refreshAppDock (15F40 object HYPOTHESIS SB/HomeScreen); BEE4: convertPoint → lệch<=0.5 cả-2 ? *out=0 : setFrame + *out=1 (size-giữ UNKNOWN)
+- DATA: bid chọn a1+32 else 1634B8/1634C0; không post/global trong file
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: độc lập (helpers lẻ)
+- FAILURE: 15F40-nil → chỉ release; thiếu selector → skip; view/superview-nil → return
+- EVIDENCE: RECONSTRUCTION/SpawnMisc.m (F-032 items 1,6)
+
+## SE-SPAWNMISC-002 — dock ticker + containers
+- FUNCTION: B144 + CCEC (+D684-note) (SpawnMisc.m; caller 9D64 ticker ×2)
+- CONDITION: B144 main-thread (else async-return) + window (else create) + hide-gates (1635F0==1, nodockhide vắng, 1635EC>=1, pid-live); CCEC unconditional idempotent
+- EFFECT: dock-hide ticker + timer 1s + 7-containers ensure
+- TARGET: B144: 1635E0 timer + 12D0A8 handler + bookkeeping 1637D0/1/8 + setHidden:1 + bid-quét (163528∩bounds else 163588/1635A8); CCEC: 7 dicts/sets/arrays lazy-init; D684 body UNKNOWN (không bịa)
+- DATA: hide-semantics HYPOTHESIS; cancel + restore-hidden khi gates-fail
+- TIMING: đồng bộ + timer 1s + handler
+- THREAD: main (async-return nếu non-main)
+- ORDER: gates → window → bid-select → timer → hide
+- FAILURE: gates-fail → cancel timer + restore hidden (không hide)
+- EVIDENCE: RECONSTRUCTION/SpawnMisc.m (F-032 items 11,17)
+
+## SE-FASTRELAY-001 — fast re-layout path
+- FUNCTION: D684 fast (D684.c:124-168; FastRelayout.m; callers D4C4 + E7DC)
+- CONDITION: v11=163588[bid] && v12=163578[bid] VC (else slow path)
+- EFFECT: meta-update + embed/resize + timer-re-arm hoặc geometry-push
+- TARGET: luôn update rect/gen/posted=NO/since + xóa nopic/rebinds/bgsince/refg; BD18 + E7F4 embed; ECB8 resolve; giống → EE4C re-arm; khác → ED5C push + stamp pushed + EE4C + after-50ms 12D068
+- DATA: rect-compare cũ-vs-mới (CGRectValue)
+- TIMING: đồng bộ (+after 50ms khi khác)
+- THREAD: caller thread + timer block
+- ORDER: compare → update → embed → same?re-arm:push
+- FAILURE: N/A (luôn update meta cả khi giống)
+- EVIDENCE: RECONSTRUCTION/FastRelayout.m (F-034 §4; KHÔNG gọi DDz)
+
+## SE-FASTRELAY-002 — slow path + failure telemetry
+- FUNCTION: D684 slow (D684.c:171+; FastRelayout.m)
+- CONDITION: thiếu một (VC tồn tại nhưng bid ∈163590 + EEF0==1 → attach; else F150-drop + rebuild 2 họ entity)
+- EFFECT: VC rebuild (DB/CAR families) + attach/embed/foreground HOẶC fail-telemetry
+- TARGET: F3E0 root + environment → (a) DBApplicationSceneViewController/_CAR + insets / (b) DBDashboard[Proxied]Entity (type-encodings verify) → lưu 163578 + addChild + E7F4 + didMoveToParent + state-dict 5 keys →163588 + BD18 + 163598-add + FC10 + foregroundSceneWithSettings (FF98) + ED5C+EE4C; fail → FB9C 14 reasons
+- DATA: E7F4/ECB8/EE4C/ED5C/F150/F3E0/FC10/FF98 bodies UNKNOWN
+- TIMING: đồng bộ (+foreground completion async)
+- THREAD: caller thread
+- ORDER: tombstone-check → drop/rebuild → attach → foreground
+- FAILURE: 14 fail reasons → FB9C(bid,gen,reason) (no foreground/persist); thiếu foreground-selector → no_foreground
+- EVIDENCE: RECONSTRUCTION/FastRelayout.m (F-034 §4; không chạm DDz state)

@@ -217,3 +217,21 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | Router + gate | D4C4 fast/waiter + D01C base-gate | SE-SPAWN-004 reproduced | rect-passing UNKNOWN (U05 9D64) | F-032 D4C4/D01C | INFERRED |
 | Dispatcher | BFF4 confine/retry/timeout + acks | SE-SPAWN-005 reproduced | env-helper bodies UNKNOWN | F-032 BFF4 | INFERRED |
 | Predicates + waiter | BE34/C2A4 pure + CB08 50ms | SE-SPAWN-006 reproduced | retry-count + overflow HYPOTHESIS | F-032 BE34/C2A4/CB08 | INFERRED |
+
+## EventLaunch (synthesis bodies) — INFERRED overall (session-060, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (EventLaunch.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| 3-tier launch | base-fast / cached / heavy DB-CAR + BFF4 acks | SE-EVLAUNCH-001 reproduced | OS-class + helpers UNKNOWN | F-032 C37C | INFERRED |
+| Fail taxonomy | 9 reasons + no_launch_route ack | reproduced | — | F-032 C37C:144-317 | INFERRED |
+
+## SpawnMisc (synthesis bodies) — INFERRED overall (session-060, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (SpawnMisc.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Active-notify + predicate | B768 nil-safe + BEE4 0.5-check | SE-SPAWNMISC-001 reproduced | 15F40-class + frame-size UNKNOWN | F-032 B768/BEE4 | INFERRED |
+| Dock ticker + containers | B144 đảo-gates + timer + CCEC idempotent | SE-SPAWNMISC-002 reproduced | hide-semantics + D684-body UNKNOWN | F-032 B144/CCEC | INFERRED |
+
+## FastRelayout (synthesis bodies) — INFERRED overall (session-060, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (FastRelayout.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Fast path | rect-compare + luôn-update + re-arm/push | SE-FASTRELAY-001 reproduced | helper-bodies UNKNOWN | F-034 D684:124-168 | INFERRED |
+| Slow path + telemetry | tombstone-attach vs rebuild + FB9C-14 | SE-FASTRELAY-002 reproduced | entity/selector details UNKNOWN | F-034 D684:171+ | INFERRED |

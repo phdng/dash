@@ -86,8 +86,8 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 ## J. Meta (contract/tracking)
 | Artifact | Status |
 |---|---|
-| SIDE_EFFECTS.md (ledger SE-*) | Có cho 11 records + slices synthesis (s1-s4 + s5a SPAWN session-059); còn lại thiếu |
-| COMPARISON.md (matrix) | Có cho 11 records + 10 synthesis sections (s1-s5a); còn lại thiếu |
+| SIDE_EFFECTS.md (ledger SE-*) | Có cho 11 records + slices synthesis (s1-s5a + s5b EVLAUNCH/MISC/FAST session-060); còn lại thiếu |
+| COMPARISON.md (matrix) | Có cho 11 records + 13 synthesis sections (s1-s5b); còn lại thiếu |
 | TESTS.md (static asserts + dynamic list) | Static pass; dynamic pending (cần device) |
 | Tweak.x (skeleton) + Shared.h | APPROXIMATION skeleton |
 
@@ -99,5 +99,5 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 5. ~~**P2**: Respring/latch synthesis~~ — DONE session-036 (Respring.m riêng).
 6. ~~**P2**: spike/hostSplit/spawn/teardown~~ — DONE sessions 037-040 + 042-044 + 047 (17/17 callees + C37C + poll + misc + D684); còn §B KB observers (cross-ref KeyinputRelay.m, giá trị thấp).
 7. **P3**: DDz3 bodies còn lại / DDz classes records (lớn, giá trị/giá thấp).
-8. **P4** (slices done s055-s059: +SPAWN core): rows cho synthesis bodies còn lại; TESTS dynamic (cần device).
+8. **P4** (slices done s055-s060: +EVLAUNCH/MISC/FAST): rows cho synthesis bodies còn lại; TESTS dynamic (cần device).
 9. **Blocked**: P0-3 (asm), Q-09 entitlements, Q-10 MITM, Q-12/Q-13 (disasm blocks), dynamic verify.
