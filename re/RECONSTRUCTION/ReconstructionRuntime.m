@@ -1255,6 +1255,74 @@ DDSceneIdentityRoute DDResolveAVCSceneHandleIdentityRoute(NSString *bundleIdenti
     return route;
 }
 
+DDAVCSceneHandleUpdateDecision DDResolveAVCSceneHandleUpdateDecision(NSString *bundleIdentifier,
+                                                                    BOOL scenePresent,
+                                                                    BOOL slotSettingsMarked,
+                                                                    BOOL sceneSettingsSelectorSupported) {
+    // Pure 4138C routing after the caller has already resolved identity/scene capability. Host-slot
+    // matching deliberately includes CarPlay slots; aux is considered only when no configured slot
+    // matches. This helper reports the pending 3F5C0/3E670 action but never invokes either executor.
+    DDAVCSceneHandleUpdateDecision decision = {
+        DDAVCSceneHandleUpdateNone,
+        -1,
+        {0.0, 0.0},
+        NO,
+        NO,
+    };
+    if (!scenePresent) return decision;
+
+    DDSceneIdentityRoute route = DDResolveAVCSceneHandleIdentityRoute(bundleIdentifier);
+    if (route.kind == DDSceneIdentityRouteHostSlot) {
+        if (slotSettingsMarked || route.slotIndex < 0 || route.slotIndex > 2) return decision;
+        DDHostSlotSize target = gDDHostMirrorSizes[(NSUInteger)route.slotIndex];
+        if (!(target.width > 0.0)) return decision;
+
+        decision.kind = DDAVCSceneHandleUpdateHostSlot;
+        decision.slotIndex = route.slotIndex;
+        decision.targetSize = DDApplyLandscapeSwapToSize(target);
+        decision.shouldAttemptGeneralCounterDecrement = YES;
+        return decision;
+    }
+
+    if (route.kind == DDSceneIdentityRouteAux) {
+        decision.kind = DDAVCSceneHandleUpdateAux;
+        decision.shouldReadSceneSettingsForAux = sceneSettingsSelectorSupported;
+    }
+    return decision;
+}
+
+DDAVCSceneHandleCallbackDecision DDResolveAVCSceneHandleCallbackDecision(NSString *bundleIdentifier,
+                                                                         BOOL scenePresent,
+                                                                         BOOL sceneSettingsSelectorSupported,
+                                                                         BOOL settingsObjectPresent,
+                                                                         BOOL foregroundSelectorSupported,
+                                                                         BOOL isForeground,
+                                                                         uint64_t suppressionCount) {
+    // Exact post-routing 4138C callback gate. Suppression is narrower than the update route: the
+    // foreground=false identity must match a configured NON-CarPlay host slot (3E4A8 semantics).
+    DDAVCSceneHandleCallbackDecision decision = {
+        YES,
+        NO,
+        NO,
+        suppressionCount,
+    };
+    if (!gDDHostMirrorActive || !scenePresent || !sceneSettingsSelectorSupported ||
+        !settingsObjectPresent || !foregroundSelectorSupported || isForeground) {
+        return decision;
+    }
+
+    NSInteger slotIndex = DDConfiguredHostSlotIndexForBundleIdentifier(bundleIdentifier, NO);
+    if (slotIndex == NSNotFound) return decision;
+
+    decision.shouldCallOriginal = NO;
+    decision.shouldSuppressOriginal = YES;
+    if (suppressionCount <= 9) {
+        decision.shouldIncrementSuppressionCount = YES;
+        decision.nextSuppressionCount = suppressionCount + 1;
+    }
+    return decision;
+}
+
 DDHostSlotSize DDResolveIdentityNativeSize(NSString *bundleIdentifier) {
     // Exact post-identity 41D80 selection. 41E08 takes precedence and only maps non-CarPlay
     // configured slots; aux is consulted only when no such host slot matches.

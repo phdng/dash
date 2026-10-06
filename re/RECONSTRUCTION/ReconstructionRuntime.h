@@ -47,6 +47,27 @@ typedef struct {
     NSInteger slotIndex;
 } DDSceneIdentityRoute;
 
+typedef NS_ENUM(NSInteger, DDAVCSceneHandleUpdateKind) {
+    DDAVCSceneHandleUpdateNone = 0,
+    DDAVCSceneHandleUpdateHostSlot = 1,
+    DDAVCSceneHandleUpdateAux = 2,
+};
+
+typedef struct {
+    DDAVCSceneHandleUpdateKind kind;
+    NSInteger slotIndex;
+    DDHostSlotSize targetSize;
+    BOOL shouldAttemptGeneralCounterDecrement;
+    BOOL shouldReadSceneSettingsForAux;
+} DDAVCSceneHandleUpdateDecision;
+
+typedef struct {
+    BOOL shouldCallOriginal;
+    BOOL shouldSuppressOriginal;
+    BOOL shouldIncrementSuppressionCount;
+    uint64_t nextSuppressionCount;
+} DDAVCSceneHandleCallbackDecision;
+
 typedef struct {
     NSInteger orientation;
     DDHostSlotSize frameSize;
@@ -336,6 +357,17 @@ FOUNDATION_EXPORT BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGenerati
 FOUNDATION_EXPORT BOOL DDBundleIdentifierMatchesAux(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityRoute DDResolveFBSUpdateIdentityRoute(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityRoute DDResolveAVCSceneHandleIdentityRoute(NSString * _Nullable bundleIdentifier);
+FOUNDATION_EXPORT DDAVCSceneHandleUpdateDecision DDResolveAVCSceneHandleUpdateDecision(NSString * _Nullable bundleIdentifier,
+                                                                                      BOOL scenePresent,
+                                                                                      BOOL slotSettingsMarked,
+                                                                                      BOOL sceneSettingsSelectorSupported);
+FOUNDATION_EXPORT DDAVCSceneHandleCallbackDecision DDResolveAVCSceneHandleCallbackDecision(NSString * _Nullable bundleIdentifier,
+                                                                                           BOOL scenePresent,
+                                                                                           BOOL sceneSettingsSelectorSupported,
+                                                                                           BOOL settingsObjectPresent,
+                                                                                           BOOL foregroundSelectorSupported,
+                                                                                           BOOL isForeground,
+                                                                                           uint64_t suppressionCount);
 FOUNDATION_EXPORT DDHostSlotSize DDResolveIdentityNativeSize(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDHostSlotSize DDResolveIdentityAdjustedSize(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT NSInteger DDResolveIdentityRawSettingsOrientation(NSString * _Nullable bundleIdentifier);
