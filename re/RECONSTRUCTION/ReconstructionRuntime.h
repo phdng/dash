@@ -53,6 +53,12 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDSceneIdentityResolutionExceptionOutcome;
 
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnNilValue;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDStringSelectorExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDAVCSceneHandleUpdateKind) {
     DDAVCSceneHandleUpdateNone = 0,
     DDAVCSceneHandleUpdateHostSlot = 1,
@@ -595,6 +601,7 @@ FOUNDATION_EXPORT BOOL DDBeginAuxSceneSettingsApply(uint64_t capturedGeneration)
 FOUNDATION_EXPORT BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGeneration);
 FOUNDATION_EXPORT BOOL DDBundleIdentifierMatchesAux(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdentityResolutionExceptionOutcome(void);
+FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDSceneIdentityRoute DDResolveFBSUpdateIdentityRoute(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityRoute DDResolveAVCSceneHandleIdentityRoute(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDAVCSceneHandleUpdateDecision DDResolveAVCSceneHandleUpdateDecision(NSString * _Nullable bundleIdentifier,

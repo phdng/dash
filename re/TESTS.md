@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-110)
+## Build (session-111)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
 - [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-109 batch (`aec5629`, user-confirmed before session-110 changes).
-- [x] Static runtime contracts through session-110: verifier checks LSDA/raw-ARM64-confirmed 3FBC8 protected scene/client identity-resolution exceptions → common typed catch swallow + nil resolved identity; nonmatching catch discriminator → resume unwind. No private traversal, selector/helper/string-matching invocation, synthesized/runtime catch execution, or global mutation.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-110 batch (`517beec`, user-confirmed before session-111 changes).
+- [x] Static runtime contracts through session-111: verifier checks LSDA/raw-ARM64-confirmed 3EFD4 protected caller-supplied selector capability/send/string-type-check exceptions → common typed catch swallow + nil string result; nonmatching catch discriminator → resume unwind. No selector/runtime class-check invocation, synthesized/runtime catch execution, real-object traversal, or state mutation.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

@@ -1226,6 +1226,14 @@ DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdentityResolutionExcept
     return outcome;
 }
 
+DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
+    // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
+    // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
+    // expected catch swallows and returns nil, while a nonmatching discriminator resumes unwind.
+    DDStringSelectorExceptionOutcome outcome = { YES, YES, YES };
+    return outcome;
+}
+
 static DDSceneIdentityRoute DDSceneIdentityRouteNoneValue(void) {
     DDSceneIdentityRoute route = { DDSceneIdentityRouteNone, -1 };
     return route;

@@ -187,6 +187,8 @@ for contract in [
     "DDBundleIdentifierMatchesAux",
     "DDResolveSceneIdentityResolutionExceptionOutcome",
     "DDSceneIdentityResolutionExceptionOutcome outcome = { YES, YES, YES }",
+    "DDResolveStringSelectorExceptionOutcome",
+    "DDStringSelectorExceptionOutcome outcome = { YES, YES, YES }",
     "DDResolveFBSUpdateIdentityRoute",
     "DDResolveAVCSceneHandleIdentityRoute",
     "DDResolveAVCSceneHandleUpdateDecision",
