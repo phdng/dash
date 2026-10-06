@@ -274,3 +274,28 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 |---|---|---|---|---|---|
 | Version/device notes | 4008/ACF1C/sysctl fail-soft, 0-hit MinimumOS/AppleLanguages | documented (no-op notes) | 46340-threshold UNKNOWN | F-030/B-20/P3-5 | INFERRED |
 | Write/read/observers | 6A4E4→post; read-4-tầng + whitelist-17 + cache; 6 observers | SE-LOCALE-001 reproduced | 16 strings + CN* UNKNOWN | F-030/B-20 | INFERRED |
+
+## License (synthesis bodies) — INFERRED overall (session-063, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (License.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Offline verify + validators | ECDSA codes 0-8/10 + NSNumber-finite + llround | SE-LIC-001 reproduced | pubkey/overflow HYPOTHESIS | F-006 + aa_validators | INFERRED |
+| Network clients | activate/info/env/healthz + throttles + verdicts | SE-LIC-002 reproduced | timing thực UNVERIFIED | F-006/B-09/F-016/F-030 | INFERRED |
+| Unrefuse + migrate + UI | conditional-delete + A/B1/B2/C + CN controllers | SE-LIC-003 reproduced | off_154238 + CN* UNKNOWN | F-019 + aa_validators | INFERRED |
+
+## KeyinputRelay (synthesis bodies) — INFERRED overall (session-063, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (KeyinputRelay.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Focus + publish | gates + dummy + plist + post begin | SE-KEY-001 reproduced | afters UNKNOWN | B-17 §§focus/publish | INFERRED |
+| Seed/forward/patch/teardown | ts-10s + merge + apply + dismiss + password/keypane | SE-KEY-002 reproduced | KeyApp + 10-blocks UNKNOWN | B-17 | INFERRED |
+
+## KeyboardHooks (mapping ledger) — INFERRED overall (session-063, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (KeyboardHooks.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Hook installs | 43 mappings + guards (455D0/4C858) | SE-KBD-001 reproduced | hook-fn bodies UNKNOWN | HOOKS.md + F-017/F-013 | INFERRED |
+| Swizzle/AZ/BKS refs | focus/swizzle/AZ/BKS bodies nơi khác | cross-refs (không duplicate) | SB-scene BLOCKED F-018 | HOOKS.md | INFERRED |
+
+## KBObservers (synthesis bodies) — INFERRED overall (session-063, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (KBObservers.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Stubs + dismiss + teardown | no-op CONFIRMED + gated 449C8 | SE-KBOBS-001 reproduced | — | F-032 §B | INFERRED |
+| End-editing machine | inverted-knob + branches + conditional-post | SE-KBOBS-001 reproduced | cousin-posts ở KeyinputRelay | F-032 §B 45180 FULL | INFERRED |

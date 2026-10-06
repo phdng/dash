@@ -1250,3 +1250,87 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: write → post → clear+reload; read → tier-fallback → cache
 - FAILURE: whitelist-fail → write bị chặn; knob tồn tại (EndEditing-cousin, không ở đây)
 - EVIDENCE: RECONSTRUCTION/LocaleFlow.m (F-030/B-20; version/device fail-soft ở COMPARISON)
+
+## SE-LIC-001 — offline verify + validators (pure)
+- FUNCTION: DDVerifyLicense + DDParseDouble/DDParseInt (License.m; F-006 + aa_validators)
+- CONDITION: blob format b64url(json).b64url(sig) 2 parts; JSON v==1 + device + product + iat/exp windows
+- EFFECT: return codes (KHÔNG side-effect): 0 OK / 1 empty / 2 format / 3 no-pubkey / 4 kid / 5 device / 6 expired / 7 skew / 8 v!=1 / 10 product (KHÔNG 9); ECDSA P-256/SHA256/X9.62 via SecKey (pubkey 65B uncompressed off_1542E0 HYPOTHESIS)
+- TARGET: (return value only)
+- DATA: validators NSNumber-only + finite-mask (Inf/NaN reject); AAAD0 llround (non-strict, no-whitelist, overflow-UB HYPOTHESIS); out ghi chỉ khi pass
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: format → schema → crypto → codes
+- FAILURE: mọi fail silent return-code (không throw/log)
+- EVIDENCE: RECONSTRUCTION/License.m (F-006/A397C + aa_validators exact)
+
+## SE-LIC-002 — license clients (network)
+- FUNCTION: DDActivate/DDInfo/DDEnv/DDHealthz (License.m; F-006/B-09/F-016/F-030)
+- CONDITION: base hardcode (license_endpoint key dead); device_hash (A3558) + client 1.1.5+b1d14e0
+- EFFECT: HTTPS POST/GET + persist verdicts/geometry + throttles
+- TARGET: activate 30s {product_key,device_hash,email?,model,udid?,ios,client,product}; info 6s 16-keys obfuscated → 4 nhánh (403 conditional-verify / 200 cache+persist / 429 retry-1-lần-v89ms / error-D code 2); env 6s rate-limit <8; healthz GET 6s throttle 3s + spinlock → server_health row; verdicts file + 24h retry (rate_limited/invalid_key/device_limit/blocked/unavailable)
+- DATA: thiếu device_hash → no_device_id; thiếu base → no_server (fail-soft)
+- TIMING: async callbacks (timing thực UNVERIFIED)
+- THREAD: session queues + main callbacks
+- ORDER: offline-verify-trước (semantics giữ) → network → verdicts
+- FAILURE: no-connection/unavailable → verdicts + retry (B-09 map)
+- EVIDENCE: RECONSTRUCTION/License.m (MITM/server-side UNKNOWN)
+
+## SE-LIC-003 — unrefuse + migrate-branch + prefs UI
+- FUNCTION: DDUnrefuseIfNonceMatches + DDMigrateLicense + CN controllers (License.m; F-019 + aa_validators + F-015)
+- CONDITION: unrefuse stored-nonce == async-nonce (non-empty copy, queue 1650E0); migrate theo (TrueDash-valid?, DuoDash-valid?, iat-mới-hơn?)
+- EFFECT: conditional-delete file + license import/reseal/delete/keep + UI refresh (không verify lại ở UI)
+- TARGET: unrefuse: refused.plist nonce-match → removeItem silent + re-arm (device-check + alert nếu fail), else giữ file; migrate: A-import (A4558 → imported/failed; key none/kept vs resealed/failed; xóa off_154238 UNKNOWN) / B1-delete+reseal / B2-none/kept / C-kept(+reseal); UI: CNLicenseActivation (~20 methods) + CNTweakManagement ← openLicenseActivation:/openTweakManagement: (bodies CN* chưa record)
+- DATA: product prefixes 3 thế hệ; blob cũ verify dưới product "duodash"; pending_key/email stored (email never-required)
+- TIMING: unrefuse async; migrate trong 4C34 once; UI on-push
+- THREAD: license queue + main + UI
+- ORDER: verify → unrefuse/migrate → UI verdicts (not_activated/activating/active/…)
+- FAILURE: nonce-mismatch → no-op giữ file; deviceId-rỗng → no-device-id/none
+- EVIDENCE: RECONSTRUCTION/License.m (KHÔNG write/chmod nào ở unrefuse — đính chính persist-SAI)
+
+## SE-KEY-001 — focus intercept + publish
+- FUNCTION: DDFieldDidFocus + DDPublishField + DDKeyPurge/DDKeyCardSet (KeyinputRelay.m §§focus/purge)
+- CONDITION: gates thứ tự 4B90C (fail → passthrough native): --163054, 163ED9, keypane-on (162F88), nokeypane-knob, chưa-focus, cooldown, isSplit; secure → PASSWORD BYPASS (native, không vào relay); publish gate 45568 + path non-empty
+- EFFECT: dummy inputView + plist write + chmod + notify begin (+ purge/card state)
+- TARGET: weak 163F30/class 163F38 + dummy 163F40 + orig; snapshot 163F48 + duodash_keyinput.plist {bid,text,selLoc,selLen=0,kbType,returnKey,secure=@NO CỨNG,ts} + chmod off_154400 + post begin (+after 1.5s/ async bodies UNKNOWN); purge per-bid + seed/out; card 30F48 set/post
+- DATA: serialize-fail → nuốt; secure field KHÔNG BAO GIỜ vào relay (password-literal 0 hit)
+- TIMING: đồng bộ focus (+afters async)
+- THREAD: UI thread
+- ORDER: gates → bypass-check → store → dummy+orig → snapshot+publish+post
+- FAILURE: gate-fail → passthrough (không chặn user); secure → native passthrough
+- EVIDENCE: RECONSTRUCTION/KeyinputRelay.m (B-17; KeyApp writers HYPOTHESIS)
+
+## SE-KEY-002 — seed + forward + patch + teardown
+- FUNCTION: DDRebuildSeed + DDForwardOutToIn + DDDismissSB + password/keypane gates (KeyinputRelay.m)
+- CONDITION: seed ts-window 10s (3A588, KHÔNG 30s) + secure!=1 + 38240-ok; forward 163CA0 non-empty + out-plist types; teardown triggers (lost-twice/rebuild-failed/watchdog≥3s + nokprecover)
+- EFFECT: seed.plist write + post seed/apply + text-patch + notifications + teardown posts
+- TARGET: rebuild (seed/out merge, out.text newer-wins) → 3896C seed.plist + post seed (3A588: bid→163CA0, ++163D18, 163D20=80, 6-entry dict); forward in.plist + post apply + --163D20; 44B1C patch (diff/insertText-setText + notifications + ret→shouldReturn/\\n, bypass-lần-2); dismiss (purge + post dismiss/fallback/end + teardown + card 38240-gates + UIApp 4C650/4D068/49778/449C8 + othertap-throttle/retap)
+- DATA: ts<30s HYPOTHESIS (cảnh báo: hằng dylib là 10s/600s); keypane-OFF → passthrough + teardown + 38240-từ-chối
+- TIMING: đồng bộ + watchdogs/afters
+- THREAD: SB + UIApp threads (relay qua plists + notifies)
+- ORDER: seed → KeyApp(HYPOTHESIS) → out → forward → apply-patch → dismiss/teardown
+- FAILURE: rebuild-fail → fallback/teardown (tôn trọng nokprecover); out-nil/wrong-type → return
+- EVIDENCE: RECONSTRUCTION/KeyinputRelay.m (B-17; 10 blocks sau-hop + KeyApp-writers UNKNOWN)
+
+## SE-KBD-001 — hook mapping install (bodies UNKNOWN)
+- FUNCTION: 455D0 + 4C858 ctors + AZ loop + swizzle + BKS (KeyboardHooks.m; HOOKS.md + F-017/F-013)
+- CONDITION: 455D0 role5-unlisted (bundle-conditional Maps/Waze/duodashkey/RCT); 4C858 IFF duodash_kbpoc_kbd tồn tại (exists=ENABLE — đảo KILL)
+- EFFECT: MSHook installs (mapping CONFIRMED; hook-fn bodies UNKNOWN trừ focus/swizzle/AZ)
+- TARGET: orientation/geometry ~17 (UIScreen/UIWindow/VC/CPWindow/scene/orientation [!RCT]) + keyboard-size ~17 (UIKeyboardImpl/UIPeripheralHost/UIKBScreenTraits/duodashkey-gated/setters + didMoveToWindow + sendEvent:48924 + AVExternalDevice + NSBundle-cptrip-gated) + AZ×7 (counter + swallow-gate, F-017) + _UIKeyboardLayerHostView ×3 (native-kb màn-ngoài, 376DC) + BKS blank (4DF94 keepawake + backlight<0.2 + display_held) + PSTableCell swizzle (94E9C, body UNKNOWN)
+- DATA: orig-slots off_163Fxx; RCT-minimal khi RCT app
+- TIMING: install lúc ctor (once); hooks chạy per-call
+- THREAD: target-process threads
+- ORDER: ctor-guard → installs (focus bodies ở KeyinputRelay.m — không duplicate)
+- FAILURE: class-nil → skip install (INFERRED từ pattern); SB-scene ×10 BLOCKED (F-018, raw asm)
+- EVIDENCE: RECONSTRUCTION/KeyboardHooks.m (ledge mapping, KHÔNG nâng cấp nhãn)
+
+## SE-KBOBS-001 — observer stubs + state machine
+- FUNCTION: onKbShow/Hide/onDismiss/449C8/onEndEditing (KBObservers.m; F-032 §B)
+- CONDITION: stubs unconditional no-op; onDismiss 163ED9==1 (+162F58>=1 → --); 449C8 163ED9 + responder-tồn-tại; onEndEditing gate 163ED9 + 162F88!=0 + knob-vắng (knob-tồn-tại → return, LOGIC ĐẢO)
+- EFFECT: no-op / gated-decrement + full-teardown / conditional-teardown + post end
+- TARGET: stubs `;` (CONFIRMED, sửa UNKNOWN cũ); 449C8: clear flags/weaks/counters + setInputView:nil+reload + resign (nếu responds); onEndEditing: 163F58=164130=v4^1 + object-match branches (v8) + --162F58 (+lần-nữa khi post end, chỉ khi 163F58==1) + clear + post keyinput.end có-điều-kiện
+- DATA: 453B8 nokeypane TTL-1s-cache; posts cousin ở KeyinputRelay.m (không duplicate)
+- TIMING: đồng bộ trong notification delivery
+- THREAD: NSNotification threads
+- ORDER: gate → match → decrement → teardown → conditional-post
+- FAILURE: guard-fail → return (không teardown, không post)
+- EVIDENCE: RECONSTRUCTION/KBObservers.m (F-032 §B; header-callees-stale note)
