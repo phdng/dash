@@ -188,3 +188,18 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | 2-pane wrapper | nil-coalesce + [L,R] + onHosted=nil | DDHostSplit reproduced | — | F-031 217EC | INFERRED |
 | In-place guards + convert | guards→0; convert + rollback-nhưng-1 + async 100ms | DDSwitchCarPlayUIInPlace reproduced | return-semantics HYPOTHESIS | F-031 208F4 | INFERRED |
 | Continuation | gates + 85B8 + slots + 9424 cpuiGen++ + log | DDInPlaceContinuation reproduced | evict-nghĩa HYPOTHESIS | F-031 26FE4 | INFERRED |
+
+## Evict (synthesis bodies) — INFERRED overall (session-058, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (Evict.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Prefs logical evict | 85B8 guards + mutate + save + republish, không kill | DDEvictPrefs reproduced | consumer resolved HYPOTHESIS | F-036 85B8 FULL | INFERRED |
+| Liveness probe | 7764C SB-gated count/-1, read-only | DDProbeLive reproduced | -1-truthy intent UNKNOWN | F-036 7764C FULL | INFERRED |
+| Home-transition | 3AE50 guards + request + watchdog exactly-once | DDEvictFromPhoneThen reproduced | SB-selectors nghĩa HYPOTHESIS | F-037 3AE50 FULL | INFERRED |
+| 3-system verdicts | kill chỉ 763E0/7792C; caller matrix 5 sites | verdicts + matrix reproduced | snapshot producers UNKNOWN | F-036/F-037 + Tweak.x | INFERRED |
+
+## Cpuigen (synthesis bodies) — INFERRED overall (session-058, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (Cpuigen.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Counter lifecycle | 4 post-increments cùng idiom; BSS-init | SE-CPUIGEN-001 reproduced | init/reset UNKNOWN | F-040 H2-H5 | INFERRED |
+| Consume + readers | 9424:a6 duy nhất; 20010 + 9D64 readers/echo | SE-CPUIGEN-002 reproduced | reshow-ngữ-nghĩa HYPOTHESIS | F-040 H1 + 9424 | INFERRED |
+| Stale-check duy nhất | 20010:69 → dedup + 85B8 retry | reproduced | — | F-040 20010:69-85 | INFERRED |

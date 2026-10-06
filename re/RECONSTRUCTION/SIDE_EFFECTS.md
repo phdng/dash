@@ -950,3 +950,63 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: sau SE-HSPLIT-002
 - FAILURE: gates fail trong continuation → skip (evict = setSlot+replacePane+85B8 HYPOTHESIS)
 - EVIDENCE: RECONSTRUCTION/HostSplit.m (F-031)
+
+## SE-EVICT-001 — prefs logical evict
+- FUNCTION: 85B8(bid) (85B8.c:9-47 FULL; Evict.m)
+- CONDITION: bid non-empty + !(bid==main && ∉merged-list) (inverted-check :31-33)
+- EFFECT: prefs writes + regenerate + notify (logical evict — KHÔNG kill/unhost process)
+- TARGET: SetAppValue(ui)+SetAppValue(more)+Sync (84D8) + 74C8() → writeToFile plist + post resolved (sau clear-main-hoặc-giữ + removeObject:bid)
+- DATA: main via 7044(carplay_ui); merged via 70FC (7E730 dedup trừ main)
+- TIMING: đồng bộ
+- THREAD: caller thread (20010 / 25C4C / 26FE4 call-sites)
+- ORDER: read → check → mutate-copy → save → republish
+- FAILURE: guard-fail → no-op (không ghi)
+- EVIDENCE: RECONSTRUCTION/Evict.m (F-036; FULL body, callees objc/CF only)
+
+## SE-EVICT-002 — liveness probe (read-only)
+- FUNCTION: 7764C(snapshot,filter) (7764C.c:9-116 FULL; Evict.m)
+- CONDITION: SB-gated (once + byte_1646A1==1 + bundle springboard, else return -1)
+- EFFECT: counter return (KHÔNG side-effect: retain/release + stack buffer)
+- TARGET: return count (live khớp pid+path) / 0 (không khớp) / -1 (non-SB/UNKNOWN)
+- DATA: a1 NSArray<{pid,path,bid}>; filter rỗng/nil = match-all; pid>=2 + proc_pidpath + strcmp
+- TIMING: đồng bộ
+- THREAD: caller thread (25C4C / 25FE0 / 26FE4)
+- ORDER: gate → iterate → count
+- FAILURE: TÀN DƯ callers ép unsigned + !=0 truthy → -1 cũng truthy ngoài SB (intent UNKNOWN); 25C4C:113 pure-call bỏ kết quả
+- EVIDENCE: RECONSTRUCTION/Evict.m (F-036; không check gen/state/frontmost/sleeping)
+
+## SE-EVICT-003 — Home-transition evict
+- FUNCTION: evictFromPhoneThen: (3AE50.c:9-186 FULL; Evict.m; wrapper 3AE48 nil-completion)
+- CONDITION (thứ tự): noevict vắng → skipfrontmost-vắng-hoặc-không-frontmost → SBMainWorkspace+entity classes + responds → request tạo ok
+- EFFECT: SB Home-transition request (app background gián tiếp — KHÔNG SIGKILL) + exactly-once completion
+- TARGET: createRequestWithOptions:0 + setActivatingEntity:Home (block 3F100) + executeTransitionRequest:; completion!=nil → version-gated block attach (setCompletionBlock:/addCompletionHandler: CF<1946.102 đảo) + watchdog 2s (3F170, guard 1-lần)
+- DATA: frontmost via 3EDFC (slot0 bid vs _accessibilityFrontMostApplication)
+- TIMING: đồng bộ request + async completion/watchdog
+- THREAD: caller thread + main (watchdog)
+- ORDER: guards → workspace → request → completion-attach → execute → cleanup
+- FAILURE: guard/class/request-fail → LABEL_2 (completion ngay, không evict); v20==0 → completion ngay
+- EVIDENCE: RECONSTRUCTION/Evict.m (F-037; callers 3CC44:312/3B2D8:189/211)
+
+## SE-CPUIGEN-001 — counter lifecycle
+- FUNCTION: 162E60 post-increments (27C88:42 / 26FE4:256 / 2565C:127 / 218D8:699; Cpuigen.m)
+- CONDITION: mỗi site guards riêng (27C88 đầy đủ nhất: main + active/split/visible/connected + bid/more; 26FE4 outer-4-đk; 2565C unconditional v11=0/1; 218D8 reshow-branch)
+- EFFECT: global write (monotonic host-side counter, idiom `old = counter++`)
+- TARGET: qword_162E60++; BSS-init HYPOTHESIS 0 (không store tường minh; reset UNKNOWN)
+- DATA: counter nội bộ (không userInfo/timestamp); IPC numberWithUnsignedLongLong (9424:92)
+- TIMING: đồng bộ tại site
+- THREAD: caller thread (27C88 main-thread gate)
+- ORDER: site-guard → increment → 9424:a6
+- FAILURE: N/A (27C88 else → v6=0 return)
+- EVIDENCE: RECONSTRUCTION/Cpuigen.m (F-040; 4 sites cùng idiom)
+
+## SE-CPUIGEN-002 — consume + readers + stale-check
+- FUNCTION: 9424:a6 → host.state + readers 20010/9D64 (Cpuigen.m)
+- CONDITION: 9424 length||count → dict["cpuiGen"] (:90-93) → post host.state (:102); 1FB5C/9400 truyền 0 cứng (chỉ 4 split/CPUI sites dùng counter)
+- EFFECT: IPC publish + CarPlay-side echo/reads
+- TARGET: host.state cpuiGen → 20010:35-36 read (stale-check !ok && incoming+1==counter → dedup per-gen 163988/163990 → 85B8 retry; forward DDz1 trước, độc lập) + 9D64:252-253 read (→1636E8/1637A0/986C echo "already"/gates BFF4/C37C) + 986C pack vào cpui.status
+- DATA: —
+- TIMING: đồng bộ (post + reads tại handlers)
+- THREAD: notify threads
+- ORDER: increment → 9424 → post → readers
+- FAILURE: stale-check duy nhất 20010:69 (không site nào khác); forward-before-check (độc lập)
+- EVIDENCE: RECONSTRUCTION/Cpuigen.m (F-040; H1-H5)
