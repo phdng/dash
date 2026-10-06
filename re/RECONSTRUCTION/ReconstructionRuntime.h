@@ -54,6 +54,11 @@ typedef struct {
 } DDSceneSettingsSnapshot;
 
 typedef struct {
+    DDHostSlotSize size;
+    BOOL substituted;
+} DDSceneCallbackSizeRewrite;
+
+typedef struct {
     BOOL valid;
     double boundsWidth;
     double boundsHeight;
@@ -202,6 +207,11 @@ FOUNDATION_EXPORT BOOL DDShouldClearAuxSceneSettingsDiff(BOOL settingsDiffPresen
                                                          BOOL settingsDiffSetterSupported,
                                                          DDSceneSettingsSnapshot before,
                                                          DDSceneSettingsSnapshot after);
+FOUNDATION_EXPORT DDSceneCallbackSizeRewrite DDResolveSceneCallbackSizeRewrite(NSString * _Nullable bundleIdentifier,
+                                                                               DDHostSlotSize originalSize);
+FOUNDATION_EXPORT BOOL DDResolveSceneOrientationEqualityResult(NSString * _Nullable bundleIdentifier,
+                                                               NSInteger requestedOrientation,
+                                                               BOOL originalResult);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);

@@ -1315,6 +1315,37 @@ BOOL DDShouldClearAuxSceneSettingsDiff(BOOL settingsDiffPresent,
            !DDSceneSettingsSnapshotsEquivalent(before, after);
 }
 
+DDSceneCallbackSizeRewrite DDResolveSceneCallbackSizeRewrite(NSString *bundleIdentifier,
+                                                              DDHostSlotSize originalSize) {
+    // Exact caller-supplied-identity rewrite shared by 40C5C/40DA8 after 41CBC has accepted
+    // either a non-CarPlay hosted bid or aux. Invalid original dimensions preserve the original.
+    DDSceneCallbackSizeRewrite rewrite = { originalSize, NO };
+    if (!gDDHostMirrorActive || originalSize.width <= 0.0 || originalSize.height <= 0.0) {
+        return rewrite;
+    }
+
+    DDSceneIdentityRoute route = DDResolveFBSUpdateIdentityRoute(bundleIdentifier);
+    if (route.kind == DDSceneIdentityRouteNone) return rewrite;
+
+    DDHostSlotSize replacement = DDApplyLandscapeSwapToSize(DDResolveIdentityNativeSize(bundleIdentifier));
+    if (replacement.width <= 0.0 || replacement.height <= 0.0) return rewrite;
+
+    rewrite.size = replacement;
+    rewrite.substituted = YES;
+    return rewrite;
+}
+
+BOOL DDResolveSceneOrientationEqualityResult(NSString *bundleIdentifier,
+                                             NSInteger requestedOrientation,
+                                             BOOL originalResult) {
+    // 40F0C overrides the original callback result only while hosting is active and 41CBC accepts
+    // the supplied identity; otherwise the original implementation result is preserved verbatim.
+    if (!gDDHostMirrorActive) return originalResult;
+    DDSceneIdentityRoute route = DDResolveFBSUpdateIdentityRoute(bundleIdentifier);
+    if (route.kind == DDSceneIdentityRouteNone) return originalResult;
+    return DDResolveIdentityRawSettingsOrientation(bundleIdentifier) == requestedOrientation;
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.

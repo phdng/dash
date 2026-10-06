@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-083)
+## Build (session-084)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
 - [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
-- [x] Last explicitly recorded compiler gate remains GitHub Actions macOS GREEN for session-081; session-082 was committed/pushed and accepted by user, but this workspace has no independent CI-status surface. Session-083 changes require the next macOS compiler run.
-- [x] Static runtime contracts through session-083: verifier checks 41D80 host/aux/zero size selection, raw-ARM64-confirmed 41E94 aux portrait-normalization vs host landscape swap, post-identity 3FAF8 orientation, 40514 direct-repair decision, snapshot equivalence (orientation/foreground + ±0.5 frame), and noapplydiff-aware diff-clear decision. No private FBSSceneSettingsDiff/settings mutation is introduced.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-083 batch (`ffcd879`, user-confirmed before session-084 changes).
+- [x] Static runtime contracts through session-084: verifier checks exact 40C5C/40DA8 route-gated size substitution with positive original/resolved dimensions, 41D80 native size + accepted-landscape swap, explicit substitution flag, and exact 40F0C fallback-to-original vs raw-orientation equality. 40DA8 counter mutation and 40FF4 private foreground setter remain excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
