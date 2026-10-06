@@ -2041,6 +2041,46 @@ DDFBSSettingsCallbackExceptionOutcome DDResolveFBSSettingsCallbackExceptionOutco
     return outcome;
 }
 
+DDFBSPresentationUpdateExceptionOutcome DDResolveFBSPresentationUpdateExceptionOutcome(DDFBSPresentationUpdateExceptionSite site,
+                                                                                        uint64_t currentProbeCount,
+                                                                                        BOOL reasonSelectorSupported) {
+    // 40AE8 protects three materially different stages. An original-callback exception is swallowed,
+    // probed through 41BA0, and then rejoins post-original nopresupdate/updateFrame evaluation if the
+    // probe completes. The file-manager nopresupdate probe itself has no landing pad and propagates.
+    // _updateFrameAndTransform capability/send exceptions are swallowed and jump directly to cleanup.
+    DDExceptionReasonProbeDecision emptyProbe = { NO, NO, currentProbeCount };
+    DDFBSPresentationUpdateExceptionOutcome outcome = {
+        NO,
+        NO,
+        NO,
+        NO,
+        NO,
+        NO,
+        emptyProbe,
+    };
+
+    if (site == DDFBSPresentationUpdateExceptionSiteOriginalCallback) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldApplyReasonProbeDecision = YES;
+        outcome.probeExceptionWouldResumeUnwind = YES;
+        outcome.shouldContinuePostOriginalEvaluationAfterProbe = YES;
+        outcome.reasonProbeDecision = DDResolveExceptionReasonProbeDecision(currentProbeCount,
+                                                                             reasonSelectorSupported);
+        return outcome;
+    }
+
+    if (site == DDFBSPresentationUpdateExceptionSiteNoPresentationUpdateFileProbe) {
+        outcome.exceptionWouldResumeUnwind = YES;
+        return outcome;
+    }
+
+    if (site == DDFBSPresentationUpdateExceptionSiteUpdateFrameAndTransform) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldContinueCleanupAfterCatch = YES;
+    }
+    return outcome;
+}
+
 NSInteger DDResolveCurrentInterfaceOrientation(BOOL settingsObjectPresent,
                                                BOOL interfaceOrientationSelectorSupported,
                                                NSInteger currentOrientation) {

@@ -324,6 +324,23 @@ typedef struct {
     DDExceptionReasonProbeDecision reasonProbeDecision;
 } DDFBSSettingsCallbackExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDFBSPresentationUpdateExceptionSite) {
+    DDFBSPresentationUpdateExceptionSiteNone = 0,
+    DDFBSPresentationUpdateExceptionSiteOriginalCallback = 1,
+    DDFBSPresentationUpdateExceptionSiteNoPresentationUpdateFileProbe = 2,
+    DDFBSPresentationUpdateExceptionSiteUpdateFrameAndTransform = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldApplyReasonProbeDecision;
+    BOOL probeExceptionWouldResumeUnwind;
+    BOOL shouldContinuePostOriginalEvaluationAfterProbe;
+    BOOL exceptionWouldResumeUnwind;
+    BOOL shouldContinueCleanupAfterCatch;
+    DDExceptionReasonProbeDecision reasonProbeDecision;
+} DDFBSPresentationUpdateExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDFBSSceneSettingsUpdateReason) {
     DDFBSSceneSettingsUpdateReasonNone = 0,
     DDFBSSceneSettingsUpdateReasonSlotNotMarked = 1,
@@ -623,6 +640,9 @@ FOUNDATION_EXPORT DDFBSUpdateExceptionOutcome DDResolveFBSUpdateExceptionOutcome
 FOUNDATION_EXPORT DDFBSSettingsCallbackExceptionOutcome DDResolveFBSSettingsCallbackExceptionOutcome(DDFBSSettingsCallbackExceptionSite site,
                                                                                                       uint64_t currentProbeCount,
                                                                                                       BOOL reasonSelectorSupported);
+FOUNDATION_EXPORT DDFBSPresentationUpdateExceptionOutcome DDResolveFBSPresentationUpdateExceptionOutcome(DDFBSPresentationUpdateExceptionSite site,
+                                                                                                          uint64_t currentProbeCount,
+                                                                                                          BOOL reasonSelectorSupported);
 FOUNDATION_EXPORT NSInteger DDResolveCurrentInterfaceOrientation(BOOL settingsObjectPresent,
                                                                  BOOL interfaceOrientationSelectorSupported,
                                                                  NSInteger currentOrientation);
