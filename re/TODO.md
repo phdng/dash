@@ -65,5 +65,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-022] Tweak.x Migration bodies từ EVIDENCE/4C34_import_defaults.md → RECONSTRUCTION/Migration.m (APPROXIMATION synthesis session-035; license branch cross-ref License.m).
 - [x] [R-023] Tweak.x Respring/latch bodies từ F-023/B-14 + notify/toggle rows → RECONSTRUCTION/Respring.m (APPROXIMATION synthesis session-036).
 - [x] [R-024] Tweak.x spikeHostSlots bodies từ EVIDENCE/spike_hostslots.md (F-035: 3CC44/3BBF0/3C1F0/3D4FC) → RECONSTRUCTION/SpikeHosting.m (APPROXIMATION synthesis session-037).
-- [ ] [R-025] hostSplit/switchInPlace + spawn/teardown records HOẶC scope khác — quyết scope session sau.
+- [x] [R-025] Tweak.x hostSplit/switchInPlace bodies từ EVIDENCE/hosting_engine.md §§2-3 (F-031: 217EC/208F4/26FE4) → RECONSTRUCTION/HostSplit.m (APPROXIMATION synthesis session-038; 218D8/279F4 cross-ref).
+- [ ] [R-026] spawn/teardown callees HOẶC scope khác — quyết scope session sau.
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
