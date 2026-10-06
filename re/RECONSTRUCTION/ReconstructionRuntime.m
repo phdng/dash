@@ -1390,6 +1390,14 @@ DDHostSlotResizePrivateFollowup DDResolveHostSlotResizePrivateFollowup(NSInteger
     return followup;
 }
 
+DDHostSlotResizePublishExceptionOutcome DDResolveHostSlotResizePublishExceptionOutcome(void) {
+    // 3F3F0 LSDA 0x114994 protects only the 89D8 publish at 0x3F4BC..0x3F4D4. The expected
+    // typed catch swallows and rejoins at 0x3F4D4, so all post-publish counter normalization,
+    // scene probing, and possible private update follow-up remain eligible. A nonmatching type unwinds.
+    DDHostSlotResizePublishExceptionOutcome outcome = { YES, YES, YES };
+    return outcome;
+}
+
 DDHostSlotSize DDResolveIdentityNativeSize(NSString *bundleIdentifier) {
     // Exact post-identity 41D80 selection. 41E08 takes precedence and only maps non-CarPlay
     // configured slots; aux is consulted only when no such host slot matches.

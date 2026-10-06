@@ -213,6 +213,8 @@ for contract in [
     "followup.shouldProbePrivateScene = YES",
     "followup.shouldRequestPrivateSceneUpdate = YES",
     "followup.targetSize = DDApplyLandscapeSwapToSize(acceptedRawSize)",
+    "DDResolveHostSlotResizePublishExceptionOutcome",
+    "DDHostSlotResizePublishExceptionOutcome outcome = { YES, YES, YES }",
     "DDConfiguredHostSlotIndexForBundleIdentifier(bundleIdentifier, NO)",
     "DDConfiguredHostSlotIndexForBundleIdentifier(bundleIdentifier, YES)",
     "DDSceneSettingsSnapshot",

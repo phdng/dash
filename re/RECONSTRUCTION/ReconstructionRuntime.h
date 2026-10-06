@@ -103,6 +103,12 @@ typedef struct {
 } DDHostSlotResizePrivateFollowup;
 
 typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldContinuePostPublishFollowup;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDHostSlotResizePublishExceptionOutcome;
+
+typedef struct {
     NSInteger orientation;
     DDHostSlotSize frameSize;
     BOOL foreground;
@@ -633,6 +639,7 @@ FOUNDATION_EXPORT DDHostSlotResizePrivateFollowup DDResolveHostSlotResizePrivate
                                                                                         NSInteger attemptCount,
                                                                                         NSInteger generalCounter,
                                                                                         BOOL privateScenePresent);
+FOUNDATION_EXPORT DDHostSlotResizePublishExceptionOutcome DDResolveHostSlotResizePublishExceptionOutcome(void);
 FOUNDATION_EXPORT DDHostSlotSize DDResolveIdentityNativeSize(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDHostSlotSize DDResolveIdentityAdjustedSize(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT NSInteger DDResolveIdentityRawSettingsOrientation(NSString * _Nullable bundleIdentifier);
