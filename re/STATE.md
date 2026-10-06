@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-039 (function-level reconstruction)_
+_Last updated: 2026-10-05 session-040 (function-level reconstruction)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-039 (synthesis, không function mới): Tweak.x teardown/evict bodies từ evidence → SpawnTeardown.m (APPROXIMATION).
+Session-040 (synthesis, không function mới): Tweak.x spawn-routing bodies từ evidence → SpawnLaunch.m (APPROXIMATION).
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
 
-## LAST COMPLETED TASK (session-039):
-- Tweak.x teardown/evict bodies (synthesis từ evidence, APPROXIMATION) + TODO R-026 + handoff (R-027 scope-open).
+## LAST COMPLETED TASK (session-040):
+- Tweak.x spawn-routing bodies (synthesis từ evidence, APPROXIMATION) + TODO R-027 + handoff (R-028 scope-open).
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-039 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-040 (đang làm).
 
-## NEXT TASK (session-040):
-1. R-027: spawn launch-route HOẶC scope khác (quyết scope đầu session).
+## NEXT TASK (session-041):
+1. R-028: event-launch C37C + BEE4/B768/B144 + poll §C HOẶC scope khác (quyết scope đầu session).
 2. Không mở rộng scope (SESSION BUDGET).
 
 ## BLOCKERS:
@@ -37,9 +37,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-039):
-- Mới: `RECONSTRUCTION/SpawnTeardown.m`, `LOG/session-039.md`.
-- Sửa: TODO (R-026), STATE.
+## FILES CHANGED (session-040):
+- Mới: `RECONSTRUCTION/SpawnLaunch.m`, `LOG/session-040.md`.
+- Sửa: TODO (R-027), STATE.
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).
