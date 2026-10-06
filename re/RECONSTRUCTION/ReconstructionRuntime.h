@@ -341,6 +341,11 @@ typedef struct {
     DDExceptionReasonProbeDecision reasonProbeDecision;
 } DDFBSPresentationUpdateExceptionOutcome;
 
+typedef struct {
+    BOOL shouldSwallowException;
+    NSInteger fallbackOrientation;
+} DDCurrentInterfaceOrientationExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDFBSSceneSettingsUpdateReason) {
     DDFBSSceneSettingsUpdateReasonNone = 0,
     DDFBSSceneSettingsUpdateReasonSlotNotMarked = 1,
@@ -677,6 +682,7 @@ FOUNDATION_EXPORT DDFBSSettingsCallbackExceptionOutcome DDResolveFBSSettingsCall
 FOUNDATION_EXPORT DDFBSPresentationUpdateExceptionOutcome DDResolveFBSPresentationUpdateExceptionOutcome(DDFBSPresentationUpdateExceptionSite site,
                                                                                                           uint64_t currentProbeCount,
                                                                                                           BOOL reasonSelectorSupported);
+FOUNDATION_EXPORT DDCurrentInterfaceOrientationExceptionOutcome DDResolveCurrentInterfaceOrientationExceptionOutcome(void);
 FOUNDATION_EXPORT NSInteger DDResolveCurrentInterfaceOrientation(BOOL settingsObjectPresent,
                                                                  BOOL interfaceOrientationSelectorSupported,
                                                                  NSInteger currentOrientation);

@@ -357,6 +357,8 @@ for contract in [
     "outcome.shouldContinuePostOriginalEvaluationAfterProbe = YES",
     "outcome.exceptionWouldResumeUnwind = YES",
     "outcome.shouldContinueCleanupAfterCatch = YES",
+    "DDResolveCurrentInterfaceOrientationExceptionOutcome",
+    "DDCurrentInterfaceOrientationExceptionOutcome outcome = { YES, 0 }",
     "DDResolveCurrentInterfaceOrientation",
     "settingsObjectPresent && interfaceOrientationSelectorSupported",
     "DDResolveFBSSceneSettingsUpdateDecision",

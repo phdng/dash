@@ -2081,6 +2081,13 @@ DDFBSPresentationUpdateExceptionOutcome DDResolveFBSPresentationUpdateExceptionO
     return outcome;
 }
 
+DDCurrentInterfaceOrientationExceptionOutcome DDResolveCurrentInterfaceOrientationExceptionOutcome(void) {
+    // 3FA90 LSDA 0x114A00 protects only respondsToSelector:interfaceOrientation plus the selector
+    // send. Its landing at 0x3FAD4 unconditionally begins/ends catch and then returns zero.
+    DDCurrentInterfaceOrientationExceptionOutcome outcome = { YES, 0 };
+    return outcome;
+}
+
 NSInteger DDResolveCurrentInterfaceOrientation(BOOL settingsObjectPresent,
                                                BOOL interfaceOrientationSelectorSupported,
                                                NSInteger currentOrientation) {
