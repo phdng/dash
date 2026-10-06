@@ -191,6 +191,24 @@ typedef struct {
     DDExceptionReasonProbeDecision reasonProbeDecision;
 } DDSceneDestroyExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDAVCSceneHandleExceptionSite) {
+    DDAVCSceneHandleExceptionSiteNone = 0,
+    DDAVCSceneHandleExceptionSiteInitialSceneLookup = 1,
+    DDAVCSceneHandleExceptionSiteUpdateRouting = 2,
+    DDAVCSceneHandleExceptionSiteSuppressionDecision = 3,
+    DDAVCSceneHandleExceptionSiteOriginalCallback = 4,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldSkipRemainingUpdateRouting;
+    BOOL shouldContinueSuppressionEvaluationAfterCatch;
+    BOOL shouldCallOriginalAfterCatch;
+    BOOL shouldApplyReasonProbeDecision;
+    BOOL probeExceptionWouldResumeUnwind;
+    DDExceptionReasonProbeDecision reasonProbeDecision;
+} DDAVCSceneHandleExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDPrivateIvarWriteWidth) {
     DDPrivateIvarWriteWidthUnsupported = 0,
     DDPrivateIvarWriteWidthByte = 1,
@@ -495,6 +513,10 @@ FOUNDATION_EXPORT DDSceneDestroyExceptionOutcome DDResolveSceneDestroyExceptionO
                                                                                         BOOL destroyRoutingPrepared,
                                                                                         uint64_t currentProbeCount,
                                                                                         BOOL reasonSelectorSupported);
+FOUNDATION_EXPORT DDAVCSceneHandleExceptionOutcome DDResolveAVCSceneHandleExceptionOutcome(DDAVCSceneHandleExceptionSite site,
+                                                                                           BOOL scenePresent,
+                                                                                           uint64_t currentProbeCount,
+                                                                                           BOOL reasonSelectorSupported);
 FOUNDATION_EXPORT DDPrivateIntegerIvarWritePlan DDResolvePrivateIntegerIvarWritePlan(BOOL ivarFound,
                                                                                      NSInteger typeEncodingFirstByte);
 FOUNDATION_EXPORT DDPrivateObjectIvarAccessPlan DDResolvePrivateObjectIvarAccessPlan(BOOL ivarFound,

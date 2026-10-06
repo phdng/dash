@@ -1721,6 +1721,58 @@ DDSceneDestroyExceptionOutcome DDResolveSceneDestroyExceptionOutcome(DDSceneDest
     return outcome;
 }
 
+DDAVCSceneHandleExceptionOutcome DDResolveAVCSceneHandleExceptionOutcome(DDAVCSceneHandleExceptionSite site,
+                                                                         BOOL scenePresent,
+                                                                         uint64_t currentProbeCount,
+                                                                         BOOL reasonSelectorSupported) {
+    // 4138C has three catch continuations before its original callback. An exception while first
+    // fetching the scene object skips all custom update/suppression work and calls original. Throws
+    // during update routing (including 3F5C0/3E670) skip the rest of that update route but, when the
+    // scene object is still present, rejoin at foreground-suppression evaluation; without a scene they
+    // call original. Throws while evaluating suppression are swallowed and force the original call.
+    // The original callback itself has a separate catch that applies 41BA0 and never retries it.
+    DDExceptionReasonProbeDecision emptyProbe = { NO, NO, currentProbeCount };
+    DDAVCSceneHandleExceptionOutcome outcome = {
+        NO,
+        NO,
+        NO,
+        NO,
+        NO,
+        NO,
+        emptyProbe,
+    };
+
+    if (site == DDAVCSceneHandleExceptionSiteInitialSceneLookup) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingUpdateRouting = YES;
+        outcome.shouldCallOriginalAfterCatch = YES;
+        return outcome;
+    }
+
+    if (site == DDAVCSceneHandleExceptionSiteUpdateRouting) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingUpdateRouting = YES;
+        outcome.shouldContinueSuppressionEvaluationAfterCatch = scenePresent;
+        outcome.shouldCallOriginalAfterCatch = !scenePresent;
+        return outcome;
+    }
+
+    if (site == DDAVCSceneHandleExceptionSiteSuppressionDecision) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldCallOriginalAfterCatch = YES;
+        return outcome;
+    }
+
+    if (site == DDAVCSceneHandleExceptionSiteOriginalCallback) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldApplyReasonProbeDecision = YES;
+        outcome.probeExceptionWouldResumeUnwind = YES;
+        outcome.reasonProbeDecision = DDResolveExceptionReasonProbeDecision(currentProbeCount,
+                                                                             reasonSelectorSupported);
+    }
+    return outcome;
+}
+
 DDPrivateIntegerIvarWritePlan DDResolvePrivateIntegerIvarWritePlan(BOOL ivarFound,
                                                                    NSInteger typeEncodingFirstByte) {
     // Pure 9C3BC write-width decision after 9C24C has already resolved the ivar/type encoding.
