@@ -1454,6 +1454,36 @@ DDSceneCallbackSizeRewrite DDResolveSceneCallbackSizeRewriteWithSuccessCounter(N
     return rewrite;
 }
 
+DDSceneCallbackExceptionOutcome DDResolveSceneCallbackExceptionOutcome(DDSceneCallbackExceptionSite site,
+                                                                       uint64_t diagnosticCount) {
+    // Exact LSDA/call-site-table behavior shared by 40C5C and 40DA8. Exceptions from 41CBC and
+    // 41D80 are caught/swallowed and execution resumes at the original callback. An exception from
+    // the original callback itself is swallowed, never retried, and advances its per-hook diagnostic
+    // counter only while the unsigned current value is <=9 (EA8 for 40C5C, EB0 for 40DA8).
+    DDSceneCallbackExceptionOutcome outcome = {
+        NO,
+        NO,
+        NO,
+        diagnosticCount,
+    };
+
+    if (site == DDSceneCallbackExceptionSiteRouteEligibility ||
+        site == DDSceneCallbackExceptionSiteNativeSizeResolution) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldCallOriginalAfterCatch = YES;
+        return outcome;
+    }
+
+    if (site == DDSceneCallbackExceptionSiteOriginalCallback) {
+        outcome.shouldSwallowException = YES;
+        if (diagnosticCount <= 9) {
+            outcome.shouldIncrementDiagnosticCount = YES;
+            outcome.nextDiagnosticCount = diagnosticCount + 1;
+        }
+    }
+    return outcome;
+}
+
 BOOL DDResolveSceneOrientationEqualityResult(NSString *bundleIdentifier,
                                              NSInteger requestedOrientation,
                                              BOOL originalResult) {

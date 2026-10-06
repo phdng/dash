@@ -92,6 +92,20 @@ typedef struct {
     NSInteger nextSuccessCounter;
 } DDSceneCallbackSizeRewrite;
 
+typedef NS_ENUM(NSInteger, DDSceneCallbackExceptionSite) {
+    DDSceneCallbackExceptionSiteNone = 0,
+    DDSceneCallbackExceptionSiteRouteEligibility = 1,
+    DDSceneCallbackExceptionSiteNativeSizeResolution = 2,
+    DDSceneCallbackExceptionSiteOriginalCallback = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldCallOriginalAfterCatch;
+    BOOL shouldIncrementDiagnosticCount;
+    uint64_t nextDiagnosticCount;
+} DDSceneCallbackExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDSceneDestroyDecisionKind) {
     DDSceneDestroyDecisionNone = 0,
     DDSceneDestroyDecisionAuxDestroyedNotice = 1,
@@ -402,6 +416,8 @@ FOUNDATION_EXPORT DDSceneCallbackSizeRewrite DDResolveSceneCallbackSizeRewrite(N
 FOUNDATION_EXPORT DDSceneCallbackSizeRewrite DDResolveSceneCallbackSizeRewriteWithSuccessCounter(NSString * _Nullable bundleIdentifier,
                                                                                                  DDHostSlotSize originalSize,
                                                                                                  NSInteger successCounter);
+FOUNDATION_EXPORT DDSceneCallbackExceptionOutcome DDResolveSceneCallbackExceptionOutcome(DDSceneCallbackExceptionSite site,
+                                                                                         uint64_t diagnosticCount);
 FOUNDATION_EXPORT BOOL DDResolveSceneOrientationEqualityResult(NSString * _Nullable bundleIdentifier,
                                                                NSInteger requestedOrientation,
                                                                BOOL originalResult);
