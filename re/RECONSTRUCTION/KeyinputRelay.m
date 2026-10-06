@@ -11,7 +11,7 @@
 // UIApp-side 4CBDC (env DUODASH_AB_UIAPP_IPC_HOOKED): KeyProbeObserver 163F68;
 //   4 Darwin observer=163F68/Coalesce — apply→4CF3C, dismiss→4CFBC,
 //   card→4D03C, fallback→4D050; + NSNotification WillShow/Hide→onKbShow:/onKbHide:,
-//   DidEndEditing→onEndEditing: (body onKbShow/onKbHide UNKNOWN).
+//   DidEndEditing→onEndEditing: (bodies ở KBObservers.m; onKbShow/onKbHide = no-op stubs CONFIRMED).
 
 // ---- 8 stub SB-side: fire-and-forget hop (EVIDENCE §1.1) ----
 static void DDKeyStubToMain(void *block_stru_12D7Fx /* 8 blocks, bodies UNKNOWN */) {
