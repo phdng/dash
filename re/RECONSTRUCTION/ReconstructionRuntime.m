@@ -2007,6 +2007,40 @@ DDFBSUpdateExceptionOutcome DDResolveFBSUpdateExceptionOutcome(DDFBSUpdateExcept
     return outcome;
 }
 
+DDFBSSettingsCallbackExceptionOutcome DDResolveFBSSettingsCallbackExceptionOutcome(DDFBSSettingsCallbackExceptionSite site,
+                                                                                    uint64_t currentProbeCount,
+                                                                                    BOOL reasonSelectorSupported) {
+    // 40514 sends every protected custom-path exception to one typed catch at 40A88, which swallows
+    // and jumps directly to the original callback. The original callback itself has a separate catch
+    // at 40AA4 that applies 41BA0 and, if the probe completes normally, resumes only final cleanup.
+    // A nested 41BA0 throw lands at cleanup-only 40AD8 and resumes unwind.
+    DDExceptionReasonProbeDecision emptyProbe = { NO, NO, currentProbeCount };
+    DDFBSSettingsCallbackExceptionOutcome outcome = {
+        NO,
+        NO,
+        NO,
+        NO,
+        NO,
+        emptyProbe,
+    };
+
+    if (site == DDFBSSettingsCallbackExceptionSiteCustomPath) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldCallOriginalAfterCatch = YES;
+        return outcome;
+    }
+
+    if (site == DDFBSSettingsCallbackExceptionSiteOriginalCallback) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldApplyReasonProbeDecision = YES;
+        outcome.probeExceptionWouldResumeUnwind = YES;
+        outcome.shouldContinueCleanupAfterProbe = YES;
+        outcome.reasonProbeDecision = DDResolveExceptionReasonProbeDecision(currentProbeCount,
+                                                                             reasonSelectorSupported);
+    }
+    return outcome;
+}
+
 NSInteger DDResolveCurrentInterfaceOrientation(BOOL settingsObjectPresent,
                                                BOOL interfaceOrientationSelectorSupported,
                                                NSInteger currentOrientation) {
