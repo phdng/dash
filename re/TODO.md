@@ -95,5 +95,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-052] P4 slice-10: SIDE_EFFECTS (SE-DATA-001..003 + SE-HUD-001..002) + COMPARISON (2 sections DataRouter/HudBle) — session-065, không claim mới.
 - [x] [R-053] P4 slice-11: SIDE_EFFECTS (SE-CLOAK-001..003) + COMPARISON (1 section CarPlayCloak) — session-066, không claim mới.
 - [x] [R-054] Audit PresentCommitAck-overlap (covered bởi record rows → không rows riêng) + micro-synthesis 279F4/27AC8 từ hosting_engine §4 → RECONSTRUCTION/HostedCallbacks.m (APPROXIMATION session-067) + COVERAGE hosting-row note.
-- [ ] [R-055] scope khác — quyết scope session sau (GAPs còn lại: P4 slices tiếp theo — Tweak.x-init?, P1 4C34 infeasible, blocked P0-3).
+- [x] [R-055] P4 close-out: audit Tweak.x-init overlap (covered bởi SE-44C0-001/COMPARISON-44C0/F-011 → không rows riêng; Shared.h constants — không behavior) + COVERAGE J/P4-#8 final — session-068, P4 ledger DONE (còn TESTS dynamic blocked).
+- [ ] [R-056] scope khác — quyết scope session sau (chỉ còn blocked/infeasible: P0-3 raw asm, P1 4C34 thiếu decompile, TESTS dynamic cần device, Q-09/Q-10/Q-12/Q-13).
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
