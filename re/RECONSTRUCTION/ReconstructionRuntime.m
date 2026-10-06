@@ -1255,6 +1255,66 @@ DDSceneIdentityRoute DDResolveAVCSceneHandleIdentityRoute(NSString *bundleIdenti
     return route;
 }
 
+DDHostSlotSize DDResolveIdentityNativeSize(NSString *bundleIdentifier) {
+    // Exact post-identity 41D80 selection. 41E08 takes precedence and only maps non-CarPlay
+    // configured slots; aux is consulted only when no such host slot matches.
+    NSInteger slotIndex = DDConfiguredHostSlotIndexForBundleIdentifier(bundleIdentifier, NO);
+    if (slotIndex != NSNotFound) return gDDHostMirrorSizes[(NSUInteger)slotIndex];
+    if (DDBundleIdentifierMatchesAux(bundleIdentifier)) return gDDAuxNativeSize;
+    return (DDHostSlotSize){0.0, 0.0};
+}
+
+DDHostSlotSize DDResolveIdentityAdjustedSize(NSString *bundleIdentifier) {
+    // Raw ARM64 at 41E94 confirms a two-double return even though the decompiler typed it void.
+    // Aux orientation 3/4 portrait-normalizes a landscape-shaped native size. Non-aux uses the
+    // same accepted-landscape swap gate recovered from 3F3F0/400D0/40C5C/40DA8.
+    DDHostSlotSize size = DDResolveIdentityNativeSize(bundleIdentifier);
+    if (DDBundleIdentifierMatchesAux(bundleIdentifier)) {
+        if ((gDDAuxOrientation == 3 || gDDAuxOrientation == 4) && size.width > size.height) {
+            return (DDHostSlotSize){size.height, size.width};
+        }
+        return size;
+    }
+    return DDApplyLandscapeSwapToSize(size);
+}
+
+NSInteger DDResolveIdentityRawSettingsOrientation(NSString *bundleIdentifier) {
+    // Exact post-identity 3FAF8 choice used directly by 40514/41F50: aux orientation wins only
+    // when nonzero and the supplied identity is aux; otherwise use the host orientation.
+    if (gDDAuxOrientation != 0 && DDBundleIdentifierMatchesAux(bundleIdentifier)) {
+        return gDDAuxOrientation;
+    }
+    return gDDHostMirrorOrientation;
+}
+
+BOOL DDShouldAttemptDirectInterfaceOrientationRepair(NSString *bundleIdentifier,
+                                                      BOOL forceInterfaceOrientation) {
+    // Pure decision before 40514 calls the private 9C3BC ivar writer. The aux branch does not
+    // take this path. Caller supplies the already-resolved force-IO toggle result.
+    if (DDBundleIdentifierMatchesAux(bundleIdentifier)) return NO;
+    NSInteger desiredOrientation = DDResolveIdentityRawSettingsOrientation(bundleIdentifier);
+    return forceInterfaceOrientation || gDDHostLandscapeOverrideOrientation != 0 ||
+           desiredOrientation != gDDHostMirrorOrientation;
+}
+
+BOOL DDSceneSettingsSnapshotsEquivalent(DDSceneSettingsSnapshot before,
+                                        DDSceneSettingsSnapshot after) {
+    // Exact 40514 post-41F50 comparison: orientation + foreground exact, frame width/height
+    // independently within +/-0.5. Missing selectors are represented by caller-supplied zeros.
+    return before.orientation == after.orientation && before.foreground == after.foreground &&
+           fabs(before.frameSize.width - after.frameSize.width) <= 0.5 &&
+           fabs(before.frameSize.height - after.frameSize.height) <= 0.5;
+}
+
+BOOL DDShouldClearAuxSceneSettingsDiff(BOOL settingsDiffPresent,
+                                       BOOL settingsDiffSetterSupported,
+                                       DDSceneSettingsSnapshot before,
+                                       DDSceneSettingsSnapshot after) {
+    // Pure 40514 decision only. The reconstruction never sends setSettingsDiff:.
+    return settingsDiffPresent && settingsDiffSetterSupported && !gDDAuxNoApplyDiff &&
+           !DDSceneSettingsSnapshotsEquivalent(before, after);
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.

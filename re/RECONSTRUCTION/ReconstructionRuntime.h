@@ -48,6 +48,12 @@ typedef struct {
 } DDSceneIdentityRoute;
 
 typedef struct {
+    NSInteger orientation;
+    DDHostSlotSize frameSize;
+    BOOL foreground;
+} DDSceneSettingsSnapshot;
+
+typedef struct {
     BOOL valid;
     double boundsWidth;
     double boundsHeight;
@@ -185,6 +191,17 @@ FOUNDATION_EXPORT BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGenerati
 FOUNDATION_EXPORT BOOL DDBundleIdentifierMatchesAux(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityRoute DDResolveFBSUpdateIdentityRoute(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityRoute DDResolveAVCSceneHandleIdentityRoute(NSString * _Nullable bundleIdentifier);
+FOUNDATION_EXPORT DDHostSlotSize DDResolveIdentityNativeSize(NSString * _Nullable bundleIdentifier);
+FOUNDATION_EXPORT DDHostSlotSize DDResolveIdentityAdjustedSize(NSString * _Nullable bundleIdentifier);
+FOUNDATION_EXPORT NSInteger DDResolveIdentityRawSettingsOrientation(NSString * _Nullable bundleIdentifier);
+FOUNDATION_EXPORT BOOL DDShouldAttemptDirectInterfaceOrientationRepair(NSString * _Nullable bundleIdentifier,
+                                                                      BOOL forceInterfaceOrientation);
+FOUNDATION_EXPORT BOOL DDSceneSettingsSnapshotsEquivalent(DDSceneSettingsSnapshot before,
+                                                          DDSceneSettingsSnapshot after);
+FOUNDATION_EXPORT BOOL DDShouldClearAuxSceneSettingsDiff(BOOL settingsDiffPresent,
+                                                         BOOL settingsDiffSetterSupported,
+                                                         DDSceneSettingsSnapshot before,
+                                                         DDSceneSettingsSnapshot after);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);
