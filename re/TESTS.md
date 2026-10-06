@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-074)
+## Build (session-075)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
-- [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime phase-1 chỉ bật ở SpringBoard.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-073 batch (user-confirmed before session-074 changes). Current session adds request/status schemas, cached UI state, 89D8, and runtime-resolved DDz2 broadcasts; next pushed CI run remains the compiler gate.
-- [x] Static runtime contracts through session-074: verifier additionally checks 104-byte 8F34 frame layout, request/split/status schemas, cached 89D8 UI state, exact fontfloor/keypane notify constants, and runtime-resolved DDz2 hosted-bundle filtering/broadcast path.
+- [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và session-075 UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-074 batch (user-confirmed before session-075 changes). Current session adds UIApp observer/state-cache/lifecycle logic; next pushed CI run remains the compiler gate.
+- [x] Static runtime contracts through session-075: verifier additionally checks DDReconstructionUIAppObserver, bundle-scoped state/fontfloor/keypane consumers, state-cache getter, 3-second stale-state marker path, background teardown marker path, active/background notification names, and UIApp startup guard.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

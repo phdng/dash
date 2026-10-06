@@ -1,4 +1,4 @@
-// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-074)
+// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-075)
 // This file intentionally implements only behavior whose data-flow can be represented without
 // unresolved private classes/functions. Unknown filtering/computation remains documented in the
 // synthesis files rather than being silently guessed here.
@@ -26,6 +26,18 @@ static NSString * const kDDClearPanes = @"/var/tmp/duodash_ab_clearpanes";
 static NSString * const kDDClearPanesDone = @"/var/tmp/duodash_ab_clearpanes.done";
 static NSInteger gDDBridgedFontFloor = 0;
 static BOOL gDDKeyPaneEnabled = YES;
+
+// UIApp-side cached state reconstructed from 4407C/443FC/444C4/422D0.
+static uint32_t gDDUIAppStateGeneration = 0;
+static NSString *gDDUIAppStateSignature = nil;
+static BOOL gDDUIAppBridging = NO;
+static BOOL gDDUIAppSplit = NO;
+static double gDDUIAppDisplayWidth = 0.0;
+static double gDDUIAppDisplayHeight = 0.0;
+static NSInteger gDDUIAppOrientation = 1;
+static NSInteger gDDUIAppFontFloor = 0;
+static BOOL gDDUIAppKeyPaneEnabled = YES;
+static BOOL gDDUIAppFontFloorActive = NO;
 
 static id _Nullable DDCopyAppPreference(NSString *key) {
     CFTypeRef value = CFPreferencesCopyAppValue((__bridge CFStringRef)key, kDDSettingsDomain);
@@ -521,6 +533,106 @@ BOOL DDPostUIAppState(NSString * _Nullable bundleIdentifier,
     return DDPostDistributedNotification(@"com.sensetechlab.appbridge.uiapp.state", bundle, payload);
 }
 
+static NSInteger DDNormalizeHostOrientation(NSInteger orientation) {
+    // sub_422D0 clamps anything outside the recovered 1..4 range to 1.
+    return (orientation >= 1 && orientation <= 4) ? orientation : 1;
+}
+
+static void DDSetCachedUIAppBridgeState(BOOL bridging,
+                                        double width,
+                                        double height,
+                                        NSInteger orientation) {
+    BOOL wasBridging = gDDUIAppBridging;
+    gDDUIAppBridging = bridging;
+    gDDUIAppOrientation = DDNormalizeHostOrientation(orientation);
+    if (bridging) {
+        gDDUIAppDisplayWidth = width;
+        gDDUIAppDisplayHeight = height;
+        gDDUIAppFontFloorActive = gDDUIAppFontFloor > 0;
+    } else {
+        gDDUIAppDisplayWidth = 0.0;
+        gDDUIAppDisplayHeight = 0.0;
+        gDDUIAppFontFloorActive = NO;
+    }
+    (void)wasBridging;
+    // sub_422D0 additionally relayouts windows and applies/restores raised fonts. Those UIKit
+    // mutations remain outside this compile-safe state cache until their private UI graph is promoted.
+}
+
+NSDictionary *DDCurrentUIAppBridgeState(void) {
+    return @{
+        @"generation": @(gDDUIAppStateGeneration),
+        @"signature": gDDUIAppStateSignature ?: @"",
+        @"bridging": @(gDDUIAppBridging),
+        @"displayWidth": @(gDDUIAppDisplayWidth),
+        @"displayHeight": @(gDDUIAppDisplayHeight),
+        @"orientation": @(gDDUIAppOrientation),
+        @"isSplit": @(gDDUIAppSplit),
+        @"bridged_font_floor": @(gDDUIAppFontFloor),
+        @"keypane_enabled": @(gDDUIAppKeyPaneEnabled),
+        @"fontFloorActive": @(gDDUIAppFontFloorActive),
+    };
+}
+
+static NSString * _Nullable DDTemporaryMarkerPath(NSString *name) {
+    // sub_42F10: look in NSTemporaryDirectory; for duodash_* also accept legacy carnav_*.
+    NSString *temporaryDirectory = NSTemporaryDirectory();
+    if (temporaryDirectory.length == 0 || name.length == 0) return nil;
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *path = [temporaryDirectory stringByAppendingPathComponent:name];
+    if ([fm fileExistsAtPath:path]) return path;
+    if (![name hasPrefix:@"duodash_"]) return nil;
+
+    NSString *legacyName = [@"carnav_" stringByAppendingString:[name substringFromIndex:8]];
+    NSString *legacyPath = [temporaryDirectory stringByAppendingPathComponent:legacyName];
+    return [fm fileExistsAtPath:legacyPath] ? legacyPath : nil;
+}
+
+static void DDConsumeUIAppStateUserInfo(NSDictionary *userInfo) {
+    // 4407C parsing/defaults; UI mutation calls are represented by the compile-safe cache only.
+    gDDUIAppStateGeneration++;
+    NSDictionary *info = [userInfo isKindOfClass:[NSDictionary class]] ? userInfo : @{};
+
+    BOOL shouldBridge = [info[@"shouldBridge"] boolValue];
+    double width = [info[@"displayWidth"] doubleValue];
+    double height = [info[@"displayHeight"] doubleValue];
+    id orientationValue = info[@"orientation"];
+    NSInteger orientation = orientationValue ? [orientationValue integerValue] : 1;
+    BOOL split = [info[@"isSplit"] boolValue];
+
+    NSString *signature = [NSString stringWithFormat:@"%d|%.1fx%.1f|%ld|%d",
+                           shouldBridge, width, height, (long)orientation, split];
+    if (![signature isEqualToString:gDDUIAppStateSignature]) gDDUIAppStateSignature = [signature copy];
+    gDDUIAppSplit = split;
+
+    id floorValue = info[@"bridged_font_floor"];
+    NSInteger floor = [floorValue isKindOfClass:[NSNumber class]] ? [floorValue integerValue] : 0;
+    gDDUIAppFontFloor = MAX((NSInteger)0, floor);
+
+    id keyPaneValue = info[@"keypane_enabled"];
+    gDDUIAppKeyPaneEnabled = [keyPaneValue isKindOfClass:[NSNumber class]] ? [keyPaneValue boolValue] : YES;
+    DDSetCachedUIAppBridgeState(shouldBridge, width, height, orientation);
+}
+
+static void DDConsumeUIAppFontFloorUserInfo(NSDictionary *userInfo) {
+    NSDictionary *info = [userInfo isKindOfClass:[NSDictionary class]] ? userInfo : @{};
+    id floorValue = info[@"bridged_font_floor"];
+    NSInteger floor = [floorValue isKindOfClass:[NSNumber class]] ? [floorValue integerValue] : 0;
+    NSInteger previous = gDDUIAppFontFloor;
+    gDDUIAppFontFloor = MAX((NSInteger)0, floor);
+    gDDUIAppFontFloorActive = gDDUIAppBridging && gDDUIAppFontFloor > 0;
+    (void)previous;
+    // 444C4 also restores/reapplies tracked UIFont objects via 434C4/4346C; omitted here.
+}
+
+static void DDConsumeUIAppKeyPaneUserInfo(NSDictionary *userInfo) {
+    NSDictionary *info = [userInfo isKindOfClass:[NSDictionary class]] ? userInfo : @{};
+    id value = info[@"keypane_enabled"];
+    gDDUIAppKeyPaneEnabled = [value isKindOfClass:[NSNumber class]] ? [value boolValue] : YES;
+    // 443FC routes this into 448B4 keyboard/window teardown state; private UI effects omitted.
+}
+
 BOOL DDPostUIAppFontFloorState(NSString * _Nullable bundleIdentifier) {
     // Per-bundle payload inside sub_291F4 after the cached 7EA4 refresh.
     NSString *bundle = bundleIdentifier ?: @"";
@@ -650,6 +762,89 @@ BOOL DDPostHostState(BOOL activated,
     return DDPostDistributedNotification(@"com.sensetechlab.appbridge.host.state", nil, payload);
 }
 
+@interface DDReconstructionUIAppObserver : NSObject
+@end
+
+@implementation DDReconstructionUIAppObserver
+
+- (void)onState:(NSNotification *)notification {
+    DDConsumeUIAppStateUserInfo(notification.userInfo);
+}
+
+- (void)onFontFloor:(NSNotification *)notification {
+    DDConsumeUIAppFontFloorUserInfo(notification.userInfo);
+}
+
+- (void)onKeyPaneSwitch:(NSNotification *)notification {
+    DDConsumeUIAppKeyPaneUserInfo(notification.userInfo);
+}
+
+- (void)onActive:(NSNotification *)notification {
+    (void)notification;
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier ?: @"";
+    DDPostUIAppRequest(bundleIdentifier);
+
+    // 445F8/447C0: when currently bridging, require a fresh onState within 3 seconds unless
+    // duodash_ab_nostatetimeout (or legacy carnav_ alias) exists in the app temp directory.
+    if (gDDUIAppBridging) {
+        uint32_t generation = gDDUIAppStateGeneration;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 3LL * NSEC_PER_SEC),
+                       dispatch_get_main_queue(), ^{
+            if (gDDUIAppStateGeneration != generation || !gDDUIAppBridging) return;
+            if (DDTemporaryMarkerPath(@"duodash_ab_nostatetimeout")) return;
+            DDSetCachedUIAppBridgeState(NO, 0.0, 0.0, gDDUIAppOrientation);
+        });
+    }
+}
+
+- (void)onBackground:(NSNotification *)notification {
+    (void)notification;
+    // 446E4: non-bridging always normalizes state; bridging stays alive in background unless
+    // duodash_ab_bg_teardown (or the legacy carnav_ alias) is present.
+    if (!gDDUIAppBridging || DDTemporaryMarkerPath(@"duodash_ab_bg_teardown")) {
+        DDSetCachedUIAppBridgeState(NO, 0.0, 0.0, gDDUIAppOrientation);
+    }
+}
+
+@end
+
+static DDReconstructionUIAppObserver *gDDUIAppObserver = nil;
+
+static void DDStartUIAppIPC(void) {
+    // sub_4CBDC evidence-safe UIApp half. The key-probe/keyboard observers in the second half
+    // remain excluded because their callbacks mutate private UIKit/input state.
+    if (getenv("DUODASH_AB_UIAPP_IPC_HOOKED")) return;
+    setenv("DUODASH_AB_UIAPP_IPC_HOOKED", "1", 1);
+
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier ?: @"";
+    gDDUIAppObserver = [DDReconstructionUIAppObserver new];
+
+    DDObserveDistributedNotification(@"com.sensetechlab.appbridge.uiapp.state",
+                                     gDDUIAppObserver,
+                                     @selector(onState:),
+                                     bundleIdentifier);
+    DDObserveDistributedNotification(@"com.sensetechlab.appbridge.uiapp.fontfloor",
+                                     gDDUIAppObserver,
+                                     @selector(onFontFloor:),
+                                     bundleIdentifier);
+    DDObserveDistributedNotification(@"com.sensetechlab.appbridge.uiapp.keypane",
+                                     gDDUIAppObserver,
+                                     @selector(onKeyPaneSwitch:),
+                                     bundleIdentifier);
+
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center addObserver:gDDUIAppObserver
+               selector:@selector(onActive:)
+                   name:@"UIApplicationDidBecomeActiveNotification"
+                 object:nil];
+    [center addObserver:gDDUIAppObserver
+               selector:@selector(onBackground:)
+                   name:@"UIApplicationDidEnterBackgroundNotification"
+                 object:nil];
+
+    DDPostUIAppRequest(bundleIdentifier);
+}
+
 static void DDReloadAppBridge(CFNotificationCenterRef center,
                               void *observer,
                               CFStringRef name,
@@ -772,8 +967,13 @@ void DDReconstructionStart(void) {
     dispatch_once(&onceToken, ^{
         DDRole role = DDDetectRole();
 
-        // Phase 1 runtime is intentionally limited to the statically reconstructed prefs
-        // publisher in SpringBoard. Other role-specific private hooks remain evidence-only.
+        // session-075 promotes the evidence-safe UIApp IPC/state consumer path from 4CBDC.
+        if (role == DDRoleUIApp) {
+            DDStartUIAppIPC();
+            return;
+        }
+
+        // Other non-SpringBoard roles still require private hook/runtime contracts.
         if (role != DDRoleSpringBoard) return;
 
         // 27E20 B12: settings.changed, appbridge.listchanged and autostart.changed

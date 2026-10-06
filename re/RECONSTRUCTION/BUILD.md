@@ -14,7 +14,7 @@ The other `RECONSTRUCTION/*.m` files remain static-evidence synthesis modules. T
 The current runtime implements the evidence-backed, compile-safe surface:
 
 1. AC5FC-style role detection by executable-path suffix.
-2. SpringBoard-only startup.
+2. Role-gated startup: SpringBoard prefs/host-side safe runtime plus the session-075 UIApp IPC/state consumer; Preferences/CarPlay/mediaserverd/kbd private-hook branches remain inactive.
 3. The reconstructed clear-panes one-shot.
 4. AppBridge settings snapshot generation.
 5. Atomic cache write to `/var/tmp/com.sensetechlab.appbridge.plist`.
@@ -31,6 +31,7 @@ The current runtime implements the evidence-backed, compile-safe surface:
 16. Exact AppBridge request/status payload builders matching `8CC0/8DF8/8F34/91B4/986C`: UI-app request, single-host request, split-host request, the full 11-field frame metadata snapshot, and CarPlay-UI status. `DDHostFrameMetrics` is layout-asserted to 104 bytes so the fields used by `8F34` stay at the recovered offsets.
 17. Cached UI-state model matching the `74C8 -> 7EA4 -> 8058` update order plus Immediate `fontfloor.changed` / `keypane.changed` callbacks. `89D8` is now represented with the cached values rather than fresh prefs reads.
 18. Runtime-resolved DDz2 active-host enumeration matching `29810` and the per-bundle `291F4/29400` distributed broadcasts. The private `30960` toast emitted when keypane is switched OFF remains intentionally excluded.
+19. UIApp-side IPC consumer matching the evidence-safe portion of `4CBDC` plus `4407C/443FC/444C4/445F8/446E4/42F10`: bundle-scoped distributed observers, initial/foreground state request, exact parsing/defaults into a compile-safe bridge-state cache, 3-second stale-state timeout, and background teardown knob semantics. `422D0` UIKit relayout/font mutation and the key-probe half of `4CBDC` remain excluded.
 
 Where the original calls unresolved helpers (for example app filtering and normalized split geometry), the runtime preserves typed raw values instead of inventing behavior.
 

@@ -11,7 +11,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Mega-ctor 4C34 | — (EVIDENCE: F-003/F-019/F-020/F-021 + 4C34_import_defaults.md) | EVIDENCE-only | 1465 dòng, phases đã cover; record riêng là R-item mở |
 | Host ctor 27E20 | functions/27E20.md | RECORD (INFERRED) | + P0-3 blocked (4049C args) |
 | CarPlay ctor 163EC | functions/163EC.md | RECORD (INFERRED) | session-033 FULL direct read (529 dòng, B01-B11) + SE-163EC-001..006 |
-| UIApp/IPC/kbd/display ctors | — (EVIDENCE: session-002 + F-011 once-chain) | EVIDENCE-only | 455D0/4CBDC/4C858/4DEB4/4D0B8/7F010/842EC/9460C |
+| UIApp/IPC/kbd/display ctors | ReconstructionRuntime.m + evidence | BUILDABLE PARTIAL | s075 promotes evidence-safe 4CBDC UIApp IPC/state half; key-probe callbacks, 4C858 keyboard hooks, 4DEB4 display hooks and other ctors remain evidence/private-hook scope |
 | Tweak.x init section | Tweak.x + ReconstructionRuntime.m | BUILDABLE SYNTH (APPROXIMATION) | session-070: ctor thật + AC5FC-style role detect; executable target hiện chỉ activate prefs/cache publisher ở SpringBoard |
 
 ## B. AppBridge hosting (split/layout/panes)
@@ -82,7 +82,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Subsystem | Artifact | Status | Ghi chú |
 |---|---|---|---|
 | Notify matrix (12+68+8) | EVIDENCE/notify_matrix.md + API_MAP.md + ReconstructionRuntime.m | BUILDABLE PARTIAL | s071 SpringBoard 29198 trio Immediate→republish; s074 adds exact Immediate fontfloor/keypane cache refresh plus runtime-resolved DDz2 per-host broadcasts from 291F4/29400. Keypane-OFF toast 30960 and other callbacks remain evidence/private scope |
-| NSDistributed fabric | F-026 + cnab_observers + ReconstructionRuntime.m | BUILDABLE PARTIAL | s073 runtime-resolved 8900/887C/8934/8C28/8D78 + 97A0/9424; s074 adds 8CC0/8DF8/8F34/91B4/986C, exact cached-state 89D8, and 291F4/29400 per-bundle uiapp.fontfloor/keypane broadcasts via runtime-resolved 29810/DDz2 selectors. Receiver method bodies still partial |
+| NSDistributed fabric | F-026 + cnab_observers + ReconstructionRuntime.m | BUILDABLE PARTIAL | s073-s074 publishers/fabric; s075 adds bundle-scoped UIApp consumers for state/fontfloor/keypane + active/background request/timeout cache behavior. SpringBoard onUIAppRequest 3F224 remains deferred because exact per-slot render sizes are raw globals with no recovered multi-slot accessor |
 
 ## J. Meta (contract/tracking)
 | Artifact | Status |
