@@ -698,3 +698,99 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: trong geometry phase
 - FAILURE: degenerate fallthrough tiếp tục (INFERRED — U04 218D8)
 - EVIDENCE: functions/218D8.md B05/B06
+
+## SE-CRASH-001 — collecting-file guard (re-entrancy)
+- FUNCTION: crashreport.send → 80C04 → DDCrashMayCollect (notify_matrix 7F14C.c:136-142; CrashReporting.m)
+- CONDITION: `/var/mobile/Library/DuoDash/crashreport_collecting` tồn tại (tạo khi bắt đầu collect, unlink khi xong/fail — INFERRED lifecycle)
+- EFFECT: skip collect + status "Disabled - last report crashed" (9DEEC → prefs row crashreport_status)
+- TARGET: (không ghi file mới) + status UI
+- DATA: —
+- TIMING: đồng bộ trước collect
+- THREAD: 80C04 spinlock byte_1650B0 (busy → "Already sending", không queue thêm) rồi async queue 9DFD4
+- ORDER: trước SE-CRASH-002/003
+- FAILURE: N/A (guard pure-check)
+- EVIDENCE: RECONSTRUCTION/CrashReporting.m (B-08/F-016 synthesis)
+
+## SE-CRASH-002 — cr_off kill-switch
+- FUNCTION: DDCrashMayCollect (CrashReporting.m)
+- CONDITION: `/var/tmp/duodash_cr_off` tồn tại
+- EFFECT: disabled, return NO (không collect/upload)
+- TARGET: —
+- DATA: —
+- TIMING: đồng bộ sau SE-CRASH-001
+- THREAD: caller thread (trong 80C04 async block)
+- ORDER: sau SE-CRASH-001, trước SE-CRASH-003
+- FAILURE: N/A
+- EVIDENCE: RECONSTRUCTION/CrashReporting.m (F-016 toggle row 9E014:104)
+
+## SE-CRASH-003 — collect + queue cap 3
+- FUNCTION: DDCollectCrashReport ← 9EE88 (CrashReporting.m; B-08)
+- CONDITION: guards pass (SE-CRASH-001/002)
+- EFFECT: file writes (artifacts) + prune queue
+- TARGET: `/var/mobile/Library/DuoDash/reports/outgoing` (bundle.tar.gz + meta.json; subdir layout UNKNOWN)
+- DATA: status "Collecting…" (9DEEC); giữ tối đa 3 (xóa từ index 3, sort mtime — F-016)
+- TIMING: đồng bộ trong async block
+- THREAD: queue 9DFD4 (block 146158)
+- ORDER: sau guards, trước SE-CRASH-004/005
+- FAILURE: collect-fail → giữ collecting file? (lifecycle INFERRED — CrashReporting.m)
+- EVIDENCE: RECONSTRUCTION/CrashReporting.m (9EE88 meta schema UNKNOWN)
+
+## SE-CRASH-004 — endpoint-nil default (no network)
+- FUNCTION: DDCrashEndpoint ← 9DE28 getter (9DE28.c:18-35; CrashReporting.m)
+- CONDITION: CFPreferences `crashreport_endpoint` không phải NSString (nil default — KHÔNG literal)
+- EFFECT: skip upload + status "Saved on device (no server configured)"
+- TARGET: (local-only, giữ bundle trên máy)
+- DATA: token optional `crashreport_token` (Bearer, nếu có)
+- TIMING: sau collect
+- THREAD: caller thread
+- ORDER: sau SE-CRASH-003, thay SE-CRASH-005 khi nil
+- FAILURE: N/A
+- EVIDENCE: RECONSTRUCTION/CrashReporting.m (F-016)
+
+## SE-CRASH-005 — upload multipart + semaphore + dryrun
+- FUNCTION: DDUploadCrashReport ← 9E014 (9E014.c:228-231+; CrashReporting.m)
+- CONDITION: endpoint non-empty
+- EFFECT: network POST + semaphore wait
+- TARGET: `<endpoint.trim('/')/v1/reports>` multipart/form-data (meta.json + bundle.tar.gz), timeout 60s; headers X-DuoDash-Protocol / Idempotency-Key / optional Bearer
+- DATA: semaphore 300s (300000000000ns — INFERRED); dryrun `/var/tmp/duodash_cr_dryrun` tồn tại → local-only, không upload
+- TIMING: đồng bộ chờ completion (tối đa 300s)
+- THREAD: caller thread (block semaphore)
+- ORDER: sau SE-CRASH-004 (endpoint-pass)
+- FAILURE: timeout/completion-fail → progress/timer/cleanup bodies UNKNOWN (chưa đọc 9E014 FULL)
+- EVIDENCE: RECONSTRUCTION/CrashReporting.m (F-016; F-023 latch cross-ref)
+
+## SE-RESPRING-001 — latch.reset wipe + post request
+- FUNCTION: latch.reset → 80574 (7F14C.c:121-127; Respring.m)
+- CONDITION: `duodash_reenable_tweaks` tồn tại/khác-false (đọc flag exact UNKNOWN)
+- EFFECT: file unlinks + status + Darwin post
+- TARGET: `/var/mobile/Library/DuoDash/*.plist` (glob list exact UNKNOWN) + flag=false (which UNKNOWN) + unlink crashreport_collecting + 9DEEC("Idle") + Post `com.sensetechlab.respring.request`
+- DATA: —
+- TIMING: đồng bộ trong handler (Immediate)
+- THREAD: notify thread (Immediate delivery)
+- ORDER: đầu chain latch→respring (kích SE-RESPRING-002)
+- FAILURE: guard fail → no-op (không wipe, không post)
+- EVIDENCE: RECONSTRUCTION/Respring.m (F-023/B-14)
+
+## SE-RESPRING-002 — respring.request guards + delayed execute
+- FUNCTION: respring.request → 8097C (7F14C.c:129-135; Respring.m)
+- CONDITION (thứ tự): duodash_norespring/duodash_ab_norespring vắng (stat!=0 → return) → respring_last throttle 8/60s (touch khi pass; path exact UNKNOWN) → latch carsleep off (9C530) → 9C790 pass (điều kiện UNKNOWN)
+- EFFECT: Darwin post + delayed respring execute
+- TARGET: Post `com.sensetechlab.respring.ack` (→ SE-RESPRING-003) + dispatch_after 21.6s block 12FC70 + thực hiện (811B0/81624 HOẶC async 812F4/81304/81344 — mapping UNKNOWN) + `respring_soft`/`no_msrv_restart` sub-paths (UNKNOWN exact)
+- DATA: —
+- TIMING: post đồng bộ; execute sau 21.6s
+- THREAD: notify thread + delayed block
+- ORDER: sau SE-RESPRING-001 (hoặc trigger trực tiếp), trước SE-RESPRING-003
+- FAILURE: guard fail → return silent/throttled (branch/thông báo exact UNKNOWN)
+- EVIDENCE: RECONSTRUCTION/Respring.m (F-023 + toggle_matrix §B)
+
+## SE-RESPRING-003 — respring.ack flag
+- FUNCTION: respring.ack → 96D60 (96D2C.c:14-20; Respring.m)
+- CONDITION: ack notify received (observer unk_164B58)
+- EFFECT: global write (ack flag)
+- TARGET: byte_164B4E=1
+- DATA: —
+- TIMING: đồng bộ
+- THREAD: notify thread
+- ORDER: sau SE-RESPRING-002
+- FAILURE: N/A (không post tiếp, không prefs-write)
+- EVIDENCE: RECONSTRUCTION/Respring.m (notify_matrix row)

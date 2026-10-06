@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-054 (function-level reconstruction)_
+_Last updated: 2026-10-05 session-055 (function-level reconstruction)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-054 (synthesis, không function mới): Tweak.x CNAB conn/window bodies từ evidence → CNABConn.m (APPROXIMATION).
+Session-055 (meta, không function mới): P4 slice-1 SIDE_EFFECTS/COMPARISON rows cho CrashReporting + Respring (INFERRED).
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
 
-## LAST COMPLETED TASK (session-054):
-- Tweak.x CNAB conn/window bodies (synthesis từ evidence, APPROXIMATION) + TODO R-041 + handoff (R-042 scope-open).
+## LAST COMPLETED TASK (session-055):
+- P4 slice-1 ledger rows (CrashReporting + Respring, INFERRED) + TODO R-042 + handoff (R-043 scope-open).
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-054 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-055 (đang làm).
 
-## NEXT TASK (session-055):
-1. R-042: scope khác (quyết scope đầu session — GAPs: P4 rows cần audit định cỡ, P1 4C34 infeasible, blocked P0-3).
+## NEXT TASK (session-056):
+1. R-043: scope khác (quyết scope đầu session — P4 slice-2 candidates: PollFlush/CNABConn notify-driven, hoặc hosting cluster, hoặc scope khác).
 2. Không mở rộng scope (SESSION BUDGET).
 
 ## BLOCKERS:
@@ -37,9 +37,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-054):
-- Mới: `RECONSTRUCTION/CNABConn.m`, `LOG/session-054.md`.
-- Sửa: TODO (R-041), STATE.
+## FILES CHANGED (session-055):
+- Mới: `LOG/session-055.md`.
+- Sửa: SIDE_EFFECTS (8 rows), COMPARISON (2 sections), COVERAGE J + P4-#8, TODO (R-042), STATE.
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).

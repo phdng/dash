@@ -142,3 +142,19 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | Chain + 5s + 191A4 | :299-308 exact | B08/B09 reproduced | chain semantics U04 | 163EC.c:299-308 | INFERRED |
 | One-shot files + holds | :309-501 exact | B10 reproduced | holdsec blocks U06 | 163EC.c:309-501 | INFERRED |
 | cproleup + cpuicaps gate | :502-528 exact | B11 reproduced | F3E0 U07 | 163EC.c:502-528 | INFERRED |
+
+## CrashReporting (synthesis bodies) — INFERRED overall (session-055, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (CrashReporting.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Trigger + spinlock | 80C04 → async 9DFD4; busy → Already sending | DDCrashReportSend reproduced | spinlock type/op exact UNKNOWN | notify_matrix 7F14C:136-142 | INFERRED |
+| Guards collecting/cr_off | collecting → Disabled-last-crashed; cr_off → disabled | DDCrashMayCollect reproduced | collecting lifecycle INFERRED | B-08/F-016 | INFERRED |
+| Collect + queue cap | 9EE88 bundle+meta; giữ ≤3 | DDCollectCrashReport reproduced | meta schema + subdir layout UNKNOWN | B-08/F-016 | INFERRED |
+| Endpoint nil-default | 9DE28 NSString-only else nil | DDCrashEndpoint reproduced | — | F-016 9DE28:18-35 | INFERRED |
+| Upload + semaphore + dryrun | POST 60s + headers + sem 300s; dryrun local-only | DDUploadCrashReport reproduced | progress/timer/cleanup UNKNOWN | F-016 9E014:228+ | INFERRED |
+
+## Respring/latch (synthesis bodies) — INFERRED overall (session-055, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (Respring.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| latch.reset wipe+post | reenable-guard → wipe + Idle + post request | DDOnLatchReset reproduced | glob list + flag target UNKNOWN | F-023 80574 | INFERRED |
+| respring.request pipeline | norespring → throttle → carsleep → 9C790 → ack + 21.6s execute | DDOnRespringRequest reproduced | last-path/branch/exec-mapping UNKNOWN | F-023 8097C + toggles | INFERRED |
+| respring.ack flag | 96D60 set 164B4E=1 | DDOnRespringAck reproduced | — | notify_matrix 96D2C:14-20 | INFERRED |

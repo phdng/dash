@@ -82,5 +82,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-039] Tweak.x KB-observer bodies từ EVIDENCE/spawn_teardown_kb.md §B (F-032: stubs no-op + onDismiss/449C8 + onEndEditing inverted-knob) → RECONSTRUCTION/KBObservers.m (APPROXIMATION synthesis session-052) + KeyinputRelay line-14 stale-fix.
 - [x] [R-040] Tweak.x locale/version-device bodies từ EVIDENCE/version_device_ainfo.md §A (F-030/B-20/P3-5: fail-soft + write/post + read-4-tầng + 6 observers) → RECONSTRUCTION/LocaleFlow.m (APPROXIMATION synthesis session-053) + COVERAGE language touch-up.
 - [x] [R-041] Tweak.x CNAB conn/window bodies từ EVIDENCE/cnab_observers.md §§4-6 (F-026: 229FC/22A8C/227E4/99D4 + fabric 887C/8D78) → RECONSTRUCTION/CNABConn.m (APPROXIMATION synthesis session-054; aa_validators verify-đã-cover ở License.m, không việc).
-- [ ] [R-042] scope khác — quyết scope session sau (GAPs còn lại: P4 SIDE_EFFECTS/COMPARISON rows — cần audit định cỡ, P1 4C34 infeasible, blocked P0-3).
+- [x] [R-042] P4 slice-1: SIDE_EFFECTS (SE-CRASH-001..005 + SE-RESPRING-001..003) + COMPARISON (2 sections CrashReporting/Respring) cho synthesis bodies — session-055, không claim mới.
+- [ ] [R-043] scope khác — quyết scope session sau (GAPs còn lại: P4 slices tiếp theo, P1 4C34 infeasible, blocked P0-3).
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
