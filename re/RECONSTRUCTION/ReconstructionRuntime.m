@@ -1454,6 +1454,57 @@ DDExceptionReasonProbeDecision DDResolveExceptionReasonProbeDecision(uint64_t cu
     return decision;
 }
 
+DDPrivateIntegerIvarWritePlan DDResolvePrivateIntegerIvarWritePlan(BOOL ivarFound,
+                                                                   NSInteger typeEncodingFirstByte) {
+    // Pure 9C3BC write-width decision after 9C24C has already resolved the ivar/type encoding.
+    // The original accepts only signed/unsigned char, short, int, and long long encodings.
+    DDPrivateIntegerIvarWritePlan plan = {
+        NO,
+        NO,
+        DDPrivateIvarWriteWidthUnsupported,
+    };
+    if (!ivarFound) return plan;
+
+    switch (typeEncodingFirstByte) {
+        case 'c':
+        case 'C':
+            plan.writeWidth = DDPrivateIvarWriteWidthByte;
+            break;
+        case 's':
+        case 'S':
+            plan.writeWidth = DDPrivateIvarWriteWidthWord;
+            break;
+        case 'i':
+        case 'I':
+            plan.writeWidth = DDPrivateIvarWriteWidthDWord;
+            break;
+        case 'q':
+        case 'Q':
+            plan.writeWidth = DDPrivateIvarWriteWidthQWord;
+            break;
+        default:
+            plan.shouldRecordUnsupportedType = YES;
+            return plan;
+    }
+
+    plan.shouldWrite = YES;
+    return plan;
+}
+
+DDPrivateObjectIvarAccessPlan DDResolvePrivateObjectIvarAccessPlan(BOOL ivarFound,
+                                                                   NSInteger typeEncodingFirstByte) {
+    // Pure 9C4AC access decision after 9C24C. Only an Objective-C object encoding ('@') is read;
+    // existing ivars with missing/non-object encodings are reported as unsupported by the original.
+    DDPrivateObjectIvarAccessPlan plan = { NO, NO };
+    if (!ivarFound) return plan;
+    if (typeEncodingFirstByte == '@') {
+        plan.shouldReadObject = YES;
+    } else {
+        plan.shouldRecordUnsupportedType = YES;
+    }
+    return plan;
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.

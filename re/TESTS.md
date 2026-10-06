@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-087)
+## Build (session-088)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
 - [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-086 batch (`b797b03`, user-confirmed before session-087 changes).
-- [x] Static runtime contracts through session-087: verifier checks 421CC settings/otherSettings/private-setter eligibility with exact fixed `flag=0, setting=6`, plus 41BA0 exact 20-probe budget, unchanged over-budget count, incremented next count, and caller-supplied reason-selector capability. Private setter/reason invocation and global counter mutation remain excluded.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-087 batch (`df6696d`, user-confirmed before session-088 changes).
+- [x] Static runtime contracts through session-088: verifier checks 9C3BC exact c/C→1B, s/S→2B, i/I→4B, q/Q→8B integer write plan plus unsupported-type marker, and 9C4AC object access only for `@` with missing-ivar silence. No Objective-C runtime ivar lookup, object memory read, or private ivar write is performed.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

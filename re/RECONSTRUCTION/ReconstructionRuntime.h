@@ -93,6 +93,25 @@ typedef struct {
     uint64_t nextProbeCount;
 } DDExceptionReasonProbeDecision;
 
+typedef NS_ENUM(NSInteger, DDPrivateIvarWriteWidth) {
+    DDPrivateIvarWriteWidthUnsupported = 0,
+    DDPrivateIvarWriteWidthByte = 1,
+    DDPrivateIvarWriteWidthWord = 2,
+    DDPrivateIvarWriteWidthDWord = 4,
+    DDPrivateIvarWriteWidthQWord = 8,
+};
+
+typedef struct {
+    BOOL shouldWrite;
+    BOOL shouldRecordUnsupportedType;
+    DDPrivateIvarWriteWidth writeWidth;
+} DDPrivateIntegerIvarWritePlan;
+
+typedef struct {
+    BOOL shouldReadObject;
+    BOOL shouldRecordUnsupportedType;
+} DDPrivateObjectIvarAccessPlan;
+
 typedef struct {
     BOOL valid;
     double boundsWidth;
@@ -261,6 +280,10 @@ FOUNDATION_EXPORT DDOtherSettingsFlagClearDecision DDResolveOtherSettingsFlagCle
                                                                                            BOOL flagSetterSupported);
 FOUNDATION_EXPORT DDExceptionReasonProbeDecision DDResolveExceptionReasonProbeDecision(uint64_t currentProbeCount,
                                                                                         BOOL reasonSelectorSupported);
+FOUNDATION_EXPORT DDPrivateIntegerIvarWritePlan DDResolvePrivateIntegerIvarWritePlan(BOOL ivarFound,
+                                                                                     NSInteger typeEncodingFirstByte);
+FOUNDATION_EXPORT DDPrivateObjectIvarAccessPlan DDResolvePrivateObjectIvarAccessPlan(BOOL ivarFound,
+                                                                                     NSInteger typeEncodingFirstByte);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);
