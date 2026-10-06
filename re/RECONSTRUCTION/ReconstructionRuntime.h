@@ -82,6 +82,18 @@ typedef struct {
 } DDToAppsYieldDecision;
 
 typedef struct {
+    BOOL shouldClear;
+    NSInteger flagValue;
+    NSInteger settingIndex;
+} DDOtherSettingsFlagClearDecision;
+
+typedef struct {
+    BOOL withinBudget;
+    BOOL shouldReadReason;
+    uint64_t nextProbeCount;
+} DDExceptionReasonProbeDecision;
+
+typedef struct {
     BOOL valid;
     double boundsWidth;
     double boundsHeight;
@@ -244,6 +256,11 @@ FOUNDATION_EXPORT DDSceneDestroyDecision DDResolveSceneDestroyDecision(NSString 
 FOUNDATION_EXPORT DDToAppsYieldDecision DDResolveToAppsYieldDecision(NSArray<NSString *> * _Nullable destinationBundleIdentifiers,
                                                                      BOOL yieldInProgress,
                                                                      BOOL swallowOriginalCallback);
+FOUNDATION_EXPORT DDOtherSettingsFlagClearDecision DDResolveOtherSettingsFlagClearDecision(BOOL settingsObjectPresent,
+                                                                                           BOOL otherSettingsPresent,
+                                                                                           BOOL flagSetterSupported);
+FOUNDATION_EXPORT DDExceptionReasonProbeDecision DDResolveExceptionReasonProbeDecision(uint64_t currentProbeCount,
+                                                                                        BOOL reasonSelectorSupported);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);

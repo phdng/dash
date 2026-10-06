@@ -1429,6 +1429,31 @@ DDToAppsYieldDecision DDResolveToAppsYieldDecision(NSArray<NSString *> *destinat
     return none;
 }
 
+DDOtherSettingsFlagClearDecision DDResolveOtherSettingsFlagClearDecision(BOOL settingsObjectPresent,
+                                                                         BOOL otherSettingsPresent,
+                                                                         BOOL flagSetterSupported) {
+    // Exact pure eligibility from 421CC. The original sends _setFlag:0 forSetting:6 only when the
+    // settings object exists, its private _otherSettings object resolves, and that object supports
+    // the private setter. This reconstruction returns the fixed arguments but never sends them.
+    DDOtherSettingsFlagClearDecision decision = { NO, 0, 6 };
+    decision.shouldClear = settingsObjectPresent && otherSettingsPresent && flagSetterSupported;
+    return decision;
+}
+
+DDExceptionReasonProbeDecision DDResolveExceptionReasonProbeDecision(uint64_t currentProbeCount,
+                                                                      BOOL reasonSelectorSupported) {
+    // Raw ARM64 confirms the three exception catch paths eventually call 41BA0. Its global counter
+    // allows exactly 20 attempts: counts 0..19 increment once; counts >19 do nothing. Reading the
+    // exception's reason is separately gated by respondsToSelector:, and is not performed here.
+    DDExceptionReasonProbeDecision decision = { NO, NO, currentProbeCount };
+    if (currentProbeCount > 19) return decision;
+
+    decision.withinBudget = YES;
+    decision.shouldReadReason = reasonSelectorSupported;
+    decision.nextProbeCount = currentProbeCount + 1;
+    return decision;
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.
