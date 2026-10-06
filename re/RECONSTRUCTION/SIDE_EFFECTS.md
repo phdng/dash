@@ -794,3 +794,75 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: sau SE-RESPRING-002
 - FAILURE: N/A (không post tiếp, không prefs-write)
 - EVIDENCE: RECONSTRUCTION/Respring.m (notify_matrix row)
+
+## SE-POLL-001 — poll tick transitions + retry labels
+- FUNCTION: carPlayPollTick → 22AD0 (22AD0.c:26-109; PollFlush.m)
+- CONDITION: self-rescheduling tick mỗi 3s (22D5C); truth = DDz1.carPlayConnected
+- EFFECT: atomics + notify post + retry-label probe + flush dispatch
+- TARGET: byte_1652B0/qword_1652B8 (atomics); prev!=1&&now==1 → post cpconnect (Darwin) + 163A68=5; labels poll.retry/connect/bringup "%@#%d" 6-163A68 → 365D4(label,1) (0 → =0 else --); 163C40>0 → 371AC (main) else async; v3==1 → 370F8 (main) else async; chốt 162E74=v3 + after 3s re-arm
+- DATA: prev!=1&&now==0 → disconnect "poll"; reconnect → 7BCBC log (cnab evidence)
+- TIMING: đồng bộ trong tick + after 3s self-reschedule
+- THREAD: poll thread + main/async flushes
+- ORDER: atomics → transition → labels/probe → flushes → chốt + re-arm
+- FAILURE: 365D4 bodies UNKNOWN (cross-ref PollFlush.m); 12D548/12D4F8 async bodies UNKNOWN
+- EVIDENCE: RECONSTRUCTION/PollFlush.m (spawn_teardown §C; cnab_observers §5)
+
+## SE-POLL-002 — display probe persist + notify
+- FUNCTION: 365D4(label,force) (365D4.c:9; PollFlush.m; caller thứ hai 218D8:552 "panel.host")
+- CONDITION: Display 34250() non-nil + w,h>=1 (else return 0)
+- EFFECT: prefs writes + Darwin post (chỉ khi force || đổi)
+- TARGET: SetAppValue(headunit_resolution/video_quality) + Sync + Post ble.status.changed; lưu 163AC0=w/h, 163AD0=scale; format "%.0f × %.0f", bucket 480p/720p/1080p; return h>0
+- DATA: clamp xmmword_163AA8>=40; FBSDisplayConfiguration CONFIRMED theo string
+- TIMING: đồng bộ trong poll tick (163A68 loop) hoặc 218D8 geometry phase
+- THREAD: caller thread
+- ORDER: probe → clamp → compare → persist+post
+- FAILURE: nil/display-nhỏ → return 0 (không persist/post)
+- EVIDENCE: RECONSTRUCTION/PollFlush.m (F-032 §C)
+
+## SE-POLL-003 — UI flushes (overdue + nudge tick)
+- FUNCTION: 371AC + 370F8 (PollFlush.m)
+- CONDITION: 371AC vô điều kiện; 370F8 khi DDz1.visible && !livePresentRunning && nonudgetick vắng
+- EFFECT: DDz1 method calls (dropOverdueNotice; nudgePresent:"tick")
+- TARGET: [DDz1 shared] (không plist/post/knob ở 371AC; post trong nudgePresent nếu có = UNKNOWN)
+- DATA: —
+- TIMING: main (163C40>0) else async (từ 22AD0 dispatch)
+- THREAD: main hoặc async queue
+- ORDER: sau probe trong tick (371AC trước 370F8 theo 22AD0:78-100)
+- FAILURE: guards fail → return (không flush)
+- EVIDENCE: RECONSTRUCTION/PollFlush.m (F-032 §C)
+
+## SE-CNAB-001 — connChanged/screenDisconnect fan-in
+- FUNCTION: onCarPlayConnChanged: (229FC.c:9) + onScreenDisconnect: (22A8C.c:9) (CNABConn.m)
+- CONDITION: 229FC userInfo IsConnected bool (true → 7BCBC log gated 164710/164709, else disconnect); 22A8C bỏ qua a3, !carPlayConnected → disconnect @"UIScreenDidDisconnect"
+- EFFECT: (chỉ forward) gọi cnabDoCarPlayDisconnect: (SE-CNAB-002)
+- TARGET: —
+- DATA: reason string (229FC exact UNKNOWN; 22A8C = "UIScreenDidDisconnect")
+- TIMING: đồng bộ
+- THREAD: NSNotification thread
+- ORDER: trước SE-CNAB-002
+- FAILURE: N/A (void, không transform/globals)
+- EVIDENCE: RECONSTRUCTION/CNABConn.m (cnab_observers §4)
+
+## SE-CNAB-002 — disconnect teardown + posts
+- FUNCTION: cnabDoCarPlayDisconnect: (227E4.c:9; CNABConn.m)
+- CONDITION: reason bất kỳ; teardown đầy đủ CHỈ khi DDz2.active (inactive → chỉ log)
+- EFFECT: teardown + log + async block + conditional posts
+- TARGET: 76224 + 7B924 log; async queue 165118 block 146308 (UNKNOWN); 163C40>0 → 371F4 else async; active → dismiss + DDz1 invalidateForDisconnect + notify_set_state(162DD8,0) + zero xmmword_163A98/AA8/AC0+qword_163AD0 + notify_post(cpdisconnect) + 4D0F4("CarPlay disconnect")
+- DATA: —
+- TIMING: đồng bộ + async block
+- THREAD: caller thread + queue 165118
+- ORDER: log/teardown → async → flush → (active) dismiss/invalidate/state/posts
+- FAILURE: inactive → skip teardown (chỉ log); 371F4/146308 bodies UNKNOWN
+- EVIDENCE: RECONSTRUCTION/CNABConn.m (cnab_observers §5)
+
+## SE-CNAB-003 — carWin registry + nudger
+- FUNCTION: onCarWindow: (99D4.c:9; CNABConn.m)
+- CONDITION: userInfo NSDictionary + bid NSString length>0 + W,H NSNumber >=1.0 (else return)
+- EFFECT: dict writes (size/pid) + conditional nudger
+- TARGET: lazy 1635B8[bid]=CGSize + 1635C0[bid]=@(pid) (pid>=1); pid đổi → remove 1635C8[bid] (throttle map, init UNKNOWN, nil-safe); 13AB8-hit → 127F0(bid) debounced nudger (skip nếu nonudge-knob / CACurrentMediaTime>=1635D0+? / 12C48 rect; set now+4.0, after 1s → 12D84)
+- DATA: counter 163640 cap 59
+- TIMING: đồng bộ
+- THREAD: NSDistributed notify thread (carwindow)
+- ORDER: gates → lazy dicts → pid-change clear → persist → lookup → nudger
+- FAILURE: gates fail → return (không ghi); 1635C8/nudger-arithmetic UNKNOWN
+- EVIDENCE: RECONSTRUCTION/CNABConn.m (cnab_observers §6)

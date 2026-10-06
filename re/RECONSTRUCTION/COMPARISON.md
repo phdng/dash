@@ -158,3 +158,18 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | latch.reset wipe+post | reenable-guard → wipe + Idle + post request | DDOnLatchReset reproduced | glob list + flag target UNKNOWN | F-023 80574 | INFERRED |
 | respring.request pipeline | norespring → throttle → carsleep → 9C790 → ack + 21.6s execute | DDOnRespringRequest reproduced | last-path/branch/exec-mapping UNKNOWN | F-023 8097C + toggles | INFERRED |
 | respring.ack flag | 96D60 set 164B4E=1 | DDOnRespringAck reproduced | — | notify_matrix 96D2C:14-20 | INFERRED |
+
+## PollFlush (synthesis bodies) — INFERRED overall (session-056, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (PollFlush.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Poll tick + transitions | 22AD0 atomics + disconnect/connect + labels + flushes + re-arm 3s | DDPollTick reproduced | label strings + 163C40 UNKNOWN | spawn_teardown §C / cnab §5 | INFERRED |
+| Display probe + persist | 365D4 FBSDisplay + clamp + persist-đổi-mới-post | DDProbeDisplay reproduced | 34250 body UNKNOWN | 365D4.c:9 | INFERRED |
+| Flushes overdue/nudge | 371AC vô điều kiện; 370F8 guards + knob | DDFlushOverdue/DDFlushNudgeTick reproduced | nudge-posts UNKNOWN | 371AC/370F8.c:9 | INFERRED |
+
+## CNABConn (synthesis bodies) — INFERRED overall (session-056, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (CNABConn.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Fabric + registration | 887C add vs 8D78 post; đăng ký 2 phía | header reproduced | entitlement UNKNOWN | cnab_observers §0 | INFERRED |
+| ConnChanged/ScreenDisconnect | bool-gate → log/disconnect; !connected → disconnect | DDOnCarPlayConnChanged/DDOnScreenDisconnect reproduced | 229FC reason UNKNOWN | 229FC/22A8C.c:9 | INFERRED |
+| Disconnect teardown | active-gated dismiss/invalidate/state/posts | DDDoCarPlayDisconnect reproduced | 371F4/146308 UNKNOWN | 227E4.c:9 | INFERRED |
+| CarWindow registry | gates + size/pid dicts + pid-change clear + nudger | DDOnCarWindow reproduced | 1635C8/nudger-arithmetic UNKNOWN | 99D4.c:9 | INFERRED |

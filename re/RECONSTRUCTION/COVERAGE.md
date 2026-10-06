@@ -86,8 +86,8 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 ## J. Meta (contract/tracking)
 | Artifact | Status |
 |---|---|
-| SIDE_EFFECTS.md (ledger SE-*) | Có cho 11 records + slice-1 synthesis (SE-CRASH-001..005 + SE-RESPRING-001..003 session-055); còn lại thiếu |
-| COMPARISON.md (matrix) | Có cho 11 records + 2 synthesis sections (CrashReporting/Respring session-055); còn lại thiếu |
+| SIDE_EFFECTS.md (ledger SE-*) | Có cho 11 records + slices synthesis (s1 CRASH/RESPRING session-055; s2 POLL/CNAB session-056); còn lại thiếu |
+| COMPARISON.md (matrix) | Có cho 11 records + 4 synthesis sections (s1 + PollFlush/CNABConn session-056); còn lại thiếu |
 | TESTS.md (static asserts + dynamic list) | Static pass; dynamic pending (cần device) |
 | Tweak.x (skeleton) + Shared.h | APPROXIMATION skeleton |
 
@@ -99,5 +99,5 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 5. ~~**P2**: Respring/latch synthesis~~ — DONE session-036 (Respring.m riêng).
 6. ~~**P2**: spike/hostSplit/spawn/teardown~~ — DONE sessions 037-040 + 042-044 + 047 (17/17 callees + C37C + poll + misc + D684); còn §B KB observers (cross-ref KeyinputRelay.m, giá trị thấp).
 7. **P3**: DDz3 bodies còn lại / DDz classes records (lớn, giá trị/giá thấp).
-8. **P4** (slice-1 done session-055: CrashReporting/Respring): SIDE_EFFECTS/COMPARISON rows cho synthesis bodies còn lại; TESTS dynamic (cần device).
+8. **P4** (slices done: s1 CrashReporting/Respring s055, s2 PollFlush/CNABConn s056): rows cho synthesis bodies còn lại; TESTS dynamic (cần device).
 9. **Blocked**: P0-3 (asm), Q-09 entitlements, Q-10 MITM, Q-12/Q-13 (disasm blocks), dynamic verify.
