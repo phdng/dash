@@ -63,5 +63,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-020] FUNCTION record 163EC (đọc FULL trực tiếp 529 dòng 2 passes; 12 branches B01-B11 + U01-U08). Status INFERRED.
 - [x] [R-021] Tweak.x CrashReporting bodies từ B-08/F-016 + notify row + strings → RECONSTRUCTION/CrashReporting.m (APPROXIMATION synthesis session-034).
 - [x] [R-022] Tweak.x Migration bodies từ EVIDENCE/4C34_import_defaults.md → RECONSTRUCTION/Migration.m (APPROXIMATION synthesis session-035; license branch cross-ref License.m).
-- [ ] [R-023] spikeHostSlots/hostSplit/spawn-teardown records HOẶC Respring/latch synthesis — quyết scope session sau.
+- [x] [R-023] Tweak.x Respring/latch bodies từ F-023/B-14 + notify/toggle rows → RECONSTRUCTION/Respring.m (APPROXIMATION synthesis session-036).
+- [ ] [R-024] spikeHostSlots/hostSplit/spawn-teardown records HOẶC scope khác — quyết scope session sau.
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
