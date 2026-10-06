@@ -255,3 +255,22 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 |---|---|---|---|---|---|
 | UI clusters map | 11 cụm theo addr-range | SE-DDZ-005 reproduced | thân HYPOTHESIS (trừ commit) | F-034 §6 | INFERRED |
 | buildKitLevel note | asm-only, ~100 callees | documented, không suy thân | NỘI DUNG UNKNOWN | 63CE4.asm:1-7 | INFERRED |
+
+## PrefsResolver (synthesis bodies) — INFERRED overall (session-062, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (PrefsResolver.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Publish 14 keys + post | 74C8 phases + derives + no-SetValue + post-cuối | SE-74C8-001..003 + PrefsResolver.m | bulk-U04 + cf-U01 INFERRED | functions/74C8.md | INFERRED |
+| Setters → republish | 746C/84D8/637E8 validate + SetApp + Sync + 74C8 | SE-PREFS-001 reproduced | 8-callers INFERRED list | B-15/F-025 | INFERRED |
+
+## Migration (synthesis bodies) — INFERRED overall (session-062, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (Migration.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Import True→Duo | guards + precheck + prefs + license + files + log | SE-MIG-001 reproduced | rename/denylist/offsets UNKNOWN | F-019 §§1-5 | INFERRED |
+| Defaults bootstrap | guard + existing + seed-false-only + record | SE-MIG-002 reproduced | — | F-020 | INFERRED |
+| License branch | A/B1/B2/C + verify chéo + prefixes | License.m §DDMigrateLicense | off_154238 UNKNOWN | F-019 §4 | INFERRED |
+
+## LocaleFlow (synthesis bodies) — INFERRED overall (session-062, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (LocaleFlow.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Version/device notes | 4008/ACF1C/sysctl fail-soft, 0-hit MinimumOS/AppleLanguages | documented (no-op notes) | 46340-threshold UNKNOWN | F-030/B-20/P3-5 | INFERRED |
+| Write/read/observers | 6A4E4→post; read-4-tầng + whitelist-17 + cache; 6 observers | SE-LOCALE-001 reproduced | 16 strings + CN* UNKNOWN | F-030/B-20 | INFERRED |

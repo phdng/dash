@@ -1202,3 +1202,51 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: N/A
 - FAILURE: N/A
 - EVIDENCE: RECONSTRUCTION/DDzPicker.m (F-034 §6)
+
+## SE-PREFS-001 — setters → republish
+- FUNCTION: 746C/84D8/637E8 setters (PrefsResolver.m cross-ref section; 74C8 publish ở SE-74C8-001..003 — không duplicate)
+- CONDITION: 746C layout 1..8 (else return nguyên); 84D8 normalize via 7E730; 637E8 flip via 836C-read
+- EFFECT: prefs writes + republish chain
+- TARGET: SetAppValue + Sync + 74C8() → 14 keys + navprovider ×2 + write appbridge.plist + post resolved (8 callers republish: 746C/84D8/27E20/29198/56B24/5F8A4/637E8/69824)
+- DATA: —
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: validate/normalize → SetAppValue → Sync → republish
+- FAILURE: 746C out-of-range → return nguyên (không ghi)
+- EVIDENCE: RECONSTRUCTION/PrefsResolver.m (B-15/F-025; bulk-keys off_154208 content HYPOTHESIS U04)
+
+## SE-MIG-001 — import True→Duo
+- FUNCTION: import guards + precheck + wipe-then-migrate + files (Migration.m §§1-5; license branch ở License.m)
+- CONDITION: import.done vắng + import.running vắng (else abort-goto LABEL_162) + precheck pass (blob/key/counts)
+- EFFECT: prefs migrate + license import/reseal + file copies + done-log
+- TARGET: 85148 2-hosts migrate (rename-map/denylist/off_154268 UNKNOWN) + xóa nguồn SetMultiple-nil; license A/B1/B2/C (verify "duodash", A4558/A50CC, xóa off_154238 UNKNOWN); airplay/iconstate 85800-copies + navapps merge (union/đè/ưu-tiên) + flags msrv/standdown; log import.done exact-format + remove running
+- DATA: —
+- TIMING: đồng bộ trong 4C34 ctor (once-only)
+- THREAD: main (role-1 ctor)
+- ORDER: guards → precheck → prefs → license → files → log
+- FAILURE: guard/precheck-fail → goto LABEL_162 (skip); write-fail running → giữ lock (lần sau abort tiếp)
+- EVIDENCE: RECONSTRUCTION/Migration.m (F-019)
+
+## SE-MIG-002 — defaults bootstrap
+- FUNCTION: DDBootstrapDefaults (Migration.m §6; F-020)
+- CONDITION: stat(defaults.done)!=0 (else skip) + existing = airplay-marker || settings-keys || import.done-existed
+- EFFECT: conditional seed-false + done-record
+- TARGET: existing==1 → keys thiếu trong 3 (pane_unload_close_enabled/appbridge_autostart/disconnect_close_enabled) = kCFBooleanFalse + sync ok/failed; existing==0 (fresh) → không seed; ghi defaults.done (existing: at/v/result/why/pinned/kept/sync; new: at/v/result=new) + "\n" UTF-8
+- DATA: 85D30 format-only (join/none)
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: guard → existing? → seed → record
+- FAILURE: N/A
+- EVIDENCE: RECONSTRUCTION/Migration.m (F-020)
+
+## SE-LOCALE-001 — language write/read/observers
+- FUNCTION: 6A4E4/9AFB0/9B314 + 6 observers (LocaleFlow.m; F-030/B-20)
+- CONDITION: write guard 9B284-whitelist; read tier-order (lang_force → prefs → carnav-migrate → en) + validate mỗi bước; observers unconditional clear+reload
+- EFFECT: prefs writes + Sync + posts + cache ops
+- TARGET: write: SetAppValue(duodash_language) + Sync + 9B314-clear + post language.changed; read: cache 164C38+lock (whitelist 17, 16 strings UNKNOWN); observers (9B848/948C0/8C41C/8EFE4/920C0/93A3C → 9B314 + async main reloads; CN* bodies UNKNOWN)
+- DATA: truedash_language 0-hit dead/legacy (giữ nguyên); NSLocale en_US_POSIX chỉ formatter
+- TIMING: đồng bộ (+async main reloads)
+- THREAD: caller + main
+- ORDER: write → post → clear+reload; read → tier-fallback → cache
+- FAILURE: whitelist-fail → write bị chặn; knob tồn tại (EndEditing-cousin, không ở đây)
+- EVIDENCE: RECONSTRUCTION/LocaleFlow.m (F-030/B-20; version/device fail-soft ở COMPARISON)
