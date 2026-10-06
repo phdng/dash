@@ -1578,6 +1578,67 @@ DDToAppsYieldDecision DDResolveToAppsYieldDecision(NSArray<NSString *> *destinat
     return none;
 }
 
+DDToAppsYieldExceptionOutcome DDResolveToAppsYieldExceptionOutcome(DDToAppsYieldExceptionSite site,
+                                                                   uint64_t currentProbeCount,
+                                                                   BOOL reasonSelectorSupported) {
+    // 41730 uses a broad catch-to-original path for pre-yield routing/enumeration/toggle probes,
+    // but its individual yield side effects have distinct continuations. DDz2 dismiss exceptions are
+    // swallowed and continue with disconnect/hide/log; disconnect exceptions jump directly to original
+    // and notably bypass the byte_163EC0 clear; DDz1 hide exceptions continue at the yield log; yield-log
+    // exceptions continue at cleanup/reset. The original callback has its own 41BA0 catch/no-retry path,
+    // while cleanup-only LSDA entries resume unwind rather than swallowing.
+    DDExceptionReasonProbeDecision emptyProbe = { NO, NO, currentProbeCount };
+    DDToAppsYieldExceptionOutcome outcome = {
+        NO,
+        DDToAppsYieldExceptionContinuationNone,
+        NO,
+        NO,
+        NO,
+        emptyProbe,
+    };
+
+    if (site == DDToAppsYieldExceptionSitePreYieldRouting) {
+        outcome.shouldSwallowException = YES;
+        outcome.continuation = DDToAppsYieldExceptionContinuationCallOriginal;
+        return outcome;
+    }
+
+    if (site == DDToAppsYieldExceptionSiteDismissSideEffect ||
+        site == DDToAppsYieldExceptionSiteHideSideEffect) {
+        outcome.shouldSwallowException = YES;
+        outcome.continuation = DDToAppsYieldExceptionContinuationContinueYieldSideEffects;
+        return outcome;
+    }
+
+    if (site == DDToAppsYieldExceptionSiteDisconnectSideEffect) {
+        outcome.shouldSwallowException = YES;
+        outcome.continuation = DDToAppsYieldExceptionContinuationCallOriginal;
+        outcome.yieldInProgressWouldRemainSet = YES;
+        return outcome;
+    }
+
+    if (site == DDToAppsYieldExceptionSiteYieldLogSideEffect) {
+        outcome.shouldSwallowException = YES;
+        outcome.continuation = DDToAppsYieldExceptionContinuationContinueYieldCleanup;
+        return outcome;
+    }
+
+    if (site == DDToAppsYieldExceptionSiteOriginalCallback) {
+        outcome.shouldSwallowException = YES;
+        outcome.continuation = DDToAppsYieldExceptionContinuationCleanupReturn;
+        outcome.shouldApplyReasonProbeDecision = YES;
+        outcome.probeExceptionWouldResumeUnwind = YES;
+        outcome.reasonProbeDecision = DDResolveExceptionReasonProbeDecision(currentProbeCount,
+                                                                             reasonSelectorSupported);
+        return outcome;
+    }
+
+    if (site == DDToAppsYieldExceptionSiteCleanup) {
+        outcome.continuation = DDToAppsYieldExceptionContinuationResumeUnwind;
+    }
+    return outcome;
+}
+
 DDOtherSettingsFlagClearDecision DDResolveOtherSettingsFlagClearDecision(BOOL settingsObjectPresent,
                                                                          BOOL otherSettingsPresent,
                                                                          BOOL flagSetterSupported) {

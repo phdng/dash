@@ -129,6 +129,26 @@ typedef struct {
     NSInteger slotIndex;
 } DDToAppsYieldDecision;
 
+typedef NS_ENUM(NSInteger, DDToAppsYieldExceptionSite) {
+    DDToAppsYieldExceptionSiteNone = 0,
+    DDToAppsYieldExceptionSitePreYieldRouting = 1,
+    DDToAppsYieldExceptionSiteDismissSideEffect = 2,
+    DDToAppsYieldExceptionSiteDisconnectSideEffect = 3,
+    DDToAppsYieldExceptionSiteHideSideEffect = 4,
+    DDToAppsYieldExceptionSiteYieldLogSideEffect = 5,
+    DDToAppsYieldExceptionSiteOriginalCallback = 6,
+    DDToAppsYieldExceptionSiteCleanup = 7,
+};
+
+typedef NS_ENUM(NSInteger, DDToAppsYieldExceptionContinuation) {
+    DDToAppsYieldExceptionContinuationNone = 0,
+    DDToAppsYieldExceptionContinuationCallOriginal = 1,
+    DDToAppsYieldExceptionContinuationContinueYieldSideEffects = 2,
+    DDToAppsYieldExceptionContinuationContinueYieldCleanup = 3,
+    DDToAppsYieldExceptionContinuationCleanupReturn = 4,
+    DDToAppsYieldExceptionContinuationResumeUnwind = 5,
+};
+
 typedef struct {
     BOOL shouldClear;
     NSInteger flagValue;
@@ -140,6 +160,15 @@ typedef struct {
     BOOL shouldReadReason;
     uint64_t nextProbeCount;
 } DDExceptionReasonProbeDecision;
+
+typedef struct {
+    BOOL shouldSwallowException;
+    DDToAppsYieldExceptionContinuation continuation;
+    BOOL yieldInProgressWouldRemainSet;
+    BOOL shouldApplyReasonProbeDecision;
+    BOOL probeExceptionWouldResumeUnwind;
+    DDExceptionReasonProbeDecision reasonProbeDecision;
+} DDToAppsYieldExceptionOutcome;
 
 typedef NS_ENUM(NSInteger, DDSceneOrientationExceptionSite) {
     DDSceneOrientationExceptionSiteNone = 0,
@@ -498,6 +527,9 @@ FOUNDATION_EXPORT DDSceneDestroyDecision DDResolveSceneDestroyDecision(NSString 
 FOUNDATION_EXPORT DDToAppsYieldDecision DDResolveToAppsYieldDecision(NSArray<NSString *> * _Nullable destinationBundleIdentifiers,
                                                                      BOOL yieldInProgress,
                                                                      BOOL swallowOriginalCallback);
+FOUNDATION_EXPORT DDToAppsYieldExceptionOutcome DDResolveToAppsYieldExceptionOutcome(DDToAppsYieldExceptionSite site,
+                                                                                     uint64_t currentProbeCount,
+                                                                                     BOOL reasonSelectorSupported);
 FOUNDATION_EXPORT DDOtherSettingsFlagClearDecision DDResolveOtherSettingsFlagClearDecision(BOOL settingsObjectPresent,
                                                                                            BOOL otherSettingsPresent,
                                                                                            BOOL flagSetterSupported);
