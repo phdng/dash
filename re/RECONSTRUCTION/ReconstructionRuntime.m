@@ -1672,6 +1672,55 @@ DDSceneForegroundExceptionOutcome DDResolveSceneForegroundExceptionOutcome(DDSce
     return outcome;
 }
 
+DDSceneDestroyExceptionOutcome DDResolveSceneDestroyExceptionOutcome(DDSceneDestroyExceptionSite site,
+                                                                      BOOL destroyRoutingPrepared,
+                                                                      uint64_t currentProbeCount,
+                                                                      BOOL reasonSelectorSupported) {
+    // 41138 uses three materially different exception regions. The pre-original route/identity
+    // range catches and rejoins at the original callback after restoring the saved identity register,
+    // while preserving whatever destroy-routing gate state had already been established. The original
+    // callback has its own catch, applies the existing 41BA0 reason probe, and then continues post-call
+    // destroy routing only when that saved gate was prepared. The post-callback destroy-routing range
+    // has no landing pad in 41138, so exceptions there leave this function and continue unwinding.
+    DDExceptionReasonProbeDecision emptyProbe = { NO, NO, currentProbeCount };
+    DDSceneDestroyExceptionOutcome outcome = {
+        NO,
+        NO,
+        NO,
+        NO,
+        NO,
+        NO,
+        NO,
+        NO,
+        emptyProbe,
+    };
+
+    if (site == DDSceneDestroyExceptionSitePreOriginalRouting) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldCallOriginalAfterCatch = YES;
+        outcome.shouldRestoreSavedIdentityAfterCatch = YES;
+        outcome.preservesPreparedDestroyRoutingState = YES;
+        outcome.shouldContinuePreparedDestroyRoutingAfterOriginal = destroyRoutingPrepared;
+        return outcome;
+    }
+
+    if (site == DDSceneDestroyExceptionSiteOriginalCallback) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldApplyReasonProbeDecision = YES;
+        outcome.probeExceptionWouldResumeUnwind = YES;
+        outcome.preservesPreparedDestroyRoutingState = YES;
+        outcome.shouldContinuePreparedDestroyRoutingAfterOriginal = destroyRoutingPrepared;
+        outcome.reasonProbeDecision = DDResolveExceptionReasonProbeDecision(currentProbeCount,
+                                                                             reasonSelectorSupported);
+        return outcome;
+    }
+
+    if (site == DDSceneDestroyExceptionSitePostCallbackDestroyRouting) {
+        outcome.exceptionWouldResumeUnwind = YES;
+    }
+    return outcome;
+}
+
 DDPrivateIntegerIvarWritePlan DDResolvePrivateIntegerIvarWritePlan(BOOL ivarFound,
                                                                    NSInteger typeEncodingFirstByte) {
     // Pure 9C3BC write-width decision after 9C24C has already resolved the ivar/type encoding.

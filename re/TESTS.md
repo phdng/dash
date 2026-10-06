@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-098)
+## Build (session-099)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
 - [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-097 batch (`398d0d5`, user-confirmed before session-098 changes).
-- [x] Static runtime contracts through session-098: verifier checks LSDA/raw-ARM64-confirmed 40FF4 original-callback exception swallow→existing 41BA0 probe→resume post-original foreground evaluation, route/mutable-settings exception swallow→skip remaining foreground forcing, and nested-probe exception→resume-unwind metadata. No synthesized/caught exception, original/private selector invocation, `setForeground:` mutation, direct reason read, or probe-counter mutation.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-098 batch (`35823bf`, user-confirmed before session-099 changes).
+- [x] Static runtime contracts through session-099: verifier checks LSDA/raw-ARM64-confirmed 41138 pre-original exception swallow→saved identity restore→original continuation with prepared-gate preservation; original-callback exception swallow→existing 41BA0 probe→prepared post-callback destroy-routing continuation; nested-probe exception→resume-unwind; and post-callback destroy-routing exceptions→propagate/unwind because that range has no landing pad. No synthesized/caught exception, private identity/original/30960/slot-clear/DDz2 invocation, direct reason read, or global mutation.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
