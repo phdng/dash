@@ -284,6 +284,31 @@ typedef struct {
     BOOL shouldReturnThroughNormalCleanup;
 } DDSceneSettingsPrivateIvarExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDFBSUpdateExceptionSite) {
+    DDFBSUpdateExceptionSiteNone = 0,
+    DDFBSUpdateExceptionSitePreSettingsPreparation = 1,
+    DDFBSUpdateExceptionSiteSceneSettingsPath = 2,
+    DDFBSUpdateExceptionSiteMutableSettingsPath = 3,
+    DDFBSUpdateExceptionSiteRoutingDecisionOrExecution = 4,
+    DDFBSUpdateExceptionSiteOriginalCallback = 5,
+};
+
+typedef NS_ENUM(NSInteger, DDFBSUpdateExceptionContinuation) {
+    DDFBSUpdateExceptionContinuationNone = 0,
+    DDFBSUpdateExceptionContinuationContinueMutableSettings = 1,
+    DDFBSUpdateExceptionContinuationContinuePostSettingsRouting = 2,
+    DDFBSUpdateExceptionContinuationCallOriginal = 3,
+    DDFBSUpdateExceptionContinuationCleanupReturn = 4,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    DDFBSUpdateExceptionContinuation continuation;
+    BOOL shouldApplyReasonProbeDecision;
+    BOOL probeExceptionWouldResumeUnwind;
+    DDExceptionReasonProbeDecision reasonProbeDecision;
+} DDFBSUpdateExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDFBSSceneSettingsUpdateReason) {
     DDFBSSceneSettingsUpdateReasonNone = 0,
     DDFBSSceneSettingsUpdateReasonSlotNotMarked = 1,
@@ -577,6 +602,9 @@ FOUNDATION_EXPORT DDSceneSettingsPrivateIvarPlan DDResolveSceneSettingsPrivateIv
                                                                                        BOOL foregroundIvarFound,
                                                                                        NSString * _Nullable foregroundTypeEncoding);
 FOUNDATION_EXPORT DDSceneSettingsPrivateIvarExceptionOutcome DDResolveSceneSettingsPrivateIvarExceptionOutcome(void);
+FOUNDATION_EXPORT DDFBSUpdateExceptionOutcome DDResolveFBSUpdateExceptionOutcome(DDFBSUpdateExceptionSite site,
+                                                                                uint64_t currentProbeCount,
+                                                                                BOOL reasonSelectorSupported);
 FOUNDATION_EXPORT NSInteger DDResolveCurrentInterfaceOrientation(BOOL settingsObjectPresent,
                                                                  BOOL interfaceOrientationSelectorSupported,
                                                                  NSInteger currentOrientation);

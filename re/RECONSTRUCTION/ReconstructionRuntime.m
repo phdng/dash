@@ -1960,6 +1960,53 @@ DDSceneSettingsPrivateIvarExceptionOutcome DDResolveSceneSettingsPrivateIvarExce
     return outcome;
 }
 
+DDFBSUpdateExceptionOutcome DDResolveFBSUpdateExceptionOutcome(DDFBSUpdateExceptionSite site,
+                                                                uint64_t currentProbeCount,
+                                                                BOOL reasonSelectorSupported) {
+    // 400D0 has stage-specific typed catches. Pre-settings preparation falls back to original;
+    // the scene-settings catch rejoins at mutableSettings; the mutable-settings catch rejoins at
+    // post-settings routing; later routing/frame/orientation/private-executor catches fall back to
+    // original. The original callback itself has a separate 41BA0 catch/no-retry path. A nested
+    // 41BA0 exception ends the catch and resumes unwind.
+    DDExceptionReasonProbeDecision emptyProbe = { NO, NO, currentProbeCount };
+    DDFBSUpdateExceptionOutcome outcome = {
+        NO,
+        DDFBSUpdateExceptionContinuationNone,
+        NO,
+        NO,
+        emptyProbe,
+    };
+
+    if (site == DDFBSUpdateExceptionSitePreSettingsPreparation ||
+        site == DDFBSUpdateExceptionSiteRoutingDecisionOrExecution) {
+        outcome.shouldSwallowException = YES;
+        outcome.continuation = DDFBSUpdateExceptionContinuationCallOriginal;
+        return outcome;
+    }
+
+    if (site == DDFBSUpdateExceptionSiteSceneSettingsPath) {
+        outcome.shouldSwallowException = YES;
+        outcome.continuation = DDFBSUpdateExceptionContinuationContinueMutableSettings;
+        return outcome;
+    }
+
+    if (site == DDFBSUpdateExceptionSiteMutableSettingsPath) {
+        outcome.shouldSwallowException = YES;
+        outcome.continuation = DDFBSUpdateExceptionContinuationContinuePostSettingsRouting;
+        return outcome;
+    }
+
+    if (site == DDFBSUpdateExceptionSiteOriginalCallback) {
+        outcome.shouldSwallowException = YES;
+        outcome.continuation = DDFBSUpdateExceptionContinuationCleanupReturn;
+        outcome.shouldApplyReasonProbeDecision = YES;
+        outcome.probeExceptionWouldResumeUnwind = YES;
+        outcome.reasonProbeDecision = DDResolveExceptionReasonProbeDecision(currentProbeCount,
+                                                                             reasonSelectorSupported);
+    }
+    return outcome;
+}
+
 NSInteger DDResolveCurrentInterfaceOrientation(BOOL settingsObjectPresent,
                                                BOOL interfaceOrientationSelectorSupported,
                                                NSInteger currentOrientation) {
