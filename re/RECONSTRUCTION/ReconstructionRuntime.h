@@ -59,6 +59,11 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDStringSelectorExceptionOutcome;
 
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldContinueCleanupAfterCatch;
+} DDActivatingEntitySetterExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDAVCSceneHandleUpdateKind) {
     DDAVCSceneHandleUpdateNone = 0,
     DDAVCSceneHandleUpdateHostSlot = 1,
@@ -602,6 +607,7 @@ FOUNDATION_EXPORT BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGenerati
 FOUNDATION_EXPORT BOOL DDBundleIdentifierMatchesAux(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdentityResolutionExceptionOutcome(void);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
+FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
 FOUNDATION_EXPORT DDSceneIdentityRoute DDResolveFBSUpdateIdentityRoute(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityRoute DDResolveAVCSceneHandleIdentityRoute(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDAVCSceneHandleUpdateDecision DDResolveAVCSceneHandleUpdateDecision(NSString * _Nullable bundleIdentifier,

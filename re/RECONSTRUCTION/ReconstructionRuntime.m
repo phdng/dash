@@ -1234,6 +1234,13 @@ DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     return outcome;
 }
 
+DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void) {
+    // 3F100 LSDA 0x114948 protects only respondsToSelector:setActivatingEntity: plus the optional
+    // setter send. Landing 0x3F158 unconditionally begin/end-catches and rejoins normal cleanup.
+    DDActivatingEntitySetterExceptionOutcome outcome = { YES, YES };
+    return outcome;
+}
+
 static DDSceneIdentityRoute DDSceneIdentityRouteNoneValue(void) {
     DDSceneIdentityRoute route = { DDSceneIdentityRouteNone, -1 };
     return route;
