@@ -1218,6 +1218,14 @@ BOOL DDBundleIdentifierMatchesAux(NSString *bundleIdentifier) {
            [bundleIdentifier isEqualToString:gDDAuxBundleIdentifier];
 }
 
+DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdentityResolutionExceptionOutcome(void) {
+    // 3FBC8 LSDA 0x114A18 funnels every protected private identity-resolution range through
+    // common typed catch 0x3FFA8. The expected catch swallows and branches to 0x3FF30, forcing
+    // a nil resolved identity; a nonmatching catch discriminator resumes unwind at 0x3FFBC.
+    DDSceneIdentityResolutionExceptionOutcome outcome = { YES, YES, YES };
+    return outcome;
+}
+
 static DDSceneIdentityRoute DDSceneIdentityRouteNoneValue(void) {
     DDSceneIdentityRoute route = { DDSceneIdentityRouteNone, -1 };
     return route;
