@@ -191,6 +191,8 @@ for contract in [
     "DDStringSelectorExceptionOutcome outcome = { YES, YES, YES }",
     "DDResolveActivatingEntitySetterExceptionOutcome",
     "DDActivatingEntitySetterExceptionOutcome outcome = { YES, YES }",
+    "DDResolveHostUIAppRequestExceptionOutcome",
+    "DDHostUIAppRequestExceptionOutcome outcome = { YES, YES, YES }",
     "DDResolveFBSUpdateIdentityRoute",
     "DDResolveAVCSceneHandleIdentityRoute",
     "DDResolveAVCSceneHandleUpdateDecision",

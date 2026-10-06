@@ -1241,6 +1241,14 @@ DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptio
     return outcome;
 }
 
+DDHostUIAppRequestExceptionOutcome DDResolveHostUIAppRequestExceptionOutcome(void) {
+    // 3F224 LSDA 0x114960 funnels protected userInfo/bundle extraction, host-slot string matching,
+    // and the final 89D8 request through common typed catch 0x3F354. Expected exceptions are
+    // swallowed and jump directly to final cleanup; a nonmatching catch discriminator unwinds.
+    DDHostUIAppRequestExceptionOutcome outcome = { YES, YES, YES };
+    return outcome;
+}
+
 static DDSceneIdentityRoute DDSceneIdentityRouteNoneValue(void) {
     DDSceneIdentityRoute route = { DDSceneIdentityRouteNone, -1 };
     return route;
