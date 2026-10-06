@@ -235,3 +235,23 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 |---|---|---|---|---|---|
 | Fast path | rect-compare + luôn-update + re-arm/push | SE-FASTRELAY-001 reproduced | helper-bodies UNKNOWN | F-034 D684:124-168 | INFERRED |
 | Slow path + telemetry | tombstone-attach vs rebuild + FB9C-14 | SE-FASTRELAY-002 reproduced | entity/selector details UNKNOWN | F-034 D684:171+ | INFERRED |
+
+## DDzCore (synthesis bodies) — INFERRED overall (session-061, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (DDzCore.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| DDz1 shell map | 63 methods + state + caller-names | SE-DDZ-001 reproduced | thân methods (trừ central) UNKNOWN | F-034 §§0-1 | INFERRED |
+| DDz1 central | shared/connected/show/present FULL | SE-DDZ-002 reproduced | hide-async details INFERRED | F-034 §3 | INFERRED |
+| DDz2 hosting + links | 35 methods + chain + 5-vs-1 links + division | SE-DDZ-003 reproduced | division HYPOTHESIS tinh chỉnh | F-034 §§2-3,5 | INFERRED |
+
+## DDzCommit (synthesis bodies) — INFERRED overall (session-061, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (DDzCommit.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Commit chain | resolve→guard→dedup→validate→bake→persist→reconcile→74C8 | SE-DDZ-004 reproduced | layout/mode-bits + ratio-int UNKNOWN | F-039 §§0-5 | INFERRED |
+| why + parallel | 2 why-strings; 3 đường song song | reproduced | why-persist HYPOTHESIS (không) | F-039 §§6-7 | INFERRED |
+| Host-handoff correction | KHÔNG gọi host trực tiếp (SAI cũ) | documented | — | F-039 §0 + 217EC | INFERRED |
+
+## DDzPicker (synthesis-map) — INFERRED overall (session-061, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (DDzPicker.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| UI clusters map | 11 cụm theo addr-range | SE-DDZ-005 reproduced | thân HYPOTHESIS (trừ commit) | F-034 §6 | INFERRED |
+| buildKitLevel note | asm-only, ~100 callees | documented, không suy thân | NỘI DUNG UNKNOWN | 63CE4.asm:1-7 | INFERRED |

@@ -1142,3 +1142,63 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: tombstone-check → drop/rebuild → attach → foreground
 - FAILURE: 14 fail reasons → FB9C(bid,gen,reason) (no foreground/persist); thiếu foreground-selector → no_foreground
 - EVIDENCE: RECONSTRUCTION/FastRelayout.m (F-034 §4; không chạm DDz state)
+
+## SE-DDZ-001 — DDz1 shell map
+- FUNCTION: DDz1 class (63 methods; DDzCore.m; F-034 §§0-1)
+- CONDITION: class-level map (không single body)
+- EFFECT: state + method-cluster inventory (window lifecycle, splash+notice 8, layout, swap/mirror 5, maximize 11)
+- TARGET: rootWindow/backdrop/paneContainer/content/splash/notice/matStrips/exitChip + _visible/_maxActive/_maxPos/_maxInFlight/_mirroring; caller-names giải từ address (1FB5C/202D0/208F4/218D8/227E4/… subs)
+- DATA: dump* ×5 stub rỗng; totals 63 = 61 instance + 2 class; strings `DDz` ZERO hit; DDz4 tồn tại ngoài-phạm-vi UNKNOWN
+- TIMING: N/A (map)
+- THREAD: N/A
+- ORDER: N/A
+- FAILURE: N/A
+- EVIDENCE: RECONSTRUCTION/DDzCore.m (ddz_inventory §§0-1)
+
+## SE-DDZ-002 — DDz1 central methods
+- FUNCTION: +shared/+carPlayConnected/showWithHostView:/present (DDzCore.m; F-034 §3 FULL reads)
+- CONDITION: shared once; connected AVExternalDevice-check; show non-nil; present _rootWindow non-nil
+- EFFECT: singleton + HW-gate + show-entry + present-animation
+- TARGET: +shared → 163C20 (once 163C28, không init window); +carPlayConnected stateless (7 callers poll/guard); showWithHostView: → block 33F5C sync-main (buildShell→installContent→present); present → unhidden + interaction + animate 0.25s + _visible=1 + nudgePresentAfterShow + startLivePresent (hide đối xứng async)
+- DATA: —
+- TIMING: show/present đồng bộ (+animate/hide async)
+- THREAD: main (33F5C sync-main)
+- ORDER: buildShell → installContent → present → nudge/live
+- FAILURE: nil-inputs → NO (show/present); carPlayConnected-nil → NO
+- EVIDENCE: RECONSTRUCTION/DDzCore.m (F-034 §3)
+
+## SE-DDZ-003 — DDz2 hosting map + cross-links
+- FUNCTION: DDz2 class (35 methods; DDzCore.m; F-034 §§2-3,5)
+- CONDITION: class-level map + division hypothesis (tinh chỉnh)
+- EFFECT: state/getters + host-spike chain + aux-scene + evict + dismiss/reset + cross-link directions
+- TARGET: 163D30 bids/163D48 count/163D50 flags/162F08 orient/163D88+163DC0 active-split/_auxVC; getters 10; chain 3CAA4→3CC44→(3BBF0→3C1F0,3D4FC,dismiss)/3B2D8→(evict/handshake/build)/3AAF8→3C808; +shared 3F1B8 18 callers; DDz1→DDz2 5 sites vs DDz2→DDz1 1 site (3BBF0:6)
+- DATA: hostedSlotBids snapshot ≤3 read-only; dismiss-caller-duy-nhất spikeHostSlots (re-host-dọn HYPOTHESIS)
+- TIMING: N/A (map; bodies ở SpikeHosting/HostSplit/Evict/PollFlush)
+- THREAD: N/A
+- ORDER: N/A
+- FAILURE: N/A
+- EVIDENCE: RECONSTRUCTION/DDzCore.m (F-034; cầu-nối CNAB↔shell HYPOTHESIS)
+
+## SE-DDZ-004 — commit chain picker→prefs
+- FUNCTION: 5F044/5F224/5F538/5F74C/5F8A4 (DDzCommit.m; F-039)
+- CONDITION: onTilePressed gates (cnabBid + ∈apps + lọc gesture) → resolve → openSlot-guard → dedup-giữ-prefs-cũ → 6A13C-validate → bake → persist → reconcile → luôn 74C8
+- EFFECT: prefs writes + Sync + resolved post (KHÔNG gọi host trực tiếp — sửa HYPOTHESIS SAI)
+- TARGET: SetValue left/right/third + Sync; bake ratio/fracs (special-mode-guard); CPUI-reconcile có-điều-kiện 84D8; 74C8 → write plist + post resolved (tín hiệu duy nhất tới host); why chẩn đoán-không-persist ("picked %@ for slot %ld" / "gutter re-host swap")
+- DATA: 6A13C 3-valued (clear/cài/lỗi-commit, drop khi chưa-cài-mà-SB-sống); 5F044 legacy tàn-dư (callers none); parallel paths (gutterFrac/swap/layout — layout không qua commitSlotBids)
+- TIMING: đồng bộ trong picker tap (close dù commit thành công hay không)
+- THREAD: UI thread (picker)
+- ORDER: resolve → guard → dedup → validate → bake → persist → reconcile → republish
+- FAILURE: guard/dedup/validate-fail → silent return/drop (không alert/log)
+- EVIDENCE: RECONSTRUCTION/DDzCommit.m (F-039; host gián tiếp via resolved)
+
+## SE-DDZ-005 — DDz3 UI clusters + buildKitLevel
+- FUNCTION: DDz3 class (153 methods map-level; DDzPicker.m; F-034 §6)
+- CONDITION: map-level (tên/cụm/addr-range CONFIRMED; thân HYPOTHESIS trừ commit-chain)
+- EFFECT: cluster inventory (không bodies): init → handles/gutter-drag → picker open/close → grid/tile → arrange → commit (=DDzCommit.m) → resize → chips → kit → buildKitLevel → layout-tiles
+- TARGET: 0x524d4–0x69c4c instance-only (không +shared); hàng trăm call-sites tới DDz1/DDz2 (tầng UI trên cùng — data CONFIRMED); buildKitLevel:pane: 0x63CE4 asm-only (~100 callees, stack 0xB90 — NỘI DUNG UNKNOWN, không suy thân)
+- DATA: —
+- TIMING: N/A (map)
+- THREAD: N/A
+- ORDER: N/A
+- FAILURE: N/A
+- EVIDENCE: RECONSTRUCTION/DDzPicker.m (F-034 §6)

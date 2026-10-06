@@ -88,5 +88,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-045] P4 slice-4: SIDE_EFFECTS (SE-EVICT-001..003 + SE-CPUIGEN-001..002) + COMPARISON (2 sections Evict/Cpuigen) — session-058, không claim mới.
 - [x] [R-046] P4 slice-5a: SIDE_EFFECTS (SE-SPAWN-001..006) + COMPARISON (2 sections SpawnTeardown/SpawnLaunch) — session-059, không claim mới.
 - [x] [R-047] P4 slice-5b: SIDE_EFFECTS (SE-EVLAUNCH-001 + SE-SPAWNMISC-001..002 + SE-FASTRELAY-001..002) + COMPARISON (3 sections) — session-060, không claim mới.
-- [ ] [R-048] scope khác — quyết scope session sau (GAPs còn lại: P4 slices tiếp theo — DDz/prefs+misc/license+keyboard+…?, P1 4C34 infeasible, blocked P0-3).
+- [x] [R-048] P4 slice-6: SIDE_EFFECTS (SE-DDZ-001..005) + COMPARISON (3 sections DDzCore/DDzCommit/DDzPicker) — session-061, không claim mới.
+- [ ] [R-049] scope khác — quyết scope session sau (GAPs còn lại: P4 slices tiếp theo — prefs/license+keyboard/siri/sleeper/data/HUD/locale/misc?, P1 4C34 infeasible, blocked P0-3).
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
