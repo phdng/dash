@@ -19,6 +19,7 @@
 #define DD_N_SETTINGS_CHANGED @"com.sensetechlab.settings.changed"
 #define DD_N_APPBRIDGE_RESOLVED @"com.sensetechlab.appbridge.resolved"
 #define DD_N_APPBRIDGE_LISTCHANGED @"com.sensetechlab.appbridge.listchanged"
+#define DD_N_AUTOSTART_CHANGED @"com.sensetechlab.autostart.changed"
 #define DD_N_APPBRIDGE_EXIT @"com.sensetechlab.appbridge.exit"
 #define DD_N_CPROLEUP @"com.sensetechlab.appbridge.cproleup"
 #define DD_N_CPCONNECT @"com.sensetechlab.appbridge.cpconnect"

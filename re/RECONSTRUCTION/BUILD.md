@@ -19,7 +19,11 @@ The current runtime implements the evidence-backed, compile-safe surface:
 4. AppBridge settings snapshot generation.
 5. Atomic cache write to `/var/tmp/com.sensetechlab.appbridge.plist`.
 6. `com.sensetechlab.appbridge.resolved` notification.
-7. Re-publish on `com.sensetechlab.settings.changed`.
+7. Immediate republish observers for `settings.changed`, `appbridge.listchanged`, and `autostart.changed` (the evidence-safe half of `29198`).
+8. Compile-safe prefs setters matching `746C` (layout 1..8), `84D8` (CarPlay UI normalize/dedup), and `637E8/836C` (resolved-plist autostart toggle).
+9. Prefs-only logical CarPlay UI eviction matching `85B8` (no kill/view teardown).
+10. Exact compile-safe cache readers matching `7044`, `70FC`, and `836C`.
+11. Pure prefs readers matching `8058` (missing keypane => ON) and the `7EA4` font-floor override/parser (valid range 8..96); private per-host UI broadcasts remain excluded.
 
 Where the original calls unresolved helpers (for example app filtering and normalized split geometry), the runtime preserves typed raw values instead of inventing behavior.
 

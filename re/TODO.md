@@ -100,4 +100,7 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-004] SUPERSEDED — covered bởi R-004a (218D8) + R-004b1 (202D0) + R-004b2 (74C8) + R-004b3 (9D64), tất cả done. (Ghi nhận session-069.)
 - [x] [R-056] Integrity audit session-069: LOG 001-068 complete (68/68) + R-artifacts present (42/42) + TESTS static documented-pass; STEADY-STATE — static scope cạn (chỉ còn blocked/infeasible).
 - [x] [R-057] Buildable reconstruction phase-1 (session-070): Theos target + exact Substrate filter + compile-safe role detect + AppBridge prefs/cache/notify runtime + local structural verifier + GitHub Actions build.
-- [ ] [R-058] Promote next evidence-safe subsystem into executable target after CI is green: prefs setters / notify fabric first; do not fake unresolved private UIKit/SpringBoard symbols.
+- [x] [R-058] Buildable prefs setters + notify reload fabric (session-071): 746C layout 1..8; 84D8 CarPlay UI normalize/dedup; 637E8/836C autostart toggle; 29198-safe republish observers for settings/listchanged/autostart with Immediate suspension; encode 85CDC CFBoolean-only trap.
+- [x] [R-059] Buildable prefs-only logical evict 85B8 (session-071): resolved main/more read → remove bid → 84D8-equivalent setter; explicitly no kill/view teardown.
+- [x] [R-060] Cache/pure-pref helpers (session-071): exact 7044/70FC/836C readers + 8058 keypane missing=>ON + 7EA4 font-floor override/parser (8..96); private 8C28 per-host broadcasts intentionally excluded.
+- [ ] [R-061] Evaluate 7764C liveness probe for compile-safe promotion (snapshot/filter + pid/path checks) and add libproc only if compiler/runtime contract is clean; keep SpringBoard/private-object consumers outside.

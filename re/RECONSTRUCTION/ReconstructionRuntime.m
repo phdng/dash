@@ -1,4 +1,4 @@
-// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-070)
+// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-071)
 // This file intentionally implements only behavior whose data-flow can be represented without
 // unresolved private classes/functions. Unknown filtering/computation remains documented in the
 // synthesis files rather than being silently guessed here.
@@ -34,6 +34,101 @@ static BOOL DDBoolPreference(NSString *key, BOOL fallback, BOOL *existsOut) {
     BOOL exists = (value != nil);
     if (existsOut) *existsOut = exists;
     return exists && [value respondsToSelector:@selector(boolValue)] ? [value boolValue] : fallback;
+}
+
+static NSArray<NSString *> *DDNormalizeCarPlayMore(id candidate, NSString *mainBundleIdentifier) {
+    if (![candidate isKindOfClass:[NSArray class]]) return @[];
+
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
+    for (id item in (NSArray *)candidate) {
+        if (![item isKindOfClass:[NSString class]]) continue;
+        NSString *bundleIdentifier = item;
+        if (bundleIdentifier.length == 0) continue;
+        if (mainBundleIdentifier.length && [bundleIdentifier isEqualToString:mainBundleIdentifier]) continue;
+        if ([result containsObject:bundleIdentifier]) continue;
+        [result addObject:[bundleIdentifier copy]];
+    }
+    return result;
+}
+
+static BOOL DDRawAutostartPreference(void) {
+    // sub_85CDC: missing -> true; otherwise only a real CFBoolean can be true.
+    // NSNumber/string values are not coerced here (the original deliberately differs
+    // from CFPreferencesGetAppBooleanValue-style readers).
+    id value = DDCopyAppPreference(@"appbridge_autostart");
+    if (!value) return YES;
+    CFTypeRef cfValue = (__bridge CFTypeRef)value;
+    if (CFGetTypeID(cfValue) != CFBooleanGetTypeID()) return NO;
+    return CFBooleanGetValue((CFBooleanRef)cfValue);
+}
+
+NSString * _Nullable DDCachedStringValue(NSString *key) {
+    // sub_7044: read resolved plist and return only a non-empty NSString.
+    NSDictionary *resolved = [NSDictionary dictionaryWithContentsOfFile:DD_APPBRIDGE_CACHE];
+    id value = resolved[key];
+    if (![value isKindOfClass:[NSString class]]) return nil;
+    return [value length] ? value : nil;
+}
+
+NSArray<NSString *> *DDCachedCarPlayUIMore(void) {
+    // sub_70FC: one resolved-plist read; normalize more against main via 7E730.
+    NSDictionary *resolved = [NSDictionary dictionaryWithContentsOfFile:DD_APPBRIDGE_CACHE];
+    id mainRaw = resolved[@"appbridge_split_carplay_ui"];
+    NSString *main = [mainRaw isKindOfClass:[NSString class]] ? mainRaw : nil;
+    return DDNormalizeCarPlayMore(resolved[@"appbridge_split_carplay_ui_more"], main);
+}
+
+BOOL DDCachedAutostartEnabled(void) {
+    // sub_836C: resolved-plist value; boolValue if supported, otherwise false.
+    NSDictionary *resolved = [NSDictionary dictionaryWithContentsOfFile:DD_APPBRIDGE_CACHE];
+    id value = resolved[@"appbridge_autostart"];
+    return [value respondsToSelector:@selector(boolValue)] ? [value boolValue] : NO;
+}
+
+BOOL DDReadKeyPaneEnabled(void) {
+    // sub_8058: missing/invalid-format defaults ON; explicit false stays OFF.
+    CFPreferencesAppSynchronize(kDDSettingsDomain);
+    Boolean valid = false;
+    Boolean enabled = CFPreferencesGetAppBooleanValue(CFSTR("keypane_enabled"),
+                                                       kDDSettingsDomain,
+                                                       &valid);
+    return enabled || !valid;
+}
+
+static NSInteger DDValidatedFontFloor(NSInteger value) {
+    return (value >= 8 && value <= 96) ? value : 0;
+}
+
+NSInteger DDReadBridgedFontFloor(void) {
+    // sub_7EA4 override semantics are intentionally unusual:
+    // - empty override file => force 0;
+    // - all-digits override => validated 8..96, otherwise 0 (no prefs fallback);
+    // - non-empty override containing a non-digit => fall back to prefs.
+    NSString *override = [NSString stringWithContentsOfFile:@"/var/tmp/duodash_ab_fontfloor_force"
+                                                   encoding:NSUTF8StringEncoding
+                                                      error:nil];
+    if (override) {
+        NSString *trimmed = [override stringByTrimmingCharactersInSet:
+                             [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSUInteger length = trimmed.length;
+        if (length == 0) return 0;
+
+        BOOL allDigits = YES;
+        for (NSUInteger index = 0; index < length; index++) {
+            unichar ch = [trimmed characterAtIndex:index];
+            if (ch < '0' || ch > '9') {
+                allDigits = NO;
+                break;
+            }
+        }
+        if (allDigits) return DDValidatedFontFloor(trimmed.integerValue);
+    }
+
+    id value = DDCopyAppPreference(@"bridged_font_floor");
+    if (!value) return 0;
+    CFTypeRef cfValue = (__bridge CFTypeRef)value;
+    if (CFGetTypeID(cfValue) != CFNumberGetTypeID()) return 0;
+    return DDValidatedFontFloor([value integerValue]);
 }
 
 static void DDClearPanesIfNeeded(void) {
@@ -120,8 +215,7 @@ NSDictionary *DDBuildKnownAppBridgeSnapshot(void) {
     NSNumber *fracB = DDNumberPreference(@"appbridge_split_frac_b", 0);
     NSNumber *fracLayout = DDNumberPreference(@"appbridge_split_frac_layout", 0);
 
-    // Evidence for sub_85CDC shows nil -> true.
-    BOOL autostart = DDBoolPreference(@"appbridge_autostart", YES, NULL);
+    BOOL autostart = DDRawAutostartPreference();
     NSString *cpuiMain = DDStringPreference(@"appbridge_split_carplay_ui");
     id cpuiMoreRaw = DDCopyAppPreference(@"appbridge_split_carplay_ui_more");
     NSArray *cpuiMore = [cpuiMoreRaw isKindOfClass:[NSArray class]] ? cpuiMoreRaw : @[];
@@ -166,13 +260,81 @@ BOOL DDRepublishKnownAppBridgeSnapshot(NSError * _Nullable * _Nullable error) {
     return ok;
 }
 
-static void DDSettingsChanged(CFNotificationCenterRef center,
+BOOL DDSetAppBridgeLayout(NSInteger layout) {
+    // sub_746C accepts exactly 1..8, otherwise returns without sync/republish.
+    if (layout < 1 || layout > 8) return NO;
+
+    NSNumber *value = @(layout);
+    CFPreferencesSetAppValue(CFSTR("appbridge_layout"),
+                             (__bridge CFPropertyListRef)value,
+                             kDDSettingsDomain);
+    CFPreferencesAppSynchronize(kDDSettingsDomain);
+    return DDRepublishKnownAppBridgeSnapshot(NULL);
+}
+
+BOOL DDSetCarPlayUI(NSString * _Nullable mainBundleIdentifier,
+                    id _Nullable additionalBundleIdentifiers) {
+    // sub_84D8: empty/nil main -> @""; nil/non-array more -> []; then 7E730
+    // filters to non-empty unique NSString values excluding main, preserving order.
+    NSString *main = mainBundleIdentifier.length ? [mainBundleIdentifier copy] : @"";
+    NSArray<NSString *> *more = DDNormalizeCarPlayMore(additionalBundleIdentifiers, main);
+
+    CFPreferencesSetAppValue(CFSTR("appbridge_split_carplay_ui"),
+                             (__bridge CFPropertyListRef)main,
+                             kDDSettingsDomain);
+    CFPreferencesSetAppValue(CFSTR("appbridge_split_carplay_ui_more"),
+                             (__bridge CFPropertyListRef)more,
+                             kDDSettingsDomain);
+    CFPreferencesAppSynchronize(kDDSettingsDomain);
+    return DDRepublishKnownAppBridgeSnapshot(NULL);
+}
+
+BOOL DDToggleAppBridgeAutostart(void) {
+    // DDz3 637E8 reads 836C from the resolved plist (missing/non-bool -> NO),
+    // flips the value, stores a CFBoolean, synchronizes, then calls 74C8.
+    BOOL enabled = !DDCachedAutostartEnabled();
+    CFPreferencesSetAppValue(CFSTR("appbridge_autostart"),
+                             enabled ? kCFBooleanTrue : kCFBooleanFalse,
+                             kDDSettingsDomain);
+    CFPreferencesAppSynchronize(kDDSettingsDomain);
+    DDRepublishKnownAppBridgeSnapshot(NULL);
+    return enabled;
+}
+
+BOOL DDEvictCarPlayUIBundle(NSString *bundleIdentifier) {
+    // sub_85B8 is prefs-only logical eviction: no process kill, no view teardown.
+    if (bundleIdentifier.length == 0) return NO;
+
+    NSString *main = DDCachedStringValue(@"appbridge_split_carplay_ui") ?: @"";
+    NSArray<NSString *> *more = DDCachedCarPlayUIMore();
+
+    BOOL isMain = [main isEqualToString:bundleIdentifier];
+    BOOL isAdditional = [more containsObject:bundleIdentifier];
+    if (!isMain && !isAdditional) return NO;
+
+    NSMutableArray<NSString *> *nextMore = [more mutableCopy];
+    [nextMore removeObject:bundleIdentifier];
+    return DDSetCarPlayUI(isMain ? @"" : main, nextMore);
+}
+
+static void DDReloadAppBridge(CFNotificationCenterRef center,
                               void *observer,
                               CFStringRef name,
                               const void *object,
                               CFDictionaryRef userInfo) {
     (void)center; (void)observer; (void)name; (void)object; (void)userInfo;
+    // Mirrors the evidence-safe half of sub_29198: 74C8 republish. The following
+    // private 792C4 side effect remains out of the executable target until resolved.
     DDRepublishKnownAppBridgeSnapshot(NULL);
+}
+
+static void DDObserveImmediate(NSString *name) {
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                    NULL,
+                                    DDReloadAppBridge,
+                                    (__bridge CFStringRef)name,
+                                    NULL,
+                                    CFNotificationSuspensionBehaviorDeliverImmediately);
 }
 
 void DDReconstructionStart(void) {
@@ -184,12 +346,11 @@ void DDReconstructionStart(void) {
         // publisher in SpringBoard. Other role-specific private hooks remain evidence-only.
         if (role != DDRoleSpringBoard) return;
 
-        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
-                                        NULL,
-                                        DDSettingsChanged,
-                                        (__bridge CFStringRef)DD_N_SETTINGS_CHANGED,
-                                        NULL,
-                                        CFNotificationSuspensionBehaviorCoalesce);
+        // 27E20 B12: settings.changed, appbridge.listchanged and autostart.changed
+        // all use sub_29198 with Immediate suspension behavior.
+        DDObserveImmediate(DD_N_SETTINGS_CHANGED);
+        DDObserveImmediate(DD_N_APPBRIDGE_LISTCHANGED);
+        DDObserveImmediate(DD_N_AUTOSTART_CHANGED);
         DDRepublishKnownAppBridgeSnapshot(NULL);
     });
 }

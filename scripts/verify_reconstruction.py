@@ -59,12 +59,31 @@ for contract in [
     "DDDetectRole",
     "DDBuildKnownAppBridgeSnapshot",
     "DDRepublishKnownAppBridgeSnapshot",
+    "DDCachedStringValue",
+    "DDCachedCarPlayUIMore",
+    "DDCachedAutostartEnabled",
+    "DDReadKeyPaneEnabled",
+    "DDReadBridgedFontFloor",
+    "DDSetAppBridgeLayout",
+    "DDSetCarPlayUI",
+    "DDToggleAppBridgeAutostart",
+    "DDEvictCarPlayUIBundle",
     "DDReconstructionStart",
     "appbridge_split_enabled",
     "com.sensetechlab.appbridge.resolved",
+    "DD_N_AUTOSTART_CHANGED",
+    "CFNotificationSuspensionBehaviorDeliverImmediately",
+    "CFBooleanGetTypeID",
+    "return enabled || !valid",
+    "value >= 8 && value <= 96",
+    "duodash_ab_fontfloor_force",
 ]:
     if contract not in runtime:
         raise SystemExit(f"runtime contract missing: {contract}")
+
+shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
+if 'DD_N_AUTOSTART_CHANGED @"com.sensetechlab.autostart.changed"' not in shared:
+    raise SystemExit("autostart Darwin notification constant drifted from decompile")
 
 print(
     f"OK: {len(REQUIRED_SYNTHESIS)} synthesis modules present; "

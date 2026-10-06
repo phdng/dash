@@ -30,16 +30,17 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | DDz3 UI (153 methods) | DDzPicker.m (F-034 §6) | SYNTH-map (APPROXIMATION) | session-049: cluster map, bodies HYPOTHESIS (commit bodies ở DDzCommit.m; buildKitLevel asm-only UNKNOWN) |
 | DDz3 commit chain | DDzCommit.m (F-039) | SYNTH (APPROXIMATION) | session-046: 5 files picker→prefs bridge |
 | cpuiGen lifecycle | Cpuigen.m (F-040) | SYNTH (APPROXIMATION) | session-050: 5 hits + idiom + consume/stale-check từ evidence (init/reset UNKNOWN) |
-| Evict (3 hệ thống) | Evict.m (F-036/F-037) | SYNTH (APPROXIMATION) | session-045: 85B8/7764C/3AE48/3AE50 + caller matrix + verdicts (kill cross-ref Tweak.x) |
+| Evict (3 hệ thống) | Evict.m + ReconstructionRuntime.m (F-036/F-037) | SYNTH + BUILDABLE PARTIAL | session-071 promotes exact prefs-only 85B8 logical evict; 7764C liveness + 3AE48/3AE50 Home-transition remain synthesis/private-runtime scope |
 
 ## C. Prefs / settings
 | Subsystem | Artifact | Status | Ghi chú |
 |---|---|---|---|
 | Resolver/publisher 74C8 | functions/74C8.md + PrefsResolver.m + ReconstructionRuntime.m | RECORD + SYNTH + BUILDABLE PARTIAL | + F-041 errata; runtime phase-1 implements clearpanes/cache/notify + typed raw prefs, unresolved normalize/filter helpers deliberately omitted |
-| Setters (746C/84D8/637E8) | PrefsResolver.m (cross-ref) | SYNTH (cross-ref) | Bodies trong EVIDENCE, chưa tách record |
+| Setters (746C/84D8/637E8) | PrefsResolver.m + ReconstructionRuntime.m | BUILDABLE PARTIAL | session-071: layout 1..8, CarPlay UI normalize/dedup, resolved-plist autostart toggle compile-safe; DDz3 refresh/watchdog private UI side effects intentionally omitted |
 | Prefs UI spec + CN controllers | F-009/F-015 (inventory) | EVIDENCE-only | CN* bodies (~32 methods) chưa đọc |
 | Toggle matrix (~100 knobs) | EVIDENCE/toggle_matrix.md (F-025/P3-1) | EVIDENCE-only | Chưa bake hết vào bodies (mới refs chính) |
 | Migration/defaults (TrueDash) | Migration.m (F-019/F-020) | SYNTH (APPROXIMATION) | session-035 từ 4C34_import_defaults.md (license branch cross-ref License.m) |
+| Cache/pure-pref helpers | ReconstructionRuntime.m (7044/70FC/836C/8058/7EA4) | BUILDABLE PARTIAL | session-071: exact resolved-cache readers, keypane default semantics, font-floor override/parser 8..96; 29400/291F4 private DDz2+8C28 broadcasts omitted |
 | Language flow | LocaleFlow.m (F-030/B-20) | SYNTH (APPROXIMATION) | session-053 §A: write/post + read-4-tầng + whitelist-17 + 6 observers (Q-10 §B ở License.m) |
 
 ## D. CarPlay cloak / keyboard / display
@@ -80,7 +81,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 ## I. IPC / notify / IPC model
 | Subsystem | Artifact | Status | Ghi chú |
 |---|---|---|---|
-| Notify matrix (12+68+8) | EVIDENCE/notify_matrix.md + API_MAP.md | EVIDENCE-only | Đã merge API_MAP; chưa ledger hóa từng notify vào SIDE_EFFECTS |
+| Notify matrix (12+68+8) | EVIDENCE/notify_matrix.md + API_MAP.md + ReconstructionRuntime.m | BUILDABLE PARTIAL | session-071: SpringBoard 29198 trio settings.changed/listchanged/autostart.changed registered Immediate and routed to republish; other notify callbacks remain evidence-only |
 | NSDistributed fabric | F-026 + cnab_observers produce/consume matrix | EVIDENCE-only | Chưa tách per-notify records |
 
 ## J. Meta (contract/tracking)
