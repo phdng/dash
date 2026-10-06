@@ -1,4 +1,4 @@
-// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-077)
+// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-078)
 // This file intentionally implements only behavior whose data-flow can be represented without
 // unresolved private classes/functions. Unknown filtering/computation remains documented in the
 // synthesis files rather than being silently guessed here.
@@ -9,10 +9,13 @@
 #import <mach-o/dyld.h>
 #import <notify.h>
 #import <objc/message.h>
+#include <fcntl.h>
 #include <math.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 // libproc is linked explicitly by the Theos target. Keeping the declaration local avoids
@@ -51,6 +54,15 @@ static NSInteger gDDHostMirrorOrientation = 1;
 static NSString *gDDHostMirrorBids[3] = { nil, nil, nil };
 static BOOL gDDHostMirrorCarPlayUI[3] = { NO, NO, NO };
 static DDHostSlotSize gDDHostMirrorSizes[3] = { {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0} };
+static NSInteger gDDHostLandscapeOverrideOrientation = 0;
+static BOOL gDDHostLandscapeSwap = NO;
+static BOOL gDDHostLandscapeCSwap = NO;
+static double gDDHostLandscapeRotationDegrees = 0.0;
+
+static NSString * const kDDLandscapeOverridePath = @"/var/tmp/duodash_ab_lscape";
+static NSString * const kDDLandscapeTrippedPath = @"/var/tmp/duodash_ab_lscape.tripped";
+static const char * const kDDLandscapeInflightPath = "/var/tmp/duodash_ab_lscape.inflight";
+static const char * const kDDRespringPlannedPath = "/var/mobile/Library/DuoDash/respring_planned";
 
 // off_154160: five NSConstantDoubleNumber values recovered directly from __objc_arraydata.
 static const double kDDHostRetryDelays[] = { 0.0, 0.4, 0.9, 1.8, 3.5 };
@@ -681,12 +693,100 @@ BOOL DDParseLandscapeOverride(NSString * _Nullable text,
 
 NSInteger DDResolveSplitHostOrientationFromAcceptedOverride(NSString * _Nullable text) {
     // In 3CC44 a successfully accepted/parsed lscape override supplies qword_163D58 (3 or 4);
-    // otherwise qword_162F08 falls back to 3DFC8. Inter-process inflight/tripped acceptance is
-    // deliberately outside this helper; callers pass nil when that coordination rejects the file.
+    // otherwise qword_162F08 falls back to 3DFC8.
     NSInteger orientation = 0;
     return DDParseLandscapeOverride(text, &orientation, NULL, NULL, NULL)
         ? orientation
         : DDReadHostOrientation();
+}
+
+static void DDClearHostLandscapeOverrideState(BOOL unlinkInflightIfActive) {
+    if (unlinkInflightIfActive && gDDHostLandscapeOverrideOrientation != 0) {
+        unlink(kDDLandscapeInflightPath);
+    }
+    gDDHostLandscapeOverrideOrientation = 0;
+    gDDHostLandscapeSwap = NO;
+    gDDHostLandscapeCSwap = NO;
+    gDDHostLandscapeRotationDegrees = 0.0;
+}
+
+NSInteger DDResolveCoordinatedSplitHostOrientation(void) {
+    // Full evidence-safe coordination from 3CC44. State resets before inspecting lscape.
+    DDClearHostLandscapeOverrideState(NO);
+
+    NSString *overrideText = [NSString stringWithContentsOfFile:kDDLandscapeOverridePath
+                                                       encoding:NSUTF8StringEncoding
+                                                          error:nil];
+    if (!overrideText) return DDReadHostOrientation();
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if ([fm fileExistsAtPath:kDDLandscapeTrippedPath]) return DDReadHostOrientation();
+
+    NSString *inflightPath = [NSString stringWithUTF8String:kDDLandscapeInflightPath];
+    NSString *inflightText = [NSString stringWithContentsOfFile:inflightPath
+                                                       encoding:NSUTF8StringEncoding
+                                                          error:nil];
+    if (inflightText.length > 0 && inflightText.intValue >= 1) {
+        pid_t inflightPID = (pid_t)inflightText.intValue;
+        if (inflightPID != getpid()) {
+            struct stat plannedStat = {0};
+            struct stat inflightStat = {0};
+            if (stat(kDDRespringPlannedPath, &plannedStat) == 0 &&
+                stat(kDDLandscapeInflightPath, &inflightStat) == 0 &&
+                plannedStat.st_mtimespec.tv_sec >= inflightStat.st_mtimespec.tv_sec) {
+                unlink(kDDLandscapeInflightPath);
+                inflightText = nil;
+            }
+        }
+    }
+
+    if (inflightText.length > 0 && inflightText.intValue >= 1 &&
+        (pid_t)inflightText.intValue != getpid()) {
+        [@"tripped\n" writeToFile:kDDLandscapeTrippedPath
+                         atomically:NO
+                           encoding:NSUTF8StringEncoding
+                              error:nil];
+        unlink(kDDLandscapeInflightPath);
+        return DDReadHostOrientation();
+    }
+
+    NSInteger orientation = 0;
+    BOOL swap = NO;
+    BOOL cSwap = NO;
+    double rotation = 0.0;
+    if (!DDParseLandscapeOverride(overrideText, &orientation, &swap, &cSwap, &rotation)) {
+        return DDReadHostOrientation();
+    }
+
+    gDDHostLandscapeOverrideOrientation = orientation;
+    gDDHostLandscapeSwap = swap;
+    gDDHostLandscapeCSwap = cSwap;
+    gDDHostLandscapeRotationDegrees = rotation;
+
+    int fd = open(kDDLandscapeInflightPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd >= 0) {
+        char buffer[32] = {0};
+        int length = snprintf(buffer, sizeof(buffer), "%d\n", getpid());
+        if (length >= 1) write(fd, buffer, (size_t)length);
+        close(fd);
+    }
+
+    // Original 3CC44 calls sub_372CC here to hook _UIKeyboardLayerHostView. That private
+    // display/input side effect remains excluded; state/file coordination is preserved.
+    return orientation;
+}
+
+uint64_t DDPrepareSplitHostMirrorFromEnvironment(NSArray *bundleIdentifiers,
+                                                  const DDHostSlotSize *slotSizes,
+                                                  NSUInteger slotSizeCount,
+                                                  NSArray * _Nullable carPlayUIFlags) {
+    // 3CC44 rejects effective slot counts outside 1..3 before touching lscape coordination.
+    NSUInteger effectiveCount = MIN(bundleIdentifiers.count, slotSizeCount);
+    if (!slotSizes || effectiveCount < 1 || effectiveCount > 3) return 0;
+
+    NSInteger orientation = DDResolveCoordinatedSplitHostOrientation();
+    return DDPrepareSplitHostMirror(bundleIdentifiers, slotSizes, slotSizeCount,
+                                    carPlayUIFlags, orientation);
 }
 
 uint64_t DDPrepareSingleHostMirror(NSString * _Nullable bundleIdentifier,
@@ -697,6 +797,8 @@ uint64_t DDPrepareSingleHostMirror(NSString * _Nullable bundleIdentifier,
     // marks single-host mode, bumps generation, and resolves orientation through 3DFC8.
     DDHostSlotSize mirrorSize = DDResolveSingleHostMirrorSize(renderSize, screenBoundsSize);
     NSString *bundle = bundleIdentifier ?: @"";
+    // 3B2D8 unlinks an active split-lscape inflight marker before clearing that state.
+    DDClearHostLandscapeOverrideState(YES);
     return DDUpdateHostSlotMirror(@[bundle], &mirrorSize, 1, nil, DDReadHostOrientation(), NO);
 }
 
@@ -765,6 +867,40 @@ void DDResetHostSlotMirror(void) {
         gDDHostMirrorSizes[index] = (DDHostSlotSize){0.0, 0.0};
         gDDHostMirrorCarPlayUI[index] = NO;
     }
+    // 3AAF8 unlinks inflight only when qword_163D58 (accepted lscape orientation) is nonzero,
+    // then clears orientation/swap/cswap/rotation override state without advancing generation.
+    DDClearHostLandscapeOverrideState(YES);
+}
+
+DDHostSlotSize DDApplyLandscapeSwapToSize(DDHostSlotSize size) {
+    // Repeated exact transform in 3F3F0/400D0/40C5C/40DA8: swap only when an accepted
+    // landscape override is active, swap is enabled, and both dimensions are positive.
+    if (gDDHostLandscapeOverrideOrientation != 0 && gDDHostLandscapeSwap &&
+        size.width > 0.0 && size.height > 0.0) {
+        return (DDHostSlotSize){size.height, size.width};
+    }
+    return size;
+}
+
+BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size) {
+    // Evidence-safe state/IPC half of 3F3F0. Raw size + uiapp.state use the unswapped size;
+    // only the subsequent private scene-layout call applies the landscape swap transform.
+    if (slotIndex > 2 || ![NSThread isMainThread] || !gDDHostMirrorActive ||
+        gDDHostMirrorSlotCount <= slotIndex || gDDHostMirrorCarPlayUI[slotIndex] ||
+        size.width < 1.0 || size.height < 1.0) {
+        return NO;
+    }
+
+    NSString *bundleIdentifier = gDDHostMirrorBids[slotIndex] ?: @"";
+    if (bundleIdentifier.length == 0) return NO;
+
+    gDDHostMirrorSizes[slotIndex] = size;
+    DDPostUIAppState(bundleIdentifier, YES, gDDHostMirrorOrientation, YES,
+                     size.width, size.height);
+
+    // Original 3F3F0 then resets two private counters, probes the hosted scene, applies
+    // DDApplyLandscapeSwapToSize-equivalent dimensions, and calls sub_3F5C0. Omitted here.
+    return YES;
 }
 
 void DDSetHostSlotCarPlayUI(NSUInteger slotIndex, BOOL carPlayUI) {
@@ -826,6 +962,10 @@ NSDictionary *DDCurrentHostSlotMirror(void) {
         @"slotCount": @(gDDHostMirrorSlotCount),
         @"generation": @(gDDHostMirrorGeneration),
         @"orientation": @(gDDHostMirrorOrientation),
+        @"landscapeOverrideOrientation": @(gDDHostLandscapeOverrideOrientation),
+        @"landscapeSwap": @(gDDHostLandscapeSwap),
+        @"landscapeCSwap": @(gDDHostLandscapeCSwap),
+        @"landscapeRotationDegrees": @(gDDHostLandscapeRotationDegrees),
         @"bundleIdentifiers": bids,
         @"sizes": sizes,
         @"carPlayUI": carPlay,

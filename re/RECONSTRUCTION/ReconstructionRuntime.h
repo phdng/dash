@@ -89,6 +89,11 @@ FOUNDATION_EXPORT BOOL DDParseLandscapeOverride(NSString * _Nullable text,
                                                 BOOL * _Nullable cSwap,
                                                 double * _Nullable rotationDegrees);
 FOUNDATION_EXPORT NSInteger DDResolveSplitHostOrientationFromAcceptedOverride(NSString * _Nullable text);
+FOUNDATION_EXPORT NSInteger DDResolveCoordinatedSplitHostOrientation(void);
+FOUNDATION_EXPORT uint64_t DDPrepareSplitHostMirrorFromEnvironment(NSArray *bundleIdentifiers,
+                                                                   const DDHostSlotSize *slotSizes,
+                                                                   NSUInteger slotSizeCount,
+                                                                   NSArray * _Nullable carPlayUIFlags);
 FOUNDATION_EXPORT uint64_t DDPrepareSingleHostMirror(NSString * _Nullable bundleIdentifier,
                                                       DDHostSlotSize renderSize,
                                                       DDHostSlotSize screenBoundsSize);
@@ -105,6 +110,8 @@ FOUNDATION_EXPORT uint64_t DDUpdateHostSlotMirror(NSArray *bundleIdentifiers,
                                                   BOOL split);
 FOUNDATION_EXPORT void DDResetHostSlotMirror(void);
 FOUNDATION_EXPORT NSDictionary *DDCurrentHostSlotMirror(void);
+FOUNDATION_EXPORT DDHostSlotSize DDApplyLandscapeSwapToSize(DDHostSlotSize size);
+FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);
 FOUNDATION_EXPORT void DDSetHostSlotCarPlayUI(NSUInteger slotIndex, BOOL carPlayUI);
 FOUNDATION_EXPORT BOOL DDConvertHostSlotToCarPlayUI(NSUInteger slotIndex);
 FOUNDATION_EXPORT void DDDismissHostMirror(void);

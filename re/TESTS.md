@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-077)
+## Build (session-078)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
 - [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-076 batch (user-confirmed before session-077 changes). Current session adds single-host scaling/prep, split orientation/parser boundary, and dismiss bridge-off/reset logic; next pushed CI run remains the compiler gate.
-- [x] Static runtime contracts through session-077: verifier additionally checks 3B2D8 rscale/canvas sizing, strict 3CC44 landscape parser tokens/range, single/split mirror prepare APIs, and 3D8A8/3D990 main-queue dismiss/reset semantics.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-077 batch (user-confirmed before session-078 changes). Current session adds Darwin stat/open lscape coordination, inflight/tripped cleanup semantics, and 3F3F0 slot-resize state/IPC logic; next pushed CI run remains the compiler gate.
+- [x] Static runtime contracts through session-078: verifier additionally checks exact lscape `.tripped/.inflight/respring_planned` paths, mtime-seconds comparison, current-PID inflight rewrite flags, accepted lscape mirror state, reset cleanup, pure swap transform, and 3F3F0 raw resize/uiapp.state gates.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
