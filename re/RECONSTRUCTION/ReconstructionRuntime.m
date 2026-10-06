@@ -1698,6 +1698,55 @@ DDFBSSceneSettingsMutationPlan DDResolveFBSSceneSettingsMutationPlan(BOOL settin
     return plan;
 }
 
+DDFBSSceneSettingsExecutionAdmission DDResolveFBSSceneSettingsExecutionAdmission(uint64_t capturedGeneration,
+                                                                                 uint64_t currentGeneration,
+                                                                                 BOOL executorReentrant) {
+    // Exact 3F7C8 entry gate: stale generation stops silently; matching generation still stops
+    // when the executor-reentrant bit is already set. Only the accepted path enters reentrancy.
+    DDFBSSceneSettingsExecutionAdmission admission = {
+        DDFBSSceneSettingsExecutionAdmissionGenerationMismatch,
+        NO,
+    };
+    if (capturedGeneration != currentGeneration) return admission;
+    if (executorReentrant) {
+        admission.kind = DDFBSSceneSettingsExecutionAdmissionReentrant;
+        return admission;
+    }
+
+    admission.kind = DDFBSSceneSettingsExecutionAdmissionInvoke;
+    admission.shouldEnterReentrantState = YES;
+    return admission;
+}
+
+DDFBSSceneSettingsInvocationOutcome DDResolveFBSSceneSettingsInvocationOutcome(NSInteger slotIndex,
+                                                                                BOOL invocationThrewException,
+                                                                                BOOL orientationChanged) {
+    // Raw ARM64 confirms the 3F7C8 post-invocation behavior. Exception exits use a dedicated
+    // counter and never mark the slot. Normal returns mark unsigned slots 0..2, then choose the
+    // orientation-changed or general counter. All entered paths clear the reentrant state.
+    DDFBSSceneSettingsInvocationOutcome outcome = {
+        NO,
+        slotIndex,
+        DDFBSSceneSettingsInvocationCounterNone,
+        NO,
+        NO,
+    };
+    outcome.shouldClearReentrantState = YES;
+
+    if (invocationThrewException) {
+        outcome.counterKind = DDFBSSceneSettingsInvocationCounterException;
+        outcome.shouldAttemptCounterDecrement = YES;
+        return outcome;
+    }
+
+    outcome.shouldMarkSlot = ((NSUInteger)slotIndex <= 2);
+    outcome.counterKind = orientationChanged
+        ? DDFBSSceneSettingsInvocationCounterOrientationChanged
+        : DDFBSSceneSettingsInvocationCounterGeneral;
+    outcome.shouldAttemptCounterDecrement = YES;
+    return outcome;
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.

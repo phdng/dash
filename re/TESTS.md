@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-091)
+## Build (session-092)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
 - [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-090 batch (`3133026`, user-confirmed before session-091 changes).
-- [x] Static runtime contracts through session-091: verifier checks 3F5C0 invalid-input/reentrant/13-attempt/capability/signature/dispatch ordering, leading `v` + contained `@?` update-method signature, exact 3ECD0 3-arg void q/Q setter signature, and 3F990 independent frame plus nonzero-differing orientation mutation plan. No dispatch/private setter/counter mutation.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-091 batch (`22ba993`, user-confirmed before session-092 changes).
+- [x] Static runtime contracts through session-092: verifier checks 3F7C8 captured-generation equality + reentrant admission, normal unsigned slot 0..2 mark with orientation-changed/general counter selection, exception-only 162F2C counter selection with no mark, and reentrant-clear outcome. No retained-block/private-selector call or slot/flag/counter mutation.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

@@ -172,6 +172,32 @@ typedef struct {
     BOOL shouldRecordOrientationChange;
 } DDFBSSceneSettingsMutationPlan;
 
+typedef NS_ENUM(NSInteger, DDFBSSceneSettingsExecutionAdmissionKind) {
+    DDFBSSceneSettingsExecutionAdmissionGenerationMismatch = 0,
+    DDFBSSceneSettingsExecutionAdmissionReentrant = 1,
+    DDFBSSceneSettingsExecutionAdmissionInvoke = 2,
+};
+
+typedef struct {
+    DDFBSSceneSettingsExecutionAdmissionKind kind;
+    BOOL shouldEnterReentrantState;
+} DDFBSSceneSettingsExecutionAdmission;
+
+typedef NS_ENUM(NSInteger, DDFBSSceneSettingsInvocationCounterKind) {
+    DDFBSSceneSettingsInvocationCounterNone = 0,
+    DDFBSSceneSettingsInvocationCounterGeneral = 1,
+    DDFBSSceneSettingsInvocationCounterOrientationChanged = 2,
+    DDFBSSceneSettingsInvocationCounterException = 3,
+};
+
+typedef struct {
+    BOOL shouldMarkSlot;
+    NSInteger slotIndex;
+    DDFBSSceneSettingsInvocationCounterKind counterKind;
+    BOOL shouldAttemptCounterDecrement;
+    BOOL shouldClearReentrantState;
+} DDFBSSceneSettingsInvocationOutcome;
+
 typedef struct {
     BOOL valid;
     double boundsWidth;
@@ -382,6 +408,12 @@ FOUNDATION_EXPORT DDFBSSceneSettingsMutationPlan DDResolveFBSSceneSettingsMutati
                                                                                        NSInteger desiredOrientation,
                                                                                        BOOL orientationSetterSignatureSupported,
                                                                                        NSInteger currentOrientation);
+FOUNDATION_EXPORT DDFBSSceneSettingsExecutionAdmission DDResolveFBSSceneSettingsExecutionAdmission(uint64_t capturedGeneration,
+                                                                                                    uint64_t currentGeneration,
+                                                                                                    BOOL executorReentrant);
+FOUNDATION_EXPORT DDFBSSceneSettingsInvocationOutcome DDResolveFBSSceneSettingsInvocationOutcome(NSInteger slotIndex,
+                                                                                                 BOOL invocationThrewException,
+                                                                                                 BOOL orientationChanged);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);

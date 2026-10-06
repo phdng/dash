@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-06 session-091 (buildable reconstruction phase)_
+_Last updated: 2026-10-06 session-092 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-22 (session-091): GitHub Actions session-090 (`3133026`) đã xanh theo user. Executable target thêm data-only 3F5C0 executor admission với exact invalid-input→reentrant→attempt<13→geometry/selector→method-signature ordering; update method cần leading `v` + chứa `@?`. 3ECD0 setter signature exact 3 args + void + q/Q; 3F990 frame/orientation mutation plan giữ frame độc lập và orientation chỉ khi current nonzero/different. Không dispatch, private setter hay counter mutation.
+BUILDABLE RUNTIME PHASE-23 (session-092): GitHub Actions session-091 (`22ba993`) đã xanh theo user. Executable target thêm data-only 3F7C8 async execution admission/outcome: captured generation phải match current và reentrant bit clear; normal return mark unsigned slot 0..2 rồi chọn orientation-changed/general counter, exception không mark và chọn dedicated exception counter; mọi entered path clear reentrancy. Không block/private selector call hay slot/flag/counter mutation.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-091):
-- R-090 data-only 3F5C0 executor admission/method-signature decisions plus 3ECD0/3F990 setter/frame-orientation mutation plans.
+## LAST COMPLETED TASK (session-092):
+- R-091 data-only 3F7C8 generation/reentrancy admission plus normal/exception slot-mark/counter outcome descriptors.
 
 ## CURRENT TASK:
-- R-090 hoàn tất local; commit-only handoff. User sẽ tự push và báo compiler green/pass trước khi R-091 bắt đầu.
+- R-091 hoàn tất local; commit-only handoff. User sẽ tự push và báo compiler green/pass trước khi R-092 bắt đầu.
 
 ## NEXT TASK:
-- Sau compiler xanh, R-091 inspect `3F7C8` execution-generation/reentrancy gate và post-invocation slot-mark/counter outcome; chỉ promote data-only generation/mark/counter decisions, không invoke retained block/private selector hay mutate `byte_163E9B`, `word_163E98`, counters. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
+- Sau compiler xanh, R-092 inspect `4138C` sceneHandle host/aux update routing và foreground-based original-callback suppression; chỉ promote caller-supplied scene/identity/settings/foreground decisions plus update descriptor, không invoke `3F5C0`, `3E670`, identity traversal, settings selectors, hay suppress/call original callback. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-091):
+## FILES CHANGED (session-092):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-091.md`.
+- Mới: `LOG/session-092.md`.
 
 ## TEST STATUS:
-Session-090 GitHub Actions build GREEN (`3133026`, user-confirmed). Session-091 local verifier + py_compile + `git diff --check` PASS after final docs/log edits; CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit; user tự push và báo compiler result. Dynamic device tests vẫn pending.
+Session-091 GitHub Actions build GREEN (`22ba993`, user-confirmed). Session-092 local verifier + py_compile + `git diff --check` PASS after final docs/log edits; CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit; user tự push và báo compiler result. Dynamic device tests vẫn pending.
