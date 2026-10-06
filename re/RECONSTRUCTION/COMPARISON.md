@@ -173,3 +173,18 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | ConnChanged/ScreenDisconnect | bool-gate → log/disconnect; !connected → disconnect | DDOnCarPlayConnChanged/DDOnScreenDisconnect reproduced | 229FC reason UNKNOWN | 229FC/22A8C.c:9 | INFERRED |
 | Disconnect teardown | active-gated dismiss/invalidate/state/posts | DDDoCarPlayDisconnect reproduced | 371F4/146308 UNKNOWN | 227E4.c:9 | INFERRED |
 | CarWindow registry | gates + size/pid dicts + pid-change clear + nudger | DDOnCarWindow reproduced | 1635C8/nudger-arithmetic UNKNOWN | 99D4.c:9 | INFERRED |
+
+## SpikeHosting (synthesis bodies) — INFERRED overall (session-057, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (SpikeHosting.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| skipEvict single-use gate | 3CC44:311 duy nhất; =1 suppress, =0 +flag-vắng no-evict | DDSpikeHostSlots reproduced | evictFromPhone nội bộ UNKNOWN | F-035 3CC44 | INFERRED |
+| Slots guard + error path | 0..3 (≥4 nil); nil → dismiss + cpdisconnect | loop reproduced | return-count-check HYPOTHESIS | F-035 3CC44 | INFERRED |
+| Create/degrade 3 nhánh | CPUI tag-7020 / SB chain + 3 degrades / empty placeholder | DDSpikeCreateSlot/DDDegradeSlot reproduced | 36E98-success HYPOTHESIS | F-035 3BBF0/3C1F0 | INFERRED |
+| Geometry pushes | delays off_154160 + captures gen/size/orient/bid | DDScheduleGeometryPushes reproduced | delays + 3DC38 UNKNOWN | F-035 3D4FC | INFERRED |
+
+## HostSplit (synthesis bodies) — INFERRED overall (session-057, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (HostSplit.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| 2-pane wrapper | nil-coalesce + [L,R] + onHosted=nil | DDHostSplit reproduced | — | F-031 217EC | INFERRED |
+| In-place guards + convert | guards→0; convert + rollback-nhưng-1 + async 100ms | DDSwitchCarPlayUIInPlace reproduced | return-semantics HYPOTHESIS | F-031 208F4 | INFERRED |
+| Continuation | gates + 85B8 + slots + 9424 cpuiGen++ + log | DDInPlaceContinuation reproduced | evict-nghĩa HYPOTHESIS | F-031 26FE4 | INFERRED |

@@ -866,3 +866,87 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: gates → lazy dicts → pid-change clear → persist → lookup → nudger
 - FAILURE: gates fail → return (không ghi); 1635C8/nudger-arithmetic UNKNOWN
 - EVIDENCE: RECONSTRUCTION/CNABConn.m (cnab_observers §6)
+
+## SE-SPIKE-001 — skipEvict single-use gate
+- FUNCTION: spikeHostSlots:natives:carPlayUI:skipEvict: (3CC44.c:311; SpikeHosting.m)
+- CONDITION: `!skipEvict && exists(/var/tmp/duodash_ab_split_evict)` (v49 :308-309)
+- EFFECT: conditional DDz2 call (evictFromPhone — nội bộ UNKNOWN)
+- TARGET: [DDz2 evictFromPhone] (suppress khi skipEvict=1; no-op khi flag vắng)
+- DATA: a6 use duy nhất cả chain (decl :9 + check :311); KHÔNG forward vào hàm con
+- TIMING: đồng bộ trong spike loop setup
+- THREAD: caller thread (2565C present-commit)
+- ORDER: trước slot loop (sau globals init :102-124)
+- FAILURE: N/A (ngoài điểm này không kill/unhost/dismiss nào khác)
+- EVIDENCE: RECONSTRUCTION/SpikeHosting.m (F-035; sửa giả thiết "forward nguyên vẹn")
+
+## SE-SPIKE-002 — slots guard + error dismiss
+- FUNCTION: 3CC44 loop (:74-80, :292-305; SpikeHosting.m)
+- CONDITION: v14=min(counts); guard 0..3 (v14>=4 → return nil, không tạo/dismiss/notify)
+- EFFECT: view creation (via spikeCreateSlot:) + NSMutableArray slots (autoreleased) + error-path dismiss
+- TARGET: slots[k] (bid sanitized 3DD4C + native CGSizeValue); error nil → dismiss + post cpdisconnect + return nil (:298-304)
+- DATA: return HYPOTHESIS caller 2565C kiểm tra count; không xóa slot trực tiếp (chỉ evictFromPhone gián tiếp)
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: sau SE-SPIKE-001 + IPC-FS (lscape/.tripped/.inflight/respring + 372CC) + globals (163DC8++/163DC0/163D48/163D50/162F08)
+- FAILURE: spikeCreateSlot==nil → dismiss + notify (nhánh duy nhất); v14>=4 → nil silent
+- EVIDENCE: RECONSTRUCTION/SpikeHosting.m (F-035)
+
+## SE-SPIKE-003 — slot create/degrade paths
+- FUNCTION: spikeCreateSlot:index:native: (3BBF0.c:10) + degradeSlot: (3C1F0.c:9; SpikeHosting.m)
+- CONDITION: 3 nhánh — CPUI flag (163D50) → tag-7020 pane; SB bid non-empty → entity/VC chain (3 degrade reasons → placeholder 36E98); bid rỗng → placeholder
+- EFFECT: view alloc + VC ivars + globals (163D88/163D30[]/163D90[]) + degrade unhost (removeFromSuperview + invalidate, KHÔNG kill) + placeholder
+- TARGET: slot view (SB VC.view / tag-7020 / 36E98); ivar self+8/24/32; 163D30[slot] clear khi degrade
+- DATA: CPUI fallback carPlayDisplaySize (DDz1-use duy nhất) → <2 Zero else *2; setRequestedMode:2 + homeGrabberDisplayMode:1; 2 nil-cases (class-nil, index>2) không degrade
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: trong SE-SPIKE-002 loop (sau globals 3CC44)
+- FAILURE: entity/VC/view-nil → degradeSlot (luôn placeholder — 36E98-success HYPOTHESIS)
+- EVIDENCE: RECONSTRUCTION/SpikeHosting.m (F-035)
+
+## SE-SPIKE-004 — geometry pushes schedule
+- FUNCTION: scheduleGeometryPushesForSlot: (3D4FC.c:9; SpikeHosting.m; caller 3CC44:313-314)
+- CONDITION: slot<=2 + bid non-empty + !CPUI-flag (else early-return)
+- EFFECT: dispatch_after blocks (delays off_154160 — nội dung UNKNOWN)
+- TARGET: main queue blocks 3DC38 captures (generation=163DC8, nativeSize=163D90, orientation=162F08, bid copy)
+- DATA: —
+- TIMING: async theo delays
+- THREAD: main (dispatch_after)
+- ORDER: sau slot loop (mỗi slot)
+- FAILURE: early-returns (không throws); downstream 3DC38 UNKNOWN
+- EVIDENCE: RECONSTRUCTION/SpikeHosting.m (F-035)
+
+## SE-HSPLIT-001 — 2-pane wrapper
+- FUNCTION: hostSplitL:right:skipEvict: (217EC.c:10-42; HostSplit.m)
+- CONDITION: unconditional (nil-coalesce L/R → @"")
+- EFFECT: array build + hostSlots call (onHosted=nil → 2565C skip callback)
+- TARGET: [L,R] arrayWithObjects:count:2 → hostSlots(...,0)
+- DATA: —
+- TIMING: đồng bộ (async nằm trong 218D8/2410C chain)
+- THREAD: caller thread
+- ORDER: entry wrapper (không slots/evict/DDz/IPC/globals riêng, không chạm layout)
+- FAILURE: N/A
+- EVIDENCE: RECONSTRUCTION/HostSplit.m (F-031)
+
+## SE-HSPLIT-002 — in-place switch guards + convert
+- FUNCTION: switchCarPlayUIInPlace:gen: (208F4.c:9; HostSplit.m; caller 202D0 envOnly)
+- CONDITION: guards từ chối → return 0 (!active/split/visible, inFlight/maximized/gen/layout/count/word-flags); bids khớp hostedSlotBids + size>=1 + 22D64 (else 0)
+- EFFECT: slot convert (convertSlotToCarPlayUI: + 26F60 view + replacePaneAtSlot:) + rollback (setSlot:0 đã làm) + rebuildMat + async completion (25EDC 100ms → 25FE0 else direct)
+- TARGET: word_163A00[slot]=1; v112/v107 merges; 163970 pending; 763E0 kill-conditional (R3); block 26FE4 captures
+- DATA: return 1 = accept KỂ CẢ rollback một phần (semantics HYPOTHESIS); eligible flags 22E40; index order giữ nguyên HYPOTHESIS
+- TIMING: convert đồng bộ + completion async 100ms
+- THREAD: caller thread + 25EDC/25FE0
+- ORDER: convert loop → rebuildMat → merge → 763E0 → schedule continuation
+- FAILURE: convert-fail → rollback + return 1 (không phải lỗi); guards-fail → return 0 → caller rơi vào host block
+- EVIDENCE: RECONSTRUCTION/HostSplit.m (F-031)
+
+## SE-HSPLIT-003 — in-place continuation
+- FUNCTION: 26FE4 block (208F4.c:544-573, body :81-260; HostSplit.m)
+- CONDITION: gates active&&split&&visible&&carPlayConnected (trong continuation)
+- EFFECT: DDz calls + prefs evict + ack post
+- TARGET: clear 163970; 7764C check; 85B8 evict; setSlot:1/0 + spikeCreateSlot: + replacePaneAtSlot: + scheduleGeometryPushes: + rebuildMatForEnvironment + 9424(1,...,cpuiGen=162E60++) + 4D0F4("split.cpui-in-place")
+- DATA: —
+- TIMING: async (sau 25EDC 100ms / 25FE0)
+- THREAD: continuation queue
+- ORDER: sau SE-HSPLIT-002
+- FAILURE: gates fail trong continuation → skip (evict = setSlot+replacePane+85B8 HYPOTHESIS)
+- EVIDENCE: RECONSTRUCTION/HostSplit.m (F-031)
