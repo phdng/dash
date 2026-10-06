@@ -2265,6 +2265,54 @@ DDFBSSceneSettingsInvocationOutcome DDResolveFBSSceneSettingsInvocationOutcome(N
     return outcome;
 }
 
+DDFBSSceneSettingsExecutorExceptionOutcome DDResolveFBSSceneSettingsExecutorExceptionOutcome(DDFBSSceneSettingsExecutorExceptionSite site,
+                                                                                              NSInteger currentExceptionCounter) {
+    // 3F5C0 has no LSDA entry of its own, so exceptions from its Objective-C/runtime/helper calls
+    // propagate to the caller. If the throw occurs after dword_163E88 was incremented, that attempt
+    // count is not rolled back. 3F7C8 does have LSDA 0x1149B4: only the private selector invocation
+    // at 3F890..3F8A0 is typed-caught. The expected catch decrements dword_162F2C only when positive,
+    // never marks a slot, then clears reentrancy and disposes captures. A nonmatching catch type takes
+    // the cleanup/resume-unwind path and notably does not clear byte_163E9B before unwinding.
+    DDFBSSceneSettingsExecutorExceptionOutcome outcome = {
+        NO,
+        NO,
+        NO,
+        NO,
+        DDFBSSceneSettingsInvocationCounterNone,
+        NO,
+        currentExceptionCounter,
+        NO,
+        NO,
+        NO,
+        NO,
+    };
+
+    if (site == DDFBSSceneSettingsExecutorExceptionSiteOuterBeforeAttemptIncrement) {
+        outcome.exceptionWouldResumeUnwind = YES;
+        return outcome;
+    }
+
+    if (site == DDFBSSceneSettingsExecutorExceptionSiteOuterAfterAttemptIncrement) {
+        outcome.exceptionWouldResumeUnwind = YES;
+        outcome.attemptCountWouldRemainIncremented = YES;
+        return outcome;
+    }
+
+    if (site == DDFBSSceneSettingsExecutorExceptionSitePrivateInvocation) {
+        outcome.shouldSwallowException = YES;
+        outcome.counterKind = DDFBSSceneSettingsInvocationCounterException;
+        outcome.shouldDecrementExceptionCounter = currentExceptionCounter > 0;
+        if (outcome.shouldDecrementExceptionCounter) {
+            outcome.nextExceptionCounter = currentExceptionCounter - 1;
+        }
+        outcome.shouldClearReentrantState = YES;
+        outcome.shouldDisposeInvocationCaptures = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        outcome.nonmatchingCatchTypeWouldClearReentrantState = NO;
+    }
+    return outcome;
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.

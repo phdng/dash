@@ -413,6 +413,27 @@ typedef struct {
     BOOL shouldClearReentrantState;
 } DDFBSSceneSettingsInvocationOutcome;
 
+typedef NS_ENUM(NSInteger, DDFBSSceneSettingsExecutorExceptionSite) {
+    DDFBSSceneSettingsExecutorExceptionSiteNone = 0,
+    DDFBSSceneSettingsExecutorExceptionSiteOuterBeforeAttemptIncrement = 1,
+    DDFBSSceneSettingsExecutorExceptionSiteOuterAfterAttemptIncrement = 2,
+    DDFBSSceneSettingsExecutorExceptionSitePrivateInvocation = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL exceptionWouldResumeUnwind;
+    BOOL attemptCountWouldRemainIncremented;
+    BOOL shouldMarkSlot;
+    DDFBSSceneSettingsInvocationCounterKind counterKind;
+    BOOL shouldDecrementExceptionCounter;
+    NSInteger nextExceptionCounter;
+    BOOL shouldClearReentrantState;
+    BOOL shouldDisposeInvocationCaptures;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+    BOOL nonmatchingCatchTypeWouldClearReentrantState;
+} DDFBSSceneSettingsExecutorExceptionOutcome;
+
 typedef struct {
     BOOL valid;
     double boundsWidth;
@@ -678,6 +699,8 @@ FOUNDATION_EXPORT DDFBSSceneSettingsExecutionAdmission DDResolveFBSSceneSettings
 FOUNDATION_EXPORT DDFBSSceneSettingsInvocationOutcome DDResolveFBSSceneSettingsInvocationOutcome(NSInteger slotIndex,
                                                                                                  BOOL invocationThrewException,
                                                                                                  BOOL orientationChanged);
+FOUNDATION_EXPORT DDFBSSceneSettingsExecutorExceptionOutcome DDResolveFBSSceneSettingsExecutorExceptionOutcome(DDFBSSceneSettingsExecutorExceptionSite site,
+                                                                                                               NSInteger currentExceptionCounter);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);
