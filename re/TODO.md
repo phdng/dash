@@ -92,5 +92,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-049] P4 slice-7: SIDE_EFFECTS (SE-PREFS-001 + SE-MIG-001..002 + SE-LOCALE-001) + COMPARISON (3 sections) — session-062, không claim mới.
 - [x] [R-050] P4 slice-8: SIDE_EFFECTS (SE-LIC-001..003 + SE-KEY-001..002 + SE-KBD-001 + SE-KBOBS-001) + COMPARISON (4 sections) — session-063, không claim mới.
 - [x] [R-051] P4 slice-9: SIDE_EFFECTS (SE-SIRI-001..003 + SE-SLEEP-001..002) + COMPARISON (2 sections SiriProbe/CarSleeper) — session-064, không claim mới.
-- [ ] [R-052] scope khác — quyết scope session sau (GAPs còn lại: P4 slices tiếp theo — data/HUD/carplay/misc/present?, P1 4C34 infeasible, blocked P0-3).
+- [x] [R-052] P4 slice-10: SIDE_EFFECTS (SE-DATA-001..003 + SE-HUD-001..002) + COMPARISON (2 sections DataRouter/HudBle) — session-065, không claim mới.
+- [ ] [R-053] scope khác — quyết scope session sau (GAPs còn lại: P4 slices tiếp theo — carplay-cloak/misc/present/init?, P1 4C34 infeasible, blocked P0-3).
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.

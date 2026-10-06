@@ -1394,3 +1394,63 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: notify → save/restore → delayed-confirm
 - FAILURE: handler bodies 85D8C-85FA0/86338-864C4 chưa tách record (cross-ref notify_matrix)
 - EVIDENCE: RECONSTRUCTION/CarSleeper.m (F-021; latch "carsleep" F-002)
+
+## SE-DATA-001 — registrar (17 + 1 notifies)
+- FUNCTION: 7F14C registrar + 715C0 relayed-ingest (DataRouter.m; F-022)
+- CONDITION: registration unconditional (Immediate trừ update/Coalesce)
+- EFFECT: observer installs (handlers, phần lớn cross-ref subsystems khác)
+- TARGET: duodash/truedash navUpdate/speedLimit/cameraAlert → 7F5A4/7F974/7FBA4; navprovider.update/rescan/selftest → 7FBBC/7FC04/7FC4C (queue 1647C0); voicecmd.rescan → 7FD94; settings.changed → 7FDDC; + ble.action/latch.reset/respring.request/crashreport.send/mapBgUpdate/mapBgClear (cross-ref F-023/F-024/B-08); navprovider.relayed → 71664 (715C0, guard !started)
+- DATA: —
+- TIMING: install lúc ctor
+- THREAD: notify threads + queue 1647C0
+- ORDER: register → dispatch per-notify
+- FAILURE: N/A (registrar)
+- EVIDENCE: RECONSTRUCTION/DataRouter.m (F-022; 715C0 CNABNavData ingest)
+
+## SE-DATA-002 — nav/speed/camera race + publish
+- FUNCTION: 7F5A4/7F974/7FBA4 + 82830/84040 (DataRouter.m; F-022)
+- CONDITION: 83FDC duo/true phân biệt; timestamp-race GMaps-vs-Waze plists
+- EFFECT: DataRouter submit + relayed posts + speed.plist write
+- TARGET: submitNav/submitSpeed{limit,confidence,source,timestamp} → 82830(navUpdate/speedLimit.relayed) + 84040; write /var/tmp/com.sensetechlab.speed.plist; cameraAlert 83FDC→84040 passthrough
+- DATA: true-variants (truedash_waze_nav/data + caches 164790/164788)
+- TIMING: đồng bộ trong handler
+- THREAD: notify thread
+- ORDER: read-plists → race → submit → relayed + file
+- FAILURE: worker bodies 83FDC/submit/82830/84040 chưa tách record (cross-ref F-022)
+- EVIDENCE: RECONSTRUCTION/DataRouter.m (F-022)
+
+## SE-DATA-003 — ingest + reload + non-nav cross-refs
+- FUNCTION: 7FBBC/7FC04/7FC4C/7FD94/7FDDC + cross-refs (DataRouter.m)
+- CONDITION: provider/voice/settings notifies (ingest async queue 1647C0; settings full-reload)
+- EFFECT: queue-ingest + full-reload + subsystem fan-out (không bodies ở đây)
+- TARGET: update/rescan/selftest → blocks 12FB10/30/50 (opaque Q-12); voicecmd → 12FBD0 (SiriProbe pipeline); settings → 80E50 + reloadSettings + 7FE78/7FF7C/8009C + 12FC10 + 7FC94; non-nav: ble.action→80468 / latch.reset→80574 / respring→8097C / crash→80C04 / mapBg→80C74/80E04 / listchanged→91DCC (cross-ref subsystems)
+- DATA: —
+- TIMING: async ingest + sync settings-prep
+- THREAD: queue 1647C0 + notify thread
+- ORDER: notify → ingest/reload → subsystem handlers
+- FAILURE: block bodies opaque (Q-12); worker bodies cross-ref
+- EVIDENCE: RECONSTRUCTION/DataRouter.m (F-022)
+
+## SE-HUD-001 — pairing flow (wiring CONFIRMED, bodies UNKNOWN)
+- FUNCTION: 80468 + 96174 (HudBle.m; F-024)
+- CONDITION: prefs toggle hud_paired → post ble.action; ble.status.changed → UI refresh
+- EFFECT: BLEManager pair/unpair + prefs-sync + UI refresh (bodies pair/unpair UNKNOWN)
+- TARGET: 80468: Sync + hud_paired ? pair : unpair (guard 1647C8); 96174: Sync + async main 96DC8; server_health + firmware rows hiển thị state
+- DATA: —
+- TIMING: notify-driven (+async main refresh)
+- THREAD: notify + main
+- ORDER: toggle → post → pair/unpair → status → refresh
+- FAILURE: pair/unpair internals UNKNOWN (ngoài strings scan-machinery)
+- EVIDENCE: RECONSTRUCTION/HudBle.m (F-024 + notify_matrix; KHÔNG nâng cấp nhãn)
+
+## SE-HUD-002 — scan/prefs/brightness/speed mappings (strings-level)
+- FUNCTION: mapping-only (HudBle.m; strings + F-022/F-008/F-013 cross-refs)
+- CONDITION: N/A (không bodies để gate)
+- EFFECT: (chưa observe — chỉ tồn tại keys/selectors)
+- TARGET: scan selectors (_beginScan/_armScanTimeout/_cancelScanTimeout/_scanTimeoutSource/_isScanning/_peripheral/didDiscoverServices:) + UI strings (Scanning…/status rows); prefs keys (paired/uuid/sha256/firmware/orientation/brightness/status); BKS get/set brightness imports (callers UNKNOWN); speed sources (GPS-vs-OBD2) + correction keys + simspeed-override + spec keys + notifies + navbubble display rows
+- DATA: SHA256-UUID HYPOTHESIS privacy; correction-formula + scan-params + UUIDs UNKNOWN
+- TIMING: N/A
+- THREAD: N/A
+- ORDER: N/A
+- FAILURE: N/A (mapping, không behavior)
+- EVIDENCE: RECONSTRUCTION/HudBle.m (KHÔNG nâng cấp nhãn — bodies chưa đọc)

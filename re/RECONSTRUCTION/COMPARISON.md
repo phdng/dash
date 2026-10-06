@@ -312,3 +312,16 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 |---|---|---|---|---|---|
 | Daemon init | once + observers + radios + dirs + boot_id + IOPS + 8s | SE-SLEEP-001 reproduced | branch CF duy nhất (B-20) | F-021 + notify_matrix | INFERRED |
 | Radio handlers + enable | save/restore priors + settings + testunblank | SE-SLEEP-002 reproduced | handler bodies cross-ref | F-021/F-002 | INFERRED |
+
+## DataRouter (synthesis bodies) — INFERRED overall (session-065, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (DataRouter.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Registrar 17+1 | 7F14C + 715C0 installs | SE-DATA-001 reproduced | handler bodies subsystems khác | F-022 | INFERRED |
+| Nav/speed/camera race | timestamp-race + relayed + speed.plist | SE-DATA-002 reproduced | worker bodies cross-ref | F-022 | INFERRED |
+| Ingest + reload + fan-out | queue-ingest + full-reload + cross-refs | SE-DATA-003 reproduced | blocks opaque Q-12 | F-022 | INFERRED |
+
+## HudBle (mappings — KHÔNG nâng cấp nhãn) — session-065
+| Feature | Original (evidence) | Reconstruction (HudBle.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Pairing flow wiring | toggle→post→pair/unpair→status→refresh | SE-HUD-001 reproduced | pair/unpair bodies UNKNOWN | F-024 + notify rows | INFERRED |
+| Scan/prefs/brightness/speed | keys/selectors tồn tại (strings) | SE-HUD-002 mapping-only | consumers/bodies UNKNOWN | strings + F-022/F-008 | INFERRED |
