@@ -387,6 +387,19 @@ typedef struct {
     BOOL shouldRecordOrientationChange;
 } DDFBSSceneSettingsMutationPlan;
 
+typedef NS_ENUM(NSInteger, DDFBSSceneSettingsMutationExceptionSite) {
+    DDFBSSceneSettingsMutationExceptionSiteNone = 0,
+    DDFBSSceneSettingsMutationExceptionSiteFramePath = 1,
+    DDFBSSceneSettingsMutationExceptionSiteOrientationPath = 2,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldContinueOrientationAfterCatch;
+    BOOL shouldContinueCleanupAfterCatch;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDFBSSceneSettingsMutationExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDFBSSceneSettingsExecutionAdmissionKind) {
     DDFBSSceneSettingsExecutionAdmissionGenerationMismatch = 0,
     DDFBSSceneSettingsExecutionAdmissionReentrant = 1,
@@ -693,6 +706,7 @@ FOUNDATION_EXPORT DDFBSSceneSettingsMutationPlan DDResolveFBSSceneSettingsMutati
                                                                                        NSInteger desiredOrientation,
                                                                                        BOOL orientationSetterSignatureSupported,
                                                                                        NSInteger currentOrientation);
+FOUNDATION_EXPORT DDFBSSceneSettingsMutationExceptionOutcome DDResolveFBSSceneSettingsMutationExceptionOutcome(DDFBSSceneSettingsMutationExceptionSite site);
 FOUNDATION_EXPORT DDFBSSceneSettingsExecutionAdmission DDResolveFBSSceneSettingsExecutionAdmission(uint64_t capturedGeneration,
                                                                                                     uint64_t currentGeneration,
                                                                                                     BOOL executorReentrant);

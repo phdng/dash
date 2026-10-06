@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-107)
+## Build (session-108)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
 - [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-106 batch (`dc9c07f`, user-confirmed before session-107 changes).
-- [x] Static runtime contracts through session-107: verifier checks no-local-LSDA 3F5C0 exceptions → propagate, with post-attempt-increment throws preserving the increment; 3F7C8 private invocation typed exception → swallow, no slot mark, exact positive-only exception-counter decrement, reentrancy clear + capture dispose; nonmatching catch type → cleanup/resume-unwind without reentrancy clear. No synthesized/caught exception, private selector/block invocation, slot/reentrancy/counter mutation, or global mutation.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-107 batch (`68714ab`, user-confirmed before session-108 changes).
+- [x] Static runtime contracts through session-108: verifier checks LSDA/raw-ARM64-confirmed 3F990 frame-path exception → swallow + continue orientation processing; orientation signature/current-orientation/setter exception → swallow + final cleanup/return; nonmatching catch discriminator → resume unwind. No synthesized/caught exception, runtime lookup/private setter invocation, or settings/byref mutation.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

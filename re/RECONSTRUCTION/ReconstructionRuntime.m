@@ -2216,6 +2216,25 @@ DDFBSSceneSettingsMutationPlan DDResolveFBSSceneSettingsMutationPlan(BOOL settin
     return plan;
 }
 
+DDFBSSceneSettingsMutationExceptionOutcome DDResolveFBSSceneSettingsMutationExceptionOutcome(DDFBSSceneSettingsMutationExceptionSite site) {
+    // 3F990 LSDA 0x1149D4 has one frame-path catch that rejoins orientation processing and one
+    // common orientation catch that skips the remainder of mutation and returns through cleanup.
+    // Both landing bodies resume unwind for a nonmatching catch discriminator.
+    DDFBSSceneSettingsMutationExceptionOutcome outcome = { NO, NO, NO, NO };
+    if (site == DDFBSSceneSettingsMutationExceptionSiteFramePath) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldContinueOrientationAfterCatch = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDFBSSceneSettingsMutationExceptionSiteOrientationPath) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldContinueCleanupAfterCatch = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    }
+    return outcome;
+}
+
 DDFBSSceneSettingsExecutionAdmission DDResolveFBSSceneSettingsExecutionAdmission(uint64_t capturedGeneration,
                                                                                  uint64_t currentGeneration,
                                                                                  BOOL executorReentrant) {
