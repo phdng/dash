@@ -88,6 +88,8 @@ typedef struct {
 typedef struct {
     DDHostSlotSize size;
     BOOL substituted;
+    BOOL shouldAttemptSuccessCounterDecrement;
+    NSInteger nextSuccessCounter;
 } DDSceneCallbackSizeRewrite;
 
 typedef NS_ENUM(NSInteger, DDSceneDestroyDecisionKind) {
@@ -397,6 +399,9 @@ FOUNDATION_EXPORT BOOL DDShouldClearAuxSceneSettingsDiff(BOOL settingsDiffPresen
                                                          DDSceneSettingsSnapshot after);
 FOUNDATION_EXPORT DDSceneCallbackSizeRewrite DDResolveSceneCallbackSizeRewrite(NSString * _Nullable bundleIdentifier,
                                                                                DDHostSlotSize originalSize);
+FOUNDATION_EXPORT DDSceneCallbackSizeRewrite DDResolveSceneCallbackSizeRewriteWithSuccessCounter(NSString * _Nullable bundleIdentifier,
+                                                                                                 DDHostSlotSize originalSize,
+                                                                                                 NSInteger successCounter);
 FOUNDATION_EXPORT BOOL DDResolveSceneOrientationEqualityResult(NSString * _Nullable bundleIdentifier,
                                                                NSInteger requestedOrientation,
                                                                BOOL originalResult);

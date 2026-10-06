@@ -1422,9 +1422,9 @@ BOOL DDShouldClearAuxSceneSettingsDiff(BOOL settingsDiffPresent,
 DDSceneCallbackSizeRewrite DDResolveSceneCallbackSizeRewrite(NSString *bundleIdentifier,
                                                               DDHostSlotSize originalSize) {
     // Exact caller-supplied-identity rewrite shared by 40C5C/40DA8 after 41CBC has accepted
-    // either a non-CarPlay hosted bid or aux. Invalid original dimensions preserve the original.
-    DDSceneCallbackSizeRewrite rewrite = { originalSize, NO };
-    if (!gDDHostMirrorActive || originalSize.width <= 0.0 || originalSize.height <= 0.0) {
+    // either a non-CarPlay hosted bid or aux. Strict-positive tests intentionally reject NaN.
+    DDSceneCallbackSizeRewrite rewrite = { originalSize, NO, NO, 0 };
+    if (!gDDHostMirrorActive || !(originalSize.width > 0.0 && originalSize.height > 0.0)) {
         return rewrite;
     }
 
@@ -1432,10 +1432,25 @@ DDSceneCallbackSizeRewrite DDResolveSceneCallbackSizeRewrite(NSString *bundleIde
     if (route.kind == DDSceneIdentityRouteNone) return rewrite;
 
     DDHostSlotSize replacement = DDApplyLandscapeSwapToSize(DDResolveIdentityNativeSize(bundleIdentifier));
-    if (replacement.width <= 0.0 || replacement.height <= 0.0) return rewrite;
+    if (!(replacement.width > 0.0 && replacement.height > 0.0)) return rewrite;
 
     rewrite.size = replacement;
     rewrite.substituted = YES;
+    return rewrite;
+}
+
+DDSceneCallbackSizeRewrite DDResolveSceneCallbackSizeRewriteWithSuccessCounter(NSString *bundleIdentifier,
+                                                                                DDHostSlotSize originalSize,
+                                                                                NSInteger successCounter) {
+    // 40DA8 only: its successful substitution path attempts dword_162F40-- when the signed
+    // current counter is >=1. 40C5C uses the base helper and therefore carries no counter action.
+    DDSceneCallbackSizeRewrite rewrite = DDResolveSceneCallbackSizeRewrite(bundleIdentifier,
+                                                                           originalSize);
+    rewrite.nextSuccessCounter = successCounter;
+    if (rewrite.substituted && successCounter >= 1) {
+        rewrite.shouldAttemptSuccessCounterDecrement = YES;
+        rewrite.nextSuccessCounter = successCounter - 1;
+    }
     return rewrite;
 }
 
