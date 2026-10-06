@@ -1650,6 +1650,14 @@ DDOtherSettingsFlagClearDecision DDResolveOtherSettingsFlagClearDecision(BOOL se
     return decision;
 }
 
+DDOtherSettingsFlagClearExceptionOutcome DDResolveOtherSettingsFlagClearExceptionOutcome(void) {
+    // 421CC protects exactly the private _otherSettings resolution/capability/_setFlag:forSetting:
+    // range. Its typed catch swallows and jumps directly to outer-object cleanup. No reason probe,
+    // setter retry, or alternate mutation path occurs.
+    DDOtherSettingsFlagClearExceptionOutcome outcome = { YES, YES, YES };
+    return outcome;
+}
+
 DDExceptionReasonProbeDecision DDResolveExceptionReasonProbeDecision(uint64_t currentProbeCount,
                                                                       BOOL reasonSelectorSupported) {
     // Raw ARM64 confirms the three exception catch paths eventually call 41BA0. Its global counter

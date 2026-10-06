@@ -278,6 +278,8 @@ for contract in [
     "DDResolveOtherSettingsFlagClearDecision",
     "DDOtherSettingsFlagClearDecision decision = { NO, 0, 6 }",
     "settingsObjectPresent && otherSettingsPresent && flagSetterSupported",
+    "DDResolveOtherSettingsFlagClearExceptionOutcome",
+    "DDOtherSettingsFlagClearExceptionOutcome outcome = { YES, YES, YES }",
     "DDResolveExceptionReasonProbeDecision",
     "if (currentProbeCount > 19)",
     "decision.nextProbeCount = currentProbeCount + 1",

@@ -156,6 +156,12 @@ typedef struct {
 } DDOtherSettingsFlagClearDecision;
 
 typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldSkipRemainingFlagClear;
+    BOOL shouldContinueCleanup;
+} DDOtherSettingsFlagClearExceptionOutcome;
+
+typedef struct {
     BOOL withinBudget;
     BOOL shouldReadReason;
     uint64_t nextProbeCount;
@@ -533,6 +539,7 @@ FOUNDATION_EXPORT DDToAppsYieldExceptionOutcome DDResolveToAppsYieldExceptionOut
 FOUNDATION_EXPORT DDOtherSettingsFlagClearDecision DDResolveOtherSettingsFlagClearDecision(BOOL settingsObjectPresent,
                                                                                            BOOL otherSettingsPresent,
                                                                                            BOOL flagSetterSupported);
+FOUNDATION_EXPORT DDOtherSettingsFlagClearExceptionOutcome DDResolveOtherSettingsFlagClearExceptionOutcome(void);
 FOUNDATION_EXPORT DDExceptionReasonProbeDecision DDResolveExceptionReasonProbeDecision(uint64_t currentProbeCount,
                                                                                         BOOL reasonSelectorSupported);
 FOUNDATION_EXPORT DDSceneOrientationExceptionOutcome DDResolveSceneOrientationExceptionOutcome(DDSceneOrientationExceptionSite site,

@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-06 session-101 (buildable reconstruction phase)_
+_Last updated: 2026-10-06 session-102 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-32 (session-101): GitHub Actions session-100 (`7262e2e`) đã xanh theo user. Executable target thêm data-only `41730` to-apps yield exception outcome được xác nhận bằng LSDA `0x114DAC` + raw ARM64: pre-yield/private enumeration/matching/toggle throw bị swallow rồi fallback original; DDz2 dismiss throw tiếp tục cpdisconnect; cpdisconnect throw nhảy original và bypass normal `byte_163EC0` clear nên yield-in-progress would remain set; DDz1 hide throw tiếp tục yield-log; yield-log throw tiếp tục cleanup/reset; cleanup-only throw resume unwind; original-callback throw bị swallow, reuse exact 41BA0 bounded reason-probe, không retry và cleanup/return; nested probe throw resume unwind. Không synthesize/catch exception, invoke private entity/side effects/original callback, reason read hay mutate globals.
+BUILDABLE RUNTIME PHASE-33 (session-102): GitHub Actions session-101 (`ae645de`) đã xanh theo user. Executable target thêm data-only `421CC` private-settings exception outcome được xác nhận bằng LSDA `0x114ECC` + raw ARM64: protected range `0x421E8..0x42234` bao trùm `_otherSettings` resolution, `_setFlag:forSetting:` capability/send; landing `0x42250` catch/swallow rồi nhảy normal cleanup `0x4223C`, không retry setter, không 41BA0 reason-probe và không alternate mutation path. Không synthesize/catch exception, invoke private ivar/setter, hay mutate settings/globals.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-101):
-- R-100 data-only 41730 exception outcome: pre-yield/entity/toggle catches→original; dismiss/hide/log catches preserve their exact continuation; cpdisconnect catch→original with stuck yield-in-progress metadata; cleanup-only→unwind; original-callback catch→existing 41BA0 probe→cleanup/no retry.
+## LAST COMPLETED TASK (session-102):
+- R-101 data-only 421CC exception outcome: private `_otherSettings`/setter range catch→swallow, skip remaining flag-clear work, then normal cleanup; no retry/probe/mutation side effects.
 
 ## CURRENT TASK:
-- R-100 hoàn tất local; commit-only handoff. User sẽ tự push và báo compiler green/pass trước khi R-101 bắt đầu.
+- R-101 hoàn tất local; commit-only handoff. User sẽ tự push và báo compiler green/pass trước khi R-102 bắt đầu.
 
 ## NEXT TASK:
-- Sau compiler xanh, R-101 decode `421CC` LSDA/raw-ARM64 exception behavior quanh private `_otherSettings` resolution và `_setFlag:forSetting:` capability/send; chỉ promote data-only swallow/cleanup outcome, không invoke private ivar access/setter, synthesize exceptions hay mutate settings/globals. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
+- Sau compiler xanh, R-102 decode `41F50` LSDA/raw-ARM64 exception behavior quanh `_frame`/`_foreground` private-ivar lookup/diagnostic/write, force-IO/orientation repair, `421CC` và failure-budget handling; chỉ promote data-only swallow/skip-remaining-mutation/return outcome, không invoke private ivar APIs/writes/diagnostics/helpers hay mutate counters/settings. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-101):
+## FILES CHANGED (session-102):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-101.md`.
+- Mới: `LOG/session-102.md`.
 
 ## TEST STATUS:
-Session-100 GitHub Actions build GREEN (`7262e2e`, user-confirmed). Session-101 local verifier + py_compile PASS trước docs/log finalization; `git diff --check` sẽ chạy trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit; user tự push và báo compiler result. Dynamic device tests vẫn pending.
+Session-101 GitHub Actions build GREEN (`ae645de`, user-confirmed). Session-102 local verifier + py_compile PASS trước docs/log finalization; `git diff --check` sẽ chạy trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit; user tự push và báo compiler result. Dynamic device tests vẫn pending.
