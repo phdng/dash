@@ -25,12 +25,12 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Hosting observers/consumers | PresentCommitAck.m | SYNTH | 202D0→218D8→2410C→2565C→9424/onHosted |
 | spikeHostSlots: internals | SpikeHosting.m (F-035) | SYNTH (APPROXIMATION) | session-037: 3CC44/3BBF0/3C1F0/3D4FC từ evidence |
 | hostSplit/switchInPlace | HostSplit.m (F-031) | SYNTH (APPROXIMATION) | session-038: 217EC/208F4/26FE4 từ evidence (218D8/279F4 cross-ref records) |
-| Spawn/teardown callees | SpawnTeardown.m + SpawnLaunch.m (F-032) | SYNTH partial | session-039 teardown (D154/CE5C/B9A8/BBF8/BCDC/BD18) + session-040 routing (D4C4/D01C/BFF4/BE34/C2A4/CB08); còn C37C/BEE4/B768/B144/CCEC/D684 + §B KB + §C poll |
+| Spawn/teardown callees | SpawnTeardown.m + SpawnLaunch.m + EventLaunch.m + PollFlush.m + SpawnMisc.m + FastRelayout.m (F-032) | SYNTH partial | s039 teardown + s040 routing + s042 event-launch C37C + s043 poll (22AD0/365D4/371AC/370F8) + s044 misc (B768/BEE4/CCEC/D684-note/B144) + s047 D684 bodies; còn §B KB observers (cross-ref KeyinputRelay.m) |
 | DDz1/DDz2 classes | DDzCore.m (F-034) | SYNTH (APPROXIMATION) | session-048: maps 63+35 + 8 central + cross-links + division |
 | DDz3 UI (153 methods) | DDzPicker.m (F-034 §6) | SYNTH-map (APPROXIMATION) | session-049: cluster map, bodies HYPOTHESIS (commit bodies ở DDzCommit.m; buildKitLevel asm-only UNKNOWN) |
 | DDz3 commit chain | DDzCommit.m (F-039) | SYNTH (APPROXIMATION) | session-046: 5 files picker→prefs bridge |
 | cpuiGen lifecycle | Cpuigen.m (F-040) | SYNTH (APPROXIMATION) | session-050: 5 hits + idiom + consume/stale-check từ evidence (init/reset UNKNOWN) |
-| Evict (3 hệ thống) | EVIDENCE/evict_helpers.md + evict_from_phone.md (F-036/F-037) | EVIDENCE-only | 85B8/7764C verdict + Home-transition; 7792C/763E0 cross-ref |
+| Evict (3 hệ thống) | Evict.m (F-036/F-037) | SYNTH (APPROXIMATION) | session-045: 85B8/7764C/3AE48/3AE50 + caller matrix + verdicts (kill cross-ref Tweak.x) |
 
 ## C. Prefs / settings
 | Subsystem | Artifact | Status | Ghi chú |
@@ -97,7 +97,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 3. ~~**P2**: CrashReporting.m synthesis~~ — DONE session-034.
 4. ~~**P2**: Migration.m synthesis~~ — DONE session-035.
 5. ~~**P2**: Respring/latch synthesis~~ — DONE session-036 (Respring.m riêng).
-6. **P2** (partial): spikeHostSlots/hostSplit DONE (SpikeHosting.m + HostSplit.m); spawn/teardown DONE 12/17 callees (SpawnTeardown.m + SpawnLaunch.m) — còn C37C/BEE4/B768/B144/CCEC/D684 + §B KB + §C poll.
+6. ~~**P2**: spike/hostSplit/spawn/teardown~~ — DONE sessions 037-040 + 042-044 + 047 (17/17 callees + C37C + poll + misc + D684); còn §B KB observers (cross-ref KeyinputRelay.m, giá trị thấp).
 7. **P3**: DDz3 bodies còn lại / DDz classes records (lớn, giá trị/giá thấp).
 8. **P4**: SIDE_EFFECTS per-notify rows; COMPARISON rows cho synthesis bodies; TESTS dynamic (cần device).
 9. **Blocked**: P0-3 (asm), Q-09 entitlements, Q-10 MITM, Q-12/Q-13 (disasm blocks), dynamic verify.
