@@ -1607,6 +1607,97 @@ DDFBSSceneSettingsUpdateDecision DDResolveFBSSceneSettingsUpdateDecision(DDHostS
     return decision;
 }
 
+BOOL DDPrivateUpdateSettingsMethodSignatureSupported(BOOL methodFound,
+                                                     NSString *methodTypeEncoding) {
+    // Exact 3F5C0 signature gate: method must exist, encoding must begin with void ('v'), and the
+    // full encoding must contain the Objective-C block token "@?". No runtime method lookup here.
+    return methodFound && methodTypeEncoding.length > 0 &&
+        [methodTypeEncoding characterAtIndex:0] == 'v' &&
+        [methodTypeEncoding containsString:@"@?"];
+}
+
+BOOL DDPrivateVoidIntegerSetterSignatureSupported(BOOL methodFound,
+                                                  NSUInteger argumentCount,
+                                                  NSInteger returnTypeFirstByte,
+                                                  NSInteger valueArgumentTypeFirstByte) {
+    // Exact data-only half of 3ECD0: 3 Objective-C args, void return, and q/Q value argument.
+    return methodFound && argumentCount == 3 && returnTypeFirstByte == 'v' &&
+        (((unsigned char)valueArgumentTypeFirstByte & 0xDFu) == 'Q');
+}
+
+DDFBSSceneSettingsExecutorDecision DDResolveFBSSceneSettingsExecutorDecision(BOOL sceneObjectPresent,
+                                                                             DDHostSlotSize targetSize,
+                                                                             BOOL executorReentrant,
+                                                                             NSInteger attemptCount,
+                                                                             BOOL geometryUpdatesEnabled,
+                                                                             BOOL updateSettingsSelectorSupported,
+                                                                             BOOL updateMethodFound,
+                                                                             NSString *updateMethodTypeEncoding) {
+    DDFBSSceneSettingsExecutorDecision decision = {
+        DDFBSSceneSettingsExecutorAdmissionNone,
+        DDFBSSceneSettingsExecutorCounterNone,
+        NO,
+        targetSize,
+    };
+
+    if (!sceneObjectPresent || !(targetSize.width > 0.0 && targetSize.height > 0.0)) {
+        decision.kind = DDFBSSceneSettingsExecutorAdmissionInvalidInput;
+        return decision;
+    }
+    if (executorReentrant) {
+        decision.kind = DDFBSSceneSettingsExecutorAdmissionReentrant;
+        decision.counterKind = DDFBSSceneSettingsExecutorCounterGeneralFailure;
+        return decision;
+    }
+    if (attemptCount >= 13) {
+        decision.kind = DDFBSSceneSettingsExecutorAdmissionAttemptLimit;
+        decision.counterKind = DDFBSSceneSettingsExecutorCounterAttemptLimit;
+        return decision;
+    }
+    if (!geometryUpdatesEnabled || !updateSettingsSelectorSupported) {
+        decision.kind = DDFBSSceneSettingsExecutorAdmissionCapabilityUnavailable;
+        return decision;
+    }
+    if (!DDPrivateUpdateSettingsMethodSignatureSupported(updateMethodFound,
+                                                         updateMethodTypeEncoding)) {
+        decision.kind = DDFBSSceneSettingsExecutorAdmissionInvalidMethodSignature;
+        decision.counterKind = DDFBSSceneSettingsExecutorCounterSignatureFailure;
+        return decision;
+    }
+
+    decision.kind = DDFBSSceneSettingsExecutorAdmissionDispatch;
+    decision.shouldIncrementAttemptCount = YES;
+    return decision;
+}
+
+DDFBSSceneSettingsMutationPlan DDResolveFBSSceneSettingsMutationPlan(BOOL settingsObjectPresent,
+                                                                     DDHostSlotSize targetSize,
+                                                                     BOOL frameSetterSupported,
+                                                                     NSInteger desiredOrientation,
+                                                                     BOOL orientationSetterSignatureSupported,
+                                                                     NSInteger currentOrientation) {
+    DDFBSSceneSettingsMutationPlan plan = {
+        NO,
+        targetSize,
+        NO,
+        desiredOrientation,
+        0,
+        NO,
+    };
+    if (!settingsObjectPresent) return plan;
+
+    plan.shouldSetFrame = frameSetterSupported;
+    if (desiredOrientation == 0 || !orientationSetterSignatureSupported ||
+        currentOrientation == 0 || currentOrientation == desiredOrientation) {
+        return plan;
+    }
+
+    plan.shouldSetInterfaceOrientation = YES;
+    plan.previousOrientation = currentOrientation;
+    plan.shouldRecordOrientationChange = YES;
+    return plan;
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.
