@@ -1,0 +1,102 @@
+# COVERAGE.md — RECONSTRUCTION/ vs subsystems audit (session-032)
+_Mục đích: cho biết subsystem nào đã có synthesis/record, subsystem nào còn thiếu, để direct sessions tiếp theo._
+_Trạng thái file: RECORD (function contract) / SYNTH (Tweak.x bodies) / EVIDENCE-only / MISSING._
+_Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-artifact coverage._
+
+## A. Init / entry / process gating
+| Subsystem | Artifact | Status | Ghi chú |
+|---|---|---|---|
+| Role dispatcher 44C0 | functions/44C0.md | RECORD (INFERRED) | + F-042 blocklist errata |
+| Role detect AC5FC/AC7A4 | — (EVIDENCE: F-011/F-012) | EVIDENCE-only | Chưa tách record (nhỏ, có thể gộp vào Tweak.x init) |
+| Mega-ctor 4C34 | — (EVIDENCE: F-003/F-019/F-020/F-021 + 4C34_import_defaults.md) | EVIDENCE-only | 1465 dòng, phases đã cover; record riêng là R-item mở |
+| Host ctor 27E20 | functions/27E20.md | RECORD (INFERRED) | + P0-3 blocked (4049C args) |
+| CarPlay ctor 163EC | — (EVIDENCE: session-002 subagent + HOOKS) | EVIDENCE-only | elig/dock/scene mapping CONFIRMED, chưa record |
+| UIApp/IPC/kbd/display ctors | — (EVIDENCE: session-002 + F-011 once-chain) | EVIDENCE-only | 455D0/4CBDC/4C858/4DEB4/4D0B8/7F010/842EC/9460C |
+| Tweak.x init section | Tweak.x (init) | SYNTH (APPROXIMATION) | Từ F-011/HOOKS, chưa bodies chi tiết |
+
+## B. AppBridge hosting (split/layout/panes)
+| Subsystem | Artifact | Status | Ghi chú |
+|---|---|---|---|
+| hostSlots decision 218D8 | functions/218D8.md | RECORD | + reshow/fast paths |
+| Split request parse 202D0 | functions/202D0.md | RECORD | layout-absent CONFIRMED |
+| Async execute 2410C | functions/2410C.md | RECORD (+state machine) | sâu nhất (878 dòng) |
+| Present-commit 2565C | functions/2565C.md | RECORD | + 9424 dict exact |
+| Single-app host 1FB5C | functions/1FB5C.md | RECORD | cặp với 202D0 |
+| Hosting observers/consumers | PresentCommitAck.m | SYNTH | 202D0→218D8→2410C→2565C→9424/onHosted |
+| spikeHostSlots: internals | EVIDENCE/spike_hostslots.md (F-035) | EVIDENCE-only | Chưa tách record (3CC44/3BBF0/3C1F0/3D4FC đã đọc bởi subagent) |
+| hostSplit/switchInPlace | EVIDENCE/hosting_engine.md (F-031) | EVIDENCE-only | 217EC/208F4 đã đọc, chưa tách record |
+| Spawn/teardown callees | EVIDENCE/spawn_teardown_kb.md (F-032) | EVIDENCE-only | 17 callees đã đọc, chưa tách records |
+| DDz1/DDz2/DDz3 classes | EVIDENCE/ddz_inventory.md (F-034, 251 methods) | EVIDENCE-only | Chỉ inventory + 8 methods; DDz3 buildKitLevel UNKNOWN; DDz3 commit chain → dưới |
+| DDz3 commit chain | EVIDENCE/ddz3_commit.md (F-039) | EVIDENCE-only | 5 files đã đọc, chưa tách record |
+| cpuiGen lifecycle | EVIDENCE/cpuigen_trace.md (F-040) | EVIDENCE-only | 5 hits đóng, BSS-init HYPOTHESIS |
+| Evict (3 hệ thống) | EVIDENCE/evict_helpers.md + evict_from_phone.md (F-036/F-037) | EVIDENCE-only | 85B8/7764C verdict + Home-transition; 7792C/763E0 cross-ref |
+
+## C. Prefs / settings
+| Subsystem | Artifact | Status | Ghi chú |
+|---|---|---|---|
+| Resolver/publisher 74C8 | functions/74C8.md + PrefsResolver.m | RECORD + SYNTH | + F-041 errata baked in |
+| Setters (746C/84D8/637E8) | PrefsResolver.m (cross-ref) | SYNTH (cross-ref) | Bodies trong EVIDENCE, chưa tách record |
+| Prefs UI spec + CN controllers | F-009/F-015 (inventory) | EVIDENCE-only | CN* bodies (~32 methods) chưa đọc |
+| Toggle matrix (~100 knobs) | EVIDENCE/toggle_matrix.md (F-025/P3-1) | EVIDENCE-only | Chưa bake hết vào bodies (mới refs chính) |
+| Migration/defaults (TrueDash) | EVIDENCE/4C34_import_defaults.md (F-019/F-020) | EVIDENCE-only | **GAP synthesis: chưa có Tweak.x Migration.m** |
+| Language flow | F-030/B-20 (17 locales, 6 observers) | EVIDENCE-only | Chưa synthesis riêng (nhỏ, gộp được vào Prefs) |
+
+## D. CarPlay cloak / keyboard / display
+| Subsystem | Artifact | Status | Ghi chú |
+|---|---|---|---|
+| Elig + dock/focus/statusbar/icon | CarPlayCloak.m (F-028) | SYNTH | Hook bodies từ subagent evidence |
+| Keyboard relay + focus + swizzle | KeyinputRelay.m + KeyboardHooks.m (F-027) | SYNTH | KeyApp HYPOTHESIS; hook-fn bodies UNKNOWN |
+| AZ spoof + BKS display | F-017/F-013 (cross-ref trong KeyboardHooks.m) | EVIDENCE-only | Bodies đã có ở evidence cũ |
+| SB scene hooks ×10 | F-018 BLOCKED | MISSING (blocked) | Cần raw asm 27E20 |
+
+## E. Siri / voice
+| Subsystem | Artifact | Status | Ghi chú |
+|---|---|---|---|
+| SiriProbe hooks + gates + cache | SiriProbe.m (F-029) | SYNTH | Sink/writers/opaque UNKNOWN giữ nguyên |
+| Voicecmd rescan pipeline | SiriProbe.m §rescan (F-029) | SYNTH | Worker 81CE4 cross-ref |
+
+## F. Sleeper / perf
+| Subsystem | Artifact | Status | Ghi chú |
+|---|---|---|---|
+| CarSleeper daemon + handlers | CarSleeper.m (F-021) | SYNTH | Handler bodies cross-ref notify_matrix |
+| Perf tweak (fps) | B-07 (HIGH CONFIDENCE) + prefs rows | EVIDENCE-only | Chưa synthesis riêng (nhỏ) |
+
+## G. License / crash / respring
+| Subsystem | Artifact | Status | Ghi chú |
+|---|---|---|---|
+| License verify/clients/validators/unrefuse | License.m (F-006/B-09/F-016/F-030) | SYNTH | MITM/server-side UNKNOWN |
+| Crash reporting | B-08/F-016 (9E014/9DE28 evidence) | EVIDENCE-only | **GAP synthesis: chưa có CrashReporting.m** |
+| Respring/latch pipeline | F-023 (80574/8097C) | EVIDENCE-only | **GAP synthesis: gộp được vào Sleeper hoặc riêng** |
+
+## H. Data / HUD / apps
+| Subsystem | Artifact | Status | Ghi chú |
+|---|---|---|---|
+| DataRouter/nav | DataRouter.m (F-022) | SYNTH | Worker bodies cross-ref |
+| HUD/BLE/speed | HudBle.m (F-024 + strings) | SYNTH | Scan/pairing bodies UNKNOWN |
+| DuoDash.app / DuoDashKey.app / Prefs.bundle | F-007/F-008 (essentials persisted) | EVIDENCE-only | Full KeyApp 255-func breakdown chỉ trong conversation session-001 (nguy cơ mất như sweep-002 — KHÔNG re-derive trừ khi cần) |
+| Version/device | F-030/B-20 | EVIDENCE-only | Nhỏ, ít behavior (fail-soft) |
+
+## I. IPC / notify / IPC model
+| Subsystem | Artifact | Status | Ghi chú |
+|---|---|---|---|
+| Notify matrix (12+68+8) | EVIDENCE/notify_matrix.md + API_MAP.md | EVIDENCE-only | Đã merge API_MAP; chưa ledger hóa từng notify vào SIDE_EFFECTS |
+| NSDistributed fabric | F-026 + cnab_observers produce/consume matrix | EVIDENCE-only | Chưa tách per-notify records |
+
+## J. Meta (contract/tracking)
+| Artifact | Status |
+|---|---|
+| SIDE_EFFECTS.md (ledger SE-*) | Có cho 10 records (2410C/2565C/218D8/202D0/74C8/9D64/1FB5C/20010/27E20/44C0); thiếu cho synthesis-only subsystems |
+| COMPARISON.md (matrix) | Có cho 10 records; synthesis bodies chưa có rows |
+| TESTS.md (static asserts + dynamic list) | Static pass; dynamic pending (cần device) |
+| Tweak.x (skeleton) + Shared.h | APPROXIMATION skeleton |
+
+## Ưu tiên lấp GAP (đề xuất cho sessions tới, theo PRIORITY P0>P1>P2>P4)
+1. **P1**: record 163EC (CarPlay ctor: elig/dock/scene install + guards) — ctor P1 cuối chưa record.
+2. **P1**: record 4C34 phases còn lại dưới dạng FUNCTION record (import/defaults đã có evidence sâu;_ctor body 1465 dòng).
+3. **P2**: CrashReporting.m synthesis (B-08/F-016 có đủ evidence).
+4. **P2**: Migration.m synthesis (F-019/F-020 import/defaults/license-branch).
+5. **P2**: Respring/latch synthesis (F-023, nhỏ — gộp vào CarSleeper.m hoặc riêng).
+6. **P2**: spikeHostSlots:/hostSplit/switchInPlace + spawn/teardown callees tách records (evidence đã đọc FULL bởi subagents — chi phí thấp).
+7. **P3**: DDz3 bodies còn lại / DDz classes records (lớn, giá trị/giá thấp).
+8. **P4**: SIDE_EFFECTS per-notify rows; COMPARISON rows cho synthesis bodies; TESTS dynamic (cần device).
+9. **Blocked**: P0-3 (asm), Q-09 entitlements, Q-10 MITM, Q-12/Q-13 (disasm blocks), dynamic verify.

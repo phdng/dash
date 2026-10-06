@@ -59,5 +59,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-016] Tweak.x keyboard-hook mapping bodies từ HOOKS.md → RECONSTRUCTION/KeyboardHooks.m (APPROXIMATION synthesis session-029; hook-fn bodies UNKNOWN trừ focus/swizzle/AZ đã có).
 - [x] [R-017] Tweak.x DataRouter/nav bodies từ F-022 + notify_matrix → RECONSTRUCTION/DataRouter.m (APPROXIMATION synthesis session-030).
 - [x] [R-018] Tweak.x HUD/BLE bodies từ F-024 + strings (scan/prefs/speed/brightness) → RECONSTRUCTION/HudBle.m (APPROXIMATION synthesis session-031; scan/pairing bodies UNKNOWN).
-- [ ] [R-019] Tweak.x bodies tiếp hoặc FUNCTION records tiếp (4C34/163EC...) — quyết scope session sau.
+- [x] [R-019] Audit coverage RECONSTRUCTION/ vs subsystems → RECONSTRUCTION/COVERAGE.md (session-032, kèm priority lấp GAP).
+- [ ] [R-020] Theo COVERAGE priority (record 163EC? CrashReporting/Migration synthesis? spikeHostSlots records?) — quyết scope session sau.
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
