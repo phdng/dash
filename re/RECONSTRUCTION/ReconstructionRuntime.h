@@ -69,6 +69,17 @@ typedef struct {
 } DDAVCSceneHandleCallbackDecision;
 
 typedef struct {
+    BOOL shouldResetAttemptCount;
+    NSInteger nextAttemptCount;
+    BOOL shouldRaiseGeneralCounterFloor;
+    NSInteger nextGeneralCounter;
+    BOOL shouldProbePrivateScene;
+    BOOL shouldRequestPrivateSceneUpdate;
+    NSInteger slotIndex;
+    DDHostSlotSize targetSize;
+} DDHostSlotResizePrivateFollowup;
+
+typedef struct {
     NSInteger orientation;
     DDHostSlotSize frameSize;
     BOOL foreground;
@@ -368,6 +379,11 @@ FOUNDATION_EXPORT DDAVCSceneHandleCallbackDecision DDResolveAVCSceneHandleCallba
                                                                                            BOOL foregroundSelectorSupported,
                                                                                            BOOL isForeground,
                                                                                            uint64_t suppressionCount);
+FOUNDATION_EXPORT DDHostSlotResizePrivateFollowup DDResolveHostSlotResizePrivateFollowup(NSInteger slotIndex,
+                                                                                        DDHostSlotSize acceptedRawSize,
+                                                                                        NSInteger attemptCount,
+                                                                                        NSInteger generalCounter,
+                                                                                        BOOL privateScenePresent);
 FOUNDATION_EXPORT DDHostSlotSize DDResolveIdentityNativeSize(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDHostSlotSize DDResolveIdentityAdjustedSize(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT NSInteger DDResolveIdentityRawSettingsOrientation(NSString * _Nullable bundleIdentifier);

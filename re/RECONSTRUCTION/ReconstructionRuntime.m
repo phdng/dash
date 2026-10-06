@@ -1323,6 +1323,42 @@ DDAVCSceneHandleCallbackDecision DDResolveAVCSceneHandleCallbackDecision(NSStrin
     return decision;
 }
 
+DDHostSlotResizePrivateFollowup DDResolveHostSlotResizePrivateFollowup(NSInteger slotIndex,
+                                                                       DDHostSlotSize acceptedRawSize,
+                                                                       NSInteger attemptCount,
+                                                                       NSInteger generalCounter,
+                                                                       BOOL privateScenePresent) {
+    // Exact post-acceptance half of 3F3F0. The caller reaches this only after the resize passed the
+    // main-thread/active/slot/bid/non-CarPlay/size>=1 gates and raw mirror+IPC state was updated.
+    // Counter changes and probeSceneForSlot:/3F5C0 invocation are deliberately reported as data.
+    DDHostSlotResizePrivateFollowup followup = {
+        NO,
+        attemptCount,
+        NO,
+        generalCounter,
+        NO,
+        NO,
+        slotIndex,
+        {0.0, 0.0},
+    };
+    followup.shouldProbePrivateScene = YES;
+
+    if (attemptCount >= 1) {
+        followup.shouldResetAttemptCount = YES;
+        followup.nextAttemptCount = 0;
+    }
+    if (generalCounter <= 3) {
+        followup.shouldRaiseGeneralCounterFloor = YES;
+        followup.nextGeneralCounter = 4;
+    }
+
+    if (privateScenePresent) {
+        followup.shouldRequestPrivateSceneUpdate = YES;
+        followup.targetSize = DDApplyLandscapeSwapToSize(acceptedRawSize);
+    }
+    return followup;
+}
+
 DDHostSlotSize DDResolveIdentityNativeSize(NSString *bundleIdentifier) {
     // Exact post-identity 41D80 selection. 41E08 takes precedence and only maps non-CarPlay
     // configured slots; aux is consulted only when no such host slot matches.
