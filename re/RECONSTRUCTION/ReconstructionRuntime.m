@@ -1636,6 +1636,42 @@ DDSceneOrientationExceptionOutcome DDResolveSceneOrientationExceptionOutcome(DDS
     return outcome;
 }
 
+DDSceneForegroundExceptionOutcome DDResolveSceneForegroundExceptionOutcome(DDSceneForegroundExceptionSite site,
+                                                                            uint64_t currentProbeCount,
+                                                                            BOOL reasonSelectorSupported) {
+    // 40FF4 catches an original-callback throw separately from the foreground-forcing path. After
+    // the original catch completes 41BA0 normally, execution resumes at the post-original host gate
+    // and may still evaluate 41CBC plus the mutable-settings foreground path. Throws from 41CBC or
+    // that mutable-settings path are swallowed and jump directly to cleanup, skipping the rest of
+    // foreground forcing. A nested throw from 41BA0 ends the outer catch and resumes unwind.
+    DDExceptionReasonProbeDecision emptyProbe = { NO, NO, currentProbeCount };
+    DDSceneForegroundExceptionOutcome outcome = {
+        NO,
+        NO,
+        NO,
+        NO,
+        NO,
+        emptyProbe,
+    };
+
+    if (site == DDSceneForegroundExceptionSiteOriginalCallback) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldApplyReasonProbeDecision = YES;
+        outcome.probeExceptionWouldResumeUnwind = YES;
+        outcome.shouldContinueForegroundEvaluationAfterCatch = YES;
+        outcome.reasonProbeDecision = DDResolveExceptionReasonProbeDecision(currentProbeCount,
+                                                                             reasonSelectorSupported);
+        return outcome;
+    }
+
+    if (site == DDSceneForegroundExceptionSiteRouteEligibility ||
+        site == DDSceneForegroundExceptionSiteMutableSettingsPath) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingForegroundForcing = YES;
+    }
+    return outcome;
+}
+
 DDPrivateIntegerIvarWritePlan DDResolvePrivateIntegerIvarWritePlan(BOOL ivarFound,
                                                                    NSInteger typeEncodingFirstByte) {
     // Pure 9C3BC write-width decision after 9C24C has already resolved the ivar/type encoding.

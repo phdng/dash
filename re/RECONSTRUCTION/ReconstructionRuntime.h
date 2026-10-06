@@ -156,6 +156,22 @@ typedef struct {
     DDExceptionReasonProbeDecision reasonProbeDecision;
 } DDSceneOrientationExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDSceneForegroundExceptionSite) {
+    DDSceneForegroundExceptionSiteNone = 0,
+    DDSceneForegroundExceptionSiteOriginalCallback = 1,
+    DDSceneForegroundExceptionSiteRouteEligibility = 2,
+    DDSceneForegroundExceptionSiteMutableSettingsPath = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldApplyReasonProbeDecision;
+    BOOL probeExceptionWouldResumeUnwind;
+    BOOL shouldContinueForegroundEvaluationAfterCatch;
+    BOOL shouldSkipRemainingForegroundForcing;
+    DDExceptionReasonProbeDecision reasonProbeDecision;
+} DDSceneForegroundExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDPrivateIvarWriteWidth) {
     DDPrivateIvarWriteWidthUnsupported = 0,
     DDPrivateIvarWriteWidthByte = 1,
@@ -453,6 +469,9 @@ FOUNDATION_EXPORT DDExceptionReasonProbeDecision DDResolveExceptionReasonProbeDe
 FOUNDATION_EXPORT DDSceneOrientationExceptionOutcome DDResolveSceneOrientationExceptionOutcome(DDSceneOrientationExceptionSite site,
                                                                                                 uint64_t currentProbeCount,
                                                                                                 BOOL reasonSelectorSupported);
+FOUNDATION_EXPORT DDSceneForegroundExceptionOutcome DDResolveSceneForegroundExceptionOutcome(DDSceneForegroundExceptionSite site,
+                                                                                              uint64_t currentProbeCount,
+                                                                                              BOOL reasonSelectorSupported);
 FOUNDATION_EXPORT DDPrivateIntegerIvarWritePlan DDResolvePrivateIntegerIvarWritePlan(BOOL ivarFound,
                                                                                      NSInteger typeEncodingFirstByte);
 FOUNDATION_EXPORT DDPrivateObjectIvarAccessPlan DDResolvePrivateObjectIvarAccessPlan(BOOL ivarFound,
