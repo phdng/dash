@@ -277,6 +277,13 @@ typedef struct {
     BOOL shouldAttemptFailureBudgetDecrement;
 } DDSceneSettingsPrivateIvarPlan;
 
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldSkipRemainingPrivateMutation;
+    BOOL shouldSkipFailureBudgetDecrement;
+    BOOL shouldReturnThroughNormalCleanup;
+} DDSceneSettingsPrivateIvarExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDFBSSceneSettingsUpdateReason) {
     DDFBSSceneSettingsUpdateReasonNone = 0,
     DDFBSSceneSettingsUpdateReasonSlotNotMarked = 1,
@@ -569,6 +576,7 @@ FOUNDATION_EXPORT DDSceneSettingsPrivateIvarPlan DDResolveSceneSettingsPrivateIv
                                                                                        NSString * _Nullable frameTypeEncoding,
                                                                                        BOOL foregroundIvarFound,
                                                                                        NSString * _Nullable foregroundTypeEncoding);
+FOUNDATION_EXPORT DDSceneSettingsPrivateIvarExceptionOutcome DDResolveSceneSettingsPrivateIvarExceptionOutcome(void);
 FOUNDATION_EXPORT NSInteger DDResolveCurrentInterfaceOrientation(BOOL settingsObjectPresent,
                                                                  BOOL interfaceOrientationSelectorSupported,
                                                                  NSInteger currentOrientation);

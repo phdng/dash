@@ -1951,6 +1951,15 @@ DDSceneSettingsPrivateIvarPlan DDResolveSceneSettingsPrivateIvarPlan(double fram
     return plan;
 }
 
+DDSceneSettingsPrivateIvarExceptionOutcome DDResolveSceneSettingsPrivateIvarExceptionOutcome(void) {
+    // 41F50 has several typed protected ranges spanning frame/foreground ivar lookup and diagnostics,
+    // force-IO/orientation repair, 9C3BC, nested 421CC, and direct foreground-offset resolution. Every
+    // typed catch converges on 0x4210C and branches to 0x420C8, skipping the remaining private mutation
+    // sequence and the dword_162F34 failure-budget decrement before normal retain/cleanup/return.
+    DDSceneSettingsPrivateIvarExceptionOutcome outcome = { YES, YES, YES, YES };
+    return outcome;
+}
+
 NSInteger DDResolveCurrentInterfaceOrientation(BOOL settingsObjectPresent,
                                                BOOL interfaceOrientationSelectorSupported,
                                                NSInteger currentOrientation) {

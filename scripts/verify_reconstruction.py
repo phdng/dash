@@ -333,6 +333,8 @@ for contract in [
     "[foregroundTypeEncoding isEqualToString:@\"B\"]",
     "DDPrivateSceneIvarActionRecordUnsupported",
     "plan.shouldAttemptFailureBudgetDecrement = !(frameHandled && foregroundHandled)",
+    "DDResolveSceneSettingsPrivateIvarExceptionOutcome",
+    "DDSceneSettingsPrivateIvarExceptionOutcome outcome = { YES, YES, YES, YES }",
     "DDResolveCurrentInterfaceOrientation",
     "settingsObjectPresent && interfaceOrientationSelectorSupported",
     "DDResolveFBSSceneSettingsUpdateDecision",
