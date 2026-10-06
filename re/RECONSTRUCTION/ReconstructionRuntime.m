@@ -1,4 +1,4 @@
-// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-078)
+// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-079)
 // This file intentionally implements only behavior whose data-flow can be represented without
 // unresolved private classes/functions. Unknown filtering/computation remains documented in the
 // synthesis files rather than being silently guessed here.
@@ -9,6 +9,7 @@
 #import <mach-o/dyld.h>
 #import <notify.h>
 #import <objc/message.h>
+#import <objc/runtime.h>
 #include <fcntl.h>
 #include <math.h>
 #include <stdint.h>
@@ -66,6 +67,10 @@ static const char * const kDDRespringPlannedPath = "/var/mobile/Library/DuoDash/
 
 // off_154160: five NSConstantDoubleNumber values recovered directly from __objc_arraydata.
 static const double kDDHostRetryDelays[] = { 0.0, 0.4, 0.9, 1.8, 3.5 };
+static NSInteger gDDSceneGeometryEnabledCache = -1;
+static NSInteger gDDSceneSettingsOrientationIvarCache = -1;
+static uint64_t gDDGeometryStateGeneration = 0;
+static BOOL gDDPaneOrientationDisabled = NO;
 
 static id _Nullable DDCopyAppPreference(NSString *key) {
     CFTypeRef value = CFPreferencesCopyAppValue((__bridge CFStringRef)key, kDDSettingsDomain);
@@ -880,6 +885,77 @@ DDHostSlotSize DDApplyLandscapeSwapToSize(DDHostSlotSize size) {
         return (DDHostSlotSize){size.height, size.width};
     }
     return size;
+}
+
+DDHostLandscapeGeometryPlan DDComputeHostLandscapeGeometryPlan(NSUInteger slotIndex,
+                                                                  DDHostSlotSize nativeSize,
+                                                                  double slotX,
+                                                                  double slotY,
+                                                                  double slotWidth,
+                                                                  double slotHeight) {
+    // Pure geometry extracted from the lscape override block inside 3257C. The scale is always
+    // computed from the unswapped native dimensions; cswap changes bounds only. Rotation is then
+    // concatenated after scale, and center is the midpoint of the target slot rectangle.
+    DDHostLandscapeGeometryPlan plan = {0};
+    if (slotIndex > 2 || gDDHostLandscapeOverrideOrientation == 0 ||
+        (gDDHostMirrorBids[slotIndex] ?: @"").length == 0 ||
+        nativeSize.width <= 0.0 || nativeSize.height <= 0.0 ||
+        slotWidth <= 0.0 || slotHeight <= 0.0) {
+        return plan;
+    }
+
+    plan.valid = YES;
+    plan.scale = MIN(slotWidth / nativeSize.width, slotHeight / nativeSize.height);
+    plan.boundsWidth = gDDHostLandscapeCSwap ? nativeSize.height : nativeSize.width;
+    plan.boundsHeight = gDDHostLandscapeCSwap ? nativeSize.width : nativeSize.height;
+    plan.rotationRadians = gDDHostLandscapeRotationDegrees * 3.14159265 / 180.0;
+    plan.centerX = slotX + slotWidth * 0.5;
+    plan.centerY = slotY + slotHeight * 0.5;
+    return plan;
+}
+
+BOOL DDSceneGeometryUpdatesEnabled(void) {
+    // sub_3E9A8 memoizes the inverse of /var/tmp/duodash_ab_noscenegeom on first read.
+    if (gDDSceneGeometryEnabledCache < 0) {
+        BOOL disabled = [[NSFileManager defaultManager]
+            fileExistsAtPath:@"/var/tmp/duodash_ab_noscenegeom"];
+        gDDSceneGeometryEnabledCache = disabled ? 0 : 1;
+    }
+    return gDDSceneGeometryEnabledCache == 1;
+}
+
+static void DDRefreshGenerationScopedGeometryStateIfNeeded(void) {
+    // Evidence-safe subset of 41C24: the nopaneorient flag is refreshed once per host
+    // generation. Private retry counters/slot-applied flags are intentionally not modeled here.
+    if (gDDGeometryStateGeneration == gDDHostMirrorGeneration) return;
+    gDDGeometryStateGeneration = gDDHostMirrorGeneration;
+    gDDPaneOrientationDisabled = [[NSFileManager defaultManager]
+        fileExistsAtPath:@"/var/tmp/duodash_ab_nopaneorient"];
+}
+
+BOOL DDSceneSettingsHasInterfaceOrientationIvar(void) {
+    // sub_3E534 memoizes whether private UIApplicationSceneSettings exposes
+    // the _interfaceOrientation ivar. Runtime lookup avoids a hard private-framework link.
+    if (gDDSceneSettingsOrientationIvarCache < 0) {
+        Class settingsClass = objc_getClass("UIApplicationSceneSettings");
+        gDDSceneSettingsOrientationIvarCache =
+            settingsClass && class_getInstanceVariable(settingsClass, "_interfaceOrientation")
+                ? 1 : 0;
+    }
+    return gDDSceneSettingsOrientationIvarCache == 1;
+}
+
+NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
+    // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
+    // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.
+    DDRefreshGenerationScopedGeometryStateIfNeeded();
+    if (gDDPaneOrientationDisabled || gDDHostLandscapeOverrideOrientation != 0) return 0;
+    if (DDSceneSettingsHasInterfaceOrientationIvar()) return 0;
+
+    NSInteger candidate = (isAuxScene && auxOrientation != 0)
+        ? auxOrientation
+        : gDDHostMirrorOrientation;
+    return (candidate >= 1 && candidate <= 4) ? candidate : 0;
 }
 
 BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size) {

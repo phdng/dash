@@ -18,6 +18,16 @@ typedef struct {
 } DDHostSlotSize;
 
 typedef struct {
+    BOOL valid;
+    double boundsWidth;
+    double boundsHeight;
+    double scale;
+    double rotationRadians;
+    double centerX;
+    double centerY;
+} DDHostLandscapeGeometryPlan;
+
+typedef struct {
     double frameX;
     double frameY;
     double frameWidth;
@@ -111,6 +121,16 @@ FOUNDATION_EXPORT uint64_t DDUpdateHostSlotMirror(NSArray *bundleIdentifiers,
 FOUNDATION_EXPORT void DDResetHostSlotMirror(void);
 FOUNDATION_EXPORT NSDictionary *DDCurrentHostSlotMirror(void);
 FOUNDATION_EXPORT DDHostSlotSize DDApplyLandscapeSwapToSize(DDHostSlotSize size);
+FOUNDATION_EXPORT DDHostLandscapeGeometryPlan DDComputeHostLandscapeGeometryPlan(NSUInteger slotIndex,
+                                                                                  DDHostSlotSize nativeSize,
+                                                                                  double slotX,
+                                                                                  double slotY,
+                                                                                  double slotWidth,
+                                                                                  double slotHeight);
+FOUNDATION_EXPORT BOOL DDSceneGeometryUpdatesEnabled(void);
+FOUNDATION_EXPORT BOOL DDSceneSettingsHasInterfaceOrientationIvar(void);
+FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
+                                                              NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);
 FOUNDATION_EXPORT void DDSetHostSlotCarPlayUI(NSUInteger slotIndex, BOOL carPlayUI);
 FOUNDATION_EXPORT BOOL DDConvertHostSlotToCarPlayUI(NSUInteger slotIndex);

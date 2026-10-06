@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-06 session-078 (buildable reconstruction phase)_
+_Last updated: 2026-10-06 session-079 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-9 (session-078): GitHub Actions session-077 batch đã xanh. Executable target hiện thêm exact 3CC44 landscape `.tripped/.inflight` PID+mtime coordination, accepted override state + inflight cleanup semantics, và 3F3F0 raw slot resize/uiapp.state half với pure lscape-swap transform. Private keyboard-layer hooks, scene probe/layout và scene/view creation vẫn giữ explicit gap.
+BUILDABLE RUNTIME PHASE-10 (session-079): GitHub Actions session-078 batch đã xanh. Executable target hiện thêm pure 3257C lscape geometry plan (scale/cswap/rotation/center), memoized 3E9A8 scene-geometry gate, và generation-scoped 41C24/3E534/3F75C pane-orientation decision. Private updateSettings/scene/view mutation và aux-scene creation vẫn giữ explicit gap.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-078):
-- R-074 exact 3CC44 lscape/tripped/inflight/respring mtime/PID coordination + accepted-state persistence/reset cleanup; R-075 exact 3F3F0 raw resize/uiapp.state half + pure lscape swap helper.
+## LAST COMPLETED TASK (session-079):
+- R-076 exact pure 3257C geometry plan + 3E9A8 gate; R-077 exact 41C24/3E534/3F75C/3FAF8 pane-orientation decision.
 
 ## CURRENT TASK:
-- Chờ compiler gate cho session-078 changes; final local structural checks chạy sau tracking/log update.
+- Chờ compiler gate cho session-079 changes; final local structural checks chạy sau tracking/log update.
 
 ## NEXT TASK:
-- Sau CI xanh, R-076 inspect geometry consumers quanh 3F5C0/3257C/400D0 và chỉ promote pure transform/decision helpers (cswap/rotation nếu recover đầy đủ); không instantiate/mutate private scene/view objects. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
+- Sau CI xanh, R-078 inspect aux-scene pre-private state 3C368/3C808/3E590/3E428 và chỉ promote normalization/capability/state mirror ở đúng post-application-lookup boundary; không ghi aux state sớm hơn original và không instantiate private scene/view classes. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-078):
+## FILES CHANGED (session-079):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-078.md`.
+- Mới: `LOG/session-079.md`.
 
 ## TEST STATUS:
-Session-077 GitHub Actions build GREEN (user-confirmed). Session-078 local verifier + py_compile + `git diff --check` PASS after final docs/log edits; CatDesk standard verifier = NOT_CONFIGURED (expected for this Theos-only repo without Cargo.toml/package.json/Python project manifest). Current Objective-C stat/open/file-coordination + resize-state edits need next macOS CI run; dynamic device tests vẫn pending.
+Session-078 GitHub Actions build GREEN (user-confirmed). Session-079 local verifier + py_compile + `git diff --check` PASS after final docs/log edits; CatDesk standard verifier = NOT_CONFIGURED (expected for this Theos-only repo without Cargo.toml/package.json/Python project manifest). Current Objective-C runtime-introspection + geometry-plan edits need next macOS CI run; dynamic device tests vẫn pending.
