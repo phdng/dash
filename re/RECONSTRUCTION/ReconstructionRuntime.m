@@ -1,4 +1,4 @@
-// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-079)
+// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-080)
 // This file intentionally implements only behavior whose data-flow can be represented without
 // unresolved private classes/functions. Unknown filtering/computation remains documented in the
 // synthesis files rather than being silently guessed here.
@@ -71,6 +71,16 @@ static NSInteger gDDSceneGeometryEnabledCache = -1;
 static NSInteger gDDSceneSettingsOrientationIvarCache = -1;
 static uint64_t gDDGeometryStateGeneration = 0;
 static BOOL gDDPaneOrientationDisabled = NO;
+
+// Aux-scene mirror for the evidence-safe state committed by 3C368 only after the private
+// application lookup succeeds. It deliberately does not represent SBAppViewController/view state.
+static NSString *gDDAuxBundleIdentifier = nil;
+static DDHostSlotSize gDDAuxNativeSize = {0.0, 0.0};
+static NSInteger gDDAuxOrientation = 0;
+static uint64_t gDDAuxGeneration = 0;
+static BOOL gDDAuxSwapEnabled = YES;
+static BOOL gDDAuxNoAuxSID = NO;
+static BOOL gDDAuxNoApplyDiff = NO;
 
 static id _Nullable DDCopyAppPreference(NSString *key) {
     CFTypeRef value = CFPreferencesCopyAppValue((__bridge CFStringRef)key, kDDSettingsDomain);
@@ -943,6 +953,153 @@ BOOL DDSceneSettingsHasInterfaceOrientationIvar(void) {
                 ? 1 : 0;
     }
     return gDDSceneSettingsOrientationIvarCache == 1;
+}
+
+static BOOL DDClassHasVoidIntegerSetter(Class cls, const char *selectorName) {
+    // sub_3ECD0: exactly three Objective-C arguments, void return, and q/Q setter argument.
+    if (!cls || !selectorName) return NO;
+    Method method = class_getInstanceMethod(cls, sel_registerName(selectorName));
+    if (!method || method_getNumberOfArguments(method) != 3) return NO;
+
+    char returnType[8] = {0};
+    char argumentType[8] = {0};
+    method_getReturnType(method, returnType, sizeof(returnType));
+    method_getArgumentType(method, 2, argumentType, sizeof(argumentType));
+    return returnType[0] == 'v' && (((unsigned char)argumentType[0] & 0xDFu) == 'Q');
+}
+
+BOOL DDAuxSceneOrientationMutationSupported(void) {
+    // sub_3E590. This is intentionally not memoized: the original probes each createAux call.
+    Class sceneClass = objc_getClass("FBScene");
+    if (!sceneClass) return NO;
+
+    Method updateMethod = class_getInstanceMethod(sceneClass, sel_registerName("updateSettingsWithBlock:"));
+    if (!updateMethod) return NO;
+    const char *typeEncoding = method_getTypeEncoding(updateMethod);
+    if (!typeEncoding || typeEncoding[0] != 'v' || !strstr(typeEncoding, "@?")) return NO;
+
+    Class mutableSettingsClass = objc_getClass("UIMutableApplicationSceneSettings");
+    return DDClassHasVoidIntegerSetter(mutableSettingsClass, "setInterfaceOrientation:");
+}
+
+static BOOL DDHostMirrorRejectsAuxBundle(NSString *bundleIdentifier) {
+    // sub_3E4A8: reject a bid already present in any non-CarPlay hosted slot.
+    if (bundleIdentifier.length == 0) return NO;
+    for (NSUInteger index = 0; index < 3; index++) {
+        NSString *hosted = gDDHostMirrorBids[index] ?: @"";
+        if (hosted.length == 0 || gDDHostMirrorCarPlayUI[index]) continue;
+        if ([bundleIdentifier isEqualToString:hosted]) return YES;
+    }
+    return NO;
+}
+
+DDAuxScenePreparation DDPrepareAuxSceneCandidate(NSString * _Nullable bundleIdentifier,
+                                                  DDHostSlotSize nativeSize,
+                                                  NSInteger requestedOrientation,
+                                                  BOOL auxControllerAlreadyExists) {
+    // Exact pre-private half of 3C368. The private self->_auxVC state is supplied explicitly
+    // because this reconstruction intentionally does not own an SBAppViewController instance.
+    DDAuxScenePreparation preparation = {0};
+    NSString *bundle = bundleIdentifier ?: @"";
+    if (bundle.length == 0 || nativeSize.width < 1.0 || nativeSize.height < 1.0 ||
+        auxControllerAlreadyExists || DDHostMirrorRejectsAuxBundle(bundle)) {
+        return preparation;
+    }
+
+    preparation.valid = YES;
+    preparation.nativeSize = nativeSize;
+    preparation.orientation = requestedOrientation;
+
+    if ((requestedOrientation == 3 || requestedOrientation == 4) &&
+        !DDSceneSettingsHasInterfaceOrientationIvar() &&
+        !DDAuxSceneOrientationMutationSupported()) {
+        preparation.orientation = 0;
+        preparation.nativeSize.width = MIN(nativeSize.width, nativeSize.height);
+        preparation.nativeSize.height = MAX(nativeSize.width, nativeSize.height);
+    }
+    return preparation;
+}
+
+static void DDRefreshAuxSceneStateGeneration(void) {
+    // Evidence-safe state subset of sub_3E428.
+    gDDAuxGeneration++;
+    gDDAuxSwapEnabled = ![[NSFileManager defaultManager]
+        fileExistsAtPath:@"/var/tmp/duodash_kp_auxnoswap"];
+}
+
+BOOL DDCommitAuxSceneMirrorAfterApplicationLookup(NSString * _Nullable bundleIdentifier,
+                                                   DDAuxScenePreparation preparation,
+                                                   BOOL applicationLookupSucceeded) {
+    // 3C368 commits qword_163D70/xmmword_163DD0/qword_163DE0 only after
+    // SBApplicationController applicationWithBundleIdentifier: returns a valid application.
+    NSString *bundle = bundleIdentifier ?: @"";
+    if (!preparation.valid || !applicationLookupSucceeded || bundle.length == 0) return NO;
+
+    gDDAuxBundleIdentifier = [bundle copy];
+    gDDAuxNativeSize = preparation.nativeSize;
+    gDDAuxOrientation = preparation.orientation;
+    DDRefreshAuxSceneStateGeneration();
+    gDDAuxNoAuxSID = [[NSFileManager defaultManager]
+        fileExistsAtPath:@"/var/tmp/duodash_kp_noauxsid"];
+    gDDAuxNoApplyDiff = [[NSFileManager defaultManager]
+        fileExistsAtPath:@"/var/tmp/duodash_kp_noapplydiff"];
+    return YES;
+}
+
+void DDClearAuxSceneMirror(void) {
+    // Evidence-safe state half of 3C808. With no private aux controller/view owned by this target,
+    // an empty aux bid is the exact no-op condition; otherwise clear state then run 3E428 state.
+    if (gDDAuxBundleIdentifier.length == 0) return;
+    gDDAuxBundleIdentifier = nil;
+    gDDAuxNativeSize = (DDHostSlotSize){0.0, 0.0};
+    gDDAuxOrientation = 0;
+    DDRefreshAuxSceneStateGeneration();
+}
+
+NSDictionary *DDCurrentAuxSceneMirror(void) {
+    return @{
+        @"active": @(gDDAuxBundleIdentifier.length > 0),
+        @"bundleIdentifier": gDDAuxBundleIdentifier ?: @"",
+        @"width": @(gDDAuxNativeSize.width),
+        @"height": @(gDDAuxNativeSize.height),
+        @"orientation": @(gDDAuxOrientation),
+        @"generation": @(gDDAuxGeneration),
+        @"swapEnabled": @(gDDAuxSwapEnabled),
+        @"noAuxSID": @(gDDAuxNoAuxSID),
+        @"noApplyDiff": @(gDDAuxNoApplyDiff),
+    };
+}
+
+DDAuxSceneSettingsPlan DDCurrentAuxSceneSettingsPlan(void) {
+    // Pure desired-settings state from 3E670 before its private updateSettingsWithBlock executor.
+    DDAuxSceneSettingsPlan plan = {0};
+    if (gDDAuxBundleIdentifier.length == 0 || DDSceneSettingsHasInterfaceOrientationIvar() ||
+        (gDDAuxOrientation != 3 && gDDAuxOrientation != 4) ||
+        gDDAuxNativeSize.width < 1.0 || gDDAuxNativeSize.height < 1.0) {
+        return plan;
+    }
+
+    plan.valid = YES;
+    plan.orientation = gDDAuxOrientation;
+    plan.frameSize.width = gDDAuxSwapEnabled ? gDDAuxNativeSize.height : gDDAuxNativeSize.width;
+    plan.frameSize.height = gDDAuxSwapEnabled ? gDDAuxNativeSize.width : gDDAuxNativeSize.height;
+    return plan;
+}
+
+BOOL DDAuxSceneSettingsNeedUpdate(DDAuxSceneSettingsPlan plan,
+                                   BOOL previouslyApplied,
+                                   BOOL hasCurrentSettings,
+                                   DDHostSlotSize currentFrameSize,
+                                   NSInteger currentOrientation) {
+    // 3E670's pure early-out check before geometry/method/reentrancy/attempt gates.
+    if (!plan.valid) return NO;
+    if (!previouslyApplied) return YES;
+    if (!hasCurrentSettings) return NO;
+
+    BOOL sizeMatches = fabs(currentFrameSize.width - plan.frameSize.width) <= 0.5 &&
+                       fabs(currentFrameSize.height - plan.frameSize.height) <= 0.5;
+    BOOL orientationMatches = currentOrientation == 0 || currentOrientation == plan.orientation;
+    return !(sizeMatches && orientationMatches);
 }
 
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {

@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-079)
+## Build (session-080)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
 - [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-078 batch (user-confirmed before session-079 changes). Current session adds data-only 3257C lscape geometry planning, memoized scene-geometry capability/toggle gates, and generation-scoped pane-orientation decisions; next pushed CI run remains the compiler gate.
-- [x] Static runtime contracts through session-079: verifier additionally checks DDHostLandscapeGeometryPlan, exact min(slot/native) scale, cswap-bounds-only behavior, rotation degrees→radians, slot midpoint center, 3E9A8 `duodash_ab_noscenegeom` memoization, runtime `_interfaceOrientation` ivar probe, generation-scoped `duodash_ab_nopaneorient`, and final 1..4 orientation gate.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-079 batch (user-confirmed before session-080 changes). Current session adds aux candidate/capability/post-app-lookup mirror/teardown state and pure 3E670 desired-settings decisions; next pushed CI run remains the compiler gate.
+- [x] Static runtime contracts through session-080: verifier additionally checks DDAuxScenePreparation, 3E590 runtime method-signature capability, explicit aux-controller precondition, 3E4A8 hosted conflict, `applicationLookupSucceeded` commit boundary, aux generation/toggles, teardown mirror, DDAuxSceneSettingsPlan swap sizing, and exact ±0.5/current-orientation early-out rule.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
