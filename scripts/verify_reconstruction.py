@@ -82,6 +82,37 @@ for contract in [
     "DDCountLiveSnapshotEntries",
     "DDPostDistributedNotification",
     "DDObserveDistributedNotification",
+    "DDPostUIAppRequest",
+    "DDPostUIAppState",
+    "DDPostUIAppFontFloorState",
+    "DDPostUIAppKeyPaneState",
+    "DDRefreshCachedBridgeUISettings",
+    "DDHostedNonCarPlayBundleIdentifiers",
+    "DDSharedDDz2",
+    "hostedSlotBids",
+    "hostedSlotIsCarPlayUI",
+    "hostedBundleId2",
+    "com.sensetechlab.appbridge.uiapp.state",
+    "com.sensetechlab.appbridge.uiapp.fontfloor",
+    "com.sensetechlab.appbridge.uiapp.keypane",
+    "DDAppendHostFrameMetrics",
+    "DDPostHostRequest",
+    "DDPostSplitHostRequest",
+    "DDPostCarPlayUIStatus",
+    "sizeof(DDHostFrameMetrics) == 104",
+    "com.sensetechlab.appbridge.uiapp.request",
+    "com.sensetechlab.appbridge.host.request",
+    "com.sensetechlab.appbridge.host.request.split",
+    "com.sensetechlab.appbridge.cpui.status",
+    "frameWinValid",
+    "cpWinW",
+    "cpWinH",
+    "bundleIdL",
+    "bundleIdR",
+    "bundleIdC",
+    "skipEvict",
+    "envOnly",
+    "cpuiWhy",
     "DDPostHostRefusedState",
     "DDPostHostState",
     "NSDistributedNotificationCenter",
@@ -109,6 +140,10 @@ for contract in [
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if 'DD_N_AUTOSTART_CHANGED @"com.sensetechlab.autostart.changed"' not in shared:
     raise SystemExit("autostart Darwin notification constant drifted from decompile")
+if 'DD_N_FONTFLOOR_CHANGED @"com.sensetechlab.fontfloor.changed"' not in shared:
+    raise SystemExit("font-floor Darwin notification constant drifted from decompile")
+if 'DD_N_KEYPANE_CHANGED @"com.sensetechlab.keypane.changed"' not in shared:
+    raise SystemExit("keypane Darwin notification constant drifted from decompile")
 
 print(
     f"OK: {len(REQUIRED_SYNTHESIS)} synthesis modules present; "

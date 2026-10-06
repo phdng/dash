@@ -40,7 +40,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Prefs UI spec + CN controllers | F-009/F-015 (inventory) | EVIDENCE-only | CN* bodies (~32 methods) chưa đọc |
 | Toggle matrix (~100 knobs) | EVIDENCE/toggle_matrix.md (F-025/P3-1) | EVIDENCE-only | Chưa bake hết vào bodies (mới refs chính) |
 | Migration/defaults (TrueDash) | Migration.m (F-019/F-020) | SYNTH (APPROXIMATION) | session-035 từ 4C34_import_defaults.md (license branch cross-ref License.m) |
-| Cache/pure-pref helpers | ReconstructionRuntime.m (7044/70FC/836C/8058/7EA4/7E63C/7EEDC/8154/81EC) | BUILDABLE PARTIAL | s071 exact cache/keypane/font-floor; s072 integer validator+self-heal; s073 exact frac wrappers 8154(0..99,0) + 81EC(0..8,0). 73E8/80D0 bounds remain unresolved; full 7E908 still partial because blacklist 7E568 + numeric bounds; private broadcasts omitted |
+| Cache/pure-pref helpers | ReconstructionRuntime.m (7044/70FC/836C/8058/7EA4/7E63C/7EEDC/8154/81EC) | BUILDABLE PARTIAL | s071 exact cache/keypane/font-floor; s072 integer validator+self-heal; s073 exact frac wrappers; s074 adds cached 7EA4/8058 state used by 89D8 + notify refresh. 73E8/80D0 bounds and full 7E908 blacklist/numerics remain unresolved |
 | Language flow | LocaleFlow.m (F-030/B-20) | SYNTH (APPROXIMATION) | session-053 §A: write/post + read-4-tầng + whitelist-17 + 6 observers (Q-10 §B ở License.m) |
 
 ## D. CarPlay cloak / keyboard / display
@@ -81,8 +81,8 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 ## I. IPC / notify / IPC model
 | Subsystem | Artifact | Status | Ghi chú |
 |---|---|---|---|
-| Notify matrix (12+68+8) | EVIDENCE/notify_matrix.md + API_MAP.md + ReconstructionRuntime.m | BUILDABLE PARTIAL | session-071: SpringBoard 29198 trio settings.changed/listchanged/autostart.changed registered Immediate and routed to republish; other notify callbacks remain evidence-only |
-| NSDistributed fabric | F-026 + cnab_observers + ReconstructionRuntime.m | BUILDABLE PARTIAL | s073 promotes runtime-resolved 8900/887C/8934/8C28/8D78 plus exact 97A0/9424 host.state publishers; receiver-specific private selectors/method bodies remain evidence/synthesis scope |
+| Notify matrix (12+68+8) | EVIDENCE/notify_matrix.md + API_MAP.md + ReconstructionRuntime.m | BUILDABLE PARTIAL | s071 SpringBoard 29198 trio Immediate→republish; s074 adds exact Immediate fontfloor/keypane cache refresh plus runtime-resolved DDz2 per-host broadcasts from 291F4/29400. Keypane-OFF toast 30960 and other callbacks remain evidence/private scope |
+| NSDistributed fabric | F-026 + cnab_observers + ReconstructionRuntime.m | BUILDABLE PARTIAL | s073 runtime-resolved 8900/887C/8934/8C28/8D78 + 97A0/9424; s074 adds 8CC0/8DF8/8F34/91B4/986C, exact cached-state 89D8, and 291F4/29400 per-bundle uiapp.fontfloor/keypane broadcasts via runtime-resolved 29810/DDz2 selectors. Receiver method bodies still partial |
 
 ## J. Meta (contract/tracking)
 | Artifact | Status |

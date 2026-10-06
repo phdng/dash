@@ -1,4 +1,4 @@
-// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-073)
+// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-074)
 // This file intentionally implements only behavior whose data-flow can be represented without
 // unresolved private classes/functions. Unknown filtering/computation remains documented in the
 // synthesis files rather than being silently guessed here.
@@ -18,9 +18,14 @@
 // depending on private headers while matching the public libproc symbol used by sub_7764C.
 extern int proc_pidpath(int pid, void *buffer, uint32_t buffersize);
 
+_Static_assert(sizeof(DDHostFrameMetrics) == 104,
+               "DDHostFrameMetrics must preserve the 8F34 104-byte snapshot layout");
+
 static CFStringRef const kDDSettingsDomain = CFSTR("com.sensetechlab.duodash.settings");
 static NSString * const kDDClearPanes = @"/var/tmp/duodash_ab_clearpanes";
 static NSString * const kDDClearPanesDone = @"/var/tmp/duodash_ab_clearpanes.done";
+static NSInteger gDDBridgedFontFloor = 0;
+static BOOL gDDKeyPaneEnabled = YES;
 
 static id _Nullable DDCopyAppPreference(NSString *key) {
     CFTypeRef value = CFPreferencesCopyAppValue((__bridge CFStringRef)key, kDDSettingsDomain);
@@ -153,6 +158,12 @@ NSInteger DDReadBridgedFontFloor(void) {
     return DDValidatedFontFloor([value integerValue]);
 }
 
+static void DDRefreshCachedBridgeUISettings(void) {
+    // sub_74C8 phase order: 7EA4 first, then 8058. These globals back sub_89D8.
+    gDDBridgedFontFloor = DDReadBridgedFontFloor();
+    gDDKeyPaneEnabled = DDReadKeyPaneEnabled();
+}
+
 NSInteger DDValidateIntegerValue(id _Nullable candidate,
                                  NSInteger minimum,
                                  NSInteger maximum,
@@ -283,6 +294,7 @@ NSString *DDRoleName(DDRole role) {
 
 NSDictionary *DDBuildKnownAppBridgeSnapshot(void) {
     CFPreferencesAppSynchronize(kDDSettingsDomain);
+    DDRefreshCachedBridgeUISettings();
 
     BOOL enabledExists = NO;
     BOOL enabled = DDBoolPreference(@"appbridge_enabled", NO, &enabledExists);
@@ -481,6 +493,119 @@ BOOL DDObserveDistributedNotification(NSString *name,
     return YES;
 }
 
+BOOL DDPostUIAppRequest(NSString * _Nullable bundleIdentifier) {
+    // sub_8CC0: nil canonicalizes to the empty string.
+    NSDictionary *payload = @{ @"bundleIdentifier": bundleIdentifier ?: @"" };
+    return DDPostDistributedNotification(@"com.sensetechlab.appbridge.uiapp.request", nil, payload);
+}
+
+BOOL DDPostUIAppState(NSString * _Nullable bundleIdentifier,
+                      BOOL shouldBridge,
+                      NSInteger orientation,
+                      BOOL split,
+                      double displayWidth,
+                      double displayHeight) {
+    // sub_89D8 reads qword_163448 / byte_162DDC cached by 7EA4 / 8058. Do not replace
+    // these with fresh reads here: notify/update timing is part of the recovered contract.
+    NSString *bundle = bundleIdentifier ?: @"";
+    NSDictionary *payload = @{
+        @"shouldBridge": @(shouldBridge),
+        @"displayWidth": @(displayWidth),
+        @"displayHeight": @(displayHeight),
+        @"orientation": @(orientation),
+        @"isSplit": @(split),
+        @"bundleIdentifier": bundle,
+        @"bridged_font_floor": @(gDDBridgedFontFloor),
+        @"keypane_enabled": @(gDDKeyPaneEnabled),
+    };
+    return DDPostDistributedNotification(@"com.sensetechlab.appbridge.uiapp.state", bundle, payload);
+}
+
+BOOL DDPostUIAppFontFloorState(NSString * _Nullable bundleIdentifier) {
+    // Per-bundle payload inside sub_291F4 after the cached 7EA4 refresh.
+    NSString *bundle = bundleIdentifier ?: @"";
+    NSDictionary *payload = @{
+        @"bridged_font_floor": @(gDDBridgedFontFloor),
+        @"bundleIdentifier": bundle,
+    };
+    return DDPostDistributedNotification(@"com.sensetechlab.appbridge.uiapp.fontfloor", bundle, payload);
+}
+
+BOOL DDPostUIAppKeyPaneState(NSString * _Nullable bundleIdentifier) {
+    // Per-bundle payload inside sub_29400 after the cached 8058 refresh.
+    NSString *bundle = bundleIdentifier ?: @"";
+    NSDictionary *payload = @{
+        @"keypane_enabled": @(gDDKeyPaneEnabled),
+        @"bundleIdentifier": bundle,
+    };
+    return DDPostDistributedNotification(@"com.sensetechlab.appbridge.uiapp.keypane", bundle, payload);
+}
+
+void DDAppendHostFrameMetrics(NSMutableDictionary *payload,
+                              const DDHostFrameMetrics *metrics) {
+    // sub_8F34 reads exactly these offsets from the 104-byte metrics snapshot.
+    if (!payload || !metrics) return;
+    payload[@"frameX"] = @(metrics->frameX);
+    payload[@"frameY"] = @(metrics->frameY);
+    payload[@"frameW"] = @(metrics->frameWidth);
+    payload[@"frameH"] = @(metrics->frameHeight);
+    payload[@"frameWinX"] = @(metrics->windowX);
+    payload[@"frameWinY"] = @(metrics->windowY);
+    payload[@"frameWinW"] = @(metrics->windowWidth);
+    payload[@"frameWinH"] = @(metrics->windowHeight);
+    payload[@"frameWinValid"] = @(metrics->windowValid);
+    payload[@"cpWinW"] = @(metrics->carPlayWindowWidth);
+    payload[@"cpWinH"] = @(metrics->carPlayWindowHeight);
+}
+
+BOOL DDPostHostRequest(NSString * _Nullable bundleIdentifier,
+                       BOOL activate,
+                       const DDHostFrameMetrics *metrics) {
+    // sub_8DF8: base fields, then sub_8F34 frame metadata, then host.request post.
+    NSMutableDictionary *payload = [@{
+        @"bundleIdentifier": bundleIdentifier ?: @"",
+        @"activate": @(activate),
+    } mutableCopy];
+    DDAppendHostFrameMetrics(payload, metrics);
+    return DDPostDistributedNotification(@"com.sensetechlab.appbridge.host.request", nil, payload);
+}
+
+BOOL DDPostSplitHostRequest(NSString * _Nullable leftBundleIdentifier,
+                            NSString * _Nullable rightBundleIdentifier,
+                            NSString * _Nullable centerBundleIdentifier,
+                            NSInteger layout,
+                            BOOL activate,
+                            BOOL skipEvict,
+                            BOOL environmentOnly,
+                            const DDHostFrameMetrics *metrics) {
+    // sub_91B4: seven base fields, sub_8F34 frame metadata, then split request post.
+    NSMutableDictionary *payload = [@{
+        @"bundleIdL": leftBundleIdentifier ?: @"",
+        @"bundleIdR": rightBundleIdentifier ?: @"",
+        @"bundleIdC": centerBundleIdentifier ?: @"",
+        @"layout": @(layout),
+        @"activate": @(activate),
+        @"skipEvict": @(skipEvict),
+        @"envOnly": @(environmentOnly),
+    } mutableCopy];
+    DDAppendHostFrameMetrics(payload, metrics);
+    return DDPostDistributedNotification(@"com.sensetechlab.appbridge.host.request.split", nil, payload);
+}
+
+BOOL DDPostCarPlayUIStatus(uint64_t generation,
+                           NSString * _Nullable bundleIdentifier,
+                           BOOL ok,
+                           NSString * _Nullable reason) {
+    // sub_986C exact four-field status payload.
+    NSDictionary *payload = @{
+        @"cpuiGen": @(generation),
+        @"cpuiBid": bundleIdentifier ?: @"",
+        @"cpuiOk": @(ok),
+        @"cpuiWhy": reason ?: @"",
+    };
+    return DDPostDistributedNotification(@"com.sensetechlab.appbridge.cpui.status", nil, payload);
+}
+
 BOOL DDPostHostRefusedState(NSString * _Nullable reason) {
     // sub_97A0: nil reason canonicalizes to "?".
     NSDictionary *payload = @{
@@ -536,6 +661,103 @@ static void DDReloadAppBridge(CFNotificationCenterRef center,
     DDRepublishKnownAppBridgeSnapshot(NULL);
 }
 
+static id _Nullable DDSharedDDz2(void) {
+    Class ddz2Class = NSClassFromString(@"DDz2");
+    SEL sharedSelector = NSSelectorFromString(@"shared");
+    if (!ddz2Class || ![ddz2Class respondsToSelector:sharedSelector]) return nil;
+    id (*sendShared)(id, SEL) = (void *)objc_msgSend;
+    return sendShared(ddz2Class, sharedSelector);
+}
+
+static NSArray<NSString *> *DDHostedNonCarPlayBundleIdentifiers(id ddz2) {
+    // sub_29810: prefer hostedSlotBids; if empty, fall back to hostedBundleId/hostedBundleId2.
+    // Exclude slot entries whose matching hostedSlotIsCarPlayUI flag is true; no dedup.
+    if (!ddz2) return @[];
+
+    id (*sendObject)(id, SEL) = (void *)objc_msgSend;
+    NSArray *bids = nil;
+    SEL bidsSelector = NSSelectorFromString(@"hostedSlotBids");
+    if ([ddz2 respondsToSelector:bidsSelector]) bids = sendObject(ddz2, bidsSelector);
+    if (![bids isKindOfClass:[NSArray class]]) bids = @[];
+
+    if (bids.count == 0) {
+        NSString *first = @"";
+        NSString *second = @"";
+        SEL firstSelector = NSSelectorFromString(@"hostedBundleId");
+        SEL secondSelector = NSSelectorFromString(@"hostedBundleId2");
+        id firstRaw = [ddz2 respondsToSelector:firstSelector] ? sendObject(ddz2, firstSelector) : nil;
+        id secondRaw = [ddz2 respondsToSelector:secondSelector] ? sendObject(ddz2, secondSelector) : nil;
+        if ([firstRaw isKindOfClass:[NSString class]]) first = firstRaw;
+        if ([secondRaw isKindOfClass:[NSString class]]) second = secondRaw;
+        bids = @[first, second];
+    }
+
+    NSArray *carPlayFlags = nil;
+    SEL flagsSelector = NSSelectorFromString(@"hostedSlotIsCarPlayUI");
+    if ([ddz2 respondsToSelector:flagsSelector]) carPlayFlags = sendObject(ddz2, flagsSelector);
+    if (![carPlayFlags isKindOfClass:[NSArray class]]) carPlayFlags = @[];
+
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
+    for (NSUInteger index = 0; index < bids.count; index++) {
+        id bid = bids[index];
+        BOOL isCarPlayUI = NO;
+        if (index < carPlayFlags.count) {
+            id flag = carPlayFlags[index];
+            if ([flag respondsToSelector:@selector(boolValue)]) isCarPlayUI = [flag boolValue];
+        }
+        if (!isCarPlayUI && [bid isKindOfClass:[NSString class]] && [bid length] > 0) {
+            [result addObject:bid];
+        }
+    }
+    return result;
+}
+
+static BOOL DDIsDDz2Active(id ddz2) {
+    SEL activeSelector = NSSelectorFromString(@"active");
+    if (!ddz2 || ![ddz2 respondsToSelector:activeSelector]) return NO;
+    BOOL (*sendActive)(id, SEL) = (void *)objc_msgSend;
+    return sendActive(ddz2, activeSelector);
+}
+
+static void DDRefreshFontFloorCache(CFNotificationCenterRef center,
+                                    void *observer,
+                                    CFStringRef name,
+                                    const void *object,
+                                    CFDictionaryRef userInfo) {
+    (void)center; (void)observer; (void)name; (void)object; (void)userInfo;
+    gDDBridgedFontFloor = DDReadBridgedFontFloor();
+    id ddz2 = DDSharedDDz2();
+    if (!DDIsDDz2Active(ddz2)) return;
+    for (NSString *bundleIdentifier in DDHostedNonCarPlayBundleIdentifiers(ddz2)) {
+        DDPostUIAppFontFloorState(bundleIdentifier);
+    }
+}
+
+static void DDRefreshKeyPaneCache(CFNotificationCenterRef center,
+                                  void *observer,
+                                  CFStringRef name,
+                                  const void *object,
+                                  CFDictionaryRef userInfo) {
+    (void)center; (void)observer; (void)name; (void)object; (void)userInfo;
+    gDDKeyPaneEnabled = DDReadKeyPaneEnabled();
+    // sub_29400 also invokes the private toast path 30960 when disabled; that UI-only side effect
+    // remains intentionally omitted. The DDz2 active-host broadcast below is reconstructed.
+    id ddz2 = DDSharedDDz2();
+    if (!DDIsDDz2Active(ddz2)) return;
+    for (NSString *bundleIdentifier in DDHostedNonCarPlayBundleIdentifiers(ddz2)) {
+        DDPostUIAppKeyPaneState(bundleIdentifier);
+    }
+}
+
+static void DDObserveImmediateWithCallback(NSString *name, CFNotificationCallback callback) {
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                    NULL,
+                                    callback,
+                                    (__bridge CFStringRef)name,
+                                    NULL,
+                                    CFNotificationSuspensionBehaviorDeliverImmediately);
+}
+
 static void DDObserveImmediate(NSString *name) {
     CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                     NULL,
@@ -559,6 +781,8 @@ void DDReconstructionStart(void) {
         DDObserveImmediate(DD_N_SETTINGS_CHANGED);
         DDObserveImmediate(DD_N_APPBRIDGE_LISTCHANGED);
         DDObserveImmediate(DD_N_AUTOSTART_CHANGED);
+        DDObserveImmediateWithCallback(DD_N_FONTFLOOR_CHANGED, DDRefreshFontFloorCache);
+        DDObserveImmediateWithCallback(DD_N_KEYPANE_CHANGED, DDRefreshKeyPaneCache);
         DDRepublishKnownAppBridgeSnapshot(NULL);
     });
 }

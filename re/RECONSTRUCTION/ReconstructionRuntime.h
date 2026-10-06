@@ -1,6 +1,7 @@
 #pragma once
 
 #import "DuoDashShared.h"
+#include <stdint.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -10,6 +11,21 @@ typedef NS_ENUM(NSInteger, DDIntegerValidationStatus) {
     DDIntegerValidationString = 2,
     DDIntegerValidationError = 3,
 };
+
+typedef struct {
+    double frameX;
+    double frameY;
+    double frameWidth;
+    double frameHeight;
+    double windowX;
+    double windowY;
+    double windowWidth;
+    double windowHeight;
+    BOOL windowValid;
+    uint8_t reserved[23];
+    double carPlayWindowWidth;
+    double carPlayWindowHeight;
+} DDHostFrameMetrics;
 
 FOUNDATION_EXPORT DDRole DDDetectRole(void);
 FOUNDATION_EXPORT NSString *DDRoleName(DDRole role);
@@ -49,6 +65,32 @@ FOUNDATION_EXPORT BOOL DDObserveDistributedNotification(NSString *name,
                                                         id observer,
                                                         SEL selector,
                                                         id _Nullable object);
+FOUNDATION_EXPORT BOOL DDPostUIAppRequest(NSString * _Nullable bundleIdentifier);
+FOUNDATION_EXPORT BOOL DDPostUIAppState(NSString * _Nullable bundleIdentifier,
+                                       BOOL shouldBridge,
+                                       NSInteger orientation,
+                                       BOOL split,
+                                       double displayWidth,
+                                       double displayHeight);
+FOUNDATION_EXPORT BOOL DDPostUIAppFontFloorState(NSString * _Nullable bundleIdentifier);
+FOUNDATION_EXPORT BOOL DDPostUIAppKeyPaneState(NSString * _Nullable bundleIdentifier);
+FOUNDATION_EXPORT void DDAppendHostFrameMetrics(NSMutableDictionary *payload,
+                                                const DDHostFrameMetrics *metrics);
+FOUNDATION_EXPORT BOOL DDPostHostRequest(NSString * _Nullable bundleIdentifier,
+                                         BOOL activate,
+                                         const DDHostFrameMetrics *metrics);
+FOUNDATION_EXPORT BOOL DDPostSplitHostRequest(NSString * _Nullable leftBundleIdentifier,
+                                              NSString * _Nullable rightBundleIdentifier,
+                                              NSString * _Nullable centerBundleIdentifier,
+                                              NSInteger layout,
+                                              BOOL activate,
+                                              BOOL skipEvict,
+                                              BOOL environmentOnly,
+                                              const DDHostFrameMetrics *metrics);
+FOUNDATION_EXPORT BOOL DDPostCarPlayUIStatus(uint64_t generation,
+                                             NSString * _Nullable bundleIdentifier,
+                                             BOOL ok,
+                                             NSString * _Nullable reason);
 FOUNDATION_EXPORT BOOL DDPostHostRefusedState(NSString * _Nullable reason);
 FOUNDATION_EXPORT BOOL DDPostHostState(BOOL activated,
                                        NSString * _Nullable bundleIdentifier,
