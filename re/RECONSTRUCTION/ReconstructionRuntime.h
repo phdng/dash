@@ -70,6 +70,17 @@ typedef struct {
     NSInteger slotIndex;
 } DDSceneDestroyDecision;
 
+typedef NS_ENUM(NSInteger, DDToAppsYieldDecisionKind) {
+    DDToAppsYieldDecisionNone = 0,
+    DDToAppsYieldDecisionYieldThenCallOriginal = 1,
+    DDToAppsYieldDecisionSwallowOriginal = 2,
+};
+
+typedef struct {
+    DDToAppsYieldDecisionKind kind;
+    NSInteger slotIndex;
+} DDToAppsYieldDecision;
+
 typedef struct {
     BOOL valid;
     double boundsWidth;
@@ -230,6 +241,9 @@ FOUNDATION_EXPORT BOOL DDShouldForceMutableSceneForeground(NSString * _Nullable 
                                                            BOOL foregroundSetterSupported);
 FOUNDATION_EXPORT DDSceneDestroyDecision DDResolveSceneDestroyDecision(NSString * _Nullable primaryBundleIdentifier,
                                                                        NSString * _Nullable secondaryBundleIdentifier);
+FOUNDATION_EXPORT DDToAppsYieldDecision DDResolveToAppsYieldDecision(NSArray<NSString *> * _Nullable destinationBundleIdentifiers,
+                                                                     BOOL yieldInProgress,
+                                                                     BOOL swallowOriginalCallback);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);

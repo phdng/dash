@@ -1405,6 +1405,30 @@ DDSceneDestroyDecision DDResolveSceneDestroyDecision(NSString *primaryBundleIden
     return DDSceneDestroyDecisionValue(DDSceneDestroyDecisionDismissHost, -1);
 }
 
+DDToAppsYieldDecision DDResolveToAppsYieldDecision(NSArray<NSString *> *destinationBundleIdentifiers,
+                                                   BOOL yieldInProgress,
+                                                   BOOL swallowOriginalCallback) {
+    // Pure post-enumeration half of 41730. The caller supplies already-extracted destination
+    // bundle identities plus the external swallow-file state. Private scene-entity traversal and
+    // dismiss/cpdisconnect/hide/log side effects remain outside the reconstruction runtime.
+    DDToAppsYieldDecision none = { DDToAppsYieldDecisionNone, -1 };
+    if (!gDDHostMirrorActive || yieldInProgress) return none;
+
+    for (NSString *bundleIdentifier in destinationBundleIdentifiers ?: @[]) {
+        NSInteger slotIndex = DDConfiguredHostSlotIndexForBundleIdentifier(bundleIdentifier, NO);
+        if (slotIndex == NSNotFound) continue;
+
+        DDToAppsYieldDecision decision = {
+            swallowOriginalCallback
+                ? DDToAppsYieldDecisionSwallowOriginal
+                : DDToAppsYieldDecisionYieldThenCallOriginal,
+            slotIndex,
+        };
+        return decision;
+    }
+    return none;
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.
