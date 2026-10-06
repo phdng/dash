@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-06 session-075 (buildable reconstruction phase)_
+_Last updated: 2026-10-06 session-076 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-6 (session-075): GitHub Actions session-074 batch đã xanh. Executable target hiện thêm UIApp-side bundle-scoped IPC consumer từ 4CBDC + exact state/fontfloor/keypane parsing cache + active re-request/3s stale timeout + background teardown semantics. UIKit relayout/font mutation, key-probe/input mutation và SpringBoard 3F224 multi-slot response vẫn giữ explicit gap.
+BUILDABLE RUNTIME PHASE-7 (session-076): GitHub Actions session-075 batch đã xanh. Executable target hiện thêm SpringBoard host-slot mirror + 3F224 uiapp.request responder, exact 3B738/3ED88 + 3D4FC/3DC38 retry schedulers với recovered delay table, và 3D6EC/3D704 CarPlay-slot state/IPC half. Private scene/view creation và UI teardown vẫn giữ explicit gap.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-075):
-- R-068 UIApp consumer: 4CBDC evidence-safe wiring + 4407C/443FC/444C4 parser defaults + 445F8/447C0 stale-state timeout + 446E4 background semantics + 42F10 temp/legacy marker lookup.
+## LAST COMPLETED TASK (session-076):
+- R-069 exact 3F224 responder over reconstruction host-slot mirror; R-070 exact 5-delay handshake/geometry retry schedulers; R-071 3D6EC + state/IPC half of 3D704 CarPlay-slot conversion.
 
 ## CURRENT TASK:
-- Chờ compiler gate cho session-075 changes; local structural checks chạy sau final docs.
+- Chờ compiler gate cho session-076 changes; final local structural checks chạy sau tracking/log update.
 
 ## NEXT TASK:
-- R-069 SpringBoard onUIAppRequest 3F224 đang blocked vì thiếu exact per-slot render-size accessor cho slots 1/2. Sau CI xanh, ưu tiên tìm direct safe state bridge/accessor; nếu vẫn không có thì chuyển sang gap khác thay vì dùng slot-0 size cho mọi slot. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
+- Sau CI xanh, R-072 inspect evidence-safe pre-private halves of 3B2D8/3CC44: render-size scaling/orientation + mirror population boundary. Không instantiate SBApplicationController/SBDeviceApplicationSceneEntity/SBAppViewController. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-075):
+## FILES CHANGED (session-076):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-075.md`.
+- Mới: `LOG/session-076.md`.
 
 ## TEST STATUS:
-Session-074 GitHub Actions build GREEN (user-confirmed). Session-075 local verifier + py_compile + `git diff --check` PASS after final tracking edits; CatDesk standard verifier = NOT_CONFIGURED (expected for Theos-only repo without Cargo/package.json/Python manifest). Current Objective-C observer/block/state-cache edits need next macOS CI run; dynamic device tests vẫn pending.
+Session-075 GitHub Actions build GREEN (user-confirmed). Session-076 local verifier + py_compile + `git diff --check` PASS after final docs/log edits; CatDesk standard verifier = NOT_CONFIGURED (expected for this Theos-only repo without Cargo.toml/package.json/Python project manifest). Current Objective-C host-mirror/responder/retry edits need next macOS CI run; dynamic device tests vẫn pending.

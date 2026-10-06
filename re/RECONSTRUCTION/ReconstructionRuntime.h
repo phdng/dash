@@ -13,6 +13,11 @@ typedef NS_ENUM(NSInteger, DDIntegerValidationStatus) {
 };
 
 typedef struct {
+    double width;
+    double height;
+} DDHostSlotSize;
+
+typedef struct {
     double frameX;
     double frameY;
     double frameWidth;
@@ -75,6 +80,19 @@ FOUNDATION_EXPORT BOOL DDPostUIAppState(NSString * _Nullable bundleIdentifier,
 FOUNDATION_EXPORT BOOL DDPostUIAppFontFloorState(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT BOOL DDPostUIAppKeyPaneState(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT NSDictionary *DDCurrentUIAppBridgeState(void);
+FOUNDATION_EXPORT NSInteger DDReadHostOrientation(void);
+FOUNDATION_EXPORT uint64_t DDUpdateHostSlotMirror(NSArray *bundleIdentifiers,
+                                                  const DDHostSlotSize *slotSizes,
+                                                  NSUInteger slotSizeCount,
+                                                  NSArray * _Nullable carPlayUIFlags,
+                                                  NSInteger orientation,
+                                                  BOOL split);
+FOUNDATION_EXPORT void DDResetHostSlotMirror(void);
+FOUNDATION_EXPORT NSDictionary *DDCurrentHostSlotMirror(void);
+FOUNDATION_EXPORT void DDSetHostSlotCarPlayUI(NSUInteger slotIndex, BOOL carPlayUI);
+FOUNDATION_EXPORT BOOL DDConvertHostSlotToCarPlayUI(NSUInteger slotIndex);
+FOUNDATION_EXPORT void DDScheduleAppSideHandshake(void);
+FOUNDATION_EXPORT void DDScheduleGeometryPushesForSlot(NSUInteger slotIndex);
 FOUNDATION_EXPORT void DDAppendHostFrameMetrics(NSMutableDictionary *payload,
                                                 const DDHostFrameMetrics *metrics);
 FOUNDATION_EXPORT BOOL DDPostHostRequest(NSString * _Nullable bundleIdentifier,

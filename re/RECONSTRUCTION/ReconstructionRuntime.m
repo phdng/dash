@@ -1,4 +1,4 @@
-// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-075)
+// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-076)
 // This file intentionally implements only behavior whose data-flow can be represented without
 // unresolved private classes/functions. Unknown filtering/computation remains documented in the
 // synthesis files rather than being silently guessed here.
@@ -38,6 +38,21 @@ static NSInteger gDDUIAppOrientation = 1;
 static NSInteger gDDUIAppFontFloor = 0;
 static BOOL gDDUIAppKeyPaneEnabled = YES;
 static BOOL gDDUIAppFontFloorActive = NO;
+
+// SpringBoard host-slot mirror. This models the raw DDz2 globals used by 3F224/3B738/3D4FC
+// without hard-linking the private scene-host implementation. Future host builders populate it
+// only after their size/orientation decisions are resolved.
+static BOOL gDDHostMirrorActive = NO;
+static BOOL gDDHostMirrorSplit = NO;
+static NSUInteger gDDHostMirrorSlotCount = 0;
+static uint64_t gDDHostMirrorGeneration = 0;
+static NSInteger gDDHostMirrorOrientation = 1;
+static NSString *gDDHostMirrorBids[3] = { nil, nil, nil };
+static BOOL gDDHostMirrorCarPlayUI[3] = { NO, NO, NO };
+static DDHostSlotSize gDDHostMirrorSizes[3] = { {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0} };
+
+// off_154160: five NSConstantDoubleNumber values recovered directly from __objc_arraydata.
+static const double kDDHostRetryDelays[] = { 0.0, 0.4, 0.9, 1.8, 3.5 };
 
 static id _Nullable DDCopyAppPreference(NSString *key) {
     CFTypeRef value = CFPreferencesCopyAppValue((__bridge CFStringRef)key, kDDSettingsDomain);
@@ -574,6 +589,181 @@ NSDictionary *DDCurrentUIAppBridgeState(void) {
     };
 }
 
+NSInteger DDReadHostOrientation(void) {
+    // sub_3DFC8: NSString integerValue from the override file; anything outside 1..4 -> 1.
+    NSString *raw = [NSString stringWithContentsOfFile:@"/var/tmp/duodash_ab_orient"
+                                              encoding:NSUTF8StringEncoding
+                                                 error:nil];
+    NSInteger value = raw ? raw.integerValue : 0;
+    return (value >= 1 && value <= 4) ? value : 1;
+}
+
+uint64_t DDUpdateHostSlotMirror(NSArray *bundleIdentifiers,
+                                const DDHostSlotSize *slotSizes,
+                                NSUInteger slotSizeCount,
+                                NSArray * _Nullable carPlayUIFlags,
+                                NSInteger orientation,
+                                BOOL split) {
+    // Compile-safe mirror of the post-3DD4C DDz2 state used by 3F224/3B738/3D4FC.
+    // 3CC44 accepts min(bids,natives) == 1..3. sub_3DD4C(a3=0) canonicalizes
+    // non-NSString/duplicates to @"" while preserving order.
+    NSUInteger count = MIN(bundleIdentifiers.count, slotSizeCount);
+    if (count < 1 || count > 3 || !slotSizes) return 0;
+
+    NSMutableArray<NSString *> *normalized = [NSMutableArray arrayWithCapacity:count];
+    for (NSUInteger index = 0; index < count; index++) {
+        id raw = bundleIdentifiers[index];
+        NSString *bid = [raw isKindOfClass:[NSString class]] ? raw : @"";
+        if (bid.length > 0 && [normalized containsObject:bid]) bid = @"";
+        [normalized addObject:[bid copy]];
+    }
+
+    gDDHostMirrorGeneration++;
+    gDDHostMirrorActive = YES;
+    gDDHostMirrorSplit = split;
+    gDDHostMirrorSlotCount = count;
+    gDDHostMirrorOrientation = (orientation >= 1 && orientation <= 4) ? orientation : 1;
+
+    for (NSUInteger index = 0; index < 3; index++) {
+        if (index < count) {
+            gDDHostMirrorBids[index] = [normalized[index] copy];
+            gDDHostMirrorSizes[index] = slotSizes[index];
+            gDDHostMirrorCarPlayUI[index] = index < carPlayUIFlags.count
+                ? [carPlayUIFlags[index] boolValue]
+                : NO;
+        } else {
+            gDDHostMirrorBids[index] = @"";
+            gDDHostMirrorSizes[index] = (DDHostSlotSize){0.0, 0.0};
+            gDDHostMirrorCarPlayUI[index] = NO;
+        }
+    }
+    return gDDHostMirrorGeneration;
+}
+
+void DDResetHostSlotMirror(void) {
+    // 3AAF8 resetHostingState clears active/bids/sizes/flags/count/split but does not advance
+    // qword_163DC8; stale retry blocks therefore fail on the active gate until a new generation.
+    gDDHostMirrorActive = NO;
+    gDDHostMirrorSplit = NO;
+    gDDHostMirrorSlotCount = 0;
+    for (NSUInteger index = 0; index < 3; index++) {
+        gDDHostMirrorBids[index] = @"";
+        gDDHostMirrorSizes[index] = (DDHostSlotSize){0.0, 0.0};
+        gDDHostMirrorCarPlayUI[index] = NO;
+    }
+}
+
+void DDSetHostSlotCarPlayUI(NSUInteger slotIndex, BOOL carPlayUI) {
+    // 3D6EC writes the raw CarPlay-UI flag for any physical slot 0..2, independent of slotCount.
+    if (slotIndex <= 2) gDDHostMirrorCarPlayUI[slotIndex] = carPlayUI;
+}
+
+BOOL DDConvertHostSlotToCarPlayUI(NSUInteger slotIndex) {
+    // Evidence-safe state/IPC half of 3D704. Return value is the precondition result, so an
+    // already-CarPlay slot still returns YES. Private hosted-view remove/invalidate is omitted.
+    BOOL valid = slotIndex < 3 && [NSThread isMainThread] && gDDHostMirrorSlotCount > slotIndex;
+    if (valid && !gDDHostMirrorCarPlayUI[slotIndex]) {
+        NSString *bundleIdentifier = [gDDHostMirrorBids[slotIndex] copy] ?: @"";
+        if (bundleIdentifier.length > 0) {
+            DDPostUIAppState(bundleIdentifier, NO, gDDHostMirrorOrientation, YES, 0.0, 0.0);
+        }
+        gDDHostMirrorBids[slotIndex] = bundleIdentifier;
+        gDDHostMirrorCarPlayUI[slotIndex] = YES;
+    }
+    return valid;
+}
+
+NSDictionary *DDCurrentHostSlotMirror(void) {
+    NSMutableArray *bids = [NSMutableArray arrayWithCapacity:gDDHostMirrorSlotCount];
+    NSMutableArray *sizes = [NSMutableArray arrayWithCapacity:gDDHostMirrorSlotCount];
+    NSMutableArray *carPlay = [NSMutableArray arrayWithCapacity:gDDHostMirrorSlotCount];
+    for (NSUInteger index = 0; index < gDDHostMirrorSlotCount && index < 3; index++) {
+        [bids addObject:gDDHostMirrorBids[index] ?: @""];
+        [sizes addObject:@{
+            @"width": @(gDDHostMirrorSizes[index].width),
+            @"height": @(gDDHostMirrorSizes[index].height),
+        }];
+        [carPlay addObject:@(gDDHostMirrorCarPlayUI[index])];
+    }
+    return @{
+        @"active": @(gDDHostMirrorActive),
+        @"split": @(gDDHostMirrorSplit),
+        @"slotCount": @(gDDHostMirrorSlotCount),
+        @"generation": @(gDDHostMirrorGeneration),
+        @"orientation": @(gDDHostMirrorOrientation),
+        @"bundleIdentifiers": bids,
+        @"sizes": sizes,
+        @"carPlayUI": carPlay,
+    };
+}
+
+static NSInteger DDHostMirrorIndexForBundle(NSString *bundleIdentifier) {
+    if (!gDDHostMirrorActive || bundleIdentifier.length == 0) return NSNotFound;
+    for (NSUInteger index = 0; index < 3; index++) {
+        NSString *bid = gDDHostMirrorBids[index] ?: @"";
+        if (bid.length == 0 || gDDHostMirrorCarPlayUI[index]) continue;
+        if ([bid isEqualToString:bundleIdentifier]) return (NSInteger)index;
+    }
+    return NSNotFound;
+}
+
+static NSArray<NSString *> *DDHostMirrorNonCarPlayBundleIdentifiers(void) {
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
+    if (!gDDHostMirrorActive) return result;
+    for (NSUInteger index = 0; index < gDDHostMirrorSlotCount && index < 3; index++) {
+        NSString *bid = gDDHostMirrorBids[index] ?: @"";
+        if (!gDDHostMirrorCarPlayUI[index] && bid.length > 0) [result addObject:bid];
+    }
+    return result;
+}
+
+void DDScheduleAppSideHandshake(void) {
+    // 3B738 + 3ED88: capture slot0 bid/size/orientation/generation, then retry at the
+    // five off_154160 delays. Each block requires same generation + active + same slot0 bid.
+    NSString *bundleIdentifier = [gDDHostMirrorBids[0] copy] ?: @"";
+    DDHostSlotSize capturedSize = gDDHostMirrorSizes[0];
+    NSInteger capturedOrientation = gDDHostMirrorOrientation;
+    uint64_t capturedGeneration = gDDHostMirrorGeneration;
+
+    for (NSUInteger index = 0; index < sizeof(kDDHostRetryDelays) / sizeof(kDDHostRetryDelays[0]); index++) {
+        double delay = kDDHostRetryDelays[index];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * (double)NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            if (gDDHostMirrorGeneration != capturedGeneration || !gDDHostMirrorActive) return;
+            NSString *current = gDDHostMirrorBids[0] ?: @"";
+            if (![current isEqualToString:bundleIdentifier]) return;
+            DDPostUIAppState(bundleIdentifier, YES, capturedOrientation, NO,
+                             capturedSize.width, capturedSize.height);
+        });
+    }
+}
+
+void DDScheduleGeometryPushesForSlot(NSUInteger slotIndex) {
+    // 3D4FC + 3DC38: schedule only a valid, non-CarPlay slot with a non-empty bid.
+    if (slotIndex > 2) return;
+    NSString *bundleIdentifier = [gDDHostMirrorBids[slotIndex] copy] ?: @"";
+    if (bundleIdentifier.length == 0 || gDDHostMirrorCarPlayUI[slotIndex]) return;
+
+    DDHostSlotSize capturedSize = gDDHostMirrorSizes[slotIndex];
+    NSInteger capturedOrientation = gDDHostMirrorOrientation;
+    uint64_t capturedGeneration = gDDHostMirrorGeneration;
+
+    for (NSUInteger index = 0; index < sizeof(kDDHostRetryDelays) / sizeof(kDDHostRetryDelays[0]); index++) {
+        double delay = kDDHostRetryDelays[index];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * (double)NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            if (gDDHostMirrorGeneration != capturedGeneration || !gDDHostMirrorActive) return;
+            NSInteger currentIndex = DDHostMirrorIndexForBundle(bundleIdentifier);
+            if (currentIndex == NSNotFound) return;
+
+            DDHostSlotSize size = gDDHostMirrorSizes[(NSUInteger)currentIndex];
+            if (size.width < 1.0 || size.height < 1.0) size = capturedSize;
+            DDPostUIAppState(bundleIdentifier, YES, capturedOrientation, YES,
+                             size.width, size.height);
+        });
+    }
+}
+
 static NSString * _Nullable DDTemporaryMarkerPath(NSString *name) {
     // sub_42F10: look in NSTemporaryDirectory; for duodash_* also accept legacy carnav_*.
     NSString *temporaryDirectory = NSTemporaryDirectory();
@@ -762,6 +952,44 @@ BOOL DDPostHostState(BOOL activated,
     return DDPostDistributedNotification(@"com.sensetechlab.appbridge.host.state", nil, payload);
 }
 
+static void DDConsumeHostUIAppRequestUserInfo(NSDictionary *userInfo) {
+    // 3F224: resolve the requested bundle against up to three active non-CarPlay slots and
+    // publish uiapp.state only when the matched slot width is positive.
+    NSDictionary *info = [userInfo isKindOfClass:[NSDictionary class]] ? userInfo : @{};
+    id rawBundle = info[@"bundleIdentifier"];
+    NSString *bundleIdentifier = [rawBundle isKindOfClass:[NSString class]] ? rawBundle : @"";
+    NSInteger slotIndex = DDHostMirrorIndexForBundle(bundleIdentifier);
+    if (slotIndex == NSNotFound) return;
+
+    DDHostSlotSize size = gDDHostMirrorSizes[(NSUInteger)slotIndex];
+    if (size.width > 0.0) {
+        DDPostUIAppState(bundleIdentifier, YES, gDDHostMirrorOrientation, gDDHostMirrorSplit,
+                         size.width, size.height);
+    }
+}
+
+@interface DDReconstructionHostUIAppResponder : NSObject
+@end
+
+@implementation DDReconstructionHostUIAppResponder
+- (void)onUIAppRequest:(NSNotification *)notification {
+    DDConsumeHostUIAppRequestUserInfo(notification.userInfo);
+}
+@end
+
+static DDReconstructionHostUIAppResponder *gDDHostUIAppResponder = nil;
+
+static void DDStartSpringBoardUIAppResponder(void) {
+    // 27E20 + 3F224 compile-safe receiver half. The host-slot mirror is intentionally separate
+    // from private scene creation; until a host builder populates it, requests correctly no-op.
+    if (gDDHostUIAppResponder) return;
+    gDDHostUIAppResponder = [DDReconstructionHostUIAppResponder new];
+    DDObserveDistributedNotification(@"com.sensetechlab.appbridge.uiapp.request",
+                                     gDDHostUIAppResponder,
+                                     @selector(onUIAppRequest:),
+                                     nil);
+}
+
 @interface DDReconstructionUIAppObserver : NSObject
 @end
 
@@ -867,7 +1095,7 @@ static id _Nullable DDSharedDDz2(void) {
 static NSArray<NSString *> *DDHostedNonCarPlayBundleIdentifiers(id ddz2) {
     // sub_29810: prefer hostedSlotBids; if empty, fall back to hostedBundleId/hostedBundleId2.
     // Exclude slot entries whose matching hostedSlotIsCarPlayUI flag is true; no dedup.
-    if (!ddz2) return @[];
+    if (!ddz2) return DDHostMirrorNonCarPlayBundleIdentifiers();
 
     id (*sendObject)(id, SEL) = (void *)objc_msgSend;
     NSArray *bids = nil;
@@ -909,7 +1137,8 @@ static NSArray<NSString *> *DDHostedNonCarPlayBundleIdentifiers(id ddz2) {
 
 static BOOL DDIsDDz2Active(id ddz2) {
     SEL activeSelector = NSSelectorFromString(@"active");
-    if (!ddz2 || ![ddz2 respondsToSelector:activeSelector]) return NO;
+    if (!ddz2) return gDDHostMirrorActive;
+    if (![ddz2 respondsToSelector:activeSelector]) return NO;
     BOOL (*sendActive)(id, SEL) = (void *)objc_msgSend;
     return sendActive(ddz2, activeSelector);
 }
@@ -978,6 +1207,7 @@ void DDReconstructionStart(void) {
 
         // 27E20 B12: settings.changed, appbridge.listchanged and autostart.changed
         // all use sub_29198 with Immediate suspension behavior.
+        DDStartSpringBoardUIAppResponder();
         DDObserveImmediate(DD_N_SETTINGS_CHANGED);
         DDObserveImmediate(DD_N_APPBRIDGE_LISTCHANGED);
         DDObserveImmediate(DD_N_AUTOSTART_CHANGED);
