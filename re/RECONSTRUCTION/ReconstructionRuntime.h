@@ -58,6 +58,18 @@ typedef struct {
     BOOL substituted;
 } DDSceneCallbackSizeRewrite;
 
+typedef NS_ENUM(NSInteger, DDSceneDestroyDecisionKind) {
+    DDSceneDestroyDecisionNone = 0,
+    DDSceneDestroyDecisionAuxDestroyedNotice = 1,
+    DDSceneDestroyDecisionClearHostSlot = 2,
+    DDSceneDestroyDecisionDismissHost = 3,
+};
+
+typedef struct {
+    DDSceneDestroyDecisionKind kind;
+    NSInteger slotIndex;
+} DDSceneDestroyDecision;
+
 typedef struct {
     BOOL valid;
     double boundsWidth;
@@ -212,6 +224,12 @@ FOUNDATION_EXPORT DDSceneCallbackSizeRewrite DDResolveSceneCallbackSizeRewrite(N
 FOUNDATION_EXPORT BOOL DDResolveSceneOrientationEqualityResult(NSString * _Nullable bundleIdentifier,
                                                                NSInteger requestedOrientation,
                                                                BOOL originalResult);
+FOUNDATION_EXPORT BOOL DDShouldForceMutableSceneForeground(NSString * _Nullable bundleIdentifier,
+                                                           BOOL mutableSettingsClassAvailable,
+                                                           BOOL settingsIsMutableApplicationSceneSettings,
+                                                           BOOL foregroundSetterSupported);
+FOUNDATION_EXPORT DDSceneDestroyDecision DDResolveSceneDestroyDecision(NSString * _Nullable primaryBundleIdentifier,
+                                                                       NSString * _Nullable secondaryBundleIdentifier);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);

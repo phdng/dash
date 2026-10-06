@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-06 session-084 (buildable reconstruction phase)_
+_Last updated: 2026-10-06 session-085 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-15 (session-084): GitHub Actions session-083 (`ffcd879`) đã xanh theo user. Executable target thêm exact pure callback rewrites từ 40C5C/40DA8/40F0C: route-gated positive-dimension substitution dùng 41D80 native size + accepted-landscape swap, và orientation equality override dùng raw 3FAF8 orientation với fallback về original result ngoài route. 40DA8 counter mutation và 40FF4 setForeground vẫn explicit gap.
+BUILDABLE RUNTIME PHASE-16 (session-085): GitHub Actions session-084 (`4933e59`) đã xanh theo user. Executable target thêm data-only 40FF4 foreground eligibility và 41138 destroy routing: either-object host/aux gate nhưng primary non-empty identity vẫn thắng selection; aux=>notice decision, non-split=>dismiss, split=>clear chỉ khi exact match đúng 1 configured slot trên cả 3 slots, còn lại dismiss. setForeground:/30960/slot clear/DDz2 dismiss vẫn explicit gap.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-084):
-- R-083 exact pure callback size substitution for 40C5C/40DA8 plus route-gated orientation equality for 40F0C.
+## LAST COMPLETED TASK (session-085):
+- R-084 data-only 40FF4 foreground-force eligibility plus exact 41138 post-identity destroy decision routing.
 
 ## CURRENT TASK:
-- R-083 hoàn tất local; commit-only handoff. User sẽ tự push và báo compiler green/pass trước khi R-084 bắt đầu.
+- R-084 hoàn tất local; commit-only handoff. User sẽ tự push và báo compiler green/pass trước khi R-085 bắt đầu.
 
 ## NEXT TASK:
-- Sau compiler xanh, R-084 inspect data-only foreground-force eligibility `40FF4` và post-identity destroy routing `41138`; chỉ promote caller-driven decisions, không invoke setForeground:, dismiss, toast, hay slot mutation. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
+- Sau compiler xanh, R-085 inspect `41730` to-apps yield gating với caller-supplied destination bundle candidates + swallow-toggle state; chỉ promote pure gate/match/yield decision, không reconstruct SBDeviceApplicationSceneEntity enumeration hay invoke dismiss/cpdisconnect/hide/log. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-084):
+## FILES CHANGED (session-085):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-084.md`.
+- Mới: `LOG/session-085.md`.
 
 ## TEST STATUS:
-Session-083 GitHub Actions build GREEN (`ffcd879`, user-confirmed). Session-084 local verifier + py_compile + `git diff --check` PASS after final docs/log edits; CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit; user tự push và báo compiler result. Dynamic device tests vẫn pending.
+Session-084 GitHub Actions build GREEN (`4933e59`, user-confirmed). Session-085 local verifier + py_compile + `git diff --check` PASS after final docs/log edits; CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit; user tự push và báo compiler result. Dynamic device tests vẫn pending.

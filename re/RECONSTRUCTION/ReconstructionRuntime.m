@@ -1346,6 +1346,65 @@ BOOL DDResolveSceneOrientationEqualityResult(NSString *bundleIdentifier,
     return DDResolveIdentityRawSettingsOrientation(bundleIdentifier) == requestedOrientation;
 }
 
+BOOL DDShouldForceMutableSceneForeground(NSString *bundleIdentifier,
+                                         BOOL mutableSettingsClassAvailable,
+                                         BOOL settingsIsMutableApplicationSceneSettings,
+                                         BOOL foregroundSetterSupported) {
+    // Pure 40FF4 eligibility after the original implementation already ran. The caller supplies
+    // runtime class/kind/setter capability results; this reconstruction never sends setForeground:.
+    if (!gDDHostMirrorActive) return NO;
+    DDSceneIdentityRoute route = DDResolveFBSUpdateIdentityRoute(bundleIdentifier);
+    return route.kind != DDSceneIdentityRouteNone && mutableSettingsClassAvailable &&
+           settingsIsMutableApplicationSceneSettings && foregroundSetterSupported;
+}
+
+static DDSceneDestroyDecision DDSceneDestroyDecisionValue(DDSceneDestroyDecisionKind kind,
+                                                           NSInteger slotIndex) {
+    DDSceneDestroyDecision decision = { kind, slotIndex };
+    return decision;
+}
+
+DDSceneDestroyDecision DDResolveSceneDestroyDecision(NSString *primaryBundleIdentifier,
+                                                      NSString *secondaryBundleIdentifier) {
+    // Pure post-identity half of 41138. 41CBC gates on either callback object, but identity
+    // selection still prefers the primary identity whenever it is non-empty, even when only the
+    // secondary object made the gate true. This subtle precedence is preserved intentionally.
+    DDSceneDestroyDecision none = DDSceneDestroyDecisionValue(DDSceneDestroyDecisionNone, -1);
+    if (!gDDHostMirrorActive) return none;
+
+    DDSceneIdentityRoute primaryRoute = DDResolveFBSUpdateIdentityRoute(primaryBundleIdentifier);
+    DDSceneIdentityRoute secondaryRoute = DDResolveFBSUpdateIdentityRoute(secondaryBundleIdentifier);
+    if (primaryRoute.kind == DDSceneIdentityRouteNone &&
+        secondaryRoute.kind == DDSceneIdentityRouteNone) {
+        return none;
+    }
+
+    NSString *selected = primaryBundleIdentifier.length > 0
+        ? primaryBundleIdentifier
+        : secondaryBundleIdentifier;
+    if (DDBundleIdentifierMatchesAux(selected)) {
+        return DDSceneDestroyDecisionValue(DDSceneDestroyDecisionAuxDestroyedNotice, -1);
+    }
+
+    if (!gDDHostMirrorSplit || selected.length == 0) {
+        return DDSceneDestroyDecisionValue(DDSceneDestroyDecisionDismissHost, -1);
+    }
+
+    NSInteger matchCount = 0;
+    NSInteger matchedSlotIndex = -1;
+    for (NSUInteger index = 0; index < 3; index++) {
+        NSString *hosted = gDDHostMirrorBids[index] ?: @"";
+        if (hosted.length > 0 && [selected isEqualToString:hosted]) {
+            matchCount++;
+            matchedSlotIndex = (NSInteger)index;
+        }
+    }
+    if (matchCount == 1) {
+        return DDSceneDestroyDecisionValue(DDSceneDestroyDecisionClearHostSlot, matchedSlotIndex);
+    }
+    return DDSceneDestroyDecisionValue(DDSceneDestroyDecisionDismissHost, -1);
+}
+
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
     // Pure decision from 3F75C + 3FAF8 after the caller has already determined whether the
     // settings/scene belongs to the aux bundle. Landscape override and nopaneorient both force 0.
