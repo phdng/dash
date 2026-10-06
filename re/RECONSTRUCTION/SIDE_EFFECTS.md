@@ -279,6 +279,78 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - FAILURE: không error path (không check return)
 - EVIDENCE: functions/202D0.md B08
 
+## SE-163EC-001 — observer + sendEvent hook
+- FUNCTION: 163EC (163EC.c:131-144)
+- CONDITION: master enable (B01)
+- EFFECT: alloc singleton + method hook (orig off_1637E0)
+- TARGET: 1635F8=new CNABCarPlayObserver (release old); UIApplication.sendEvent:→17204 (Class = instance-or-getClass)
+- DATA: log-tag "CarPlay sendEvent: (pane-touch wake)"
+- TIMING: đồng bộ
+- THREAD: caller thread (từ 4A08 once — INFERRED)
+- ORDER: sau counters, trước Darwin observers
+- FAILURE: sharedApplication nil → getClass fallback (vẫn hook)
+- EVIDENCE: functions/163EC.md B02 + HOOKS.md CarPlay cloak
+
+## SE-163EC-002 — observers (Darwin ×3 + notifyd ×2) + plist load
+- FUNCTION: 163EC (163EC.c:145-180)
+- CONDITION: master enable
+- EFFECT: observer registrations + resolved-plist load
+- TARGET: listchanged/resolved→17344 + exit→173FC (Immediate, &unk_163608); cpdisconnect/cpconnect blocks (main, tokens); 17410() load
+- DATA: —
+- TIMING: đồng bộ (delivery async sau này)
+- THREAD: caller thread
+- ORDER: sau hooks, trước elig install
+- FAILURE: UNKNOWN (re-register khi reentry — U08)
+- EVIDENCE: functions/163EC.md B03/B04 + notify_matrix
+
+## SE-163EC-003 — elig hooks install
+- FUNCTION: 163EC (163EC.c:181-298)
+- CONDITION: !getenv(ELIG_HOOKED) + classes tồn tại (nested v8/v9)
+- EFFECT: 8 method hooks + env set + capability probe store
+- TARGET: policy/declaration/library/carPlayDeclaration/icon×2/displayName×2 (origs 163858-163890); env=1; 162E08=probe
+- DATA: log-tags "elig ..." per-hook; DB→CAR fallbacks; struct-magic gate (icon variant 2)
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: sau load, trước chain
+- FAILURE: env set → skip lần sau; classes nil → fallbacks/skips (một số calls unguarded — U03)
+- EVIDENCE: functions/163EC.md B05-B07; EVIDENCE/elig_cloak.md (bodies); CarPlayCloak.m
+
+## SE-163EC-004 — chain + delayed triggers
+- FUNCTION: 163EC (163EC.c:299-308)
+- CONDITION: master enable (ngoài elig-if)
+- EFFECT: chained installer calls + one-shot dispatches
+- TARGET: 189D0→18A7C→18C2C→18F48→19014→1910C (threaded returns); after-5s block; 191A4()
+- DATA: —
+- TIMING: sync chain + async 5s one-shot (main)
+- THREAD: caller → main (async parts)
+- ORDER: sau elig
+- FAILURE: UNKNOWN (chain semantics U04)
+- EVIDENCE: functions/163EC.md B08/B09
+
+## SE-163EC-005 — one-shot file triggers
+- FUNCTION: 163EC (163EC.c:309-501)
+- CONDITION: file exists (spike/host-nonempty/hostsplit-nonempty/splitstart) + clamps
+- EFFECT: file consume (removeItem) + reads + scheduled blocks (one-shots)
+- TARGET: ab_spike (4s+19s); ab_host (+hold clamp [10,3600]→900s, blocks 191D4/19210); ab_hostsplit (tokens≥2, 4s + hold, blocks 1925C/192C0); ab_splitstart (5s)
+- DATA: bid strings retains; hold doubles
+- TIMING: async one-shots main (4s/5s/19s/hold-computed)
+- THREAD: caller → main
+- ORDER: sau chain, trước cproleup
+- FAILURE: missing/empty/malformed → skip/clamp/defaults
+- EVIDENCE: functions/163EC.md B10
+
+## SE-163EC-006 — cproleup + cpuicaps
+- FUNCTION: 163EC (163EC.c:502-528)
+- CONDITION: luôn (post) + probe-gate (set/post)
+- EFFECT: notify post + conditional notify set/post + token register
+- TARGET: cproleup post; cpuicaps: set_state(token, caps) + post (skip nếu register fail)
+- DATA: caps = (F3E0-non-nil | rootVC-responds) & icon-hook-installed; token 162E58 (-1 khi fail)
+- TIMING: đồng bộ
+- THREAD: caller thread
+- ORDER: cuối body
+- FAILURE: register fail → skip post (vẫn releases)
+- EVIDENCE: functions/163EC.md B11
+
 ## SE-44C0-001 — role dispatches + 4760 calls
 - FUNCTION: 44C0 (44C0.c:29-123)
 - CONDITION: role = AC5FC() (1..6; default silent)

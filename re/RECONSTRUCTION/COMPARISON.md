@@ -25,6 +25,7 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | 2410C | RECONSTRUCTION/functions/2410C.md | INFERRED |
 | 2565C | RECONSTRUCTION/functions/2565C.md | INFERRED |
 | 218D8 | RECONSTRUCTION/functions/218D8.md | INFERRED |
+| 163EC | RECONSTRUCTION/functions/163EC.md | INFERRED |
 | 202D0 | RECONSTRUCTION/functions/202D0.md | INFERRED |
 | 74C8 | RECONSTRUCTION/functions/74C8.md | INFERRED |
 | 9D64 | RECONSTRUCTION/functions/9D64.md | INFERRED |
@@ -131,3 +132,13 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 | Role5 bundle-gate + Siri-exclusion | :39-67, :93-97 exact literals | B03/B04 reproduced | none known | 44C0.c:39-67 | INFERRED |
 | Blocklist scan (exclusion!) | :68-91 exact (trace 5 iters) | B05 reproduced | contents UNKNOWN (U01); F-042 errata | 44C0.c:68-91 | INFERRED |
 | 4760 sync + pool balance + QOS | :41/:76/:85/:89/:96/:112/:34/:116 exact | reproduced | QOS INFERRED; balance INFERRED | 44C0.c | INFERRED |
+
+## 163EC (CarPlay ctor) — INFERRED overall (session-033, đọc FULL trực tiếp)
+| Feature | Original (evidence) | Reconstruction (163EC.md) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Master gate + observer + sendEvent | :123-144 exact | B01/B02 reproduced | thread INFERRED | 163EC.c:123-144 | INFERRED |
+| Darwin ×3 + notifyd ×2 + 17410 | :145-180 exact | B03/B04 reproduced | block bodies U (Q-12) | 163EC.c:145-180 | INFERRED |
+| Elig gate + 8 hooks + probe | :181-298 exact | B05-B07 reproduced | magic/nil/class U01-U03 | 163EC.c:181-298 | INFERRED |
+| Chain + 5s + 191A4 | :299-308 exact | B08/B09 reproduced | chain semantics U04 | 163EC.c:299-308 | INFERRED |
+| One-shot files + holds | :309-501 exact | B10 reproduced | holdsec blocks U06 | 163EC.c:309-501 | INFERRED |
+| cproleup + cpuicaps gate | :502-528 exact | B11 reproduced | F3E0 U07 | 163EC.c:502-528 | INFERRED |
