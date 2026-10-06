@@ -1334,3 +1334,63 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: gate → match → decrement → teardown → conditional-post
 - FAILURE: guard-fail → return (không teardown, không post)
 - EVIDENCE: RECONSTRUCTION/KBObservers.m (F-032 §B; header-callees-stale note)
+
+## SE-SIRI-001 — probe installer
+- FUNCTION: DDInstallSiriProbe (4C34.c:1279-1390; SiriProbe.m)
+- CONDITION: latch siriprobe off (9C530==0) + master enable (byte_168D19==1) (guard 164A00)
+- EFFECT: dlopen + 7 MSHook installs + prefs-cache reload + notify blocks + counters init
+- TARGET: SiriActivationService (dlopen mode 17 → fallback 1); 7 hooks via 88A80 (validate sig trước MSHookMessageEx; orig → off_164A08-38); 88FD0 reload; 3 notify blocks (settings.changed/voicecmd.changed/fakepress — opaque U02); 890A0 warm-cache; counters 0xA cho 16 buckets 164A40 + 2 buckets 164A80/84
+- DATA: hook selectors + type-encodings CONFIRMED (118/"q@" variants, 66/"@")
+- TIMING: once trong 4C34 ctor
+- THREAD: main (role-1 ctor)
+- ORDER: gate → dlopen → hooks → cache → notifies → counters
+- FAILURE: gate-fail → không cài (không hooks); dlopen-fail → fallback mode
+- EVIDENCE: RECONSTRUCTION/SiriProbe.m (EVIDENCE/siriprobe.md §0)
+
+## SE-SIRI-002 — gates + swallow matrix
+- FUNCTION: DDProbeGate + DDProbeLog + DDShouldSwallow/DDPressEligible + 7 hooks (SiriProbe.m §§1-4)
+- CONDITION: file-gate throttle 0.5s/process (cache &163228/164A88; swallow cặp riêng + path); swallow = off-vắng && (eligible || (swallow-file-có && id==bid) || id-rỗng-wildcard)
+- EFFECT: throttle-checks + rate-limited-log (sink UNKNOWN — chỉ tiêu counter) + conditional-swallow + conditional-press-post
+- TARGET: logger buckets (counter>=0 ~11 lần đầu/bucket, không reset HYPOTHESIS; backtrace 40 -frame0 + dladdr, build-rồi-release); eligible ⟺ bid==6 && !off && enabled && selected; hooks: off→orig (+log? theo hook), on→log + orig iff !swallow; 88BC8 eligible → post voicecmd.press.<bid> (KỂ CẢ sắp-swallow); prewarm/voicetrigger passthrough; handleRequest log-only (bid -1)
+- DATA: swallow-file = master-switch theo-bid (cả hai vô hiệu khi off); writers siriprobe_* 0-hit (controller ngoài U04)
+- TIMING: per-call hooks
+- THREAD: Siri-process threads
+- ORDER: gate → eligible/log → swallow?nuốt:forward (+press-post ở buttonDown)
+- FAILURE: off → orig luôn (hook 1: không log; prewarm/trigger: refresh-cache-only)
+- EVIDENCE: RECONSTRUCTION/SiriProbe.m (EVIDENCE/siriprobe.md §§1-4)
+
+## SE-SIRI-003 — voicecmd cache + fakepress + rescan
+- FUNCTION: DDVoiceCmdReload + DDFakePressTest + DDVoiceCmdRescan (SiriProbe.m §§5-7)
+- CONDITION: cache <2s dùng-cache else re-read; fakepress selected non-empty + enabled + BID-valid; rescan posters (viewWillAppear/tap)
+- EFFECT: prefs-cache + latch-posts + rescan-ingest + listchanged-post
+- TARGET: 88FD0 Sync + 891F0 (enabled iff key-tồn-tại&&true; selected copy; reverse-DNS validate) + cache byte/timestamp (lock); fakepress: register_check + set_state(now_ms) + post press.<bid> (=transform press thật); rescan: 7F14C → 7FD94 → queue 1647C0 → 81CE4 quét VoiceHandlers/*.plist (v==2, handler==filename, name-48, LSApplicationProxy-check) → voicecmd_seen + migrate wheelbutton + purge-stale → LUÔN post listchanged
+- DATA: voicecmd.changed posters (9332C + 81CE4:530); press.<bid> consumer 0-hit (tweak ngoài); rescan→worker linkage HYPOTHESIS
+- TIMING: cache-sync + async rescan queue
+- THREAD: prefs/UI + worker queue
+- ORDER: reload → cache → fakepress/rescan → ingest → listchanged
+- FAILURE: selected-rỗng/disabled → silent no-op; stale-selected → purge
+- EVIDENCE: RECONSTRUCTION/SiriProbe.m (EVIDENCE/siriprobe.md §§5-7; handler-blocks opaque)
+
+## SE-SLEEP-001 — sleeper daemon init
+- FUNCTION: DDCarSleeperInit (4C34.c:1121-1273; CarSleeper.m; F-021)
+- CONDITION: once byte_164878; full-daemon chỉ khi master==1 && latch carsleep off (else init-nhẹ 85FB0/86028/86218)
+- EFFECT: observers + RadiosPreferences + dirs + boot_id + IOPS + delayed-start
+- TARGET: 6 Darwin observers (bt/cell/airplane on/off → 85D8C/85E20/85ED4/85F08/85F28/85FA0) + settings.changed→862DC + testunblank→86334; os_log carsleeper/daemon; mkdir CarSleeper + chmod 0x1FD/0x180; sysctl bootsessionuuid → state.plist {boot_id}; IOPS runloop source; dispatch_after 8s (khi 16487C && !87CA0 && !88648)
+- DATA: daemon name carsleeper/carsleep; kill-switch via 9C530
+- TIMING: once ctor + after-8s delayed
+- THREAD: main + runloop
+- ORDER: once → observers → prefs/radio → dirs → boot_id → IOPS → delayed
+- FAILURE: latch-on/master-off → init-nhẹ (vẫn 85FB0/86028/86218)
+- EVIDENCE: RECONSTRUCTION/CarSleeper.m (F-021 + import_defaults §8)
+
+## SE-SLEEP-002 — radio handlers + enable paths
+- FUNCTION: DDCarSleeperBT/Cell/Airplane + DDCarSleepSettingsChanged + DDCarSleepTestUnblank (CarSleeper.m; notify_matrix)
+- CONDITION: per-radio on/off notifies; settings 86338→16487C transitions; testunblank unconditional-thunk
+- EFFECT: prior save/restore + enable/disable + force-unblank
+- TARGET: bt-off: save powered→16487F + setPowered/Enabled:0 + after-2.5s; bt-on: restore + clear + dispatch-after; cell: 879E8(0/1) + prior-byte; airplane: save-BT + 87868 set/restore; settings: 86338→16487C, on&&!D→863E8 / off&&D→864C4+88648; testunblank: once + off_1649C0(0) + off_1649B0(1.0,0) (force wake)
+- DATA: respring.request tôn trọng carsleep (8097C — cross-ref Respring.m)
+- TIMING: notify-driven (+afters 2.5s)
+- THREAD: notify threads
+- ORDER: notify → save/restore → delayed-confirm
+- FAILURE: handler bodies 85D8C-85FA0/86338-864C4 chưa tách record (cross-ref notify_matrix)
+- EVIDENCE: RECONSTRUCTION/CarSleeper.m (F-021; latch "carsleep" F-002)

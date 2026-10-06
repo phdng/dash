@@ -299,3 +299,16 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 |---|---|---|---|---|---|
 | Stubs + dismiss + teardown | no-op CONFIRMED + gated 449C8 | SE-KBOBS-001 reproduced | — | F-032 §B | INFERRED |
 | End-editing machine | inverted-knob + branches + conditional-post | SE-KBOBS-001 reproduced | cousin-posts ở KeyinputRelay | F-032 §B 45180 FULL | INFERRED |
+
+## SiriProbe (synthesis bodies) — INFERRED overall (session-064, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (SiriProbe.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Installer | latch+master + dlopen + 7 hooks + cache + notifies + counters | SE-SIRI-001 reproduced | notify-block bodies opaque U02 | siriprobe.md §0 | INFERRED |
+| Gates + swallow matrix | throttle + rate-log + eligible + swallow 4-nút | SE-SIRI-002 reproduced | sink + writers UNKNOWN | siriprobe.md §§1-4 | INFERRED |
+| Cache + fakepress + rescan | 88FD0/891F0/890A0 + press-transform + 81CE4-ingest | SE-SIRI-003 reproduced | handler linkage HYPOTHESIS | siriprobe.md §§5-7 | INFERRED |
+
+## CarSleeper (synthesis bodies) — INFERRED overall (session-064, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (CarSleeper.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Daemon init | once + observers + radios + dirs + boot_id + IOPS + 8s | SE-SLEEP-001 reproduced | branch CF duy nhất (B-20) | F-021 + notify_matrix | INFERRED |
+| Radio handlers + enable | save/restore priors + settings + testunblank | SE-SLEEP-002 reproduced | handler bodies cross-ref | F-021/F-002 | INFERRED |
