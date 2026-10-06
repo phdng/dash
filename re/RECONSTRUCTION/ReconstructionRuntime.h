@@ -30,6 +30,13 @@ typedef struct {
 } DDAuxSceneSettingsPlan;
 
 typedef struct {
+    BOOL shouldDispatch;
+    uint64_t generation;
+    NSInteger attemptNumber;
+    DDAuxSceneSettingsPlan settingsPlan;
+} DDAuxSceneSettingsAttempt;
+
+typedef struct {
     BOOL valid;
     double boundsWidth;
     double boundsHeight;
@@ -157,6 +164,13 @@ FOUNDATION_EXPORT BOOL DDAuxSceneSettingsNeedUpdate(DDAuxSceneSettingsPlan plan,
                                                     BOOL hasCurrentSettings,
                                                     DDHostSlotSize currentFrameSize,
                                                     NSInteger currentOrientation);
+FOUNDATION_EXPORT NSArray<NSNumber *> *DDAuxCreateKickRetryDelays(void);
+FOUNDATION_EXPORT BOOL DDAuxCreateKickRetriesEnabled(void);
+FOUNDATION_EXPORT BOOL DDAuxCreateKickShouldRequestPrivateSceneObject(uint64_t capturedGeneration);
+FOUNDATION_EXPORT DDAuxSceneSettingsAttempt DDBeginAuxSceneSettingsAttempt(BOOL settingsNeedUpdate,
+                                                                          BOOL privateExecutorMethodSupported);
+FOUNDATION_EXPORT BOOL DDBeginAuxSceneSettingsApply(uint64_t capturedGeneration);
+FOUNDATION_EXPORT BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGeneration);
 FOUNDATION_EXPORT NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene,
                                                               NSInteger auxOrientation);
 FOUNDATION_EXPORT BOOL DDUpdateHostSlotRenderSize(NSUInteger slotIndex, DDHostSlotSize size);

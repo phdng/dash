@@ -1,4 +1,4 @@
-// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-080)
+// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-081)
 // This file intentionally implements only behavior whose data-flow can be represented without
 // unresolved private classes/functions. Unknown filtering/computation remains documented in the
 // synthesis files rather than being silently guessed here.
@@ -81,6 +81,13 @@ static uint64_t gDDAuxGeneration = 0;
 static BOOL gDDAuxSwapEnabled = YES;
 static BOOL gDDAuxNoAuxSID = NO;
 static BOOL gDDAuxNoApplyDiff = NO;
+static BOOL gDDAuxSettingsInFlight = NO;
+static BOOL gDDAuxSettingsApplied = NO;
+static NSInteger gDDAuxSettingsAttemptCount = 0;
+static NSInteger gDDAuxSettingsBudget = 0;
+static BOOL gDDAuxSettingsExecutorReentrant = NO;
+static uint64_t gDDAuxSettingsExecutingGeneration = 0;
+static const double kDDAuxCreateKickRetryDelays[] = { 0.1, 0.5, 1.5 };
 
 static id _Nullable DDCopyAppPreference(NSString *key) {
     CFTypeRef value = CFPreferencesCopyAppValue((__bridge CFStringRef)key, kDDSettingsDomain);
@@ -1021,8 +1028,13 @@ DDAuxScenePreparation DDPrepareAuxSceneCandidate(NSString * _Nullable bundleIden
 }
 
 static void DDRefreshAuxSceneStateGeneration(void) {
-    // Evidence-safe state subset of sub_3E428.
+    // Exact state subset of sub_3E428.
     gDDAuxGeneration++;
+    gDDAuxSettingsInFlight = NO;
+    gDDAuxSettingsApplied = NO;
+    gDDAuxSettingsAttemptCount = 0;
+    gDDAuxSettingsBudget = 10;
+    // sub_3E428 does not touch byte_163E9D (executor reentrancy); preserve it exactly.
     gDDAuxSwapEnabled = ![[NSFileManager defaultManager]
         fileExistsAtPath:@"/var/tmp/duodash_kp_auxnoswap"];
 }
@@ -1067,6 +1079,11 @@ NSDictionary *DDCurrentAuxSceneMirror(void) {
         @"swapEnabled": @(gDDAuxSwapEnabled),
         @"noAuxSID": @(gDDAuxNoAuxSID),
         @"noApplyDiff": @(gDDAuxNoApplyDiff),
+        @"settingsInFlight": @(gDDAuxSettingsInFlight),
+        @"settingsApplied": @(gDDAuxSettingsApplied),
+        @"settingsAttemptCount": @(gDDAuxSettingsAttemptCount),
+        @"settingsBudget": @(gDDAuxSettingsBudget),
+        @"settingsExecutorReentrant": @(gDDAuxSettingsExecutorReentrant),
     };
 }
 
@@ -1100,6 +1117,85 @@ BOOL DDAuxSceneSettingsNeedUpdate(DDAuxSceneSettingsPlan plan,
                        fabs(currentFrameSize.height - plan.frameSize.height) <= 0.5;
     BOOL orientationMatches = currentOrientation == 0 || currentOrientation == plan.orientation;
     return !(sizeMatches && orientationMatches);
+}
+
+NSArray<NSNumber *> *DDAuxCreateKickRetryDelays(void) {
+    // 3C368 schedules exactly 0.1s, 0.5s and 1.5s create-kick callbacks.
+    return @[
+        @(kDDAuxCreateKickRetryDelays[0]),
+        @(kDDAuxCreateKickRetryDelays[1]),
+        @(kDDAuxCreateKickRetryDelays[2]),
+    ];
+}
+
+BOOL DDAuxCreateKickRetriesEnabled(void) {
+    // 3C368 schedules create-kicks only after a view exists when aux orientation is nonzero and
+    // UIApplicationSceneSettings does not expose the direct _interfaceOrientation ivar.
+    return gDDAuxOrientation != 0 && !DDSceneSettingsHasInterfaceOrientationIvar();
+}
+
+BOOL DDAuxCreateKickShouldRequestPrivateSceneObject(uint64_t capturedGeneration) {
+    // sub_3E604 gate before the private auxSceneObject lookup.
+    return capturedGeneration == gDDAuxGeneration && !gDDAuxSettingsApplied;
+}
+
+DDAuxSceneSettingsAttempt DDBeginAuxSceneSettingsAttempt(BOOL settingsNeedUpdate,
+                                                         BOOL privateExecutorMethodSupported) {
+    // Evidence-safe state-machine half of 3E670 after its scene/current-settings early-outs.
+    // The caller supplies the private updateSettingsWithBlock signature/capability result.
+    DDAuxSceneSettingsAttempt attempt = {0};
+    DDAuxSceneSettingsPlan plan = DDCurrentAuxSceneSettingsPlan();
+    attempt.settingsPlan = plan;
+
+    if (!settingsNeedUpdate || !plan.valid || !DDSceneGeometryUpdatesEnabled() ||
+        gDDAuxSettingsExecutorReentrant || gDDAuxSettingsInFlight) {
+        return attempt;
+    }
+
+    if (gDDAuxSettingsAttemptCount >= 8) {
+        if (gDDAuxSettingsBudget >= 1) gDDAuxSettingsBudget = 0;
+        return attempt;
+    }
+
+    if (!privateExecutorMethodSupported) {
+        if (gDDAuxSettingsBudget >= 1) gDDAuxSettingsBudget--;
+        return attempt;
+    }
+
+    gDDAuxSettingsAttemptCount++;
+    gDDAuxSettingsInFlight = YES;
+    attempt.shouldDispatch = YES;
+    attempt.generation = gDDAuxGeneration;
+    attempt.attemptNumber = gDDAuxSettingsAttemptCount;
+    return attempt;
+}
+
+BOOL DDBeginAuxSceneSettingsApply(uint64_t capturedGeneration) {
+    // Entry state of sub_3EA0C. Generation mismatch is a total no-op. Matching generation first
+    // clears the in-flight flag, then honors the executor reentrancy guard.
+    if (capturedGeneration != gDDAuxGeneration) return NO;
+    gDDAuxSettingsInFlight = NO;
+    if (gDDAuxSettingsExecutorReentrant) return NO;
+
+    gDDAuxSettingsExecutorReentrant = YES;
+    gDDAuxSettingsExecutingGeneration = capturedGeneration;
+    return YES;
+}
+
+BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGeneration) {
+    // Call only after the external/private updateSettingsWithBlock invocation actually returned.
+    // Original 3EA0C marks applied regardless of whether frame/orientation setters inside 3EB9C
+    // were available; therefore completion means executor invocation happened, not setter success.
+    if (!gDDAuxSettingsExecutorReentrant ||
+        gDDAuxSettingsExecutingGeneration != capturedGeneration) {
+        return NO;
+    }
+
+    gDDAuxSettingsApplied = YES;
+    if (gDDAuxSettingsBudget >= 1) gDDAuxSettingsBudget--;
+    gDDAuxSettingsExecutorReentrant = NO;
+    gDDAuxSettingsExecutingGeneration = 0;
+    return YES;
 }
 
 NSInteger DDResolvePaneSettingsOrientation(BOOL isAuxScene, NSInteger auxOrientation) {
