@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-042 (function-level reconstruction)_
+_Last updated: 2026-10-05 session-043 (function-level reconstruction)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-042 (synthesis, không function mới): Tweak.x event-launch body từ evidence → EventLaunch.m (APPROXIMATION).
+Session-043 (synthesis, không function mới): Tweak.x poll/UI-flush bodies từ evidence → PollFlush.m (APPROXIMATION).
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
 
-## LAST COMPLETED TASK (session-042):
-- Tweak.x event-launch body (synthesis từ evidence, APPROXIMATION) + TODO R-029 + handoff (R-030 scope-open).
+## LAST COMPLETED TASK (session-043):
+- Tweak.x poll/UI-flush bodies (synthesis từ evidence, APPROXIMATION) + TODO R-030 + handoff (R-031 scope-open).
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-042 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-043 (đang làm).
 
-## NEXT TASK (session-043):
-1. R-030: BEE4/B768/B144 + CCEC/D684 + poll §C HOẶC scope khác (quyết scope đầu session).
+## NEXT TASK (session-044):
+1. R-031: BEE4/B768/B144 + CCEC/D684 HOẶC scope khác (quyết scope đầu session).
 2. Không mở rộng scope (SESSION BUDGET).
 
 ## BLOCKERS:
@@ -37,9 +37,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-042):
-- Mới: `RECONSTRUCTION/EventLaunch.m`, `LOG/session-042.md`.
-- Sửa: TODO (R-029), STATE.
+## FILES CHANGED (session-043):
+- Mới: `RECONSTRUCTION/PollFlush.m`, `LOG/session-043.md`.
+- Sửa: TODO (R-030), STATE.
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).
