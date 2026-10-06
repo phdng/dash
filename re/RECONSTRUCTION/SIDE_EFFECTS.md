@@ -1454,3 +1454,39 @@ _Trạng thái observation: OBSERVED (static) — chưa VERIFIED (chưa runtime 
 - ORDER: N/A
 - FAILURE: N/A (mapping, không behavior)
 - EVIDENCE: RECONSTRUCTION/HudBle.m (KHÔNG nâng cấp nhãn — bodies chưa đọc)
+
+## SE-CLOAK-001 — installer + predicates
+- FUNCTION: 163EC:181-295 + 18A7C:17-66 + 189D0:9-42 installers (CarPlayCloak.m; HOOKS.md)
+- CONDITION: getenv guards (DUODASH_AB_ELIG_HOOKED / DOCK_HOOKED); orig-slots non-nil (env chỉ set khi đủ); capability probe 162E08 (DBApplicationController-side); class-nil → skip (icon-tap)
+- EFFECT: MSHook installs + orig-slot stores + helper predicates (pure)
+- TARGET: elig slots 163858/60/68/70/78/80/88/90; dock slots 1638D0/D8/E0 (fallback DB→CAR); icon slots 163790/C8 (SBHIconManager); helpers: 1CAF8 first-party-hardcoded / 114B4 bridged-check (enabled+contains−navselected−cpui) / 1CA4C split-member / 1E770 roster-gate (cache 1s, noroster-knob) / 1C3C8 kill-switch (hosting_off → toàn skip) / F83C int-probe
+- DATA: —
+- TIMING: once ctor (163EC) + 18A7C/189D0
+- THREAD: main (ctor)
+- ORDER: probe → slots → hooks
+- FAILURE: guard/class-fail → skip install (call-through mặc định giữ)
+- EVIDENCE: RECONSTRUCTION/CarPlayCloak.m (EVIDENCE/elig_cloak.md §0)
+
+## SE-CLOAK-002 — eligibility cloak (mutate/synth/inject)
+- FUNCTION: A1-A8 hooks (CarPlayCloak.m §A; EVIDENCE/elig_cloak.md)
+- CONDITION: orig-first LUÔN TRƯỚC; patch chỉ khi policy && 162E08==1 && (114B4||1CAF8) && roster; icon/name chỉ 1CAF8 (bridged giữ orig)
+- EFFECT: in-place mutate + synth declarations + library injection + icon/name override
+- TARGET: A1 policy: launchUsingTemplateUI=0 + CarPlay-capable (runtime-add selectors + =1, once 163898); A2 synth {bid,Maps=1} khi orig-nil (1DB14); A3 injector (bridgedApps + duodash luôn-add; missing-info → proxy + _carPlayDeclaration; icon-add via file+notify); A4 carPlayDeclaration (orig-thắng; nil+bridged → once-set + 1DB14); A5/A6 icon synth (size/scale rules + DualAppsIcon.png + fallback-glyph UNKNOWN); A7/A8 @"DuoDash" (bỏ qua location)
+- DATA: cache bridged policy 163488/490 (khi F83C>=0); v7-nil → skip-trả-nil; KHÔNG fake số policy
+- TIMING: per-call hooks
+- THREAD: CarPlay-process threads
+- ORDER: orig → gate → mutate/synth/inject → return (v7, không object mới trừ A2/A4/A5)
+- FAILURE: gate-fail → orig passthrough (call-through mặc định)
+- EVIDENCE: RECONSTRUCTION/CarPlayCloak.m (B-18; fake-{bundle,Maps} + icon-source CONFIRMED)
+
+## SE-CLOAK-003 — dock/focus/statusbar/icon-tap matrix
+- FUNCTION: B1-B4 hooks (CarPlayCloak.m §B; chung gate !1C3C8 → skip → forward)
+- CONDITION: kill-switch off; per-branch (DuoDash/split-member/bridged/lạ + debounce/knobs)
+- EFFECT: conditional-swallow + host/teardown/warm + forward-rules
+- TARGET: B1 dock (DuoDash debounce-1.5s-nuốt / split-member-nuốt / bridged-split-clear + host-1CC04-nuốt / lạ-teardown+warm+forward-duy-nhất); B2 focus (KHÔNG nuốt — teardown-skip conditions + luôn-forward); B3 home (luôn-forward + nohomedismiss-giữ + debounce-teardown); B4 icon-tap (mirror dock KHÔNG-debounce + use-after-release HYPOTHESIS-cần-verify-asm)
+- DATA: bid trích off_154130 + fallback; 162E40--no-op UNKNOWN; "giữ focus" HYPOTHESIS diễn giải (literal = skip-conditions)
+- TIMING: per-tap/event (+debounce windows)
+- THREAD: SpringBoard threads
+- ORDER: gate → branch → swallow/host/teardown/forward
+- FAILURE: orig-nil ở forward-nhánh → nuốt lặng; hosting_off → toàn forward
+- EVIDENCE: RECONSTRUCTION/CarPlayCloak.m (B-18; call-through CHỈ nhánh lạ + orig-non-nil)

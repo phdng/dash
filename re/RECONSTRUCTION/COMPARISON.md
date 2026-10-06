@@ -325,3 +325,10 @@ _Chưa có gì VERIFIED (không runtime test). Reconstruction code bodies chưa 
 |---|---|---|---|---|---|
 | Pairing flow wiring | toggle→post→pair/unpair→status→refresh | SE-HUD-001 reproduced | pair/unpair bodies UNKNOWN | F-024 + notify rows | INFERRED |
 | Scan/prefs/brightness/speed | keys/selectors tồn tại (strings) | SE-HUD-002 mapping-only | consumers/bodies UNKNOWN | strings + F-022/F-008 | INFERRED |
+
+## CarPlayCloak (synthesis bodies) — INFERRED overall (session-066, synthesis từ evidence)
+| Feature | Original (evidence) | Reconstruction (CarPlayCloak.m) | Difference | Evidence | Status |
+|---|---|---|---|---|---|
+| Installer + predicates | slots + guards + probes + pure-helpers | SE-CLOAK-001 reproduced | — | elig_cloak.md §0 + HOOKS | INFERRED |
+| Eligibility cloak | mutate + synth + injector + icon/name | SE-CLOAK-002 reproduced | glyph-fallback + order HYPOTHESIS | elig_cloak.md §A | INFERRED |
+| Dock/focus/statusbar/tap | swallow-matrix + forward-rules | SE-CLOAK-003 reproduced | focus-diễn-giải + UAR HYPOTHESIS | elig_cloak.md §B | INFERRED |
