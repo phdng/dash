@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-076)
+## Build (session-077)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
-- [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và session-075 UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-075 batch (user-confirmed before session-076 changes). Current session adds SpringBoard host-slot mirror, uiapp.request responder, retry schedulers, and CarPlay-slot state conversion; next pushed CI run remains the compiler gate.
-- [x] Static runtime contracts through session-076: verifier additionally checks host-slot mirror/update/reset, exact 0.0/0.4/0.9/1.8/3.5 retry table, generation guard, 3F224-style SpringBoard responder, geometry captured-size fallback, and 3D6EC/3D704 CarPlay-slot state/IPC semantics.
+- [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-076 batch (user-confirmed before session-077 changes). Current session adds single-host scaling/prep, split orientation/parser boundary, and dismiss bridge-off/reset logic; next pushed CI run remains the compiler gate.
+- [x] Static runtime contracts through session-077: verifier additionally checks 3B2D8 rscale/canvas sizing, strict 3CC44 landscape parser tokens/range, single/split mirror prepare APIs, and 3D8A8/3D990 main-queue dismiss/reset semantics.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

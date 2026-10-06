@@ -23,7 +23,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Present-commit 2565C | functions/2565C.md | RECORD | + 9424 dict exact |
 | Single-app host 1FB5C | functions/1FB5C.md | RECORD | cặp với 202D0 |
 | Hosting observers/consumers | PresentCommitAck.m (+ HostedCallbacks.m s067) | SYNTH | 202D0→218D8→2410C→2565C→9424/onHosted; onHosted-blocks 279F4/27AC8 tách riêng; KHÔNG rows riêng (record rows cover — audit s067) |
-| spikeHostSlots: internals | SpikeHosting.m + ReconstructionRuntime.m (F-035) | SYNTH + BUILDABLE PARTIAL | s037 synthesis; s076 promotes the post-normalization host-slot mirror plus exact 3D4FC/3DC38 retry scheduler and 3D6EC/3D704 slot-state/IPC half. Private scene/view creation remains evidence-only |
+| spikeHostSlots: internals | SpikeHosting.m + ReconstructionRuntime.m (F-035) | SYNTH + BUILDABLE PARTIAL | s037 synthesis; s076 mirror/retries/CarPlay state; s077 adds exact 3B2D8 single-host scaling/prep, 3CC44 split-state prep + pure landscape parser, and 3D8A8/3D990 dismiss IPC/reset half. Private scene/view creation and lscape inflight/tripped coordination remain evidence-only |
 | hostSplit/switchInPlace | HostSplit.m (F-031) | SYNTH (APPROXIMATION) | session-038: 217EC/208F4/26FE4 từ evidence (218D8/279F4 cross-ref records) |
 | Spawn/teardown callees | SpawnTeardown.m + SpawnLaunch.m + EventLaunch.m + PollFlush.m + SpawnMisc.m + FastRelayout.m (F-032) | SYNTH partial | s039 teardown + s040 routing + s042 event-launch C37C + s043 poll (22AD0/365D4/371AC/370F8) + s044 misc (B768/BEE4/CCEC/D684-note/B144) + s047 D684 bodies; còn §B KB observers (cross-ref KeyinputRelay.m) |
 | DDz1/DDz2 classes | DDzCore.m (F-034) | SYNTH (APPROXIMATION) | session-048: maps 63+35 + 8 central + cross-links + division |
@@ -82,7 +82,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Subsystem | Artifact | Status | Ghi chú |
 |---|---|---|---|
 | Notify matrix (12+68+8) | EVIDENCE/notify_matrix.md + API_MAP.md + ReconstructionRuntime.m | BUILDABLE PARTIAL | s071 SpringBoard 29198 trio Immediate→republish; s074 adds exact Immediate fontfloor/keypane cache refresh plus runtime-resolved DDz2 per-host broadcasts from 291F4/29400. Keypane-OFF toast 30960 and other callbacks remain evidence/private scope |
-| NSDistributed fabric | F-026 + cnab_observers + ReconstructionRuntime.m | BUILDABLE PARTIAL | s073-s075 publishers + UIApp consumers; s076 adds SpringBoard 3F224 responder backed by an exact per-slot reconstruction mirror, plus 3B738/3ED88 handshake retries and 3D4FC/3DC38 geometry pushes. Mirror population is separated from private scene creation |
+| NSDistributed fabric | F-026 + cnab_observers + ReconstructionRuntime.m | BUILDABLE PARTIAL | s073-s075 publishers + UIApp consumers; s076 adds responder/retries; s077 adds exact pre-private single/split mirror population and dismiss bridge-off broadcasts. Private scene/view creation remains separated from IPC/state reconstruction |
 
 ## J. Meta (contract/tracking)
 | Artifact | Status |

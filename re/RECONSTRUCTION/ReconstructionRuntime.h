@@ -81,6 +81,22 @@ FOUNDATION_EXPORT BOOL DDPostUIAppFontFloorState(NSString * _Nullable bundleIden
 FOUNDATION_EXPORT BOOL DDPostUIAppKeyPaneState(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT NSDictionary *DDCurrentUIAppBridgeState(void);
 FOUNDATION_EXPORT NSInteger DDReadHostOrientation(void);
+FOUNDATION_EXPORT DDHostSlotSize DDResolveSingleHostMirrorSize(DDHostSlotSize renderSize,
+                                                               DDHostSlotSize screenBoundsSize);
+FOUNDATION_EXPORT BOOL DDParseLandscapeOverride(NSString * _Nullable text,
+                                                NSInteger * _Nullable orientation,
+                                                BOOL * _Nullable swap,
+                                                BOOL * _Nullable cSwap,
+                                                double * _Nullable rotationDegrees);
+FOUNDATION_EXPORT NSInteger DDResolveSplitHostOrientationFromAcceptedOverride(NSString * _Nullable text);
+FOUNDATION_EXPORT uint64_t DDPrepareSingleHostMirror(NSString * _Nullable bundleIdentifier,
+                                                      DDHostSlotSize renderSize,
+                                                      DDHostSlotSize screenBoundsSize);
+FOUNDATION_EXPORT uint64_t DDPrepareSplitHostMirror(NSArray *bundleIdentifiers,
+                                                     const DDHostSlotSize *slotSizes,
+                                                     NSUInteger slotSizeCount,
+                                                     NSArray * _Nullable carPlayUIFlags,
+                                                     NSInteger resolvedOrientation);
 FOUNDATION_EXPORT uint64_t DDUpdateHostSlotMirror(NSArray *bundleIdentifiers,
                                                   const DDHostSlotSize *slotSizes,
                                                   NSUInteger slotSizeCount,
@@ -91,6 +107,7 @@ FOUNDATION_EXPORT void DDResetHostSlotMirror(void);
 FOUNDATION_EXPORT NSDictionary *DDCurrentHostSlotMirror(void);
 FOUNDATION_EXPORT void DDSetHostSlotCarPlayUI(NSUInteger slotIndex, BOOL carPlayUI);
 FOUNDATION_EXPORT BOOL DDConvertHostSlotToCarPlayUI(NSUInteger slotIndex);
+FOUNDATION_EXPORT void DDDismissHostMirror(void);
 FOUNDATION_EXPORT void DDScheduleAppSideHandshake(void);
 FOUNDATION_EXPORT void DDScheduleGeometryPushesForSlot(NSUInteger slotIndex);
 FOUNDATION_EXPORT void DDAppendHostFrameMetrics(NSMutableDictionary *payload,

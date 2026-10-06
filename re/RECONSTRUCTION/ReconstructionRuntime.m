@@ -1,4 +1,4 @@
-// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-076)
+// RECONSTRUCTION/ReconstructionRuntime.m — buildable static-evidence runtime (session-077)
 // This file intentionally implements only behavior whose data-flow can be represented without
 // unresolved private classes/functions. Unknown filtering/computation remains documented in the
 // synthesis files rather than being silently guessed here.
@@ -9,6 +9,7 @@
 #import <mach-o/dyld.h>
 #import <notify.h>
 #import <objc/message.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -598,6 +599,119 @@ NSInteger DDReadHostOrientation(void) {
     return (value >= 1 && value <= 4) ? value : 1;
 }
 
+DDHostSlotSize DDResolveSingleHostMirrorSize(DDHostSlotSize renderSize,
+                                             DDHostSlotSize screenBoundsSize) {
+    // Pure pre-private half of 3B2D8. duodash_ab_canvas=portrait ignores rscale and stores
+    // portrait-normalized screen bounds. Otherwise rscale accepts 1..3 and defaults to 2.
+    NSString *scaleText = [NSString stringWithContentsOfFile:@"/var/tmp/duodash_ab_rscale"
+                                                    encoding:NSUTF8StringEncoding
+                                                       error:nil];
+    double scale = scaleText ? scaleText.doubleValue : 0.0;
+
+    NSString *canvasText = [NSString stringWithContentsOfFile:@"/var/tmp/duodash_ab_canvas"
+                                                     encoding:NSUTF8StringEncoding
+                                                        error:nil];
+    NSString *canvas = [canvasText stringByTrimmingCharactersInSet:
+                        [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if ([canvas isEqualToString:@"portrait"]) {
+        double width = MIN(screenBoundsSize.width, screenBoundsSize.height);
+        double height = MAX(screenBoundsSize.width, screenBoundsSize.height);
+        return (DDHostSlotSize){width, height};
+    }
+
+    if (scale < 1.0 || scale > 3.0) scale = 2.0;
+    return (DDHostSlotSize){renderSize.width * scale, renderSize.height * scale};
+}
+
+BOOL DDParseLandscapeOverride(NSString * _Nullable text,
+                              NSInteger * _Nullable orientation,
+                              BOOL * _Nullable swap,
+                              BOOL * _Nullable cSwap,
+                              double * _Nullable rotationDegrees) {
+    // Pure parser inside 3CC44 after the inflight/tripped coordination has allowed the file.
+    // First non-empty token must be strict integer 3 or 4. Later non-empty tokens are only
+    // swap, cswap, or strict finite rot=<double> with |rotation| <= 360. Empty tokens are ignored.
+    if (!text) return NO;
+
+    NSArray<NSString *> *tokens = [text componentsSeparatedByCharactersInSet:
+                                   [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSInteger parsedOrientation = 0;
+    BOOL parsedSwap = NO;
+    BOOL parsedCSwap = NO;
+    double parsedRotation = 0.0;
+
+    for (NSString *token in tokens) {
+        if (token.length == 0) continue;
+        if (parsedOrientation == 0) {
+            const char *utf8 = token.UTF8String;
+            if (!utf8) return NO;
+            char *end = NULL;
+            long value = strtol(utf8, &end, 10);
+            if (!end || *end != '\0' || value < 3 || value > 4) return NO;
+            parsedOrientation = (NSInteger)value;
+            continue;
+        }
+
+        if ([token isEqualToString:@"swap"]) {
+            parsedSwap = YES;
+            continue;
+        }
+        if ([token isEqualToString:@"cswap"]) {
+            parsedCSwap = YES;
+            continue;
+        }
+        if (![token hasPrefix:@"rot="]) return NO;
+
+        NSString *number = [token substringFromIndex:4];
+        const char *utf8 = number.UTF8String;
+        if (!utf8) return NO;
+        char *end = NULL;
+        double value = strtod(utf8, &end);
+        if (!end || *end != '\0' || !isfinite(value) || fabs(value) > 360.0) return NO;
+        parsedRotation = value;
+    }
+
+    if (parsedOrientation == 0) return NO;
+    if (orientation) *orientation = parsedOrientation;
+    if (swap) *swap = parsedSwap;
+    if (cSwap) *cSwap = parsedCSwap;
+    if (rotationDegrees) *rotationDegrees = parsedRotation;
+    return YES;
+}
+
+NSInteger DDResolveSplitHostOrientationFromAcceptedOverride(NSString * _Nullable text) {
+    // In 3CC44 a successfully accepted/parsed lscape override supplies qword_163D58 (3 or 4);
+    // otherwise qword_162F08 falls back to 3DFC8. Inter-process inflight/tripped acceptance is
+    // deliberately outside this helper; callers pass nil when that coordination rejects the file.
+    NSInteger orientation = 0;
+    return DDParseLandscapeOverride(text, &orientation, NULL, NULL, NULL)
+        ? orientation
+        : DDReadHostOrientation();
+}
+
+uint64_t DDPrepareSingleHostMirror(NSString * _Nullable bundleIdentifier,
+                                   DDHostSlotSize renderSize,
+                                   DDHostSlotSize screenBoundsSize) {
+    // 3B2D8 state boundary after the private-class availability gate and before scene creation.
+    // The original stores a scaled/canvas-adjusted size in slot0, clears slots1/2 + CarPlay flags,
+    // marks single-host mode, bumps generation, and resolves orientation through 3DFC8.
+    DDHostSlotSize mirrorSize = DDResolveSingleHostMirrorSize(renderSize, screenBoundsSize);
+    NSString *bundle = bundleIdentifier ?: @"";
+    return DDUpdateHostSlotMirror(@[bundle], &mirrorSize, 1, nil, DDReadHostOrientation(), NO);
+}
+
+uint64_t DDPrepareSplitHostMirror(NSArray *bundleIdentifiers,
+                                  const DDHostSlotSize *slotSizes,
+                                  NSUInteger slotSizeCount,
+                                  NSArray * _Nullable carPlayUIFlags,
+                                  NSInteger resolvedOrientation) {
+    // 3CC44 pure state boundary: native per-slot sizes are stored unchanged; normalization and
+    // default CarPlay flags are handled by DDUpdateHostSlotMirror. Landscape override/inflight
+    // coordination resolves orientation before this boundary and remains separate.
+    return DDUpdateHostSlotMirror(bundleIdentifiers, slotSizes, slotSizeCount,
+                                  carPlayUIFlags, resolvedOrientation, YES);
+}
+
 uint64_t DDUpdateHostSlotMirror(NSArray *bundleIdentifiers,
                                 const DDHostSlotSize *slotSizes,
                                 NSUInteger slotSizeCount,
@@ -671,6 +785,27 @@ BOOL DDConvertHostSlotToCarPlayUI(NSUInteger slotIndex) {
         gDDHostMirrorCarPlayUI[slotIndex] = YES;
     }
     return valid;
+}
+
+void DDDismissHostMirror(void) {
+    // Evidence-safe state/IPC half of 3D8A8/3D990. The original first tears down private
+    // hosted/aux views; this reconstruction owns no such objects, so it preserves the exact
+    // per-slot bridge-off broadcasts and reset ordering only.
+    void (^dismissBlock)(void) = ^{
+        for (NSUInteger index = 0; index < 3; index++) {
+            NSString *bundleIdentifier = gDDHostMirrorBids[index] ?: @"";
+            if (bundleIdentifier.length == 0 || gDDHostMirrorCarPlayUI[index]) continue;
+            DDPostUIAppState(bundleIdentifier, NO, gDDHostMirrorOrientation,
+                             index == 0 ? NO : YES, 0.0, 0.0);
+        }
+        DDResetHostSlotMirror();
+    };
+
+    if ([NSThread isMainThread]) {
+        dismissBlock();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), dismissBlock);
+    }
 }
 
 NSDictionary *DDCurrentHostSlotMirror(void) {
