@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-096)
+## Build (session-097)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
 - [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-095 batch (`8db179c`, user-confirmed before session-096 changes).
-- [x] Static runtime contracts through session-096: verifier checks LSDA-confirmed 40C5C/40DA8 route/native-size exception swallow→original fallback and original-callback exception swallow/no-retry with unsigned diagnostic count <=9 increment to max 10. No synthesized/caught exception, callback invocation, or diagnostic-counter mutation.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-096 batch (`036e7f2`, user-confirmed before session-097 changes).
+- [x] Static runtime contracts through session-097: verifier checks LSDA-confirmed 40F0C decision-path exception swallow→original fallback, original-callback exception swallow/no-retry, reuse of the existing bounded 41BA0 reason-probe decision, forced-false only after probe completion, and nested-probe exception→resume-unwind metadata. No synthesized/caught exception, original/private invocation, direct reason read, or probe-counter mutation.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

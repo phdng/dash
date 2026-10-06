@@ -1603,6 +1603,39 @@ DDExceptionReasonProbeDecision DDResolveExceptionReasonProbeDecision(uint64_t cu
     return decision;
 }
 
+DDSceneOrientationExceptionOutcome DDResolveSceneOrientationExceptionOutcome(DDSceneOrientationExceptionSite site,
+                                                                              uint64_t currentProbeCount,
+                                                                              BOOL reasonSelectorSupported) {
+    // 40F0C LSDA maps the combined 41CBC + 3FAF8 decision range to a catch that resumes at the
+    // original callback. A throw from the original callback has a distinct catch: the caught
+    // exception is passed through 41BA0's bounded reason-probe path, then the hook forces false.
+    DDExceptionReasonProbeDecision emptyProbe = { NO, NO, currentProbeCount };
+    DDSceneOrientationExceptionOutcome outcome = {
+        NO,
+        NO,
+        NO,
+        NO,
+        NO,
+        emptyProbe,
+    };
+
+    if (site == DDSceneOrientationExceptionSiteDecisionPath) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldCallOriginalAfterCatch = YES;
+        return outcome;
+    }
+
+    if (site == DDSceneOrientationExceptionSiteOriginalCallback) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldApplyReasonProbeDecision = YES;
+        outcome.probeExceptionWouldResumeUnwind = YES;
+        outcome.shouldForceFalseResultAfterProbe = YES;
+        outcome.reasonProbeDecision = DDResolveExceptionReasonProbeDecision(currentProbeCount,
+                                                                             reasonSelectorSupported);
+    }
+    return outcome;
+}
+
 DDPrivateIntegerIvarWritePlan DDResolvePrivateIntegerIvarWritePlan(BOOL ivarFound,
                                                                    NSInteger typeEncodingFirstByte) {
     // Pure 9C3BC write-width decision after 9C24C has already resolved the ivar/type encoding.

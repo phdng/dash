@@ -141,6 +141,21 @@ typedef struct {
     uint64_t nextProbeCount;
 } DDExceptionReasonProbeDecision;
 
+typedef NS_ENUM(NSInteger, DDSceneOrientationExceptionSite) {
+    DDSceneOrientationExceptionSiteNone = 0,
+    DDSceneOrientationExceptionSiteDecisionPath = 1,
+    DDSceneOrientationExceptionSiteOriginalCallback = 2,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldCallOriginalAfterCatch;
+    BOOL shouldApplyReasonProbeDecision;
+    BOOL probeExceptionWouldResumeUnwind;
+    BOOL shouldForceFalseResultAfterProbe;
+    DDExceptionReasonProbeDecision reasonProbeDecision;
+} DDSceneOrientationExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDPrivateIvarWriteWidth) {
     DDPrivateIvarWriteWidthUnsupported = 0,
     DDPrivateIvarWriteWidthByte = 1,
@@ -435,6 +450,9 @@ FOUNDATION_EXPORT DDOtherSettingsFlagClearDecision DDResolveOtherSettingsFlagCle
                                                                                            BOOL flagSetterSupported);
 FOUNDATION_EXPORT DDExceptionReasonProbeDecision DDResolveExceptionReasonProbeDecision(uint64_t currentProbeCount,
                                                                                         BOOL reasonSelectorSupported);
+FOUNDATION_EXPORT DDSceneOrientationExceptionOutcome DDResolveSceneOrientationExceptionOutcome(DDSceneOrientationExceptionSite site,
+                                                                                                uint64_t currentProbeCount,
+                                                                                                BOOL reasonSelectorSupported);
 FOUNDATION_EXPORT DDPrivateIntegerIvarWritePlan DDResolvePrivateIntegerIvarWritePlan(BOOL ivarFound,
                                                                                      NSInteger typeEncodingFirstByte);
 FOUNDATION_EXPORT DDPrivateObjectIvarAccessPlan DDResolvePrivateObjectIvarAccessPlan(BOOL ivarFound,
