@@ -29,7 +29,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | DDz1/DDz2 classes | DDzCore.m (F-034) | SYNTH (APPROXIMATION) | session-048: maps 63+35 + 8 central + cross-links + division |
 | DDz3 UI (153 methods) | DDzPicker.m (F-034 §6) | SYNTH-map (APPROXIMATION) | session-049: cluster map, bodies HYPOTHESIS (commit bodies ở DDzCommit.m; buildKitLevel asm-only UNKNOWN) |
 | DDz3 commit chain | DDzCommit.m (F-039) | SYNTH (APPROXIMATION) | session-046: 5 files picker→prefs bridge |
-| cpuiGen lifecycle | EVIDENCE/cpuigen_trace.md (F-040) | EVIDENCE-only | 5 hits đóng, BSS-init HYPOTHESIS |
+| cpuiGen lifecycle | Cpuigen.m (F-040) | SYNTH (APPROXIMATION) | session-050: 5 hits + idiom + consume/stale-check từ evidence (init/reset UNKNOWN) |
 | Evict (3 hệ thống) | EVIDENCE/evict_helpers.md + evict_from_phone.md (F-036/F-037) | EVIDENCE-only | 85B8/7764C verdict + Home-transition; 7792C/763E0 cross-ref |
 
 ## C. Prefs / settings

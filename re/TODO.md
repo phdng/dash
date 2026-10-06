@@ -77,5 +77,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-034] Tweak.x D684 fast/slow bodies từ EVIDENCE/ddz_inventory.md §4 (F-034: fast-vs-slow + 2 họ entity + 14 fail reasons + trigger 3 đường) → RECONSTRUCTION/FastRelayout.m (APPROXIMATION synthesis session-047; lấp D684-UNKNOWN ở SpawnLaunch/SpawnMisc/9D64-U05).
 - [x] [R-035] Tweak.x DDz1/DDz2 class bodies từ EVIDENCE/ddz_inventory.md §§0-3,5 (F-034: maps 63+35 + 8 central + cross-links + division) → RECONSTRUCTION/DDzCore.m (APPROXIMATION synthesis session-048; DDz3 UI scope sau) + COVERAGE DDz rows touch-up.
 - [x] [R-036] Tweak.x DDz3 UI-cluster map từ EVIDENCE/ddz_inventory.md §6 (F-034: 153 methods cụm + buildKitLevel-note) → RECONSTRUCTION/DDzPicker.m (APPROXIMATION synthesis-map session-049) + COVERAGE DDz3 touch-up.
-- [ ] [R-037] scope khác — quyết scope session sau (GAPs còn lại: P4 SIDE_EFFECTS/COMPARISON rows, COVERAGE touch-up 042-045, P1 4C34 infeasible, blocked P0-3).
+- [x] [R-037] Tweak.x cpuiGen lifecycle bodies từ EVIDENCE/cpuigen_trace.md (F-040: 5 hits + idiom + consume/stale-check) → RECONSTRUCTION/Cpuigen.m (APPROXIMATION synthesis session-050) + COVERAGE cpuigen touch-up.
+- [ ] [R-038] scope khác — quyết scope session sau (GAPs còn lại: P4 SIDE_EFFECTS/COMPARISON rows, COVERAGE touch-up 042-045, P1 4C34 infeasible, blocked P0-3).
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
