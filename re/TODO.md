@@ -61,5 +61,6 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-018] Tweak.x HUD/BLE bodies từ F-024 + strings (scan/prefs/speed/brightness) → RECONSTRUCTION/HudBle.m (APPROXIMATION synthesis session-031; scan/pairing bodies UNKNOWN).
 - [x] [R-019] Audit coverage RECONSTRUCTION/ vs subsystems → RECONSTRUCTION/COVERAGE.md (session-032, kèm priority lấp GAP).
 - [x] [R-020] FUNCTION record 163EC (đọc FULL trực tiếp 529 dòng 2 passes; 12 branches B01-B11 + U01-U08). Status INFERRED.
-- [ ] [R-021] Theo COVERAGE priority tiếp (CrashReporting/Migration synthesis? spikeHostSlots records?) — quyết scope session sau.
+- [x] [R-021] Tweak.x CrashReporting bodies từ B-08/F-016 + notify row + strings → RECONSTRUCTION/CrashReporting.m (APPROXIMATION synthesis session-034).
+- [ ] [R-022] Migration synthesis HOẶC spikeHostSlots records HOẶC scope khác — quyết scope session sau.
 - [ ] [R-004] FUNCTION records tiếp theo theo ưu tiên: 218D8 → 202D0 → 74C8 → 9D64.
