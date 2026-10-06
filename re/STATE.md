@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-05 session-034 (function-level reconstruction)_
+_Last updated: 2026-10-05 session-035 (function-level reconstruction)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-034 (synthesis, không function mới): Tweak.x CrashReporting bodies từ evidence → CrashReporting.m (APPROXIMATION).
+Session-035 (synthesis, không function mới): Tweak.x Migration bodies từ evidence → Migration.m (APPROXIMATION).
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT (FINAL): mọi subsystem chính có behavioral model CONFIRMED; tàn dư liệt kê đóng ở OPEN_QUESTIONS + LOG-011 (không mở rộng nếu không có artifacts mới).
 
-## LAST COMPLETED TASK (session-034):
-- Tweak.x CrashReporting bodies (synthesis từ evidence, APPROXIMATION) + TODO R-021 + handoff (R-022 scope-open).
+## LAST COMPLETED TASK (session-035):
+- Tweak.x Migration bodies (synthesis từ evidence, APPROXIMATION) + TODO R-022 + handoff (R-023 scope-open).
 
 ## CURRENT TASK:
-Checkpoint: commit + STATE/TODO/LOG session-034 (đang làm).
+Checkpoint: commit + STATE/TODO/LOG session-035 (đang làm).
 
-## NEXT TASK (session-035):
-1. R-022: Migration synthesis HOẶC spikeHostSlots records (quyết scope đầu session).
+## NEXT TASK (session-036):
+1. R-023: spikeHostSlots/hostSplit/spawn-teardown records HOẶC Respring/latch synthesis (quyết scope đầu session).
 2. Không mở rộng scope (SESSION BUDGET).
 
 ## BLOCKERS:
@@ -37,9 +37,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-034):
-- Mới: `RECONSTRUCTION/CrashReporting.m`, `LOG/session-034.md`.
-- Sửa: TODO (R-021), STATE.
+## FILES CHANGED (session-035):
+- Mới: `RECONSTRUCTION/Migration.m`, `LOG/session-035.md`.
+- Sửa: TODO (R-022), STATE.
 
 ## TEST STATUS:
 Static asserts session-002..004 pass (TESTS.md). Dynamic + build vẫn pending (không device/toolchain).
