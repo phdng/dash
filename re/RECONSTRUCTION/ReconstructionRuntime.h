@@ -172,6 +172,22 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDDismissExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDConvertSlotToCarPlayExceptionSite) {
+    DDConvertSlotToCarPlayExceptionSiteNone = 0,
+    DDConvertSlotToCarPlayExceptionSitePrivateHostedViewTeardown = 1,
+    DDConvertSlotToCarPlayExceptionSiteBridgeOffPublish = 2,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldContinueControllerIvarClear;
+    BOOL shouldContinueBridgeOffPhase;
+    BOOL shouldCommitHostedBundleState;
+    BOOL shouldSetCarPlayFlag;
+    BOOL controllerIvarWasAlreadyClearedBeforeCatch;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDConvertSlotToCarPlayExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -750,6 +766,7 @@ FOUNDATION_EXPORT DDSceneResolverExceptionOutcome DDResolveSceneResolverExceptio
 FOUNDATION_EXPORT DDSceneDiagnosticSummaryExceptionOutcome DDResolveSceneDiagnosticSummaryExceptionOutcome(DDSceneDiagnosticSummaryExceptionSite site);
 FOUNDATION_EXPORT DDBundleNormalizationExceptionOutcome DDResolveBundleNormalizationExceptionOutcome(DDBundleNormalizationExceptionSite site);
 FOUNDATION_EXPORT DDDismissExceptionOutcome DDResolveDismissExceptionOutcome(DDDismissExceptionSite site);
+FOUNDATION_EXPORT DDConvertSlotToCarPlayExceptionOutcome DDResolveConvertSlotToCarPlayExceptionOutcome(DDConvertSlotToCarPlayExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

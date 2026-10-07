@@ -1407,6 +1407,30 @@ DDDismissExceptionOutcome DDResolveDismissExceptionOutcome(DDDismissExceptionSit
     return outcome;
 }
 
+DDConvertSlotToCarPlayExceptionOutcome DDResolveConvertSlotToCarPlayExceptionOutcome(DDConvertSlotToCarPlayExceptionSite site) {
+    // 3D704 LSDA 0x114774 has two typed catches. A private hosted-view teardown exception rejoins
+    // before controller-ivar clear and then continues the bridge-off/state-commit path. A bridge-off
+    // publish exception rejoins directly at the hosted-bundle/CarPlay state-commit block.
+    DDConvertSlotToCarPlayExceptionOutcome outcome = {0};
+    if (site == DDConvertSlotToCarPlayExceptionSitePrivateHostedViewTeardown) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldContinueControllerIvarClear = YES;
+        outcome.shouldContinueBridgeOffPhase = YES;
+        outcome.shouldCommitHostedBundleState = YES;
+        outcome.shouldSetCarPlayFlag = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDConvertSlotToCarPlayExceptionSiteBridgeOffPublish) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldCommitHostedBundleState = YES;
+        outcome.shouldSetCarPlayFlag = YES;
+        outcome.controllerIvarWasAlreadyClearedBeforeCatch = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
