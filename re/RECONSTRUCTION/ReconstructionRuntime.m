@@ -3837,6 +3837,67 @@ DDServerNoticeBuildExceptionOutcome DDResolveServerNoticeBuildExceptionOutcome(D
     return outcome;
 }
 
+DDResetTeardownExceptionOutcome DDResolveResetTeardownExceptionOutcome(DDResetTeardownExceptionSite site) {
+    // 34524 LSDA 0x113CB8 has one action-1 catch-all range 0x34598..0x345A4.
+    // When reset flag +0xA9 is set, every reset store and the clear of strong slot +0x140 happen
+    // before the protected range. The release of the previous +0x140 value at 0x3458C is unprotected.
+    // The protected calls are removeAllObjects (reset path only) and teardownWindow (both paths).
+    // Landing 0x345B0 has no discriminator: begin/end-catch and immediate return.
+    DDResetTeardownExceptionOutcome outcome = {0};
+    BOOL protectedSite = site == DDResetTeardownExceptionSiteRemoveAllObjectsAfterReset ||
+                         site == DDResetTeardownExceptionSiteTeardownWindowAfterReset ||
+                         site == DDResetTeardownExceptionSiteTeardownWindowWithoutReset;
+    if (protectedSite) {
+        outcome.shouldSwallowAnyException = YES;
+        outcome.shouldReturnImmediately = YES;
+    }
+
+    BOOL resetCompletedBeforeCall = site == DDResetTeardownExceptionSiteRemoveAllObjectsAfterReset ||
+                                    site == DDResetTeardownExceptionSiteTeardownWindowAfterReset;
+    if (resetCompletedBeforeCall) {
+        outcome.resetFlagDefinitelyClearedBeforeSite = YES;
+        outcome.generationSentinelDefinitelyResetBeforeSite = YES;
+        outcome.geometryDefinitelyResetToCGRectNullBeforeSite = YES;
+        outcome.stateBytesDefinitelyClearedBeforeSite = YES;
+        outcome.counterDefinitelyClearedBeforeSite = YES;
+        outcome.strongSlotDefinitelyClearedBeforeSite = YES;
+        outcome.previousStrongSlotReleaseDefinitelyCompletedBeforeProtectedCall = YES;
+    }
+
+    if (site == DDResetTeardownExceptionSiteStrongSlotReleaseUnprotected) {
+        outcome.resetFlagDefinitelyClearedBeforeSite = YES;
+        outcome.generationSentinelDefinitelyResetBeforeSite = YES;
+        outcome.geometryDefinitelyResetToCGRectNullBeforeSite = YES;
+        outcome.stateBytesDefinitelyClearedBeforeSite = YES;
+        outcome.counterDefinitelyClearedBeforeSite = YES;
+        outcome.strongSlotDefinitelyClearedBeforeSite = YES;
+        outcome.previousStrongSlotReleaseCouldHaveStartedBeforeException = YES;
+        outcome.collectionClearDefinitelyNotStartedBeforeException = YES;
+        outcome.teardownDefinitelyNotStartedBeforeException = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDResetTeardownExceptionSiteRemoveAllObjectsAfterReset) {
+        outcome.collectionClearCouldHaveAppliedBeforeException = YES;
+        outcome.teardownDefinitelyNotStartedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDResetTeardownExceptionSiteTeardownWindowAfterReset) {
+        outcome.collectionClearDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.teardownCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDResetTeardownExceptionSiteTeardownWindowWithoutReset) {
+        outcome.collectionClearDefinitelyNotStartedBeforeException = YES;
+        outcome.teardownCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDResetTeardownExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

@@ -1353,6 +1353,34 @@ typedef struct {
     BOOL capturedReasonCouldHaveBecomePresentFailedBeforeException;
 } DDServerNoticeBuildExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDResetTeardownExceptionSite) {
+    DDResetTeardownExceptionSiteNone = 0,
+    DDResetTeardownExceptionSiteStrongSlotReleaseUnprotected = 1,
+    DDResetTeardownExceptionSiteRemoveAllObjectsAfterReset = 2,
+    DDResetTeardownExceptionSiteTeardownWindowAfterReset = 3,
+    DDResetTeardownExceptionSiteTeardownWindowWithoutReset = 4,
+    DDResetTeardownExceptionSiteUnprotectedRange = 5,
+};
+
+typedef struct {
+    BOOL shouldSwallowAnyException;
+    BOOL shouldReturnImmediately;
+    BOOL resetFlagDefinitelyClearedBeforeSite;
+    BOOL generationSentinelDefinitelyResetBeforeSite;
+    BOOL geometryDefinitelyResetToCGRectNullBeforeSite;
+    BOOL stateBytesDefinitelyClearedBeforeSite;
+    BOOL counterDefinitelyClearedBeforeSite;
+    BOOL strongSlotDefinitelyClearedBeforeSite;
+    BOOL previousStrongSlotReleaseCouldHaveStartedBeforeException;
+    BOOL previousStrongSlotReleaseDefinitelyCompletedBeforeProtectedCall;
+    BOOL collectionClearCouldHaveAppliedBeforeException;
+    BOOL collectionClearDefinitelyCompletedBeforeProtectedCall;
+    BOOL teardownCouldHaveAppliedBeforeException;
+    BOOL collectionClearDefinitelyNotStartedBeforeException;
+    BOOL teardownDefinitelyNotStartedBeforeException;
+    BOOL exceptionWouldPropagate;
+} DDResetTeardownExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -2037,6 +2065,7 @@ FOUNDATION_EXPORT DDSplashNudgePreparationExceptionOutcome DDResolveSplashNudgeP
 FOUNDATION_EXPORT DDRestoreTargetsExceptionOutcome DDResolveRestoreTargetsExceptionOutcome(DDRestoreTargetsExceptionSite site);
 FOUNDATION_EXPORT DDTickPresenterExceptionOutcome DDResolveTickPresenterExceptionOutcome(DDTickPresenterExceptionSite site);
 FOUNDATION_EXPORT DDServerNoticeBuildExceptionOutcome DDResolveServerNoticeBuildExceptionOutcome(DDServerNoticeBuildExceptionSite site);
+FOUNDATION_EXPORT DDResetTeardownExceptionOutcome DDResolveResetTeardownExceptionOutcome(DDResetTeardownExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
