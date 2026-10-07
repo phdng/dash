@@ -629,6 +629,27 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDKeyPaneHostConstructionExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDPropertyListReaderExceptionSite) {
+    DDPropertyListReaderExceptionSiteNone = 0,
+    DDPropertyListReaderExceptionSiteDataRead = 1,
+    DDPropertyListReaderExceptionSitePropertyListDecode = 2,
+    DDPropertyListReaderExceptionSiteDictionaryTypeCheck = 3,
+    DDPropertyListReaderExceptionSiteUnprotectedRange = 4,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnNil;
+    BOOL shouldContinueInputCleanup;
+    BOOL retainedDataDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedDataReleaseCouldBeBypassed;
+    BOOL propertyListDecodeCouldHaveStartedBeforeException;
+    BOOL retainedPropertyListDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedPropertyListReleaseCouldBeBypassed;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDPropertyListReaderExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1225,6 +1246,7 @@ FOUNDATION_EXPORT DDKeyPaneHideGapExceptionOutcome DDResolveKeyPaneHideGapExcept
 FOUNDATION_EXPORT DDDisplayScaleCapExceptionOutcome DDResolveDisplayScaleCapExceptionOutcome(DDDisplayScaleCapExceptionSite site);
 FOUNDATION_EXPORT DDPropertyListWriterExceptionOutcome DDResolvePropertyListWriterExceptionOutcome(DDPropertyListWriterExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneHostConstructionExceptionOutcome DDResolveKeyPaneHostConstructionExceptionOutcome(DDKeyPaneHostConstructionExceptionSite site);
+FOUNDATION_EXPORT DDPropertyListReaderExceptionOutcome DDResolvePropertyListReaderExceptionOutcome(DDPropertyListReaderExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

@@ -2197,6 +2197,48 @@ DDKeyPaneHostConstructionExceptionOutcome DDResolveKeyPaneHostConstructionExcept
     return outcome;
 }
 
+DDPropertyListReaderExceptionOutcome DDResolvePropertyListReaderExceptionOutcome(DDPropertyListReaderExceptionSite site) {
+    // 3815C LSDA 0x1141AC has two action-5 ranges. Expected catches converge at 0x3820C,
+    // begin/end-catch, force the returned object to nil, and continue only the retained input-string
+    // cleanup. The file-read range ends before x20 commits retained NSData. The second LSDA range
+    // starts with x20 committed; before x21 commit it covers plist decode/retain, and after x21 commit
+    // it covers NSDictionary class lookup/type checking. Catch routing bypasses whichever local
+    // NSData/plist releases had become relevant before the throw.
+    DDPropertyListReaderExceptionOutcome outcome = {0};
+    if (site == DDPropertyListReaderExceptionSiteDataRead) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnNil = YES;
+        outcome.shouldContinueInputCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDPropertyListReaderExceptionSitePropertyListDecode) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnNil = YES;
+        outcome.shouldContinueInputCleanup = YES;
+        outcome.retainedDataDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedDataReleaseCouldBeBypassed = YES;
+        outcome.propertyListDecodeCouldHaveStartedBeforeException = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDPropertyListReaderExceptionSiteDictionaryTypeCheck) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnNil = YES;
+        outcome.shouldContinueInputCleanup = YES;
+        outcome.retainedDataDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedDataReleaseCouldBeBypassed = YES;
+        outcome.retainedPropertyListDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedPropertyListReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDPropertyListReaderExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

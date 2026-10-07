@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-140 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-141 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-71 (session-140): GitHub Actions session-139 (`f988197`) đã xanh theo user. Executable target thêm data-only `38240` keypane/aux-scene host-construction exception outcome từ LSDA `0x1141D0` + raw ARM64. Mười action-5 ranges hội tụ catch `0x388E4`: expected catch explicit nil/release C88/C90/C78, request teardown trên retained controller, force false, release aux-scene/controller locals rồi rejoin splitHost/input cleanup. Catch không explicit clear C68/C70. Geometry range có thể để partial size/flag stores; transparency/activation ranges bắt đầu sau geometry/flags/time/generation và initial delayed dispatch đã commit. Late activation còn sau completed transparency + four staggered dispatch schedules. Không UIKit/private scene construction, global mutation, dispatch scheduling, teardown execution, ownership mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-72 (session-141): GitHub Actions session-140 (`ca03cf3`) đã xanh theo user. Executable target thêm data-only `3815C` plist-reader exception outcome từ LSDA `0x1141AC` + raw ARM64. Hai typed ranges hội tụ catch `0x3820C`: expected catch begin/end-catch, force nil, chỉ cleanup retained input x19 rồi return nil. File-read range kết thúc trước NSData x20 commit; plist-decode subsite bắt đầu với x20 committed và có thể bypass release; dictionary-type-check subsite bắt đầu sau plist x21 commit và có thể bypass cả x21+x20 releases. Unprotected/nonmatching propagate/unwind. Không file read, plist decode/type-check, ownership mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-140):
-- R-139 data-only 38240 keypane/aux-scene host-construction exception outcome: 10 typed ranges→explicit C88/C90/C78 clear+teardown request+false return; C68/C70 survive local explicit clear; site-aware local release-bypass, hierarchy/key insertion, partial/definite geometry-state, delayed-dispatch and late transparency/fronting/activation timing recorded.
+## LAST COMPLETED TASK (session-141):
+- R-140 data-only 3815C plist-reader exception outcome: 2 typed ranges→nil fallback+input cleanup; exact pre-x20 file read, committed NSData during plist decode, committed plist+NSData during dictionary type-check, release-bypass, unprotected propagation and nonmatching unwind recorded.
 
 ## CURRENT TASK:
-- R-139 hoàn tất local; commit-only handoff. User confirmed session-139 compiler green before this batch; assistant không push.
+- R-140 hoàn tất local; commit-only handoff. User confirmed session-140 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-140 batch, R-140: inspect `3815C -> 0x1141AC` plist-reader. Exact 4-entry table has typed file-read `0x38184..0x38194 -> 0x38208` and typed plist-decode/class-check `0x381A4..0x381DC -> 0x3820C`; both expected catches begin/end-catch, force result nil, release input x19, and return nil. First range ends before retained NSData x20 commit. Second starts with x20 committed and can bypass its explicit release; within the same range property-list x21 may also have been retained before throw, so split decode vs class-check sub-sites for exact x21 lifetime. Nonmatching type resumes unwind at `0x3823C`; unprotected ranges propagate. Next earlier unwind-bearing function after 3815C is `37A7C -> 0x11418C`. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
+- Sau compiler xanh cho session-141 batch, R-141: inspect `37A7C -> 0x11418C` keyboard-lost recovery. Exact 3-entry table has one typed action-5 range `0x37AD0..0x37AEC -> 0x37C20` covering `+[DDz2 shared]` retain plus `keyPaneSceneSummary` retain. Expected catch `0x37C20` begin/end-catches, substitutes fallback `&stru_146AD8` into x20, then jumps to `0x37B18` and continues NSFileManager marker/rebuild flow instead of returning. Split shared-acquisition vs scene-summary sub-sites: shared-acquisition may end before x21 commit; summary subsite runs with retained DDz2 x21 committed and can bypass its normal release, while a retained summary result may exist before x22 commit and its release can also be bypassed. Nonmatching type resumes unwind at `0x37C3C`; unprotected async-dispatch/rebuild/cleanup paths propagate. Next earlier unwind-bearing function is `37924 -> 0x114178`. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-140):
+## FILES CHANGED (session-141):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-140.md`.
+- Mới: `LOG/session-141.md`.
 
 ## TEST STATUS:
-Session-139 GitHub Actions build GREEN (`f988197`, user-confirmed). Session-140 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-140 GitHub Actions build GREEN (`ca03cf3`, user-confirmed). Session-141 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
