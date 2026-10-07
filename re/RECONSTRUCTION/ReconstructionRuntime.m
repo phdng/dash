@@ -2906,6 +2906,32 @@ DDSplashFadeCompletionExceptionOutcome DDResolveSplashFadeCompletionExceptionOut
     return outcome;
 }
 
+DDSplashFadeAnimationExceptionOutcome DDResolveSplashFadeAnimationExceptionOutcome(DDSplashFadeAnimationExceptionSite site) {
+    // 35FBC LSDA 0x113F94 has one action-0 cleanup range 0x3606C..0x36084 around
+    // +[UIView animateWithDuration:animations:completion:]. Before the range starts, both strong
+    // block captures were retained/committed and the completion block's copied weak capture was
+    // initialized by objc_copyWeak. Landing 0x360B4 preserves the active exception, destroys only
+    // that copied weak capture, then resumes unwind at 0x360C4. The normal strong-capture releases
+    // at 0x3608C and 0x36098 are therefore skipped on this unwind path.
+    DDSplashFadeAnimationExceptionOutcome outcome = {0};
+    if (site == DDSplashFadeAnimationExceptionSiteUIViewAnimationInvocation) {
+        outcome.shouldResumeUnwindFromActionZero = YES;
+        outcome.exceptionWouldPropagate = YES;
+        outcome.copiedWeakCaptureDefinitelyInitializedBeforeProtectedCall = YES;
+        outcome.copiedWeakCaptureDefinitelyDestroyedBeforeResumeUnwind = YES;
+        outcome.retainedAnimationCaptureDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedAnimationCaptureReleaseCouldBeBypassed = YES;
+        outcome.retainedCompletionCaptureDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedCompletionCaptureReleaseCouldBeBypassed = YES;
+        outcome.animationCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDSplashFadeAnimationExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
