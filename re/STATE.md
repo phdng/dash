@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-152 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-153 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-83 (session-152): GitHub Actions session-151 (`42153ac`) đã xanh theo user. Executable target thêm data-only `369E8` layout-area publish exception outcome từ LSDA `0x114058` + raw ARM64. Năm typed ranges + hai action-0 ranges được tách thành precommit label/status construction, committed-status dedup, global `qword_163AE8` store unwind, ordered CFPreferences SetValue/synchronize, Darwin center/name/post, và final release unwind. Typed catch expected type jump final stack cleanup, giữ nguyên side effects đã xảy ra và có thể bypass retained x20/x19 releases; action-0 store/release ranges resume unwind, không swallow. Nonmatching typed exceptions unwind. Không live formatting/global/prefs/notify execution, ownership mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-84 (session-153): GitHub Actions session-152 (`1299df0`) đã xanh theo user. Executable target thêm data-only `365D4` display-configuration/resolution-quality publish exception outcome từ LSDA `0x113FFC` + raw ARM64. Chín typed ranges được tách thành ba continuation families: FBS config/pixel/scale catches tiếp tục display bounds fallback; display bounds/frame catches tiếp tục geometry-validity gate; acquisition/class/format/dedup/publish catches force false và jump final input cleanup, có thể bypass committed display/resolution/quality releases. Runtime ghi exact x20/x22/x23/x24 ownership, pixel-width/scale fallback state, geometry globals, dedup global stores, ordered preferences/Darwin side effects. Nonmatching typed exceptions unwind `0x369E4`; unprotected gaps propagate. Không live display/FBS/prefs/notify execution, ownership mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-152):
-- R-151 data-only 369E8 layout-area publish exception outcome: five typed ranges plus two action-0 ranges; exact precommit label/status ownership, committed-status dedup, global-store unwind, ordered prefs/notify side-effect persistence, retained-release bypass, final cleanup unwind, unprotected propagation and nonmatching unwind recorded.
+## LAST COMPLETED TASK (session-153):
+- R-152 data-only 365D4 display-configuration/resolution-quality publish exception outcome: nine typed ranges with three distinct catch continuations; exact display/FBS/pixel/scale/bounds/frame fallback timing, geometry-global commit, resolution/quality ownership, dedup/global-store persistence, ordered prefs/Darwin side effects, release bypass, unprotected propagation and nonmatching unwind recorded.
 
 ## CURRENT TASK:
-- R-151 hoàn tất local; commit-only handoff. User confirmed session-151 compiler green before this batch; assistant không push.
+- R-152 hoàn tất local; commit-only handoff. User confirmed session-152 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-152 batch, R-152: inspect `365D4 -> 0x113FFC`, display configuration/resolution-quality publish helper. Exact 14-entry table: no landing `0x365D4..0x36608`; typed `0x36608..0x36614 -> 0x369A0`; typed `0x3661C..0x36628 -> 0x36998`; typed `0x3663C..0x36678 -> 0x369A4`; typed `0x3667C..0x36688 -> 0x3698C`; typed `0x366B0..0x366CC -> 0x369A4`; no landing `0x366CC..0x366E4`; typed `0x366E4..0x36734 -> 0x369B8`; typed `0x36814..0x3682C -> 0x36994`; no landing `0x3682C..0x3688C`; typed `0x3688C..0x368A8 -> 0x3699C`; no landing `0x368A8..0x368CC`; typed `0x368CC..0x36938 -> 0x3699C`; final tail unprotected. Landing families differ: `0x369A4` expected catch continues geometry fallback at `0x366DC`; `0x369B8` continues later bounds/frame fallback at `0x36758`; aliases `0x36994/98/9C/A0 -> 0x369CC` force result false and jump cleanup `0x36958`; `0x3698C` first restores d8=d9 then routes through `0x369A4`. Map FBSDisplayConfiguration acquisition, pixelSize/scale probes, bounds/frame fallback, global geometry commits, resolution/quality string ownership, dedup, prefs/Darwin side effects and release bypass separately. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
+- Sau compiler xanh cho session-153 batch, R-153: inspect `365A8 -> 0x113FE8`, `display.changed` wrapper around `sub_365D4`. Exact 2-entry table: action-1 catch-all `0x365B0..0x365C0 -> 0x365C8`, then unprotected `0x365C0..0x365D4`. Protected range prepares static `display.changed`, force flag 1, and calls `sub_365D4`; landing `0x365C8` unconditionally begin/end-catches and returns immediately, with no discriminator/nonmatching path. Promote wrapper-level catch-all swallow/return metadata only; do not duplicate inner R-152 site semantics. Next earlier LSDA-bearing function is `3640C -> 0x113FD0`. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-152):
+## FILES CHANGED (session-153):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-152.md`.
+- Mới: `LOG/session-153.md`.
 
 ## TEST STATUS:
-Session-151 GitHub Actions build GREEN (`42153ac`, user-confirmed). Session-152 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-152 GitHub Actions build GREEN (`1299df0`, user-confirmed). Session-153 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.

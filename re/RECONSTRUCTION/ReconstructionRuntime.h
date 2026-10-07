@@ -838,6 +838,78 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDLayoutAreaPublishExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDDisplayConfigurationPublishExceptionSite) {
+    DDDisplayConfigurationPublishExceptionSiteNone = 0,
+    DDDisplayConfigurationPublishExceptionSiteDisplayAcquisition = 1,
+    DDDisplayConfigurationPublishExceptionSiteConfigurationClassLookup = 2,
+    DDDisplayConfigurationPublishExceptionSiteConfigurationConstruction = 3,
+    DDDisplayConfigurationPublishExceptionSitePixelSizeCapabilityCheck = 4,
+    DDDisplayConfigurationPublishExceptionSitePixelSizeRead = 5,
+    DDDisplayConfigurationPublishExceptionSiteScaleCapabilityCheck = 6,
+    DDDisplayConfigurationPublishExceptionSiteScaleRead = 7,
+    DDDisplayConfigurationPublishExceptionSiteBoundsCapabilityCheck = 8,
+    DDDisplayConfigurationPublishExceptionSiteBoundsRead = 9,
+    DDDisplayConfigurationPublishExceptionSiteFrameCapabilityCheck = 10,
+    DDDisplayConfigurationPublishExceptionSiteFrameRead = 11,
+    DDDisplayConfigurationPublishExceptionSiteResolutionStringFormatting = 12,
+    DDDisplayConfigurationPublishExceptionSiteResolutionDedupEquality = 13,
+    DDDisplayConfigurationPublishExceptionSiteQualityDedupEquality = 14,
+    DDDisplayConfigurationPublishExceptionSiteResolutionPreferenceSet = 15,
+    DDDisplayConfigurationPublishExceptionSiteQualityPreferenceSet = 16,
+    DDDisplayConfigurationPublishExceptionSitePreferencesSynchronize = 17,
+    DDDisplayConfigurationPublishExceptionSiteDarwinCenterAcquisition = 18,
+    DDDisplayConfigurationPublishExceptionSiteNotificationNameConstruction = 19,
+    DDDisplayConfigurationPublishExceptionSiteDarwinNotificationPost = 20,
+    DDDisplayConfigurationPublishExceptionSiteUnprotectedRange = 21,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldForceFalseResult;
+    BOOL shouldContinueAtDisplayBoundsFallback;
+    BOOL shouldContinueAtGeometryValidityGate;
+    BOOL shouldRestorePixelWidthFallbackBeforeContinuation;
+    BOOL shouldKeepScaleAtZeroFallbackBeforeContinuation;
+    BOOL shouldSkipScaleDerivationBeforeValidityGate;
+    BOOL retainedInputDefinitelyCommittedBeforeProtectedCall;
+    BOOL shouldContinueFinalInputCleanup;
+    BOOL temporaryDisplayAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryDisplayReleaseCouldBeBypassed;
+    BOOL retainedDisplayDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedDisplayReleaseCouldBeBypassed;
+    BOOL temporaryConfigurationAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryConfigurationReleaseCouldBeBypassed;
+    BOOL retainedConfigurationDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedConfigurationReleaseCouldBeBypassed;
+    BOOL pixelSizeCapabilityDefinitelyPassedBeforeProtectedCall;
+    BOOL scaleCapabilityDefinitelyPassedBeforeProtectedCall;
+    BOOL boundsCapabilityDefinitelyPassedBeforeProtectedCall;
+    BOOL boundsProbeDefinitelyCompletedBeforeProtectedCall;
+    BOOL frameCapabilityDefinitelyPassedBeforeProtectedCall;
+    BOOL frameDimensionsDefinitelyUncommittedBeforeCatch;
+    BOOL geometryGlobalsDefinitelyCommittedBeforeProtectedCall;
+    BOOL temporaryResolutionStringConstructionCouldHaveStartedBeforeException;
+    BOOL temporaryResolutionStringReleaseCouldBeBypassed;
+    BOOL retainedResolutionStringDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedResolutionStringReleaseCouldBeBypassed;
+    BOOL retainedQualityLabelDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedQualityLabelReleaseCouldBeBypassed;
+    BOOL resolutionDedupDefinitelyMatchedBeforeProtectedCall;
+    BOOL resolutionGlobalDefinitelyStoredBeforeProtectedCall;
+    BOOL qualityGlobalDefinitelyStoredBeforeProtectedCall;
+    BOOL resolutionPreferenceDefinitelySetBeforeProtectedCall;
+    BOOL resolutionPreferenceCouldHaveAppliedBeforeException;
+    BOOL qualityPreferenceDefinitelySetBeforeProtectedCall;
+    BOOL qualityPreferenceCouldHaveAppliedBeforeException;
+    BOOL preferencesSynchronizeDefinitelyCompletedBeforeProtectedCall;
+    BOOL preferencesSynchronizeCouldHaveAppliedBeforeException;
+    BOOL darwinCenterDefinitelyAcquiredBeforeProtectedCall;
+    BOOL notificationNameDefinitelyConstructedBeforeProtectedCall;
+    BOOL notificationCouldHavePostedBeforeException;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDDisplayConfigurationPublishExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1510,6 +1582,7 @@ FOUNDATION_EXPORT DDDropOverdueNoticeExceptionOutcome DDResolveDropOverdueNotice
 FOUNDATION_EXPORT DDNudgePresentGateExceptionOutcome DDResolveNudgePresentGateExceptionOutcome(DDNudgePresentGateExceptionSite site);
 FOUNDATION_EXPORT DDDisplayBoundsFallbackExceptionOutcome DDResolveDisplayBoundsFallbackExceptionOutcome(DDDisplayBoundsFallbackExceptionSite site);
 FOUNDATION_EXPORT DDLayoutAreaPublishExceptionOutcome DDResolveLayoutAreaPublishExceptionOutcome(DDLayoutAreaPublishExceptionSite site);
+FOUNDATION_EXPORT DDDisplayConfigurationPublishExceptionOutcome DDResolveDisplayConfigurationPublishExceptionOutcome(DDDisplayConfigurationPublishExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);

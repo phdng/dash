@@ -2624,6 +2624,192 @@ DDLayoutAreaPublishExceptionOutcome DDResolveLayoutAreaPublishExceptionOutcome(D
     return outcome;
 }
 
+DDDisplayConfigurationPublishExceptionOutcome DDResolveDisplayConfigurationPublishExceptionOutcome(DDDisplayConfigurationPublishExceptionSite site) {
+    // 365D4 LSDA 0x113FFC has nine typed action-5 ranges with three continuation families.
+    // 369A4 catches continue at 366DC (display bounds fallback), 369B8 catches continue at 36758
+    // (geometry validity gate), while aliases 36994/98/9C/A0 route through 369CC, set w22=false,
+    // and jump to 36958 so only the retained input x19 is cleaned up. 3698C first restores d8=d9
+    // and then joins the 369A4 family. Nonmatching typed exceptions resume unwind at 369E4.
+    DDDisplayConfigurationPublishExceptionOutcome outcome = {0};
+    BOOL typedSite = site >= DDDisplayConfigurationPublishExceptionSiteDisplayAcquisition &&
+                     site <= DDDisplayConfigurationPublishExceptionSiteDarwinNotificationPost;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.retainedInputDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    }
+
+    if (site == DDDisplayConfigurationPublishExceptionSiteDisplayAcquisition) {
+        outcome.shouldForceFalseResult = YES;
+        outcome.shouldContinueFinalInputCleanup = YES;
+        outcome.temporaryDisplayAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryDisplayReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteConfigurationClassLookup) {
+        outcome.shouldForceFalseResult = YES;
+        outcome.shouldContinueFinalInputCleanup = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedDisplayReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteConfigurationConstruction) {
+        outcome.shouldContinueAtDisplayBoundsFallback = YES;
+        outcome.shouldKeepScaleAtZeroFallbackBeforeContinuation = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.temporaryConfigurationAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryConfigurationReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSitePixelSizeCapabilityCheck) {
+        outcome.shouldContinueAtDisplayBoundsFallback = YES;
+        outcome.shouldKeepScaleAtZeroFallbackBeforeContinuation = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedConfigurationDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedConfigurationReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSitePixelSizeRead) {
+        outcome.shouldContinueAtDisplayBoundsFallback = YES;
+        outcome.shouldRestorePixelWidthFallbackBeforeContinuation = YES;
+        outcome.shouldKeepScaleAtZeroFallbackBeforeContinuation = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedConfigurationDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedConfigurationReleaseCouldBeBypassed = YES;
+        outcome.pixelSizeCapabilityDefinitelyPassedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteScaleCapabilityCheck) {
+        outcome.shouldContinueAtDisplayBoundsFallback = YES;
+        outcome.shouldKeepScaleAtZeroFallbackBeforeContinuation = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedConfigurationDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedConfigurationReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteScaleRead) {
+        outcome.shouldContinueAtDisplayBoundsFallback = YES;
+        outcome.shouldKeepScaleAtZeroFallbackBeforeContinuation = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedConfigurationDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedConfigurationReleaseCouldBeBypassed = YES;
+        outcome.scaleCapabilityDefinitelyPassedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteBoundsCapabilityCheck) {
+        outcome.shouldContinueAtGeometryValidityGate = YES;
+        outcome.shouldSkipScaleDerivationBeforeValidityGate = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteBoundsRead) {
+        outcome.shouldContinueAtGeometryValidityGate = YES;
+        outcome.shouldSkipScaleDerivationBeforeValidityGate = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.boundsCapabilityDefinitelyPassedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteFrameCapabilityCheck) {
+        outcome.shouldContinueAtGeometryValidityGate = YES;
+        outcome.shouldSkipScaleDerivationBeforeValidityGate = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.boundsProbeDefinitelyCompletedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteFrameRead) {
+        outcome.shouldContinueAtGeometryValidityGate = YES;
+        outcome.shouldSkipScaleDerivationBeforeValidityGate = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.boundsProbeDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.frameCapabilityDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.frameDimensionsDefinitelyUncommittedBeforeCatch = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteResolutionStringFormatting) {
+        outcome.shouldForceFalseResult = YES;
+        outcome.shouldContinueFinalInputCleanup = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedDisplayReleaseCouldBeBypassed = YES;
+        outcome.geometryGlobalsDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.temporaryResolutionStringConstructionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryResolutionStringReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteResolutionDedupEquality ||
+        site == DDDisplayConfigurationPublishExceptionSiteQualityDedupEquality) {
+        outcome.shouldForceFalseResult = YES;
+        outcome.shouldContinueFinalInputCleanup = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedDisplayReleaseCouldBeBypassed = YES;
+        outcome.geometryGlobalsDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedResolutionStringDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedResolutionStringReleaseCouldBeBypassed = YES;
+        outcome.retainedQualityLabelDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedQualityLabelReleaseCouldBeBypassed = YES;
+        if (site == DDDisplayConfigurationPublishExceptionSiteQualityDedupEquality) {
+            outcome.resolutionDedupDefinitelyMatchedBeforeProtectedCall = YES;
+        }
+        return outcome;
+    }
+
+    BOOL publicationSite = site >= DDDisplayConfigurationPublishExceptionSiteResolutionPreferenceSet &&
+                           site <= DDDisplayConfigurationPublishExceptionSiteDarwinNotificationPost;
+    if (publicationSite) {
+        outcome.shouldForceFalseResult = YES;
+        outcome.shouldContinueFinalInputCleanup = YES;
+        outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedDisplayReleaseCouldBeBypassed = YES;
+        outcome.geometryGlobalsDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedResolutionStringDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedResolutionStringReleaseCouldBeBypassed = YES;
+        outcome.retainedQualityLabelDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedQualityLabelReleaseCouldBeBypassed = YES;
+        outcome.resolutionGlobalDefinitelyStoredBeforeProtectedCall = YES;
+        outcome.qualityGlobalDefinitelyStoredBeforeProtectedCall = YES;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteResolutionPreferenceSet) {
+        outcome.resolutionPreferenceCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteQualityPreferenceSet) {
+        outcome.resolutionPreferenceDefinitelySetBeforeProtectedCall = YES;
+        outcome.qualityPreferenceCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSitePreferencesSynchronize) {
+        outcome.resolutionPreferenceDefinitelySetBeforeProtectedCall = YES;
+        outcome.qualityPreferenceDefinitelySetBeforeProtectedCall = YES;
+        outcome.preferencesSynchronizeCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteDarwinCenterAcquisition) {
+        outcome.resolutionPreferenceDefinitelySetBeforeProtectedCall = YES;
+        outcome.qualityPreferenceDefinitelySetBeforeProtectedCall = YES;
+        outcome.preferencesSynchronizeDefinitelyCompletedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteNotificationNameConstruction) {
+        outcome.resolutionPreferenceDefinitelySetBeforeProtectedCall = YES;
+        outcome.qualityPreferenceDefinitelySetBeforeProtectedCall = YES;
+        outcome.preferencesSynchronizeDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.darwinCenterDefinitelyAcquiredBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteDarwinNotificationPost) {
+        outcome.resolutionPreferenceDefinitelySetBeforeProtectedCall = YES;
+        outcome.qualityPreferenceDefinitelySetBeforeProtectedCall = YES;
+        outcome.preferencesSynchronizeDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.darwinCenterDefinitelyAcquiredBeforeProtectedCall = YES;
+        outcome.notificationNameDefinitelyConstructedBeforeProtectedCall = YES;
+        outcome.notificationCouldHavePostedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDDisplayConfigurationPublishExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
