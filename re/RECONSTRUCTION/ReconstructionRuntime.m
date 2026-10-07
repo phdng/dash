@@ -1591,6 +1591,53 @@ DDSpikeCreateSlotExceptionOutcome DDResolveSpikeCreateSlotExceptionOutcome(DDSpi
     return outcome;
 }
 
+DDCNABBuildSceneHostExceptionOutcome DDResolveCNABBuildSceneHostExceptionOutcome(DDCNABBuildSceneHostExceptionSite site) {
+    // 3B8F8 LSDA 0x1144C4 has eleven action-5 ranges. Ten funnel through common typed catch
+    // 0x3BBA4, whose expected path invokes resetHostingState, forces the return object nil, and
+    // rejoins final cleanup. The three protected normal failure resetHostingState calls therefore
+    // retry reset once from the catch. The sole special range 0x3BAA4..0x3BAEC covers private
+    // device-controller/home-grabber decoration; expected catch 0x3BB74 swallows and rejoins
+    // 0x3BB24, preserving the already-acquired main view and skipping the normal device-controller
+    // release at 0x3BAEC if that object had been retained before the throw. Catch-internal reset at
+    // 0x3BBC4..0x3BBCC is action 0 and ends the active catch before resume-unwind if it throws.
+    DDCNABBuildSceneHostExceptionOutcome outcome = {0};
+    if (site == DDCNABBuildSceneHostExceptionSitePreControllerPrivateWork ||
+        site == DDCNABBuildSceneHostExceptionSitePostControllerPrivateWork ||
+        site == DDCNABBuildSceneHostExceptionSiteFailureReset) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldInvokeResetHostingStateFromCatch = YES;
+        outcome.shouldForceNilReturn = YES;
+        outcome.retainedIntermediateReleasesCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site == DDCNABBuildSceneHostExceptionSitePostControllerPrivateWork) {
+            outcome.controllerIvarHadBeenStoredBeforeProtectedCall = YES;
+        }
+        if (site == DDCNABBuildSceneHostExceptionSiteFailureReset) {
+            outcome.shouldRetryResetHostingStateFromCatch = YES;
+        }
+        return outcome;
+    }
+    if (site == DDCNABBuildSceneHostExceptionSitePrivateDeviceDecoration) {
+        outcome.shouldSwallowException = YES;
+        outcome.controllerIvarHadBeenStoredBeforeProtectedCall = YES;
+        outcome.shouldSkipRemainingPrivateDecoration = YES;
+        outcome.mainViewHadBeenAcquiredBeforeProtectedCall = YES;
+        outcome.shouldContinueReturningMainView = YES;
+        outcome.retainedDeviceControllerReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDCNABBuildSceneHostExceptionSiteCatchReset) {
+        outcome.shouldEndActiveCatchBeforeResumeUnwind = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDCNABBuildSceneHostExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
