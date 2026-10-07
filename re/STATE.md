@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-143 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-144 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-74 (session-143): GitHub Actions session-142 (`13e2a56`) đã xanh theo user. Executable target thêm data-only `37924` CarPlay UI-status callback catch-all outcome từ LSDA `0x114178` + raw ARM64. Một action-1 range `0x3793C..0x37958` bao DDz1 shared+retain và `noteCarPlayUIStatus:gen:ok:`; landing `0x37968` unconditional begin/end-catch rồi return ngay, không discriminator. Runtime tách pre-x19 shared acquisition (temporary DDz1 only) khỏi callback-send sau x19 commit; callback throw có thể bypass normal retained-DDz1 tail release và giữ side effects đã apply trước throw. Unprotected tail propagate. Không DDz1 lookup/callback execution, ownership mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-75 (session-144): GitHub Actions session-143 (`6734571`) đã xanh theo user. Executable target thêm data-only `375B8` keypane center-adjustment exception outcome từ LSDA `0x11415C` + raw ARM64. Một action-5 range `0x375EC..0x37610` bao geometry helpers, CGRectIsNull, center getter và setCenter. Expected catch swallow rồi jump `0x37618`, bỏ remaining geometry và first normal release nhưng vẫn final-release retained view. Pre-geometry `off_163C60` đã hoàn tất trước protected range. Runtime tách geometry-helper, center-getter và center-setter; chỉ setter-site ghi possible center side effect trước throw, không rollback. Unprotected/nonmatching propagate/unwind. Không geometry/UIView execution, ownership mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-143):
-- R-142 data-only 37924 CarPlay UI-status callback exception outcome: action-1 catch-all→immediate return; exact pre/post x19 DDz1 commit, retained-controller release-bypass and possible callback-side-effect persistence recorded; unprotected tail propagates.
+## LAST COMPLETED TASK (session-144):
+- R-143 data-only 375B8 keypane center-adjustment exception outcome: one typed range→skip remaining geometry+final retained-view cleanup; pre-geometry callback completion, first-release bypass, setter-only possible center side effect, unprotected propagation and nonmatching unwind recorded.
 
 ## CURRENT TASK:
-- R-142 hoàn tất local; commit-only handoff. User confirmed session-142 compiler green before this batch; assistant không push.
+- R-143 hoàn tất local; commit-only handoff. User confirmed session-143 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-143 batch, R-143: inspect `375B8 -> 0x11415C`. Exact 3-entry table has one typed action-5 range `0x375EC..0x37610 -> 0x37628`, with unprotected prefix/tail. Protected range covers helper `37640`, geometry helper `376DC`, `CGRectIsNull`, optional `center` getter, and optional `setCenter:`. Expected catch `0x37628` begin/end-catches then jumps directly to `0x37618`, skipping remaining geometry work and continuing retained-input cleanup; nonmatching type resumes unwind at `0x3763C`. Split pre-center geometry helper failure, center-getter failure, and center-setter failure so only setter site records possible center side-effect before throw. Next earlier LSDA-bearing function is `374C4 -> 0x11413C`, with typed `0x374FC..0x3751C -> 0x375A0`. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
+- Sau compiler xanh cho session-144 batch, R-144: inspect `374C4 -> 0x11413C`. Exact 3-entry table has one typed action-5 range `0x374FC..0x3751C -> 0x375A0`, covering `376DC` candidate-rect acquisition and `CGRectIsNull`. Expected catch begin/end-catches then jumps to `0x3755C`, preserving caller-supplied rectangle registers (`d9/d8/d10/d11`), skipping candidate adoption and `dword_162EF0` decrement, and still invoking `off_163C58` with the original rectangle before final retained-input cleanup; nonmatching type resumes unwind at `0x375B4`. Split geometry-helper vs CGRectIsNull timing and promote original-rectangle forwarding metadata only. Next earlier LSDA-bearing function is `37398 -> 0x114114`, whose 5-entry table has three typed ranges `0x373CC..0x373D0`, `0x373D0..0x373EC`, and `0x373FC..0x37428`. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-143):
+## FILES CHANGED (session-144):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-143.md`.
+- Mới: `LOG/session-144.md`.
 
 ## TEST STATUS:
-Session-142 GitHub Actions build GREEN (`13e2a56`, user-confirmed). Session-143 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-143 GitHub Actions build GREEN (`6734571`, user-confirmed). Session-144 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.

@@ -2301,6 +2301,37 @@ DDCarPlayUIStatusCallbackExceptionOutcome DDResolveCarPlayUIStatusCallbackExcept
     return outcome;
 }
 
+DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
+    // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
+    // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
+    // to 0x37618, skipping the remaining protected work and the first normal x19 release at 0x37614
+    // while still executing the final retained-view release at 0x37624. Only the setCenter sub-site
+    // can have changed center before throwing; the catch performs no rollback.
+    DDKeyPaneCenterAdjustmentExceptionOutcome outcome = {0};
+    BOOL typedSite =
+        site == DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers ||
+        site == DDKeyPaneCenterAdjustmentExceptionSiteCenterGetter ||
+        site == DDKeyPaneCenterAdjustmentExceptionSiteCenterSetter;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingGeometryWork = YES;
+        outcome.shouldContinueFinalRetainedViewCleanup = YES;
+        outcome.preGeometryCallbackDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.retainedViewDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedViewReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site == DDKeyPaneCenterAdjustmentExceptionSiteCenterSetter) {
+            outcome.centerGetterDefinitelyCompletedBeforeProtectedCall = YES;
+            outcome.centerCouldHaveAppliedBeforeException = YES;
+        }
+        return outcome;
+    }
+    if (site == DDKeyPaneCenterAdjustmentExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
