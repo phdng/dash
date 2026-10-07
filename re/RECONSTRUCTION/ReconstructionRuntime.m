@@ -1482,6 +1482,37 @@ DDAuxSceneTeardownExceptionOutcome DDResolveAuxSceneTeardownExceptionOutcome(DDA
     return outcome;
 }
 
+DDAuxSceneCreationExceptionOutcome DDResolveAuxSceneCreationExceptionOutcome(DDAuxSceneCreationExceptionSite site) {
+    // 3C368 LSDA 0x1145D8 has twelve action-5 ranges whose landing stubs converge at common
+    // typed catch 0x3C7C0. Expected type invokes teardownAuxScene then exits through nil path
+    // 0x3C3D8; nonmatching type resumes unwind at 0x3C800. The final three action-5 ranges are
+    // normal failure-path teardownAuxScene calls, so their expected catch retries teardown once.
+    // If teardown invoked from inside the catch throws, action-0 landing 0x3C7F8 ends the active
+    // catch and resumes unwind; no second local swallow is attempted.
+    DDAuxSceneCreationExceptionOutcome outcome = {0};
+    if (site == DDAuxSceneCreationExceptionSiteProtectedCreationWork ||
+        site == DDAuxSceneCreationExceptionSiteProtectedFailureTeardown) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldInvokeTeardownFromCatch = YES;
+        outcome.shouldSkipRemainingCreation = YES;
+        outcome.shouldReturnNilScene = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site == DDAuxSceneCreationExceptionSiteProtectedFailureTeardown) {
+            outcome.shouldRetryTeardownFromCatch = YES;
+        }
+        return outcome;
+    }
+    if (site == DDAuxSceneCreationExceptionSiteCatchTeardown) {
+        outcome.shouldEndActiveCatchBeforeResumeUnwind = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDAuxSceneCreationExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
