@@ -134,6 +134,21 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDSceneDiagnosticSummaryExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDBundleNormalizationExceptionSite) {
+    DDBundleNormalizationExceptionSiteNone = 0,
+    DDBundleNormalizationExceptionSiteApplicationControllerLookup = 1,
+    DDBundleNormalizationExceptionSitePerItemApplicationLookup = 2,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldContinueCanonicalization;
+    BOOL shouldForceApplicationControllerNil;
+    BOOL shouldPreserveSanitizedCandidate;
+    BOOL shouldAddCandidateAndContinueLoop;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDBundleNormalizationExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -710,6 +725,7 @@ FOUNDATION_EXPORT BOOL DDBundleIdentifierMatchesAux(NSString * _Nullable bundleI
 FOUNDATION_EXPORT DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdentityResolutionExceptionOutcome(void);
 FOUNDATION_EXPORT DDSceneResolverExceptionOutcome DDResolveSceneResolverExceptionOutcome(DDSceneResolverExceptionSite site);
 FOUNDATION_EXPORT DDSceneDiagnosticSummaryExceptionOutcome DDResolveSceneDiagnosticSummaryExceptionOutcome(DDSceneDiagnosticSummaryExceptionSite site);
+FOUNDATION_EXPORT DDBundleNormalizationExceptionOutcome DDResolveBundleNormalizationExceptionOutcome(DDBundleNormalizationExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

@@ -1341,6 +1341,28 @@ DDSceneDiagnosticSummaryExceptionOutcome DDResolveSceneDiagnosticSummaryExceptio
     return outcome;
 }
 
+DDBundleNormalizationExceptionOutcome DDResolveBundleNormalizationExceptionOutcome(DDBundleNormalizationExceptionSite site) {
+    // 3DD4C LSDA 0x1147EC has two protected application-validation ranges. The early controller
+    // lookup catch forces the controller nil and resumes canonicalization; the per-item lookup
+    // catch preserves the already-sanitized candidate and rejoins at addObject:/loop continuation.
+    DDBundleNormalizationExceptionOutcome outcome = { NO, NO, NO, NO, NO, NO };
+    if (site == DDBundleNormalizationExceptionSiteApplicationControllerLookup) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldContinueCanonicalization = YES;
+        outcome.shouldForceApplicationControllerNil = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDBundleNormalizationExceptionSitePerItemApplicationLookup) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldContinueCanonicalization = YES;
+        outcome.shouldPreserveSanitizedCandidate = YES;
+        outcome.shouldAddCandidateAndContinueLoop = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
