@@ -1109,6 +1109,63 @@ typedef struct {
     BOOL nonmatchingCatchTypeCouldUseCleanupLandingBeforeResume;
 } DDSplashNudgePreparationExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDRestoreTargetsExceptionSite) {
+    DDRestoreTargetsExceptionSiteNone = 0,
+    DDRestoreTargetsExceptionSiteInitialTargetsProbe = 1,
+    DDRestoreTargetsExceptionSiteTransactionBegin = 2,
+    DDRestoreTargetsExceptionSiteDisableActions = 3,
+    DDRestoreTargetsExceptionSiteEnumerationSourceAcquisition = 4,
+    DDRestoreTargetsExceptionSiteEnumerationCollectionAcquisition = 5,
+    DDRestoreTargetsExceptionSiteInitialEnumerationRead = 6,
+    DDRestoreTargetsExceptionSiteEnumerationMutationOrTypeFilter = 7,
+    DDRestoreTargetsExceptionSiteFirstOpacityRead = 8,
+    DDRestoreTargetsExceptionSiteSecondOpacityRead = 9,
+    DDRestoreTargetsExceptionSiteOpacityAnimationLookup = 10,
+    DDRestoreTargetsExceptionSiteOpacityMutation = 11,
+    DDRestoreTargetsExceptionSiteEnumerationAdvance = 12,
+    DDRestoreTargetsExceptionSiteTransactionCommit = 13,
+    DDRestoreTargetsExceptionSiteAnimationResultReleaseActionZero = 14,
+    DDRestoreTargetsExceptionSiteRetainedLayerReleaseActionZero = 15,
+    DDRestoreTargetsExceptionSiteCollectionReleaseActionZero = 16,
+    DDRestoreTargetsExceptionSiteUnprotectedRange = 17,
+};
+
+typedef struct {
+    BOOL shouldSwallowExpectedException;
+    BOOL shouldReturnViaEpilogue;
+    BOOL shouldResumeUnwind;
+    BOOL transactionBeginCouldHaveAppliedBeforeException;
+    BOOL transactionBeginDefinitelyCompletedBeforeProtectedCall;
+    BOOL disableActionsCouldHaveAppliedBeforeException;
+    BOOL disableActionsDefinitelyCompletedBeforeProtectedCall;
+    BOOL finalTransactionCommitWouldBeSkippedAfterCatch;
+    BOOL noFurtherTransactionCommitAttemptAfterCatch;
+    BOOL temporaryTargetsAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryTargetsReleaseCouldBeBypassed;
+    BOOL retainedEnumerationSourceDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedEnumerationSourceReleaseCouldBeBypassed;
+    BOOL temporaryCollectionAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryCollectionReleaseCouldBeBypassed;
+    BOOL retainedCollectionDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedCollectionReleaseCouldBeBypassed;
+    BOOL enumerationDefinitelyStartedBeforeProtectedCall;
+    BOOL retainedLayerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedLayerReleaseCouldBeBypassed;
+    BOOL firstOpacityReadDefinitelyCompletedBeforeProtectedCall;
+    BOOL secondOpacityReadDefinitelyCompletedBeforeProtectedCall;
+    BOOL temporaryOpacityAnimationAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryOpacityAnimationReleaseCouldBeBypassed;
+    BOOL opacityAnimationDefinitelyAbsentBeforeProtectedCall;
+    BOOL opacityMutationCouldHaveAppliedBeforeException;
+    BOOL opacityMutationDefinitelyCompletedBeforeProtectedCall;
+    BOOL transactionCommitCouldHaveAppliedBeforeException;
+    BOOL actionZeroCurrentReleaseCouldHaveStartedBeforeException;
+    BOOL remainingLayerReleaseCouldBeBypassed;
+    BOOL remainingCollectionReleaseCouldBeBypassed;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDRestoreTargetsExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1790,6 +1847,7 @@ FOUNDATION_EXPORT DDSplashFadeAnimationExceptionOutcome DDResolveSplashFadeAnima
 FOUNDATION_EXPORT DDSplashPresentationExceptionOutcome DDResolveSplashPresentationExceptionOutcome(DDSplashPresentationExceptionSite site);
 FOUNDATION_EXPORT DDSplashOpacityTransactionExceptionOutcome DDResolveSplashOpacityTransactionExceptionOutcome(DDSplashOpacityTransactionExceptionSite site);
 FOUNDATION_EXPORT DDSplashNudgePreparationExceptionOutcome DDResolveSplashNudgePreparationExceptionOutcome(DDSplashNudgePreparationExceptionSite site);
+FOUNDATION_EXPORT DDRestoreTargetsExceptionOutcome DDResolveRestoreTargetsExceptionOutcome(DDRestoreTargetsExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);

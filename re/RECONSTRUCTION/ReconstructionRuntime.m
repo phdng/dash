@@ -3195,6 +3195,153 @@ DDSplashNudgePreparationExceptionOutcome DDResolveSplashNudgePreparationExceptio
     return outcome;
 }
 
+DDRestoreTargetsExceptionOutcome DDResolveRestoreTargetsExceptionOutcome(DDRestoreTargetsExceptionSite site) {
+    // 35328 LSDA 0x113E30 has typed action-5 ranges plus three action-0 release ranges.
+    // Expected typed exceptions converge at 0x35534, begin/end-catch, then jump to epilogue
+    // 0x354DC. Once CATransaction begin has started, this catch path skips the normal final commit
+    // at 0x354D4. Action-0 release failures and nonmatching typed exceptions resume unwind instead.
+    DDRestoreTargetsExceptionOutcome outcome = {0};
+    BOOL typedSite = site >= DDRestoreTargetsExceptionSiteInitialTargetsProbe &&
+                     site <= DDRestoreTargetsExceptionSiteTransactionCommit;
+    if (typedSite) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.shouldReturnViaEpilogue = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    }
+    if (site == DDRestoreTargetsExceptionSiteInitialTargetsProbe) {
+        outcome.temporaryTargetsAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryTargetsReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteTransactionBegin) {
+        outcome.transactionBeginCouldHaveAppliedBeforeException = YES;
+        outcome.finalTransactionCommitWouldBeSkippedAfterCatch = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteDisableActions) {
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsCouldHaveAppliedBeforeException = YES;
+        outcome.finalTransactionCommitWouldBeSkippedAfterCatch = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteEnumerationSourceAcquisition) {
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.temporaryTargetsAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryTargetsReleaseCouldBeBypassed = YES;
+        outcome.finalTransactionCommitWouldBeSkippedAfterCatch = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteEnumerationCollectionAcquisition) {
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.retainedEnumerationSourceDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedEnumerationSourceReleaseCouldBeBypassed = YES;
+        outcome.temporaryCollectionAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryCollectionReleaseCouldBeBypassed = YES;
+        outcome.finalTransactionCommitWouldBeSkippedAfterCatch = YES;
+        return outcome;
+    }
+    BOOL collectionSite = site == DDRestoreTargetsExceptionSiteInitialEnumerationRead ||
+                          site == DDRestoreTargetsExceptionSiteEnumerationMutationOrTypeFilter ||
+                          site == DDRestoreTargetsExceptionSiteFirstOpacityRead ||
+                          site == DDRestoreTargetsExceptionSiteSecondOpacityRead ||
+                          site == DDRestoreTargetsExceptionSiteOpacityAnimationLookup ||
+                          site == DDRestoreTargetsExceptionSiteOpacityMutation ||
+                          site == DDRestoreTargetsExceptionSiteEnumerationAdvance;
+    if (collectionSite) {
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.retainedCollectionDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedCollectionReleaseCouldBeBypassed = YES;
+        outcome.finalTransactionCommitWouldBeSkippedAfterCatch = YES;
+    }
+    if (site == DDRestoreTargetsExceptionSiteInitialEnumerationRead) {
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteEnumerationMutationOrTypeFilter) {
+        outcome.enumerationDefinitelyStartedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    BOOL layerSite = site == DDRestoreTargetsExceptionSiteFirstOpacityRead ||
+                     site == DDRestoreTargetsExceptionSiteSecondOpacityRead ||
+                     site == DDRestoreTargetsExceptionSiteOpacityAnimationLookup ||
+                     site == DDRestoreTargetsExceptionSiteOpacityMutation;
+    if (layerSite) {
+        outcome.enumerationDefinitelyStartedBeforeProtectedCall = YES;
+        outcome.retainedLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedLayerReleaseCouldBeBypassed = YES;
+    }
+    if (site == DDRestoreTargetsExceptionSiteFirstOpacityRead) {
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteSecondOpacityRead) {
+        outcome.firstOpacityReadDefinitelyCompletedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteOpacityAnimationLookup) {
+        outcome.firstOpacityReadDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.secondOpacityReadDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.temporaryOpacityAnimationAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryOpacityAnimationReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteOpacityMutation) {
+        outcome.firstOpacityReadDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.secondOpacityReadDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.opacityAnimationDefinitelyAbsentBeforeProtectedCall = YES;
+        outcome.opacityMutationCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteEnumerationAdvance) {
+        outcome.enumerationDefinitelyStartedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteTransactionCommit) {
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.transactionCommitCouldHaveAppliedBeforeException = YES;
+        outcome.noFurtherTransactionCommitAttemptAfterCatch = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteAnimationResultReleaseActionZero) {
+        outcome.shouldResumeUnwind = YES;
+        outcome.exceptionWouldPropagate = YES;
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.retainedCollectionDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.actionZeroCurrentReleaseCouldHaveStartedBeforeException = YES;
+        outcome.remainingLayerReleaseCouldBeBypassed = YES;
+        outcome.remainingCollectionReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteRetainedLayerReleaseActionZero) {
+        outcome.shouldResumeUnwind = YES;
+        outcome.exceptionWouldPropagate = YES;
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.retainedCollectionDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.actionZeroCurrentReleaseCouldHaveStartedBeforeException = YES;
+        outcome.remainingCollectionReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteCollectionReleaseActionZero) {
+        outcome.shouldResumeUnwind = YES;
+        outcome.exceptionWouldPropagate = YES;
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.retainedCollectionDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.actionZeroCurrentReleaseCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDRestoreTargetsExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
