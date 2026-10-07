@@ -707,6 +707,24 @@ typedef struct {
     BOOL exceptionWouldPropagate;
 } DDDropSplashIfOverdueExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDDropServerNoticeNowExceptionSite) {
+    DDDropServerNoticeNowExceptionSiteNone = 0,
+    DDDropServerNoticeNowExceptionSiteSharedControllerAcquisition = 1,
+    DDDropServerNoticeNowExceptionSiteDropSelectorSend = 2,
+    DDDropServerNoticeNowExceptionSiteUnprotectedRange = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowAnyException;
+    BOOL shouldReturnImmediately;
+    BOOL temporaryControllerAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryControllerReleaseCouldBeBypassed;
+    BOOL retainedControllerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedControllerReleaseCouldBeBypassed;
+    BOOL dropSelectorCouldHaveAppliedSideEffectsBeforeException;
+    BOOL exceptionWouldPropagate;
+} DDDropServerNoticeNowExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1374,6 +1392,7 @@ FOUNDATION_EXPORT DDPropertyListReaderExceptionOutcome DDResolvePropertyListRead
 FOUNDATION_EXPORT DDKeyboardLostRecoveryExceptionOutcome DDResolveKeyboardLostRecoveryExceptionOutcome(DDKeyboardLostRecoveryExceptionSite site);
 FOUNDATION_EXPORT DDCarPlayUIStatusCallbackExceptionOutcome DDResolveCarPlayUIStatusCallbackExceptionOutcome(DDCarPlayUIStatusCallbackExceptionSite site);
 FOUNDATION_EXPORT DDDropSplashIfOverdueExceptionOutcome DDResolveDropSplashIfOverdueExceptionOutcome(DDDropSplashIfOverdueExceptionSite site);
+FOUNDATION_EXPORT DDDropServerNoticeNowExceptionOutcome DDResolveDropServerNoticeNowExceptionOutcome(DDDropServerNoticeNowExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
