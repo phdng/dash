@@ -2493,6 +2493,137 @@ DDDisplayBoundsFallbackExceptionOutcome DDResolveDisplayBoundsFallbackExceptionO
     return outcome;
 }
 
+DDLayoutAreaPublishExceptionOutcome DDResolveLayoutAreaPublishExceptionOutcome(DDLayoutAreaPublishExceptionSite site) {
+    // 369E8 LSDA 0x114058 has five typed action-5 ranges, two action-0 ranges, and a final
+    // unprotected tail. Expected typed catches converge on 0x36DEC and jump to final stack cleanup
+    // at 0x36DA4, skipping normal x20 status-string / x19 appended-label releases. The label-append
+    // range ends before x19 commit; both stringWithFormat ranges end before x20 commit. The dedup
+    // equality range starts with x20 committed. The preferences/notification range starts only after
+    // objc_storeStrong(qword_163AE8, x20) completed. Action-0 ranges resume unwind rather than swallow.
+    DDLayoutAreaPublishExceptionOutcome outcome = {0};
+    BOOL typedSite =
+        site == DDLayoutAreaPublishExceptionSiteInitialRectEmptyCheck ||
+        site == DDLayoutAreaPublishExceptionSiteDockSuffixLabelAppend ||
+        site == DDLayoutAreaPublishExceptionSiteStatusStringFormatting ||
+        site == DDLayoutAreaPublishExceptionSiteStatusDedupEquality ||
+        site == DDLayoutAreaPublishExceptionSitePreferencesSetValue ||
+        site == DDLayoutAreaPublishExceptionSitePreferencesSynchronize ||
+        site == DDLayoutAreaPublishExceptionSiteDarwinCenterAcquisition ||
+        site == DDLayoutAreaPublishExceptionSiteNotificationNameConstruction ||
+        site == DDLayoutAreaPublishExceptionSiteDarwinNotificationPost;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnImmediately = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    }
+    if (site == DDLayoutAreaPublishExceptionSiteInitialRectEmptyCheck) {
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSiteDockSuffixLabelAppend) {
+        outcome.temporaryLabelConstructionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryLabelReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSiteStatusStringFormatting) {
+        outcome.retainedLabelCouldBeCommittedBeforeProtectedCall = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.temporaryStatusStringConstructionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryStatusStringReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSiteStatusDedupEquality) {
+        outcome.retainedLabelCouldBeCommittedBeforeProtectedCall = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.retainedStatusStringDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedStatusStringReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSiteGlobalStatusStoreUnwind) {
+        outcome.retainedLabelCouldBeCommittedBeforeProtectedCall = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.retainedStatusStringDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedStatusStringReleaseCouldBeBypassed = YES;
+        outcome.globalStatusCouldHaveAppliedBeforeException = YES;
+        outcome.shouldResumeUnwindFromActionZero = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSitePreferencesSetValue) {
+        outcome.retainedLabelCouldBeCommittedBeforeProtectedCall = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.retainedStatusStringDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedStatusStringReleaseCouldBeBypassed = YES;
+        outcome.globalStatusDefinitelyStoredBeforeProtectedCall = YES;
+        outcome.preferencesValueCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSitePreferencesSynchronize) {
+        outcome.retainedLabelCouldBeCommittedBeforeProtectedCall = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.retainedStatusStringDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedStatusStringReleaseCouldBeBypassed = YES;
+        outcome.globalStatusDefinitelyStoredBeforeProtectedCall = YES;
+        outcome.preferencesValueDefinitelySetBeforeProtectedCall = YES;
+        outcome.preferencesSynchronizeCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSiteDarwinCenterAcquisition) {
+        outcome.retainedLabelCouldBeCommittedBeforeProtectedCall = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.retainedStatusStringDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedStatusStringReleaseCouldBeBypassed = YES;
+        outcome.globalStatusDefinitelyStoredBeforeProtectedCall = YES;
+        outcome.preferencesValueDefinitelySetBeforeProtectedCall = YES;
+        outcome.preferencesSynchronizeDefinitelyCompletedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSiteNotificationNameConstruction) {
+        outcome.retainedLabelCouldBeCommittedBeforeProtectedCall = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.retainedStatusStringDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedStatusStringReleaseCouldBeBypassed = YES;
+        outcome.globalStatusDefinitelyStoredBeforeProtectedCall = YES;
+        outcome.preferencesValueDefinitelySetBeforeProtectedCall = YES;
+        outcome.preferencesSynchronizeDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.darwinCenterDefinitelyAcquiredBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSiteDarwinNotificationPost) {
+        outcome.retainedLabelCouldBeCommittedBeforeProtectedCall = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.retainedStatusStringDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedStatusStringReleaseCouldBeBypassed = YES;
+        outcome.globalStatusDefinitelyStoredBeforeProtectedCall = YES;
+        outcome.preferencesValueDefinitelySetBeforeProtectedCall = YES;
+        outcome.preferencesSynchronizeDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.darwinCenterDefinitelyAcquiredBeforeProtectedCall = YES;
+        outcome.notificationNameDefinitelyConstructedBeforeProtectedCall = YES;
+        outcome.notificationCouldHavePostedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSiteFinalStatusCleanupUnwind) {
+        outcome.retainedLabelCouldBeCommittedBeforeProtectedCall = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.retainedStatusStringDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedStatusStringReleaseCouldBeBypassed = YES;
+        outcome.shouldResumeUnwindFromActionZero = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSiteFinalLabelCleanupUnwind) {
+        outcome.retainedLabelCouldBeCommittedBeforeProtectedCall = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.statusStringReleaseDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.shouldResumeUnwindFromActionZero = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDLayoutAreaPublishExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

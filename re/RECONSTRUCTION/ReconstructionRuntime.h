@@ -795,6 +795,49 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDDisplayBoundsFallbackExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDLayoutAreaPublishExceptionSite) {
+    DDLayoutAreaPublishExceptionSiteNone = 0,
+    DDLayoutAreaPublishExceptionSiteInitialRectEmptyCheck = 1,
+    DDLayoutAreaPublishExceptionSiteDockSuffixLabelAppend = 2,
+    DDLayoutAreaPublishExceptionSiteStatusStringFormatting = 3,
+    DDLayoutAreaPublishExceptionSiteStatusDedupEquality = 4,
+    DDLayoutAreaPublishExceptionSiteGlobalStatusStoreUnwind = 5,
+    DDLayoutAreaPublishExceptionSitePreferencesSetValue = 6,
+    DDLayoutAreaPublishExceptionSitePreferencesSynchronize = 7,
+    DDLayoutAreaPublishExceptionSiteDarwinCenterAcquisition = 8,
+    DDLayoutAreaPublishExceptionSiteNotificationNameConstruction = 9,
+    DDLayoutAreaPublishExceptionSiteDarwinNotificationPost = 10,
+    DDLayoutAreaPublishExceptionSiteFinalStatusCleanupUnwind = 11,
+    DDLayoutAreaPublishExceptionSiteFinalLabelCleanupUnwind = 12,
+    DDLayoutAreaPublishExceptionSiteUnprotectedRange = 13,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnImmediately;
+    BOOL temporaryLabelConstructionCouldHaveStartedBeforeException;
+    BOOL temporaryLabelReleaseCouldBeBypassed;
+    BOOL retainedLabelCouldBeCommittedBeforeProtectedCall;
+    BOOL retainedLabelReleaseCouldBeBypassed;
+    BOOL temporaryStatusStringConstructionCouldHaveStartedBeforeException;
+    BOOL temporaryStatusStringReleaseCouldBeBypassed;
+    BOOL retainedStatusStringDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedStatusStringReleaseCouldBeBypassed;
+    BOOL globalStatusDefinitelyStoredBeforeProtectedCall;
+    BOOL globalStatusCouldHaveAppliedBeforeException;
+    BOOL preferencesValueDefinitelySetBeforeProtectedCall;
+    BOOL preferencesValueCouldHaveAppliedBeforeException;
+    BOOL preferencesSynchronizeDefinitelyCompletedBeforeProtectedCall;
+    BOOL preferencesSynchronizeCouldHaveAppliedBeforeException;
+    BOOL darwinCenterDefinitelyAcquiredBeforeProtectedCall;
+    BOOL notificationNameDefinitelyConstructedBeforeProtectedCall;
+    BOOL notificationCouldHavePostedBeforeException;
+    BOOL statusStringReleaseDefinitelyCompletedBeforeProtectedCall;
+    BOOL shouldResumeUnwindFromActionZero;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDLayoutAreaPublishExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1466,6 +1509,7 @@ FOUNDATION_EXPORT DDDropServerNoticeNowExceptionOutcome DDResolveDropServerNotic
 FOUNDATION_EXPORT DDDropOverdueNoticeExceptionOutcome DDResolveDropOverdueNoticeExceptionOutcome(DDDropOverdueNoticeExceptionSite site);
 FOUNDATION_EXPORT DDNudgePresentGateExceptionOutcome DDResolveNudgePresentGateExceptionOutcome(DDNudgePresentGateExceptionSite site);
 FOUNDATION_EXPORT DDDisplayBoundsFallbackExceptionOutcome DDResolveDisplayBoundsFallbackExceptionOutcome(DDDisplayBoundsFallbackExceptionSite site);
+FOUNDATION_EXPORT DDLayoutAreaPublishExceptionOutcome DDResolveLayoutAreaPublishExceptionOutcome(DDLayoutAreaPublishExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
