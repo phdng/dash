@@ -514,6 +514,36 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDKeyPaneHideGapExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDDisplayScaleCapExceptionSite) {
+    DDDisplayScaleCapExceptionSiteNone = 0,
+    DDDisplayScaleCapExceptionSiteDisplayAcquisition = 1,
+    DDDisplayScaleCapExceptionSiteDisplayClassLookup = 2,
+    DDDisplayScaleCapExceptionSiteConfigurationConstruction = 3,
+    DDDisplayScaleCapExceptionSiteScaleCapabilityProbe = 4,
+    DDDisplayScaleCapExceptionSiteScaleGetter = 5,
+    DDDisplayScaleCapExceptionSiteWindowBoundsRead = 6,
+    DDDisplayScaleCapExceptionSitePixelSizeCapabilityProbe = 7,
+    DDDisplayScaleCapExceptionSitePixelSizeGetter = 8,
+    DDDisplayScaleCapExceptionSiteUnprotectedRange = 9,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnOriginalBoundsDimension;
+    BOOL shouldSkipDisplayScaleCap;
+    BOOL shouldContinueInputCleanup;
+    BOOL retainedDisplayDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedDisplayReleaseCouldBeBypassed;
+    BOOL retainedConfigurationDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedConfigurationReleaseCouldBeBypassed;
+    BOOL temporaryConfigurationConstructionCouldHaveStartedBeforeException;
+    BOOL temporaryConfigurationReleaseCouldBeBypassed;
+    BOOL retainedWindowDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedWindowReleaseCouldBeBypassed;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDDisplayScaleCapExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1107,6 +1137,7 @@ FOUNDATION_EXPORT DDRecursiveTransparencyExceptionOutcome DDResolveRecursiveTran
 FOUNDATION_EXPORT DDTopLevelTransparencyExceptionOutcome DDResolveTopLevelTransparencyExceptionOutcome(DDTopLevelTransparencyExceptionSite site);
 FOUNDATION_EXPORT DDCNABKeyPaneHideSymbolExceptionOutcome DDResolveCNABKeyPaneHideSymbolExceptionOutcome(DDCNABKeyPaneHideSymbolExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneHideGapExceptionOutcome DDResolveKeyPaneHideGapExceptionOutcome(DDKeyPaneHideGapExceptionSite site);
+FOUNDATION_EXPORT DDDisplayScaleCapExceptionOutcome DDResolveDisplayScaleCapExceptionOutcome(DDDisplayScaleCapExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

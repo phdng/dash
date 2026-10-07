@@ -1999,6 +1999,57 @@ DDKeyPaneHideGapExceptionOutcome DDResolveKeyPaneHideGapExceptionOutcome(DDKeyPa
     return outcome;
 }
 
+DDDisplayScaleCapExceptionOutcome DDResolveDisplayScaleCapExceptionOutcome(DDDisplayScaleCapExceptionSite site) {
+    // 38B0C LSDA 0x11428C has eight action-5 ranges covering display acquisition, display class/
+    // configuration setup, direct scale probing, window-bounds fallback probing, and pixelSize.
+    // Expected catches converge at 0x38CD0 and jump to 0x38C58: both input-view ownerships are
+    // released and the original bounds-derived d8 is returned without applying the 800/scale cap.
+    // The catch bypasses any still-live display/config/window intermediates according to site timing.
+    DDDisplayScaleCapExceptionOutcome outcome = {0};
+    BOOL typedSite =
+        site == DDDisplayScaleCapExceptionSiteDisplayAcquisition ||
+        site == DDDisplayScaleCapExceptionSiteDisplayClassLookup ||
+        site == DDDisplayScaleCapExceptionSiteConfigurationConstruction ||
+        site == DDDisplayScaleCapExceptionSiteScaleCapabilityProbe ||
+        site == DDDisplayScaleCapExceptionSiteScaleGetter ||
+        site == DDDisplayScaleCapExceptionSiteWindowBoundsRead ||
+        site == DDDisplayScaleCapExceptionSitePixelSizeCapabilityProbe ||
+        site == DDDisplayScaleCapExceptionSitePixelSizeGetter;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnOriginalBoundsDimension = YES;
+        outcome.shouldSkipDisplayScaleCap = YES;
+        outcome.shouldContinueInputCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site != DDDisplayScaleCapExceptionSiteDisplayAcquisition) {
+            outcome.retainedDisplayDefinitelyCommittedBeforeProtectedCall = YES;
+            outcome.retainedDisplayReleaseCouldBeBypassed = YES;
+        }
+        if (site == DDDisplayScaleCapExceptionSiteConfigurationConstruction) {
+            outcome.temporaryConfigurationConstructionCouldHaveStartedBeforeException = YES;
+            outcome.temporaryConfigurationReleaseCouldBeBypassed = YES;
+            return outcome;
+        }
+        if (site == DDDisplayScaleCapExceptionSiteScaleCapabilityProbe ||
+            site == DDDisplayScaleCapExceptionSiteScaleGetter ||
+            site == DDDisplayScaleCapExceptionSiteWindowBoundsRead ||
+            site == DDDisplayScaleCapExceptionSitePixelSizeCapabilityProbe ||
+            site == DDDisplayScaleCapExceptionSitePixelSizeGetter) {
+            outcome.retainedConfigurationDefinitelyCommittedBeforeProtectedCall = YES;
+            outcome.retainedConfigurationReleaseCouldBeBypassed = YES;
+        }
+        if (site == DDDisplayScaleCapExceptionSiteWindowBoundsRead) {
+            outcome.retainedWindowDefinitelyCommittedBeforeProtectedCall = YES;
+            outcome.retainedWindowReleaseCouldBeBypassed = YES;
+        }
+        return outcome;
+    }
+    if (site == DDDisplayScaleCapExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
