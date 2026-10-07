@@ -3032,6 +3032,58 @@ DDSplashPresentationExceptionOutcome DDResolveSplashPresentationExceptionOutcome
     return outcome;
 }
 
+DDSplashOpacityTransactionExceptionOutcome DDResolveSplashOpacityTransactionExceptionOutcome(DDSplashOpacityTransactionExceptionSite site) {
+    // 35880 LSDA 0x113EC8 has one action-1 catch-all range 0x35894..0x358D4 covering
+    // the layer opacity read and, only when opacity == 0.99, CATransaction begin,
+    // setDisableActions:YES, setOpacity:1.0, and commit. Landing 0x358E0 has no discriminator:
+    // it unconditionally begin/end-catches and returns. No compensating commit/rollback runs after
+    // catch, so any transaction or opacity side effects completed before the throw persist locally.
+    DDSplashOpacityTransactionExceptionOutcome outcome = {0};
+    BOOL protectedSite = site >= DDSplashOpacityTransactionExceptionSiteOpacityRead &&
+                         site <= DDSplashOpacityTransactionExceptionSiteTransactionCommit;
+    if (protectedSite) {
+        outcome.shouldSwallowAnyException = YES;
+        outcome.shouldReturnImmediately = YES;
+    }
+    if (site == DDSplashOpacityTransactionExceptionSiteOpacityRead) {
+        return outcome;
+    }
+    if (site == DDSplashOpacityTransactionExceptionSiteTransactionBegin) {
+        outcome.opacityMatchDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.transactionBeginCouldHaveAppliedBeforeException = YES;
+        outcome.localTransactionCompletionWouldBeSkippedAfterCatch = YES;
+        return outcome;
+    }
+    if (site == DDSplashOpacityTransactionExceptionSiteDisableActions) {
+        outcome.opacityMatchDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsCouldHaveAppliedBeforeException = YES;
+        outcome.localTransactionCompletionWouldBeSkippedAfterCatch = YES;
+        return outcome;
+    }
+    if (site == DDSplashOpacityTransactionExceptionSiteOpacityMutation) {
+        outcome.opacityMatchDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.opacityMutationCouldHaveAppliedBeforeException = YES;
+        outcome.localTransactionCompletionWouldBeSkippedAfterCatch = YES;
+        return outcome;
+    }
+    if (site == DDSplashOpacityTransactionExceptionSiteTransactionCommit) {
+        outcome.opacityMatchDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.opacityMutationDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.transactionCommitCouldHaveAppliedBeforeException = YES;
+        outcome.localTransactionCompletionWouldBeSkippedAfterCatch = YES;
+        return outcome;
+    }
+    if (site == DDSplashOpacityTransactionExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

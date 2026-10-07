@@ -1035,6 +1035,31 @@ typedef struct {
     BOOL exceptionWouldPropagate;
 } DDSplashPresentationExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDSplashOpacityTransactionExceptionSite) {
+    DDSplashOpacityTransactionExceptionSiteNone = 0,
+    DDSplashOpacityTransactionExceptionSiteOpacityRead = 1,
+    DDSplashOpacityTransactionExceptionSiteTransactionBegin = 2,
+    DDSplashOpacityTransactionExceptionSiteDisableActions = 3,
+    DDSplashOpacityTransactionExceptionSiteOpacityMutation = 4,
+    DDSplashOpacityTransactionExceptionSiteTransactionCommit = 5,
+    DDSplashOpacityTransactionExceptionSiteUnprotectedRange = 6,
+};
+
+typedef struct {
+    BOOL shouldSwallowAnyException;
+    BOOL shouldReturnImmediately;
+    BOOL opacityMatchDefinitelyPassedBeforeProtectedCall;
+    BOOL transactionBeginCouldHaveAppliedBeforeException;
+    BOOL transactionBeginDefinitelyCompletedBeforeProtectedCall;
+    BOOL disableActionsCouldHaveAppliedBeforeException;
+    BOOL disableActionsDefinitelyCompletedBeforeProtectedCall;
+    BOOL opacityMutationCouldHaveAppliedBeforeException;
+    BOOL opacityMutationDefinitelyCompletedBeforeProtectedCall;
+    BOOL transactionCommitCouldHaveAppliedBeforeException;
+    BOOL localTransactionCompletionWouldBeSkippedAfterCatch;
+    BOOL exceptionWouldPropagate;
+} DDSplashOpacityTransactionExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1714,6 +1739,7 @@ FOUNDATION_EXPORT DDShellRebuildBlockExceptionOutcome DDResolveShellRebuildBlock
 FOUNDATION_EXPORT DDSplashFadeCompletionExceptionOutcome DDResolveSplashFadeCompletionExceptionOutcome(DDSplashFadeCompletionExceptionSite site);
 FOUNDATION_EXPORT DDSplashFadeAnimationExceptionOutcome DDResolveSplashFadeAnimationExceptionOutcome(DDSplashFadeAnimationExceptionSite site);
 FOUNDATION_EXPORT DDSplashPresentationExceptionOutcome DDResolveSplashPresentationExceptionOutcome(DDSplashPresentationExceptionSite site);
+FOUNDATION_EXPORT DDSplashOpacityTransactionExceptionOutcome DDResolveSplashOpacityTransactionExceptionOutcome(DDSplashOpacityTransactionExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
