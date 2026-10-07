@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-136 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-137 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-67 (session-136): GitHub Actions session-135 (`686806a`) đã xanh theo user. Executable target thêm data-only `38EF8` CNABKeyPaneHideKey SF-Symbol exception fallback outcome từ LSDA `0x114308` + raw ARM64. Hai typed action-5 ranges hội tụ catch `0x39248`: expected catch bỏ remaining SF-Symbol path rồi jump `0x390C8` để tiếp tục manual chevron UIView/UIBezierPath/CAShapeLayer fallback và phần constructor còn lại. Exact ownership timing: config range đầu kết thúc trước `x24` assignment nên không record config release bypass; range hai bắt đầu với config đã retained, image-lookup throw có thể bypass config release, image-view-init throw xảy ra sau `x25` retained image commit nên có thể bypass cả image+config releases. Manual fallback/later tail unprotected; nonmatching unwind. Không UIKit symbol/image/fallback construction hay exception runtime.
+BUILDABLE RUNTIME PHASE-68 (session-137): GitHub Actions session-136 (`89152f3`) đã xanh theo user. Executable target thêm data-only `38E14` keypane-hide-gap parser exception outcome từ LSDA `0x1142DC` + raw ARM64. Bốn typed action-5 ranges (file read+retain, length, UTF8String, strtod) hội tụ catch `0x38ED8`: expected catch swallow rồi force return gap `71.0` qua `0x38EB4`. File-read range kết thúc trước `x19` commit nên không record retained-string cleanup bypass; length/UTF8/parse xảy ra sau x19 commit và catch bỏ qua explicit release `0x38EAC`. Gap `0x38E58..0x38E6C` chứa `objc_retainAutorelease` là unprotected nên exception propagate thay vì fallback. Nonmatching unwind. Không file I/O, NSString/UTF8 parsing, ownership mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-136):
-- R-135 data-only 38EF8 CNABKeyPaneHideKey SF-Symbol exception outcome: 2 typed symbol ranges→manual-chevron fallback continuation, with exact config/image retained-object timing, config-only vs image+config release-bypass, unprotected fallback/tail propagation, and nonmatching-type unwind metadata.
+## LAST COMPLETED TASK (session-137):
+- R-136 data-only 38E14 keypane-hide-gap parser exception outcome: 4 typed sites→swallow+forced `71.0` return; post-x19 sites record retained-string release bypass, retainAutorelease gap stays unprotected/propagating, nonmatching type unwinds.
 
 ## CURRENT TASK:
-- R-135 hoàn tất local; commit-only handoff. User confirmed session-135 compiler green before this batch; assistant không push.
+- R-136 hoàn tất local; commit-only handoff. User confirmed session-136 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-136 batch, R-136: inspect next earlier LSDA-bearing `38E14 -> 0x1142DC` (`sub_38E14`, `/var/tmp/duodash_ab_keypane_hidegap` parser). Scout decoded 6 entries: typed action-5 `0x38E34..0x38E50 -> 0x38ED4` (file read + retain), typed `0x38E50..0x38E58 -> 0x38ED8` (retained string + length), unprotected `0x38E58..0x38E6C` (includes `objc_retainAutorelease` before UTF8String), typed `0x38E6C..0x38E70 -> 0x38ED8` (UTF8String), typed `0x38E7C..0x38E88 -> 0x38ED0` (`strtod`), then unprotected tail. Expected catches converge at `0x38ED8`, begin/end-catch, force default `71.0`, and return via `0x38EB4`; from length/UTF8/parse sites onward the retained NSString explicit release at `0x38EAC` is bypassed. First file-read range ends before `x19` assignment, so no established retained-string release bypass there. Nonmatching type resumes unwind at `0x38EF4`. Map exact default-value/release-bypass/unprotected-retainAutorelease behavior before promotion. 73E8/80D0 and full 7E908 remain unresolved; dynamic device verify still needed.
+- Sau compiler xanh cho session-137 batch, R-137: inspect next earlier LSDA-bearing `38B0C -> 0x11428C` (`sub_38B0C`, display-scale width-cap helper). Direct unwind enumeration shows it immediately precedes `38E14`. Exact 12-entry table has 8 action-5 ranges: `0x38B3C..0x38B48 -> 0x38CCC` (display acquisition+retain), `0x38B48..0x38B58 -> 0x38CC8` (display committed + FBSDisplayConfiguration class lookup), `0x38B60..0x38B84 -> 0x38CD0` (config alloc/init/retain), `0x38B9C..0x38BA8 -> 0x38CD0` (scale capability probe), `0x38BAC..0x38BB8 -> 0x38CC0` (scale getter), `0x38BD4..0x38BEC -> 0x38CC4` (window+retain+bounds), `0x38C00..0x38C0C -> 0x38CC4` (pixelSize capability probe), and `0x38C24..0x38C30 -> 0x38CBC` (pixelSize getter). All stubs converge typed catch `0x38CD0`; expected type begin/end-catches then jumps to `0x38C58`, releases the two input-view ownerships and returns original bounds dimension `d8`, abandoning display-scale-derived 800/scale cap. Depending on site, catch may bypass retained display/config/window intermediates; first display-acquisition range ends before `x20` commit. Nonmatching type resumes unwind at `0x38CE4`. Map exact per-site ownership timing before promotion. 73E8/80D0 and full 7E908 remain unresolved; dynamic device verify still needed.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-136):
+## FILES CHANGED (session-137):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-136.md`.
+- Mới: `LOG/session-137.md`.
 
 ## TEST STATUS:
-Session-135 GitHub Actions build GREEN (`686806a`, user-confirmed). Session-136 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-136 GitHub Actions build GREEN (`89152f3`, user-confirmed). Session-137 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.

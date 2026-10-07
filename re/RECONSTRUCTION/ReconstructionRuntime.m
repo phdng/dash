@@ -1963,6 +1963,42 @@ DDCNABKeyPaneHideSymbolExceptionOutcome DDResolveCNABKeyPaneHideSymbolExceptionO
     return outcome;
 }
 
+DDKeyPaneHideGapExceptionOutcome DDResolveKeyPaneHideGapExceptionOutcome(DDKeyPaneHideGapExceptionSite site) {
+    // 38E14 LSDA 0x1142DC has four action-5 ranges around file read/retain, length, UTF8String,
+    // and strtod. Expected catches converge at 0x38ED8, end the catch, force d8 to the normal
+    // default 71.0, and return through 0x38EB4. The first protected range ends before mov x19,x0,
+    // so it has no established retained-string cleanup bypass. Later typed sites occur after x19 is
+    // committed and the catch skips the explicit release at 0x38EAC. The 0x38E58..0x38E6C gap,
+    // including objc_retainAutorelease before UTF8String, has no landing pad and propagates.
+    DDKeyPaneHideGapExceptionOutcome outcome = {0};
+    BOOL typedSite =
+        site == DDKeyPaneHideGapExceptionSiteFileRead ||
+        site == DDKeyPaneHideGapExceptionSiteLengthRead ||
+        site == DDKeyPaneHideGapExceptionSiteUTF8StringRead ||
+        site == DDKeyPaneHideGapExceptionSiteNumericParse;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnDefaultGap = YES;
+        outcome.defaultGap = 71.0;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site != DDKeyPaneHideGapExceptionSiteFileRead) {
+            outcome.retainedStringDefinitelyCommittedBeforeProtectedCall = YES;
+            outcome.retainedStringReleaseCouldBeBypassed = YES;
+        }
+        return outcome;
+    }
+    if (site == DDKeyPaneHideGapExceptionSiteRetainAutoreleaseGap) {
+        outcome.retainedStringDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainAutoreleaseCouldHaveStartedBeforeException = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDKeyPaneHideGapExceptionSiteOtherUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

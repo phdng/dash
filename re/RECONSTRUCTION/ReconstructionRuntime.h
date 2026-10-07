@@ -493,6 +493,27 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDCNABKeyPaneHideSymbolExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDKeyPaneHideGapExceptionSite) {
+    DDKeyPaneHideGapExceptionSiteNone = 0,
+    DDKeyPaneHideGapExceptionSiteFileRead = 1,
+    DDKeyPaneHideGapExceptionSiteLengthRead = 2,
+    DDKeyPaneHideGapExceptionSiteUTF8StringRead = 3,
+    DDKeyPaneHideGapExceptionSiteNumericParse = 4,
+    DDKeyPaneHideGapExceptionSiteRetainAutoreleaseGap = 5,
+    DDKeyPaneHideGapExceptionSiteOtherUnprotectedRange = 6,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnDefaultGap;
+    double defaultGap;
+    BOOL retainedStringDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedStringReleaseCouldBeBypassed;
+    BOOL retainAutoreleaseCouldHaveStartedBeforeException;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDKeyPaneHideGapExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1085,6 +1106,7 @@ FOUNDATION_EXPORT DDSlideAnimationExceptionOutcome DDResolveSlideAnimationExcept
 FOUNDATION_EXPORT DDRecursiveTransparencyExceptionOutcome DDResolveRecursiveTransparencyExceptionOutcome(DDRecursiveTransparencyExceptionSite site);
 FOUNDATION_EXPORT DDTopLevelTransparencyExceptionOutcome DDResolveTopLevelTransparencyExceptionOutcome(DDTopLevelTransparencyExceptionSite site);
 FOUNDATION_EXPORT DDCNABKeyPaneHideSymbolExceptionOutcome DDResolveCNABKeyPaneHideSymbolExceptionOutcome(DDCNABKeyPaneHideSymbolExceptionSite site);
+FOUNDATION_EXPORT DDKeyPaneHideGapExceptionOutcome DDResolveKeyPaneHideGapExceptionOutcome(DDKeyPaneHideGapExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
