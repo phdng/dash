@@ -1381,6 +1381,80 @@ typedef struct {
     BOOL exceptionWouldPropagate;
 } DDResetTeardownExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDCarPlayDisplayResolverExceptionSite) {
+    DDCarPlayDisplayResolverExceptionSiteNone = 0,
+    DDCarPlayDisplayResolverExceptionSiteClassLookupUnprotected = 1,
+    DDCarPlayDisplayResolverExceptionSiteCurrentDeviceAcquisitionActionZero = 2,
+    DDCarPlayDisplayResolverExceptionSiteScreenIDsAcquisitionActionZero = 3,
+    DDCarPlayDisplayResolverExceptionSiteScreenIDsTypeCheckUnprotected = 4,
+    DDCarPlayDisplayResolverExceptionSiteFirstScreenIDAcquisitionActionZero = 5,
+    DDCarPlayDisplayResolverExceptionSiteDisplaysAcquisitionActionZero = 6,
+    DDCarPlayDisplayResolverExceptionSiteDisplaysSecondRetainUnprotected = 7,
+    DDCarPlayDisplayResolverExceptionSiteInitialEnumerationReadActionZero = 8,
+    DDCarPlayDisplayResolverExceptionSiteEnumerationMutationActionZero = 9,
+    DDCarPlayDisplayResolverExceptionSiteUniqueIdAcquisitionActionZero = 10,
+    DDCarPlayDisplayResolverExceptionSiteUniqueIdTypeCheckActionZero = 11,
+    DDCarPlayDisplayResolverExceptionSiteUniqueIdEqualityActionZero = 12,
+    DDCarPlayDisplayResolverExceptionSiteEnumerationAdvanceActionZero = 13,
+    DDCarPlayDisplayResolverExceptionSiteCandidateRetainUnprotected = 14,
+    DDCarPlayDisplayResolverExceptionSiteBoundsCapabilityTyped = 15,
+    DDCarPlayDisplayResolverExceptionSiteBoundsReadTyped = 16,
+    DDCarPlayDisplayResolverExceptionSiteCandidateReleaseAfterBoundsActionZero = 17,
+    DDCarPlayDisplayResolverExceptionSiteReturnCandidateRetainUnprotected = 18,
+    DDCarPlayDisplayResolverExceptionSiteFinalCandidateReleaseActionZero = 19,
+    DDCarPlayDisplayResolverExceptionSiteFinalUniqueIdReleaseActionZero = 20,
+    DDCarPlayDisplayResolverExceptionSiteFinalDisplaysFirstReleaseActionZero = 21,
+    DDCarPlayDisplayResolverExceptionSiteFinalDisplaysSecondReleaseActionZero = 22,
+    DDCarPlayDisplayResolverExceptionSiteFinalFirstScreenIDReleaseActionZero = 23,
+    DDCarPlayDisplayResolverExceptionSiteFinalScreenIDsReleaseActionZero = 24,
+    DDCarPlayDisplayResolverExceptionSiteFinalExternalDeviceReleaseActionZero = 25,
+    DDCarPlayDisplayResolverExceptionSiteUnprotectedRange = 26,
+};
+
+typedef struct {
+    BOOL shouldSwallowExpectedException;
+    BOOL shouldContinueCandidateReleaseAndNilFallback;
+    BOOL shouldContinueFinalCleanupAfterCandidateRelease;
+    BOOL candidateWouldBeNilIfCatchCleanupCompletes;
+    BOOL candidateReleaseContinuationUsesActionZeroUnwind;
+    BOOL catchInternalEndCatchExceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+    BOOL actionZeroExceptionWouldResumeUnwind;
+    BOOL exceptionWouldPropagate;
+    BOOL temporaryExternalDeviceAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedExternalDeviceDefinitelyCommittedBeforeSite;
+    BOOL retainedExternalDeviceReleaseCouldBeBypassed;
+    BOOL temporaryScreenIDsAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedScreenIDsDefinitelyCommittedBeforeSite;
+    BOOL retainedScreenIDsReleaseCouldBeBypassed;
+    BOOL screenIDsTypeCheckDefinitelyPassedBeforeSite;
+    BOOL temporaryFirstScreenIDAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedFirstScreenIDDefinitelyCommittedBeforeSite;
+    BOOL retainedFirstScreenIDReleaseCouldBeBypassed;
+    BOOL temporaryDisplaysAcquisitionCouldHaveStartedBeforeException;
+    BOOL firstDisplaysRetainDefinitelyCompletedBeforeSite;
+    BOOL displaysSecondRetainCouldHaveStartedBeforeException;
+    BOOL displaysDoubleRetainDefinitelyCommittedBeforeSite;
+    BOOL displaysFirstReleaseCouldBeBypassed;
+    BOOL displaysSecondReleaseCouldBeBypassed;
+    BOOL enumerationDefinitelyStartedBeforeSite;
+    BOOL temporaryUniqueIdAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedUniqueIdDefinitelyCommittedBeforeSite;
+    BOOL retainedUniqueIdReleaseCouldBeBypassed;
+    BOOL uniqueIdTypeCheckDefinitelyPassedBeforeSite;
+    BOOL uniqueIdMatchDefinitelyPassedBeforeSite;
+    BOOL candidateRetainCouldHaveStartedBeforeException;
+    BOOL retainedCandidateDefinitelyCommittedBeforeSite;
+    BOOL retainedCandidateReleaseCouldBeBypassed;
+    BOOL boundsCapabilityResultDefinitelyUncommittedBeforeCatch;
+    BOOL boundsCapabilityDefinitelySupportedBeforeProtectedCall;
+    BOOL boundsDimensionsDefinitelyUncommittedBeforeCatch;
+    BOOL boundsValidationDefinitelyCompletedBeforeSite;
+    BOOL candidateBoundsDefinitelyValidBeforeSite;
+    BOOL returnCandidateRetainCouldHaveStartedBeforeException;
+    BOOL actionZeroCurrentReleaseCouldHaveStartedBeforeException;
+} DDCarPlayDisplayResolverExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -2066,6 +2140,7 @@ FOUNDATION_EXPORT DDRestoreTargetsExceptionOutcome DDResolveRestoreTargetsExcept
 FOUNDATION_EXPORT DDTickPresenterExceptionOutcome DDResolveTickPresenterExceptionOutcome(DDTickPresenterExceptionSite site);
 FOUNDATION_EXPORT DDServerNoticeBuildExceptionOutcome DDResolveServerNoticeBuildExceptionOutcome(DDServerNoticeBuildExceptionSite site);
 FOUNDATION_EXPORT DDResetTeardownExceptionOutcome DDResolveResetTeardownExceptionOutcome(DDResetTeardownExceptionSite site);
+FOUNDATION_EXPORT DDCarPlayDisplayResolverExceptionOutcome DDResolveCarPlayDisplayResolverExceptionOutcome(DDCarPlayDisplayResolverExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);

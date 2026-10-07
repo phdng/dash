@@ -3898,6 +3898,287 @@ DDResetTeardownExceptionOutcome DDResolveResetTeardownExceptionOutcome(DDResetTe
     return outcome;
 }
 
+DDCarPlayDisplayResolverExceptionOutcome DDResolveCarPlayDisplayResolverExceptionOutcome(DDCarPlayDisplayResolverExceptionSite site) {
+    // 34250 LSDA 0x113C60 has two typed action-5 ranges around matched-candidate bounds
+    // capability/read and several action-0 acquisition/enumeration/release ranges. Expected typed
+    // exceptions begin/end-catch and continue at 0x344A0: candidate release (itself action-0), then
+    // x24=nil and normal uniqueId/displays/screenIDs/device cleanup. Therefore nil fallback is
+    // guaranteed only if that catch-cleanup release sequence completes. Nonmatching typed and all
+    // action-0 exceptions resume unwind at 0x34520.
+    DDCarPlayDisplayResolverExceptionOutcome outcome = {0};
+    BOOL typedSite = site == DDCarPlayDisplayResolverExceptionSiteBoundsCapabilityTyped ||
+                     site == DDCarPlayDisplayResolverExceptionSiteBoundsReadTyped;
+    if (typedSite) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.shouldContinueCandidateReleaseAndNilFallback = YES;
+        outcome.shouldContinueFinalCleanupAfterCandidateRelease = YES;
+        outcome.candidateWouldBeNilIfCatchCleanupCompletes = YES;
+        outcome.candidateReleaseContinuationUsesActionZeroUnwind = YES;
+        outcome.catchInternalEndCatchExceptionWouldPropagate = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        outcome.retainedExternalDeviceDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.screenIDsTypeCheckDefinitelyPassedBeforeSite = YES;
+        outcome.retainedFirstScreenIDDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedFirstScreenIDReleaseCouldBeBypassed = YES;
+        outcome.displaysDoubleRetainDefinitelyCommittedBeforeSite = YES;
+        outcome.displaysFirstReleaseCouldBeBypassed = YES;
+        outcome.displaysSecondReleaseCouldBeBypassed = YES;
+        outcome.enumerationDefinitelyStartedBeforeSite = YES;
+        outcome.retainedUniqueIdDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedUniqueIdReleaseCouldBeBypassed = YES;
+        outcome.uniqueIdMatchDefinitelyPassedBeforeSite = YES;
+        outcome.retainedCandidateDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedCandidateReleaseCouldBeBypassed = YES;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteBoundsCapabilityTyped) {
+        outcome.boundsCapabilityResultDefinitelyUncommittedBeforeCatch = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteBoundsReadTyped) {
+        outcome.boundsCapabilityDefinitelySupportedBeforeProtectedCall = YES;
+        outcome.boundsDimensionsDefinitelyUncommittedBeforeCatch = YES;
+        return outcome;
+    }
+
+    BOOL actionZeroSite = site == DDCarPlayDisplayResolverExceptionSiteCurrentDeviceAcquisitionActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteScreenIDsAcquisitionActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteFirstScreenIDAcquisitionActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteDisplaysAcquisitionActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteInitialEnumerationReadActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteEnumerationMutationActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteUniqueIdAcquisitionActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteUniqueIdTypeCheckActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteUniqueIdEqualityActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteEnumerationAdvanceActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteCandidateReleaseAfterBoundsActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteFinalCandidateReleaseActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteFinalUniqueIdReleaseActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteFinalDisplaysFirstReleaseActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteFinalDisplaysSecondReleaseActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteFinalFirstScreenIDReleaseActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteFinalScreenIDsReleaseActionZero ||
+                          site == DDCarPlayDisplayResolverExceptionSiteFinalExternalDeviceReleaseActionZero;
+    if (actionZeroSite) {
+        outcome.actionZeroExceptionWouldResumeUnwind = YES;
+        outcome.exceptionWouldPropagate = YES;
+    }
+
+    if (site == DDCarPlayDisplayResolverExceptionSiteCurrentDeviceAcquisitionActionZero) {
+        outcome.temporaryExternalDeviceAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteScreenIDsAcquisitionActionZero) {
+        outcome.retainedExternalDeviceDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        outcome.temporaryScreenIDsAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteScreenIDsTypeCheckUnprotected) {
+        outcome.retainedExternalDeviceDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteFirstScreenIDAcquisitionActionZero) {
+        outcome.retainedExternalDeviceDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.screenIDsTypeCheckDefinitelyPassedBeforeSite = YES;
+        outcome.temporaryFirstScreenIDAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteDisplaysAcquisitionActionZero) {
+        outcome.retainedExternalDeviceDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.screenIDsTypeCheckDefinitelyPassedBeforeSite = YES;
+        outcome.retainedFirstScreenIDDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedFirstScreenIDReleaseCouldBeBypassed = YES;
+        outcome.temporaryDisplaysAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteDisplaysSecondRetainUnprotected) {
+        outcome.retainedExternalDeviceDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.retainedFirstScreenIDDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedFirstScreenIDReleaseCouldBeBypassed = YES;
+        outcome.firstDisplaysRetainDefinitelyCompletedBeforeSite = YES;
+        outcome.displaysFirstReleaseCouldBeBypassed = YES;
+        outcome.displaysSecondRetainCouldHaveStartedBeforeException = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+
+    BOOL enumerationActionSite = site == DDCarPlayDisplayResolverExceptionSiteInitialEnumerationReadActionZero ||
+                                 site == DDCarPlayDisplayResolverExceptionSiteEnumerationMutationActionZero ||
+                                 site == DDCarPlayDisplayResolverExceptionSiteUniqueIdAcquisitionActionZero ||
+                                 site == DDCarPlayDisplayResolverExceptionSiteUniqueIdTypeCheckActionZero ||
+                                 site == DDCarPlayDisplayResolverExceptionSiteUniqueIdEqualityActionZero ||
+                                 site == DDCarPlayDisplayResolverExceptionSiteEnumerationAdvanceActionZero;
+    if (enumerationActionSite) {
+        outcome.retainedExternalDeviceDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.screenIDsTypeCheckDefinitelyPassedBeforeSite = YES;
+        outcome.retainedFirstScreenIDDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedFirstScreenIDReleaseCouldBeBypassed = YES;
+        outcome.displaysDoubleRetainDefinitelyCommittedBeforeSite = YES;
+        outcome.displaysFirstReleaseCouldBeBypassed = YES;
+        outcome.displaysSecondReleaseCouldBeBypassed = YES;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteInitialEnumerationReadActionZero) {
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteEnumerationMutationActionZero) {
+        outcome.enumerationDefinitelyStartedBeforeSite = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteUniqueIdAcquisitionActionZero) {
+        outcome.enumerationDefinitelyStartedBeforeSite = YES;
+        outcome.temporaryUniqueIdAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteUniqueIdTypeCheckActionZero) {
+        outcome.enumerationDefinitelyStartedBeforeSite = YES;
+        outcome.retainedUniqueIdDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedUniqueIdReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteUniqueIdEqualityActionZero) {
+        outcome.enumerationDefinitelyStartedBeforeSite = YES;
+        outcome.retainedUniqueIdDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedUniqueIdReleaseCouldBeBypassed = YES;
+        outcome.uniqueIdTypeCheckDefinitelyPassedBeforeSite = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteEnumerationAdvanceActionZero) {
+        outcome.enumerationDefinitelyStartedBeforeSite = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteCandidateRetainUnprotected) {
+        outcome.retainedExternalDeviceDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedScreenIDsDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedFirstScreenIDDefinitelyCommittedBeforeSite = YES;
+        outcome.displaysDoubleRetainDefinitelyCommittedBeforeSite = YES;
+        outcome.enumerationDefinitelyStartedBeforeSite = YES;
+        outcome.retainedUniqueIdDefinitelyCommittedBeforeSite = YES;
+        outcome.uniqueIdMatchDefinitelyPassedBeforeSite = YES;
+        outcome.candidateRetainCouldHaveStartedBeforeException = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteCandidateReleaseAfterBoundsActionZero) {
+        outcome.retainedExternalDeviceDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.retainedFirstScreenIDDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedFirstScreenIDReleaseCouldBeBypassed = YES;
+        outcome.displaysDoubleRetainDefinitelyCommittedBeforeSite = YES;
+        outcome.displaysFirstReleaseCouldBeBypassed = YES;
+        outcome.displaysSecondReleaseCouldBeBypassed = YES;
+        outcome.retainedUniqueIdDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedUniqueIdReleaseCouldBeBypassed = YES;
+        outcome.retainedCandidateDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedCandidateReleaseCouldBeBypassed = YES;
+        outcome.boundsCapabilityDefinitelySupportedBeforeProtectedCall = YES;
+        outcome.boundsValidationDefinitelyCompletedBeforeSite = YES;
+        outcome.actionZeroCurrentReleaseCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteReturnCandidateRetainUnprotected) {
+        outcome.retainedExternalDeviceDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.retainedFirstScreenIDDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedFirstScreenIDReleaseCouldBeBypassed = YES;
+        outcome.displaysDoubleRetainDefinitelyCommittedBeforeSite = YES;
+        outcome.displaysFirstReleaseCouldBeBypassed = YES;
+        outcome.displaysSecondReleaseCouldBeBypassed = YES;
+        outcome.retainedUniqueIdDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedUniqueIdReleaseCouldBeBypassed = YES;
+        outcome.boundsCapabilityDefinitelySupportedBeforeProtectedCall = YES;
+        outcome.boundsValidationDefinitelyCompletedBeforeSite = YES;
+        outcome.candidateBoundsDefinitelyValidBeforeSite = YES;
+        outcome.returnCandidateRetainCouldHaveStartedBeforeException = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+
+    BOOL finalCleanupSite = site >= DDCarPlayDisplayResolverExceptionSiteFinalCandidateReleaseActionZero &&
+                            site <= DDCarPlayDisplayResolverExceptionSiteFinalExternalDeviceReleaseActionZero;
+    if (finalCleanupSite) {
+        outcome.actionZeroCurrentReleaseCouldHaveStartedBeforeException = YES;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteFinalCandidateReleaseActionZero) {
+        outcome.retainedCandidateDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedCandidateReleaseCouldBeBypassed = YES;
+        outcome.retainedUniqueIdDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedUniqueIdReleaseCouldBeBypassed = YES;
+        outcome.displaysFirstReleaseCouldBeBypassed = YES;
+        outcome.displaysSecondReleaseCouldBeBypassed = YES;
+        outcome.retainedFirstScreenIDReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteFinalUniqueIdReleaseActionZero) {
+        outcome.retainedUniqueIdDefinitelyCommittedBeforeSite = YES;
+        outcome.displaysFirstReleaseCouldBeBypassed = YES;
+        outcome.displaysSecondReleaseCouldBeBypassed = YES;
+        outcome.retainedFirstScreenIDReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteFinalDisplaysFirstReleaseActionZero) {
+        outcome.displaysDoubleRetainDefinitelyCommittedBeforeSite = YES;
+        outcome.displaysSecondReleaseCouldBeBypassed = YES;
+        outcome.retainedFirstScreenIDReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteFinalDisplaysSecondReleaseActionZero) {
+        outcome.displaysDoubleRetainDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedFirstScreenIDReleaseCouldBeBypassed = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteFinalFirstScreenIDReleaseActionZero) {
+        outcome.retainedFirstScreenIDDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedScreenIDsReleaseCouldBeBypassed = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteFinalScreenIDsReleaseActionZero) {
+        outcome.retainedScreenIDsDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedExternalDeviceReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteFinalExternalDeviceReleaseActionZero) {
+        outcome.retainedExternalDeviceDefinitelyCommittedBeforeSite = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayDisplayResolverExceptionSiteClassLookupUnprotected ||
+        site == DDCarPlayDisplayResolverExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
