@@ -472,6 +472,27 @@ typedef struct {
     BOOL exceptionWouldPropagate;
 } DDTopLevelTransparencyExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDCNABKeyPaneHideSymbolExceptionSite) {
+    DDCNABKeyPaneHideSymbolExceptionSiteNone = 0,
+    DDCNABKeyPaneHideSymbolExceptionSiteSymbolConfiguration = 1,
+    DDCNABKeyPaneHideSymbolExceptionSiteSymbolImageLookup = 2,
+    DDCNABKeyPaneHideSymbolExceptionSiteSymbolImageViewInit = 3,
+    DDCNABKeyPaneHideSymbolExceptionSiteManualFallbackUnprotected = 4,
+    DDCNABKeyPaneHideSymbolExceptionSiteOtherUnprotectedRange = 5,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldSkipRemainingSymbolPath;
+    BOOL shouldContinueManualChevronFallback;
+    BOOL symbolConfigurationDefinitelyRetainedBeforeProtectedCall;
+    BOOL symbolImageDefinitelyRetainedBeforeProtectedCall;
+    BOOL retainedSymbolConfigurationReleaseCouldBeBypassed;
+    BOOL retainedSymbolImageReleaseCouldBeBypassed;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDCNABKeyPaneHideSymbolExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1063,6 +1084,7 @@ FOUNDATION_EXPORT DDSceneLayerHostPredicateExceptionOutcome DDResolveSceneLayerH
 FOUNDATION_EXPORT DDSlideAnimationExceptionOutcome DDResolveSlideAnimationExceptionOutcome(DDSlideAnimationExceptionSite site);
 FOUNDATION_EXPORT DDRecursiveTransparencyExceptionOutcome DDResolveRecursiveTransparencyExceptionOutcome(DDRecursiveTransparencyExceptionSite site);
 FOUNDATION_EXPORT DDTopLevelTransparencyExceptionOutcome DDResolveTopLevelTransparencyExceptionOutcome(DDTopLevelTransparencyExceptionSite site);
+FOUNDATION_EXPORT DDCNABKeyPaneHideSymbolExceptionOutcome DDResolveCNABKeyPaneHideSymbolExceptionOutcome(DDCNABKeyPaneHideSymbolExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

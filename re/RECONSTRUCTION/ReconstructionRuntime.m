@@ -1920,6 +1920,49 @@ DDTopLevelTransparencyExceptionOutcome DDResolveTopLevelTransparencyExceptionOut
     return outcome;
 }
 
+DDCNABKeyPaneHideSymbolExceptionOutcome DDResolveCNABKeyPaneHideSymbolExceptionOutcome(DDCNABKeyPaneHideSymbolExceptionSite site) {
+    // 38EF8 LSDA 0x114308 protects only the SF-Symbol path. Expected action-5 catches converge at
+    // 0x39248 and jump to 0x390C8, the same manual UIView/UIBezierPath/CAShapeLayer chevron fallback
+    // used when the symbol lookup returns nil. Range 1 ends before x24 receives the retained symbol
+    // configuration, so it has no established config-release bypass. Range 2 starts after x24 is
+    // committed: image-lookup exceptions bypass the config release; UIImageView init exceptions occur
+    // after x25 holds the retained image and can bypass both image and config releases. The manual
+    // fallback itself is outside the protected ranges and therefore propagates its own exceptions.
+    DDCNABKeyPaneHideSymbolExceptionOutcome outcome = {0};
+    if (site == DDCNABKeyPaneHideSymbolExceptionSiteSymbolConfiguration) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingSymbolPath = YES;
+        outcome.shouldContinueManualChevronFallback = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDCNABKeyPaneHideSymbolExceptionSiteSymbolImageLookup) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingSymbolPath = YES;
+        outcome.shouldContinueManualChevronFallback = YES;
+        outcome.symbolConfigurationDefinitelyRetainedBeforeProtectedCall = YES;
+        outcome.retainedSymbolConfigurationReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDCNABKeyPaneHideSymbolExceptionSiteSymbolImageViewInit) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingSymbolPath = YES;
+        outcome.shouldContinueManualChevronFallback = YES;
+        outcome.symbolConfigurationDefinitelyRetainedBeforeProtectedCall = YES;
+        outcome.symbolImageDefinitelyRetainedBeforeProtectedCall = YES;
+        outcome.retainedSymbolConfigurationReleaseCouldBeBypassed = YES;
+        outcome.retainedSymbolImageReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDCNABKeyPaneHideSymbolExceptionSiteManualFallbackUnprotected ||
+        site == DDCNABKeyPaneHideSymbolExceptionSiteOtherUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
