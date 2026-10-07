@@ -2273,6 +2273,34 @@ DDKeyboardLostRecoveryExceptionOutcome DDResolveKeyboardLostRecoveryExceptionOut
     return outcome;
 }
 
+DDCarPlayUIStatusCallbackExceptionOutcome DDResolveCarPlayUIStatusCallbackExceptionOutcome(DDCarPlayUIStatusCallbackExceptionSite site) {
+    // 37924 LSDA 0x114178 has one action-1 catch-all range around DDz1 shared acquisition and
+    // noteCarPlayUIStatus:gen:ok:. Landing 0x37968 unconditionally begin/end-catches and returns.
+    // The semantic split is at mov x19,x0: exceptions during shared acquisition need no committed
+    // DDz1 lifetime claim, while callback-send exceptions occur with retained x19 committed and the
+    // catch bypasses the normal release/tail. Callback side effects are not rolled back.
+    DDCarPlayUIStatusCallbackExceptionOutcome outcome = {0};
+    if (site == DDCarPlayUIStatusCallbackExceptionSiteSharedControllerAcquisition) {
+        outcome.shouldSwallowAnyException = YES;
+        outcome.shouldReturnImmediately = YES;
+        outcome.temporaryControllerAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryControllerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayUIStatusCallbackExceptionSiteStatusCallbackSend) {
+        outcome.shouldSwallowAnyException = YES;
+        outcome.shouldReturnImmediately = YES;
+        outcome.retainedControllerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedControllerReleaseCouldBeBypassed = YES;
+        outcome.callbackCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayUIStatusCallbackExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

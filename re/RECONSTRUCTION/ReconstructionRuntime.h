@@ -671,6 +671,24 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDKeyboardLostRecoveryExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDCarPlayUIStatusCallbackExceptionSite) {
+    DDCarPlayUIStatusCallbackExceptionSiteNone = 0,
+    DDCarPlayUIStatusCallbackExceptionSiteSharedControllerAcquisition = 1,
+    DDCarPlayUIStatusCallbackExceptionSiteStatusCallbackSend = 2,
+    DDCarPlayUIStatusCallbackExceptionSiteUnprotectedRange = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowAnyException;
+    BOOL shouldReturnImmediately;
+    BOOL temporaryControllerAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryControllerReleaseCouldBeBypassed;
+    BOOL retainedControllerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedControllerReleaseCouldBeBypassed;
+    BOOL callbackCouldHaveAppliedSideEffectsBeforeException;
+    BOOL exceptionWouldPropagate;
+} DDCarPlayUIStatusCallbackExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1269,6 +1287,7 @@ FOUNDATION_EXPORT DDPropertyListWriterExceptionOutcome DDResolvePropertyListWrit
 FOUNDATION_EXPORT DDKeyPaneHostConstructionExceptionOutcome DDResolveKeyPaneHostConstructionExceptionOutcome(DDKeyPaneHostConstructionExceptionSite site);
 FOUNDATION_EXPORT DDPropertyListReaderExceptionOutcome DDResolvePropertyListReaderExceptionOutcome(DDPropertyListReaderExceptionSite site);
 FOUNDATION_EXPORT DDKeyboardLostRecoveryExceptionOutcome DDResolveKeyboardLostRecoveryExceptionOutcome(DDKeyboardLostRecoveryExceptionSite site);
+FOUNDATION_EXPORT DDCarPlayUIStatusCallbackExceptionOutcome DDResolveCarPlayUIStatusCallbackExceptionOutcome(DDCarPlayUIStatusCallbackExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
