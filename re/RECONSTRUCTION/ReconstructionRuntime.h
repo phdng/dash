@@ -347,6 +347,28 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDEvictFromPhoneExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDSplitHostGeometryExceptionSite) {
+    DDSplitHostGeometryExceptionSiteNone = 0,
+    DDSplitHostGeometryExceptionSiteHostFrameSetter = 1,
+    DDSplitHostGeometryExceptionSiteSplitCenterSetter = 2,
+    DDSplitHostGeometryExceptionSiteGapRead = 3,
+    DDSplitHostGeometryExceptionSiteFinalGeometrySync = 4,
+    DDSplitHostGeometryExceptionSiteUnprotectedRange = 5,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldSkipRemainingGeometryWork;
+    BOOL shouldContinueRetainedViewCleanup;
+    BOOL hostFrameDefinitelyAppliedBeforeProtectedCall;
+    BOOL hostFrameCouldHaveAppliedBeforeException;
+    BOOL splitCenterDefinitelyAppliedBeforeProtectedCall;
+    BOOL splitCenterCouldHaveAppliedBeforeException;
+    BOOL finalGeometrySyncCouldHaveStartedBeforeException;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDSplitHostGeometryExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -933,6 +955,7 @@ FOUNDATION_EXPORT DDDegradeSlotExceptionOutcome DDResolveDegradeSlotExceptionOut
 FOUNDATION_EXPORT DDSpikeCreateSlotExceptionOutcome DDResolveSpikeCreateSlotExceptionOutcome(DDSpikeCreateSlotExceptionSite site);
 FOUNDATION_EXPORT DDCNABBuildSceneHostExceptionOutcome DDResolveCNABBuildSceneHostExceptionOutcome(DDCNABBuildSceneHostExceptionSite site);
 FOUNDATION_EXPORT DDEvictFromPhoneExceptionOutcome DDResolveEvictFromPhoneExceptionOutcome(DDEvictFromPhoneExceptionSite site);
+FOUNDATION_EXPORT DDSplitHostGeometryExceptionOutcome DDResolveSplitHostGeometryExceptionOutcome(DDSplitHostGeometryExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

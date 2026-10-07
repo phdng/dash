@@ -1700,6 +1700,45 @@ DDEvictFromPhoneExceptionOutcome DDResolveEvictFromPhoneExceptionOutcome(DDEvict
     return outcome;
 }
 
+DDSplitHostGeometryExceptionOutcome DDResolveSplitHostGeometryExceptionOutcome(DDSplitHostGeometryExceptionSite site) {
+    // 3A0D0 LSDA 0x114404 has one typed protected range, 0x3A1F4..0x3A254. Expected catch
+    // 0x3A2A8 swallows and jumps to 0x3A254, which only performs retained split-host-view cleanup.
+    // There is no rollback: a throwing setFrame: may already have mutated the host view; setCenter:
+    // is reached only after setFrame: returns; the gap read 38E14 is reached only after both setters
+    // return; final 39260 synchronization is reached after both setters and the gap read complete.
+    DDSplitHostGeometryExceptionOutcome outcome = {0};
+    BOOL typedSite =
+        site == DDSplitHostGeometryExceptionSiteHostFrameSetter ||
+        site == DDSplitHostGeometryExceptionSiteSplitCenterSetter ||
+        site == DDSplitHostGeometryExceptionSiteGapRead ||
+        site == DDSplitHostGeometryExceptionSiteFinalGeometrySync;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingGeometryWork = YES;
+        outcome.shouldContinueRetainedViewCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site == DDSplitHostGeometryExceptionSiteHostFrameSetter) {
+            outcome.hostFrameCouldHaveAppliedBeforeException = YES;
+        } else {
+            outcome.hostFrameDefinitelyAppliedBeforeProtectedCall = YES;
+        }
+        if (site == DDSplitHostGeometryExceptionSiteSplitCenterSetter) {
+            outcome.splitCenterCouldHaveAppliedBeforeException = YES;
+        } else if (site == DDSplitHostGeometryExceptionSiteGapRead ||
+                   site == DDSplitHostGeometryExceptionSiteFinalGeometrySync) {
+            outcome.splitCenterDefinitelyAppliedBeforeProtectedCall = YES;
+        }
+        if (site == DDSplitHostGeometryExceptionSiteFinalGeometrySync) {
+            outcome.finalGeometrySyncCouldHaveStartedBeforeException = YES;
+        }
+        return outcome;
+    }
+    if (site == DDSplitHostGeometryExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
