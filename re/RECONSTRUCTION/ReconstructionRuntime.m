@@ -2829,6 +2829,35 @@ DDDisplayChangedWrapperExceptionOutcome DDResolveDisplayChangedWrapperExceptionO
     return outcome;
 }
 
+DDCarPlayConnectedExceptionOutcome DDResolveCarPlayConnectedExceptionOutcome(DDCarPlayConnectedExceptionSite site) {
+    // 3640C LSDA 0x113FD0 has one typed action-5 range 0x36418..0x3643C around
+    // objc_getClass("AVExternalDevice"), the class-null branch, currentCarPlayExternalDevice,
+    // and retain-autoreleased return value. The range ends before cmp x0,#0, cset w19, and
+    // normal objc_release(x0). Expected catch at 0x3644C begin/end-catches and falls through
+    // 0x3645C, forcing w19=false. Nonmatching type resumes unwind at 0x36470.
+    DDCarPlayConnectedExceptionOutcome outcome = {0};
+    if (site == DDCarPlayConnectedExceptionSiteExternalDeviceClassLookup) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnFalse = YES;
+        outcome.booleanResultDefinitelyUncommittedBeforeCatch = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayConnectedExceptionSiteCurrentDeviceAcquisition) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnFalse = YES;
+        outcome.booleanResultDefinitelyUncommittedBeforeCatch = YES;
+        outcome.temporaryDeviceAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryDeviceReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDCarPlayConnectedExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

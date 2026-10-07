@@ -923,6 +923,23 @@ typedef struct {
     BOOL exceptionWouldPropagate;
 } DDDisplayChangedWrapperExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDCarPlayConnectedExceptionSite) {
+    DDCarPlayConnectedExceptionSiteNone = 0,
+    DDCarPlayConnectedExceptionSiteExternalDeviceClassLookup = 1,
+    DDCarPlayConnectedExceptionSiteCurrentDeviceAcquisition = 2,
+    DDCarPlayConnectedExceptionSiteUnprotectedRange = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnFalse;
+    BOOL booleanResultDefinitelyUncommittedBeforeCatch;
+    BOOL temporaryDeviceAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryDeviceReleaseCouldBeBypassed;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDCarPlayConnectedExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1597,6 +1614,7 @@ FOUNDATION_EXPORT DDDisplayBoundsFallbackExceptionOutcome DDResolveDisplayBounds
 FOUNDATION_EXPORT DDLayoutAreaPublishExceptionOutcome DDResolveLayoutAreaPublishExceptionOutcome(DDLayoutAreaPublishExceptionSite site);
 FOUNDATION_EXPORT DDDisplayConfigurationPublishExceptionOutcome DDResolveDisplayConfigurationPublishExceptionOutcome(DDDisplayConfigurationPublishExceptionSite site);
 FOUNDATION_EXPORT DDDisplayChangedWrapperExceptionOutcome DDResolveDisplayChangedWrapperExceptionOutcome(DDDisplayChangedWrapperExceptionSite site);
+FOUNDATION_EXPORT DDCarPlayConnectedExceptionOutcome DDResolveCarPlayConnectedExceptionOutcome(DDCarPlayConnectedExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
