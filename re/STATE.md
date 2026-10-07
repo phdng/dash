@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-146 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-147 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-77 (session-146): GitHub Actions session-145 (`75828a5`) đã xanh theo user. Executable target thêm data-only `37398` keypane center-forward exception outcome từ LSDA `0x114114` + raw ARM64. Ba action-5 ranges hội tụ catch `0x374AC`. Raw branch target resolve d10/d11 gap: caller center được giữ ở d9/d8; normal candidate midpoint chỉ copy d10/d11→d9/d8 tại `0x37460/64`, còn catch jump thẳng `0x37468` nên luôn forward original caller center qua `off_163C50`. Catch bỏ candidate adoption, counter decrement và first retained-input release nhưng vẫn callback + final release. Site timing tách pre-helper/candidate/null/MidX/MidY. Unprotected/nonmatching propagate/unwind. Không geometry/midpoint/callback execution, counter mutation, ownership mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-78 (session-147): GitHub Actions session-146 (`41c0195`) đã xanh theo user. Executable target thêm data-only `37284` DDz1 `dropSplashIfOverdue` catch-all outcome từ LSDA `0x114100` + raw ARM64. Một action-1 range `0x37298..0x372AC` bao DDz1 shared+retain, x19 commit và selector send; landing `0x372BC` unconditional begin/end-catch rồi return ngay, không discriminator. Runtime tách pre-x19 shared acquisition khỏi post-x19 selector send; selector exception có thể bypass retained-DDz1 release tail và giữ side effects đã apply trước throw. Unprotected prefix/tail propagate. Không DDz1 lookup/selector execution, ownership mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-146):
-- R-145 data-only 37398 keypane center-forward exception outcome: 3 typed ranges→original caller center fallback+skip candidate midpoint adoption/counter decrement+still invoke off_163C50; raw branch ordering closes prior d10/d11 uncertainty; exact candidate/null/MidX/MidY timing, one-release bypass/final-release continuation, unprotected propagation and nonmatching unwind recorded.
+## LAST COMPLETED TASK (session-147):
+- R-146 data-only 37284 DDz1 dropSplashIfOverdue catch-all outcome: action-1 catch-all→immediate return; exact pre/post x19 DDz1 ownership timing, retained-controller release bypass, possible selector-side-effect persistence and unprotected propagation recorded.
 
 ## CURRENT TASK:
-- R-145 hoàn tất local; commit-only handoff. User confirmed session-145 compiler green before this batch; assistant không push.
+- R-146 hoàn tất local; commit-only handoff. User confirmed session-146 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-146 batch, R-146: inspect `37284 -> 0x114100` (`dropSplashIfOverdue`). LSDA header decodes one action-1 catch-all range `0x37298..0x372AC -> 0x372BC`, followed by unprotected tail `0x372AC..0x372CC`. Protected range covers `+[DDz1 shared]`, retain-autoreleased result, x19 commit at `0x372A4`, and `dropSplashIfOverdue` send at `0x372A8`. Landing `0x372BC` unconditional begin/end-catches and returns; no discriminator. Split shared-acquisition vs callback-send timing: first may throw before x19 commit; callback site has retained DDz1 committed and catch skips normal release tail at `0x372AC..0x372B8`, preserving any callback side effect before throw. Next earlier LSDA-bearing function is `371F4 -> 0x1140EC`, same catch-all shape around `dropServerNoticeNow`. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
+- Sau compiler xanh cho session-147 batch, R-147: inspect `371F4 -> 0x1140EC` (`dropServerNoticeNow`). Exact same action-1 shape: protected `0x37208..0x3721C -> 0x3722C`, unprotected tail `0x3721C..0x3723C`, x19 commit at `0x37214`, selector send `0x37218`. Split shared acquisition before x19 commit from selector send after commit; catch-all returns immediately and can bypass normal release tail/preserve pre-throw selector side effects. R-148 after that is `371AC -> 0x1140D8` (`dropOverdueNotice`) with protected `0x371C0..0x371D4 -> 0x371E4`. Next earlier LSDA-bearing function after 371AC is `370F8 -> 0x1140B4`. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-146):
+## FILES CHANGED (session-147):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-146.md`.
+- Mới: `LOG/session-147.md`.
 
 ## TEST STATUS:
-Session-145 GitHub Actions build GREEN (`75828a5`, user-confirmed). Session-146 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-146 GitHub Actions build GREEN (`41c0195`, user-confirmed). Session-147 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.

@@ -2301,6 +2301,35 @@ DDCarPlayUIStatusCallbackExceptionOutcome DDResolveCarPlayUIStatusCallbackExcept
     return outcome;
 }
 
+DDDropSplashIfOverdueExceptionOutcome DDResolveDropSplashIfOverdueExceptionOutcome(DDDropSplashIfOverdueExceptionSite site) {
+    // 37284 LSDA 0x114100 has one action-1 catch-all range 0x37298..0x372AC around
+    // DDz1 shared acquisition/retain and dropSplashIfOverdue. Landing 0x372BC has no
+    // discriminator: it unconditionally begin/end-catches and returns. The semantic split is
+    // mov x19,x0 at 0x372A4. Acquisition exceptions can happen before a committed controller;
+    // selector-send exceptions happen with retained x19 committed, and catch routing skips the
+    // normal release tail at 0x372AC..0x372B8. No selector side effects are rolled back locally.
+    DDDropSplashIfOverdueExceptionOutcome outcome = {0};
+    if (site == DDDropSplashIfOverdueExceptionSiteSharedControllerAcquisition) {
+        outcome.shouldSwallowAnyException = YES;
+        outcome.shouldReturnImmediately = YES;
+        outcome.temporaryControllerAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryControllerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDDropSplashIfOverdueExceptionSiteDropSelectorSend) {
+        outcome.shouldSwallowAnyException = YES;
+        outcome.shouldReturnImmediately = YES;
+        outcome.retainedControllerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedControllerReleaseCouldBeBypassed = YES;
+        outcome.dropSelectorCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDDropSplashIfOverdueExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
