@@ -544,6 +544,41 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDDisplayScaleCapExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDPropertyListWriterExceptionSite) {
+    DDPropertyListWriterExceptionSiteNone = 0,
+    DDPropertyListWriterExceptionSiteSerialization = 1,
+    DDPropertyListWriterExceptionSiteDataWrite = 2,
+    DDPropertyListWriterExceptionSiteFileManagerAcquisition = 3,
+    DDPropertyListWriterExceptionSitePermissionsDictionaryConstruction = 4,
+    DDPropertyListWriterExceptionSiteSetAttributes = 5,
+    DDPropertyListWriterExceptionSiteIntermediateCleanupUnwind = 6,
+    DDPropertyListWriterExceptionSiteFinalArgumentCleanupUnwind = 7,
+    DDPropertyListWriterExceptionSiteUnprotectedRange = 8,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnFalse;
+    BOOL shouldReturnTrueAfterSuccessfulWrite;
+    BOOL dataWriteDefinitelySucceededBeforeProtectedCall;
+    BOOL retainedDataDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedDataReleaseCouldBeBypassed;
+    BOOL shouldContinueRetainedDataCleanup;
+    BOOL temporaryFileManagerAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryFileManagerReleaseCouldBeBypassed;
+    BOOL retainedFileManagerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedFileManagerReleaseCouldBeBypassed;
+    BOOL temporaryPermissionsDictionaryConstructionCouldHaveStartedBeforeException;
+    BOOL temporaryPermissionsDictionaryReleaseCouldBeBypassed;
+    BOOL retainedPermissionsDictionaryDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedPermissionsDictionaryReleaseCouldBeBypassed;
+    BOOL fileAttributesCouldHaveAppliedBeforeException;
+    BOOL shouldContinueFinalArgumentCleanup;
+    BOOL shouldResumeUnwindFromCleanup;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDPropertyListWriterExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1138,6 +1173,7 @@ FOUNDATION_EXPORT DDTopLevelTransparencyExceptionOutcome DDResolveTopLevelTransp
 FOUNDATION_EXPORT DDCNABKeyPaneHideSymbolExceptionOutcome DDResolveCNABKeyPaneHideSymbolExceptionOutcome(DDCNABKeyPaneHideSymbolExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneHideGapExceptionOutcome DDResolveKeyPaneHideGapExceptionOutcome(DDKeyPaneHideGapExceptionSite site);
 FOUNDATION_EXPORT DDDisplayScaleCapExceptionOutcome DDResolveDisplayScaleCapExceptionOutcome(DDDisplayScaleCapExceptionSite site);
+FOUNDATION_EXPORT DDPropertyListWriterExceptionOutcome DDResolvePropertyListWriterExceptionOutcome(DDPropertyListWriterExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

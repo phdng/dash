@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-138 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-139 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-69 (session-138): GitHub Actions session-137 (`954d26d`) đã xanh theo user. Executable target thêm data-only `38B0C` display-scale width-cap exception outcome từ LSDA `0x11428C` + raw ARM64. Tám action-5 ranges quanh display acquisition, FBSDisplayConfiguration construction/scale probing, window-bounds fallback và pixelSize đều hội tụ catch `0x38CD0`: expected catch swallow rồi jump `0x38C58`, bỏ remaining display-scale probing/`800/scale` cap, release hai ownership của input view và trả original bounds-derived `d8`. Metadata tách pre-x20 display acquisition, committed display, in-progress config construction trước x21 commit, committed config, temporary retained window, và post-window pixelSize sites. Unprotected/nonmatching propagate/unwind. Không private display/config/window queries, scale computation, ownership mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-70 (session-139): GitHub Actions session-138 (`f1ef1bf`) đã xanh theo user. Executable target thêm data-only `3896C` property-list writer exception outcome từ LSDA `0x114250` + raw ARM64. Serialization/write typed catches trả false và final-clean arguments; write site có retained NSData committed nên có thể bypass data release. Post-write attributes range chỉ reachable sau write success; expected catch cố ý trả true, vẫn release retained data + final args, nhưng có thể bypass manager/dictionary releases. Runtime tách file-manager acquisition, permissions-dictionary construction, setAttributes với temporary-vs-committed ownership và possible partial attributes application. Action-0 cleanup/unprotected propagate; nonmatching unwind. Không plist serialization/file I/O/chmod, ownership mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-138):
-- R-137 data-only 38B0C display-scale width-cap exception outcome: 8 typed ranges→swallow+original-bounds fallback+skip scale cap+input cleanup; site-aware display/config/window commit/release-bypass timing recorded; unprotected/nonmatching paths propagate/unwind.
+## LAST COMPLETED TASK (session-139):
+- R-138 data-only 3896C property-list writer exception outcome: serialization/write typed catches→false, post-success attribute typed catches→true; exact retained-data/manager/dictionary lifetime, release-bypass, partial attributes timing, action-0 cleanup unwind and final-argument continuation recorded.
 
 ## CURRENT TASK:
-- R-137 hoàn tất local; commit-only handoff. User confirmed session-137 compiler green before this batch; assistant không push.
+- R-138 hoàn tất local; commit-only handoff. User confirmed session-138 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-138 batch, R-138: inspect next earlier LSDA-bearing `3896C -> 0x114250` (`sub_3896C`, property-list file writer). Scout decoded 8 call-site entries: unprotected `0x3896C..0x389C4`; typed action-5 `0x389C4..0x389E0 -> 0x38AAC` around property-list serialization+retain; typed `0x389E8..0x38A00 -> 0x38A94` around `NSData writeToFile:options:error:`; typed `0x38A0C..0x38A6C -> 0x38A98` around defaultManager/permissions-dictionary/setAttributes; action-0 cleanup `0x38A6C..0x38A90 -> 0x38B08`; unprotected catch body `0x38A90..0x38AC0`; action-0 final argument cleanup `0x38AC0..0x38AD0 -> 0x38B08`; unprotected tail. Serialization/write exceptions converge to catch `0x38AAC` and return false; write range occurs after retained data x21 commit so data release may be bypassed. Attribute-phase expected catch `0x38A98` instead sets success `w22=1` and rejoins at `0x38A7C`, because data write already succeeded; depending on throw timing retained file-manager/dictionary releases may be bypassed, while retained data is still released at `0x38A88`. Nonmatching type and action-0 cleanup resume unwind. Split exact attribute sub-sites/ownership before promotion. 73E8/80D0 and full 7E908 remain unresolved; dynamic device verify still needed.
+- Sau compiler xanh cho session-139 batch, R-139: inspect next earlier LSDA-bearing `38240 -> 0x1141D0` (`sub_38240`, keypane/aux-scene host construction). Exact 16-entry table has 10 action-5 ranges: `0x3852C..0x38590`, `0x38598..0x385A4`, `0x385A8..0x38680`, `0x38688..0x386AC`, `0x386BC..0x386C0`, `0x386C0..0x386D8`, `0x386D8..0x3870C`, `0x3875C..0x387A0`, `0x38814..0x38818`, and `0x38878..0x38890`; all landing stubs converge common typed catch `0x388E4`. Expected catch clears/releases globals `qword_163C88` and `qword_163C90`, invokes teardown on retained DDz2 x21, clears/releases `qword_163C78`, ends catch, forces result false, releases retained aux scene x22/DDz2 x21, then rejoins splitHost/input cleanup. Protected ranges span outer/inner UIView construction+transparency, splitHost addSubview, 38E14 gap read, left/right 38EF8 key creation+addSubview, 39260 geometry/global-state commit, 39884 transparency wrapper, and late bringSubviewToFront/30F48 activation. Map exact prior global stores (especially C68/C70/C78/C88/C90 and size/generation flags), local-view/key release bypass, and which late state survives catch before promotion. 73E8/80D0 and full 7E908 remain unresolved; dynamic device verify still needed.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-138):
+## FILES CHANGED (session-139):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-138.md`.
+- Mới: `LOG/session-139.md`.
 
 ## TEST STATUS:
-Session-137 GitHub Actions build GREEN (`954d26d`, user-confirmed). Session-138 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-138 GitHub Actions build GREEN (`f1ef1bf`, user-confirmed). Session-139 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.

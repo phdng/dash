@@ -2050,6 +2050,70 @@ DDDisplayScaleCapExceptionOutcome DDResolveDisplayScaleCapExceptionOutcome(DDDis
     return outcome;
 }
 
+DDPropertyListWriterExceptionOutcome DDResolvePropertyListWriterExceptionOutcome(DDPropertyListWriterExceptionSite site) {
+    // 3896C LSDA 0x114250 distinguishes pre-write failure from post-write attribute failure.
+    // Serialization/write exceptions converge on typed catch 0x38AAC and return false through final
+    // argument cleanup. The attribute range begins only after writeToFile returned true; its typed
+    // catch 0x38A98 rejoins at 0x38A7C, forces success=true, releases retained NSData, then performs
+    // final argument cleanup. Attribute sub-sites differ only in manager/dictionary lifetime timing.
+    DDPropertyListWriterExceptionOutcome outcome = {0};
+    if (site == DDPropertyListWriterExceptionSiteSerialization) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnFalse = YES;
+        outcome.shouldContinueFinalArgumentCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDPropertyListWriterExceptionSiteDataWrite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnFalse = YES;
+        outcome.retainedDataDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedDataReleaseCouldBeBypassed = YES;
+        outcome.shouldContinueFinalArgumentCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    BOOL attributeSite =
+        site == DDPropertyListWriterExceptionSiteFileManagerAcquisition ||
+        site == DDPropertyListWriterExceptionSitePermissionsDictionaryConstruction ||
+        site == DDPropertyListWriterExceptionSiteSetAttributes;
+    if (attributeSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnTrueAfterSuccessfulWrite = YES;
+        outcome.dataWriteDefinitelySucceededBeforeProtectedCall = YES;
+        outcome.retainedDataDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.shouldContinueRetainedDataCleanup = YES;
+        outcome.shouldContinueFinalArgumentCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site == DDPropertyListWriterExceptionSiteFileManagerAcquisition) {
+            outcome.temporaryFileManagerAcquisitionCouldHaveStartedBeforeException = YES;
+            outcome.temporaryFileManagerReleaseCouldBeBypassed = YES;
+            return outcome;
+        }
+        outcome.retainedFileManagerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedFileManagerReleaseCouldBeBypassed = YES;
+        if (site == DDPropertyListWriterExceptionSitePermissionsDictionaryConstruction) {
+            outcome.temporaryPermissionsDictionaryConstructionCouldHaveStartedBeforeException = YES;
+            outcome.temporaryPermissionsDictionaryReleaseCouldBeBypassed = YES;
+            return outcome;
+        }
+        outcome.retainedPermissionsDictionaryDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedPermissionsDictionaryReleaseCouldBeBypassed = YES;
+        outcome.fileAttributesCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDPropertyListWriterExceptionSiteIntermediateCleanupUnwind ||
+        site == DDPropertyListWriterExceptionSiteFinalArgumentCleanupUnwind) {
+        outcome.shouldResumeUnwindFromCleanup = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDPropertyListWriterExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
