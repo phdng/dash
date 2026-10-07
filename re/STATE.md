@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-156 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-157 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-87 (session-156): GitHub Actions session-155 (`0be4c67`) đã xanh theo user. Executable target thêm data-only `361C4` shell-rebuild block catch-all outcome từ LSDA `0x113FBC` + raw ARM64. Một action-1 range `0x361D8..0x361E4` bao `teardownWindow` + `buildShellIfNeeded`; landing `0x361FC` unconditional begin/end-catch rồi return ngay. Range kết thúc đúng trước captured result-byte store `0x361E4..0x361EC`, nên caught path không ghi captured byte. Teardown-site có thể giữ partial teardown side effects; build-site chỉ reachable sau teardown return và có thể giữ partial build side effects. Unprotected store/tail propagate. Không teardown/build execution, block-state mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-88 (session-157): GitHub Actions session-156 (`942c182`) đã xanh theo user. Executable target thêm data-only `36158` splash-fade completion catch-resume outcome từ LSDA `0x113FA8` + raw ARM64. Một action-1 range `0x3616C..0x36170` chỉ bao `removeFromSuperview`; landing `0x361B8` unconditional begin/end-catch rồi branch lại `0x36170`, không return. Caught path tiếp tục weak-owner acquisition, conditional matching owner-slot clear/release, `nudgePresent:@"splash.fade"`, và final weak-retained-owner release. Remove side effects có thể đã apply trước throw; toàn bộ continuation sau catch unprotected và có thể propagate. Không live UI/weak-owner mutation, nudge execution, ownership mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-156):
-- R-155 data-only 361C4 shell-rebuild block catch-all outcome: action-1 catch-all→immediate return before captured result-byte store; teardown/build side-effect timing and unprotected propagation recorded.
+## LAST COMPLETED TASK (session-157):
+- R-156 data-only 36158 splash-fade completion catch-resume outcome: action-1 removeFromSuperview catch-all→resume weak-owner cleanup/nudge continuation; possible remove side-effect persistence and later unprotected propagation recorded.
 
 ## CURRENT TASK:
-- R-155 hoàn tất local; commit-only handoff. User confirmed session-155 compiler green before this batch; assistant không push.
+- R-156 hoàn tất local; commit-only handoff. User confirmed session-156 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-156 batch, R-156: inspect `36158 -> 0x113FA8`. Exact action-1 catch-all `0x3616C..0x36170 -> 0x361B8` protects only `removeFromSuperview`; landing unconditionally begin/end-catches then branches back to `0x36170`, so expected catch does NOT return. It continues weak-owner acquisition, conditional owner-slot clear/release, `nudgePresent:@"splash.fade"`, and final weak-retained-owner release. Record possible remove side effect before throw, continued cleanup/nudge after catch, and unprotected later propagation. Next earlier LSDA-bearing function is `35FBC -> 0x113F94`, a larger UIView animation/capture-cleanup helper. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
+- Sau compiler xanh cho session-157 batch, R-157: inspect `35FBC -> 0x113F94`. Exact table has action-0 cleanup `0x3606C..0x36084 -> 0x360B4` around copied-weak capture setup plus `+[UIView animateWithDuration:animations:completion:]`; landing preserves the active exception, destroys the copied weak capture, then resumes unwind at `0x360C4`. Map copied weak lifetime, retained animation/completion captures, possible animation side effects before throw, weak cleanup ordering, and normal post-call releases outside protection. Next earlier LSDA-bearing function is `358F0 -> 0x113EDC`. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-156):
+## FILES CHANGED (session-157):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-156.md`.
+- Mới: `LOG/session-157.md`.
 
 ## TEST STATUS:
-Session-155 GitHub Actions build GREEN (`0be4c67`, user-confirmed). Session-156 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-156 GitHub Actions build GREEN (`942c182`, user-confirmed). Session-157 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.

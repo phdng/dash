@@ -957,6 +957,22 @@ typedef struct {
     BOOL exceptionWouldPropagate;
 } DDShellRebuildBlockExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDSplashFadeCompletionExceptionSite) {
+    DDSplashFadeCompletionExceptionSiteNone = 0,
+    DDSplashFadeCompletionExceptionSiteRemoveFromSuperview = 1,
+    DDSplashFadeCompletionExceptionSiteUnprotectedRange = 2,
+};
+
+typedef struct {
+    BOOL shouldSwallowAnyException;
+    BOOL shouldContinueWeakOwnerAcquisition;
+    BOOL ownerSlotClearCouldStillOccurAfterCatch;
+    BOOL shouldContinueNudgePresent;
+    BOOL shouldContinueWeakRetainedOwnerRelease;
+    BOOL removeFromSuperviewCouldHaveAppliedSideEffectsBeforeException;
+    BOOL exceptionWouldPropagate;
+} DDSplashFadeCompletionExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1633,6 +1649,7 @@ FOUNDATION_EXPORT DDDisplayConfigurationPublishExceptionOutcome DDResolveDisplay
 FOUNDATION_EXPORT DDDisplayChangedWrapperExceptionOutcome DDResolveDisplayChangedWrapperExceptionOutcome(DDDisplayChangedWrapperExceptionSite site);
 FOUNDATION_EXPORT DDCarPlayConnectedExceptionOutcome DDResolveCarPlayConnectedExceptionOutcome(DDCarPlayConnectedExceptionSite site);
 FOUNDATION_EXPORT DDShellRebuildBlockExceptionOutcome DDResolveShellRebuildBlockExceptionOutcome(DDShellRebuildBlockExceptionSite site);
+FOUNDATION_EXPORT DDSplashFadeCompletionExceptionOutcome DDResolveSplashFadeCompletionExceptionOutcome(DDSplashFadeCompletionExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);

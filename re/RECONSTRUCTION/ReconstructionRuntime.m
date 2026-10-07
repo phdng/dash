@@ -2885,6 +2885,27 @@ DDShellRebuildBlockExceptionOutcome DDResolveShellRebuildBlockExceptionOutcome(D
     return outcome;
 }
 
+DDSplashFadeCompletionExceptionOutcome DDResolveSplashFadeCompletionExceptionOutcome(DDSplashFadeCompletionExceptionSite site) {
+    // 36158 LSDA 0x113FA8 has one action-1 catch-all range 0x3616C..0x36170 covering
+    // only removeFromSuperview. Landing 0x361B8 unconditionally begin/end-catches and branches
+    // back to 0x36170, so a caught remove exception continues weak-owner acquisition, conditional
+    // owner-slot clear/release, nudgePresent:@"splash.fade", and final weak-retained-owner release.
+    DDSplashFadeCompletionExceptionOutcome outcome = {0};
+    if (site == DDSplashFadeCompletionExceptionSiteRemoveFromSuperview) {
+        outcome.shouldSwallowAnyException = YES;
+        outcome.shouldContinueWeakOwnerAcquisition = YES;
+        outcome.ownerSlotClearCouldStillOccurAfterCatch = YES;
+        outcome.shouldContinueNudgePresent = YES;
+        outcome.shouldContinueWeakRetainedOwnerRelease = YES;
+        outcome.removeFromSuperviewCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDSplashFadeCompletionExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
