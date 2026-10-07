@@ -1780,6 +1780,42 @@ DDSceneLayerHostPredicateExceptionOutcome DDResolveSceneLayerHostPredicateExcept
     return outcome;
 }
 
+DDSlideAnimationExceptionOutcome DDResolveSlideAnimationExceptionOutcome(DDSlideAnimationExceptionSite site) {
+    // 39B70 LSDA 0x11439C protects only the UIView animation send at 0x39CA4..0x39CC8.
+    // Before that call the slide flag is set, the generation-gated 1s 3A004 follow-up is already
+    // scheduled, the split view is retained, host bounds are read, and target center d8/d9 is fully
+    // computed. Expected catch 0x39CFC directly sends setCenter: with that target and then rejoins
+    // cleanup at 0x39CD0, bypassing the normal local release of the retained animation-block capture
+    // at 0x39CC8 while still releasing the primary retained split view and input. The catch fallback
+    // setCenter: itself is action 0; if it throws, the active catch ends and unwind resumes.
+    DDSlideAnimationExceptionOutcome outcome = {0};
+    if (site == DDSlideAnimationExceptionSiteUIViewAnimationCall) {
+        outcome.shouldSwallowException = YES;
+        outcome.slideFlagWasAlreadySet = YES;
+        outcome.oneSecondFollowupWasAlreadyScheduled = YES;
+        outcome.targetCenterWasAlreadyComputed = YES;
+        outcome.animationCouldHaveStartedBeforeException = YES;
+        outcome.shouldInvokeDirectCenterFallback = YES;
+        outcome.retainedAnimationCaptureReleaseCouldBeBypassed = YES;
+        outcome.shouldContinuePrimaryViewAndInputCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDSlideAnimationExceptionSiteCatchFallbackCenterSetter) {
+        outcome.slideFlagWasAlreadySet = YES;
+        outcome.oneSecondFollowupWasAlreadyScheduled = YES;
+        outcome.targetCenterWasAlreadyComputed = YES;
+        outcome.directCenterFallbackCouldHaveAppliedBeforeException = YES;
+        outcome.shouldEndActiveCatchBeforeResumeUnwind = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDSlideAnimationExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

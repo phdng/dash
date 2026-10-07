@@ -394,6 +394,28 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDSceneLayerHostPredicateExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDSlideAnimationExceptionSite) {
+    DDSlideAnimationExceptionSiteNone = 0,
+    DDSlideAnimationExceptionSiteUIViewAnimationCall = 1,
+    DDSlideAnimationExceptionSiteCatchFallbackCenterSetter = 2,
+    DDSlideAnimationExceptionSiteUnprotectedRange = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL slideFlagWasAlreadySet;
+    BOOL oneSecondFollowupWasAlreadyScheduled;
+    BOOL targetCenterWasAlreadyComputed;
+    BOOL animationCouldHaveStartedBeforeException;
+    BOOL shouldInvokeDirectCenterFallback;
+    BOOL retainedAnimationCaptureReleaseCouldBeBypassed;
+    BOOL shouldContinuePrimaryViewAndInputCleanup;
+    BOOL directCenterFallbackCouldHaveAppliedBeforeException;
+    BOOL shouldEndActiveCatchBeforeResumeUnwind;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDSlideAnimationExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -982,6 +1004,7 @@ FOUNDATION_EXPORT DDCNABBuildSceneHostExceptionOutcome DDResolveCNABBuildSceneHo
 FOUNDATION_EXPORT DDEvictFromPhoneExceptionOutcome DDResolveEvictFromPhoneExceptionOutcome(DDEvictFromPhoneExceptionSite site);
 FOUNDATION_EXPORT DDSplitHostGeometryExceptionOutcome DDResolveSplitHostGeometryExceptionOutcome(DDSplitHostGeometryExceptionSite site);
 FOUNDATION_EXPORT DDSceneLayerHostPredicateExceptionOutcome DDResolveSceneLayerHostPredicateExceptionOutcome(DDSceneLayerHostPredicateExceptionSite site);
+FOUNDATION_EXPORT DDSlideAnimationExceptionOutcome DDResolveSlideAnimationExceptionOutcome(DDSlideAnimationExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
