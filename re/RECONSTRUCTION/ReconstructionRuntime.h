@@ -36,6 +36,20 @@ typedef struct {
     DDAuxSceneSettingsPlan settingsPlan;
 } DDAuxSceneSettingsAttempt;
 
+typedef NS_ENUM(NSInteger, DDAuxSettingsMutationExceptionSite) {
+    DDAuxSettingsMutationExceptionSiteNone = 0,
+    DDAuxSettingsMutationExceptionSiteFramePath = 1,
+    DDAuxSettingsMutationExceptionSiteOrientationPath = 2,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldSkipRemainingMutation;
+    BOOL shouldContinueCleanupAfterCatch;
+    BOOL frameAppliedWriteCouldHaveOccurredBeforeException;
+    BOOL orientationAppliedWriteWouldBeSkipped;
+} DDAuxSettingsMutationExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDSceneIdentityRouteKind) {
     DDSceneIdentityRouteNone = 0,
     DDSceneIdentityRouteHostSlot = 1,
@@ -622,6 +636,7 @@ FOUNDATION_EXPORT DDAuxSceneSettingsAttempt DDBeginAuxSceneSettingsAttempt(BOOL 
                                                                           BOOL privateExecutorMethodSupported);
 FOUNDATION_EXPORT BOOL DDBeginAuxSceneSettingsApply(uint64_t capturedGeneration);
 FOUNDATION_EXPORT BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGeneration);
+FOUNDATION_EXPORT DDAuxSettingsMutationExceptionOutcome DDResolveAuxSettingsMutationExceptionOutcome(DDAuxSettingsMutationExceptionSite site);
 FOUNDATION_EXPORT BOOL DDBundleIdentifierMatchesAux(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdentityResolutionExceptionOutcome(void);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);

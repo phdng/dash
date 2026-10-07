@@ -1198,6 +1198,29 @@ BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGeneration) {
     return YES;
 }
 
+DDAuxSettingsMutationExceptionOutcome DDResolveAuxSettingsMutationExceptionOutcome(DDAuxSettingsMutationExceptionSite site) {
+    // 3EB9C LSDA 0x1148D8 has one catch-all over frame+orientation mutation. Frame-path calls
+    // precede the frame-applied byref write; orientation-path calls occur after that write could
+    // already have happened, while the orientation-applied write starts at 0x3EC34 after the
+    // protected range. Every expected exception skips the remaining mutation and rejoins cleanup.
+    DDAuxSettingsMutationExceptionOutcome outcome = { NO, NO, NO, NO, NO };
+    if (site == DDAuxSettingsMutationExceptionSiteFramePath) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingMutation = YES;
+        outcome.shouldContinueCleanupAfterCatch = YES;
+        outcome.orientationAppliedWriteWouldBeSkipped = YES;
+        return outcome;
+    }
+    if (site == DDAuxSettingsMutationExceptionSiteOrientationPath) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingMutation = YES;
+        outcome.shouldContinueCleanupAfterCatch = YES;
+        outcome.frameAppliedWriteCouldHaveOccurredBeforeException = YES;
+        outcome.orientationAppliedWriteWouldBeSkipped = YES;
+    }
+    return outcome;
+}
+
 static NSInteger DDConfiguredHostSlotIndexForBundleIdentifier(NSString *bundleIdentifier,
                                                                BOOL includeCarPlayUI) {
     // Post-identity half shared by 41E08/4138C. The caller supplies the already-resolved
