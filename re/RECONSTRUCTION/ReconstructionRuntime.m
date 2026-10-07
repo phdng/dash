@@ -1513,6 +1513,30 @@ DDAuxSceneCreationExceptionOutcome DDResolveAuxSceneCreationExceptionOutcome(DDA
     return outcome;
 }
 
+DDDegradeSlotExceptionOutcome DDResolveDegradeSlotExceptionOutcome(DDDegradeSlotExceptionSite site) {
+    // 3C1F0 LSDA 0x1145B8 protects only 0x3C26C..0x3C2C8: viewIfLoaded capability/send,
+    // removeFromSuperview, invalidate capability/send, and the private teardown view release edge.
+    // Expected catch 0x3C350 swallows and rejoins at 0x3C2D0, before the selected controller ivar
+    // is cleared, the hosted bid is replaced by the empty string, and 36E98 creates the placeholder.
+    // Nonmatching type resumes unwind; all other call-site regions have no local landing pad.
+    DDDegradeSlotExceptionOutcome outcome = {0};
+    if (site == DDDegradeSlotExceptionSitePrivateControllerTeardown) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingPrivateTeardown = YES;
+        outcome.controllerIvarClearStillPendingAtCatch = YES;
+        outcome.shouldContinueControllerIvarClear = YES;
+        outcome.shouldContinueHostedBidReset = YES;
+        outcome.shouldContinuePlaceholderCreation = YES;
+        outcome.retainedViewReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDDegradeSlotExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-06 session-126 (buildable reconstruction phase)_
+_Last updated: 2026-10-06 session-127 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-57 (session-126): GitHub Actions session-125 (`123b913`) đã xanh theo user. Executable target thêm data-only `3C368` aux-scene creation exception outcome từ LSDA `0x1145D8` + raw ARM64. Mười hai action-5 ranges hội tụ common typed catch `0x3C7C0`: expected type swallow, request `teardownAuxScene`, bỏ phần creation còn lại và ra nil path `0x3C3D8`; ba protected normal-failure teardown calls vì vậy được retry teardown một lần trong catch. Nonmatching type unwind tại `0x3C800`; nếu teardown bên trong catch ném tiếp (`0x3C7E0..0x3C7E8`, action 0), landing `0x3C7F8` end-catch rồi resume unwind. Không private SpringBoard construction/selector/view/teardown execution, live state mutation hay exception synthesis.
+BUILDABLE RUNTIME PHASE-58 (session-127): GitHub Actions session-126 (`d99b720`) đã xanh theo user. Executable target thêm data-only `3C1F0` degrade-slot exception outcome từ LSDA `0x1145B8` + raw ARM64. Chỉ một typed protected range `0x3C26C..0x3C2C8` quanh `viewIfLoaded`/remove/invalidate; expected catch `0x3C350` swallow rồi rejoin `0x3C2D0`, trước controller-ivar clear. Vì vậy catch vẫn đi tiếp qua controller clear/release, hosted-bid reset về empty string và `36E98` placeholder creation; retained-view release có thể bị bypass nếu view đã acquire. Nonmatching và mọi unprotected ranges unwind/propagate. Không private view/controller calls, live hosted-state mutation, placeholder creation hay exception synthesis.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-126):
-- R-125 data-only 3C368 aux-scene creation exception outcome: 12 typed action-5 ranges→common catch teardown-request+nil return; protected normal-failure teardown exceptions retry teardown once; catch-internal teardown throw→end-catch+resume unwind; nonmatching/unprotected paths propagate.
+## LAST COMPLETED TASK (session-127):
+- R-126 data-only 3C1F0 degrade-slot exception outcome: protected private teardown throw→typed swallow before controller-ivar clear→continue ivar clear/release, hosted-bid empty reset, and placeholder creation; possible retained-view release bypass recorded; nonmatching/unprotected paths propagate.
 
 ## CURRENT TASK:
-- R-125 hoàn tất local; commit-only handoff. User confirmed session-125 compiler green before this batch; assistant không push.
+- R-126 hoàn tất local; commit-only handoff. User confirmed session-126 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-126 batch, R-126: inspect next earlier LSDA-bearing `3C1F0 -> 0x1145B8` (`degradeSlot:bid:native:why:`). Existing decompile shows private hosted-controller view/remove/invalidate teardown followed by controller ivar clear, hosted-bid replacement with empty string, and placeholder creation via `36E98`; decode exact LSDA/raw ARM64 continuation before promotion. 73E8/80D0 and full 7E908 remain unresolved; dynamic device verify still needed.
+- Sau compiler xanh cho session-127 batch, R-127: inspect next earlier LSDA-bearing `3BBF0 -> 0x114538` (`spikeCreateSlot:index:native:`). LSDA scout đã decode 19 call-site entries: 14 action-5 ranges with landing stubs around `0x3C12C..0x3C15C`, one action-0 range `0x3C184..0x3C1C4`, and unprotected gaps. Raw tail shows one expected catch path rejoins `0x3BF50`; the common path at `0x3C15C` builds an exception reason and routes through a degrade call before rejoining later normal cleanup. Decode exact per-site semantics before promotion. 73E8/80D0 and full 7E908 remain unresolved; dynamic device verify still needed.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-126):
+## FILES CHANGED (session-127):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-126.md`.
+- Mới: `LOG/session-127.md`.
 
 ## TEST STATUS:
-Session-125 GitHub Actions build GREEN (`123b913`, user-confirmed). Session-126 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-126 GitHub Actions build GREEN (`d99b720`, user-confirmed). Session-127 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
