@@ -314,6 +314,39 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDCNABBuildSceneHostExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDEvictFromPhoneExceptionSite) {
+    DDEvictFromPhoneExceptionSiteNone = 0,
+    DDEvictFromPhoneExceptionSiteWorkspaceClassLookup = 1,
+    DDEvictFromPhoneExceptionSiteWorkspacePreparation = 2,
+    DDEvictFromPhoneExceptionSiteTransitionRequestCreation = 3,
+    DDEvictFromPhoneExceptionSiteApplicationContextPreparation = 4,
+    DDEvictFromPhoneExceptionSiteApplicationContextMutation = 5,
+    DDEvictFromPhoneExceptionSiteProtectedFallbackInvocation = 6,
+    DDEvictFromPhoneExceptionSiteCompletionSelectorProbe = 7,
+    DDEvictFromPhoneExceptionSiteCompletionHandlerInstall = 8,
+    DDEvictFromPhoneExceptionSiteExecuteTransitionOrFallback = 9,
+    DDEvictFromPhoneExceptionSiteEarlyProbeOrBypassCleanup = 10,
+    DDEvictFromPhoneExceptionSiteCatchFallback = 11,
+    DDEvictFromPhoneExceptionSiteUnprotectedRange = 12,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldInvokeFallbackWrapperFromCatch;
+    BOOL shouldSkipRemainingEvictionWork;
+    BOOL shouldContinueFinalCleanup;
+    BOOL protectedFallbackThrowOccursAfterOneShotGateSet;
+    BOOL catchFallbackMayBeSuppressedByOneShotGate;
+    BOOL completionHandlerMayAlreadyBeInstalled;
+    BOOL timeoutFallbackMayAlreadyBeScheduled;
+    BOOL transitionExecutionMayHaveStarted;
+    BOOL retainedTransitionIntermediatesReleaseCouldBeBypassed;
+    BOOL resumeUnwindRunsByrefCleanup;
+    BOOL shouldEndActiveCatchBeforeResumeUnwind;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDEvictFromPhoneExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -899,6 +932,7 @@ FOUNDATION_EXPORT DDAuxSceneCreationExceptionOutcome DDResolveAuxSceneCreationEx
 FOUNDATION_EXPORT DDDegradeSlotExceptionOutcome DDResolveDegradeSlotExceptionOutcome(DDDegradeSlotExceptionSite site);
 FOUNDATION_EXPORT DDSpikeCreateSlotExceptionOutcome DDResolveSpikeCreateSlotExceptionOutcome(DDSpikeCreateSlotExceptionSite site);
 FOUNDATION_EXPORT DDCNABBuildSceneHostExceptionOutcome DDResolveCNABBuildSceneHostExceptionOutcome(DDCNABBuildSceneHostExceptionSite site);
+FOUNDATION_EXPORT DDEvictFromPhoneExceptionOutcome DDResolveEvictFromPhoneExceptionOutcome(DDEvictFromPhoneExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

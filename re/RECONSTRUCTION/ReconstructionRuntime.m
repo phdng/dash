@@ -1638,6 +1638,68 @@ DDCNABBuildSceneHostExceptionOutcome DDResolveCNABBuildSceneHostExceptionOutcome
     return outcome;
 }
 
+DDEvictFromPhoneExceptionOutcome DDResolveEvictFromPhoneExceptionOutcome(DDEvictFromPhoneExceptionSite site) {
+    // 3AE50 LSDA 0x114424 has twelve action-5 ranges from SBMainWorkspace/SBHomeScreenEntity
+    // lookup through request/context/completion setup and executeTransitionRequest. Their landing
+    // stubs converge at typed catch 0x3B278. Expected type invokes the retained one-shot fallback
+    // wrapper, ends the catch, and rejoins final cleanup at 0x3B0BC, skipping all remaining eviction
+    // work. The wrapper sets its byref delivered gate before any callback-related throwing call, so
+    // an exception from a protected direct wrapper invocation cannot duplicate the user callback
+    // when the catch invokes the wrapper again. Late execute-transition range may already have the
+    // completion handler and 2s timeout armed. Early file/no-evict ranges are action-0 cleanup only.
+    DDEvictFromPhoneExceptionOutcome outcome = {0};
+    BOOL typedSite =
+        site == DDEvictFromPhoneExceptionSiteWorkspaceClassLookup ||
+        site == DDEvictFromPhoneExceptionSiteWorkspacePreparation ||
+        site == DDEvictFromPhoneExceptionSiteTransitionRequestCreation ||
+        site == DDEvictFromPhoneExceptionSiteApplicationContextPreparation ||
+        site == DDEvictFromPhoneExceptionSiteApplicationContextMutation ||
+        site == DDEvictFromPhoneExceptionSiteProtectedFallbackInvocation ||
+        site == DDEvictFromPhoneExceptionSiteCompletionSelectorProbe ||
+        site == DDEvictFromPhoneExceptionSiteCompletionHandlerInstall ||
+        site == DDEvictFromPhoneExceptionSiteExecuteTransitionOrFallback;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldInvokeFallbackWrapperFromCatch = YES;
+        outcome.shouldSkipRemainingEvictionWork = YES;
+        outcome.shouldContinueFinalCleanup = YES;
+        outcome.resumeUnwindRunsByrefCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site != DDEvictFromPhoneExceptionSiteWorkspaceClassLookup) {
+            outcome.retainedTransitionIntermediatesReleaseCouldBeBypassed = YES;
+        }
+        if (site == DDEvictFromPhoneExceptionSiteProtectedFallbackInvocation) {
+            outcome.protectedFallbackThrowOccursAfterOneShotGateSet = YES;
+            outcome.catchFallbackMayBeSuppressedByOneShotGate = YES;
+        }
+        if (site == DDEvictFromPhoneExceptionSiteCompletionHandlerInstall ||
+            site == DDEvictFromPhoneExceptionSiteExecuteTransitionOrFallback) {
+            outcome.completionHandlerMayAlreadyBeInstalled = YES;
+        }
+        if (site == DDEvictFromPhoneExceptionSiteExecuteTransitionOrFallback) {
+            outcome.timeoutFallbackMayAlreadyBeScheduled = YES;
+            outcome.transitionExecutionMayHaveStarted = YES;
+            outcome.catchFallbackMayBeSuppressedByOneShotGate = YES;
+        }
+        return outcome;
+    }
+    if (site == DDEvictFromPhoneExceptionSiteEarlyProbeOrBypassCleanup) {
+        outcome.resumeUnwindRunsByrefCleanup = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDEvictFromPhoneExceptionSiteCatchFallback) {
+        outcome.shouldEndActiveCatchBeforeResumeUnwind = YES;
+        outcome.resumeUnwindRunsByrefCleanup = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDEvictFromPhoneExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

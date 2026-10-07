@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-06 session-129 (buildable reconstruction phase)_
+_Last updated: 2026-10-06 session-130 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-60 (session-129): GitHub Actions session-128 (`3e36eaa`) đã xanh theo user. Executable target thêm data-only `3B8F8` cnabBuildSceneHost exception outcome từ LSDA `0x1144C4` + raw ARM64. Exact table có 11 action-5 ranges: 10 range common typed catch `0x3BBA4`→`resetHostingState`→force nil; 3 protected normal failure-reset ranges vì vậy retry reset một lần. Riêng `0x3BAA4..0x3BAEC` (`_deviceAppViewController`/home-grabber decoration) catch `0x3BB74` swallow rồi rejoin `0x3BB24`, giữ/return main view đã acquire. Post-controller ranges ghi nhận `_appVC` đã store; common catch có thể bypass normal retained-intermediate releases, special catch có thể bypass retained device-controller release. Catch-internal reset action-0 end-catch→unwind; nonmatching/unprotected propagate. Không private construction/view/device/reset execution hay live state mutation.
+BUILDABLE RUNTIME PHASE-61 (session-130): GitHub Actions session-129 (`877e143`) đã xanh theo user. Executable target thêm data-only `3AE50` evictFromPhoneThen exception outcome từ LSDA `0x114424` + raw ARM64/callback helpers. Exact table có 12 action-5 ranges hội tụ typed catch `0x3B278`: expected catch gọi retained one-shot fallback wrapper rồi bỏ phần eviction còn lại và vào final cleanup `0x3B0BC`. Ba protected direct fallback-call ranges đã set delivered gate trước mọi callback-related throw, nên catch gọi wrapper lại không duplicate user callback. Late execute range có thể đã arm completion handler + 2s timeout hoặc đã bắt đầu transition; catch fallback dùng cùng gate khiến callback/timer sau đó no-op. Early file/no-evict/frontmost ranges và catch-internal fallback là action-0 cleanup→propagate. Không file I/O, private transition execution, dispatch scheduling, live callback invocation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-129):
-- R-128 data-only 3B8F8 cnabBuildSceneHost exception outcome: 10 typed ranges→common resetHostingState+nil, 3 failure-reset ranges retry once, special private device/home-grabber range→swallow+return acquired main view, nested catch reset action-0→end-catch+unwind; `_appVC` timing and possible retained-intermediate/device-controller release bypass recorded.
+## LAST COMPLETED TASK (session-130):
+- R-129 data-only 3AE50 evictFromPhoneThen exception outcome: 12 typed ranges→common one-shot fallback wrapper+final cleanup; protected direct fallback throws are gate-suppressed on catch re-invocation; late completion-handler/2s-timeout/transition timing and possible retained-intermediate release bypass recorded; early/catch-internal action-0 ranges propagate with byref/end-catch cleanup.
 
 ## CURRENT TASK:
-- R-128 hoàn tất local; commit-only handoff. User confirmed session-128 compiler green before this batch; assistant không push.
+- R-129 hoàn tất local; commit-only handoff. User confirmed session-129 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-129 batch, R-129: inspect next earlier LSDA-bearing `3AE50 -> 0x114424` (`evictFromPhoneThen:`). Scout decoded 25 call-site entries with 12 action-5 ranges, three action-0 ranges (`0x3AEE4..0x3AF00`, `0x3AF14..0x3AF50`, `0x3B29C..0x3B2A4`), and unprotected gaps. All action-5 landing stubs `0x3B25C..0x3B278` converge at typed catch `0x3B278`; expected type begin-catches, invokes the retained completion/fallback block, end-catches, and rejoins final cleanup at `0x3B0BC`. Nonmatching resumes unwind; nested fallback-block throw is action-0 and ends the active catch before unwind. Map exact per-range scheduling/executeTransition state and callback timing before promotion. 73E8/80D0 and full 7E908 remain unresolved; dynamic device verify still needed.
+- Sau compiler xanh cho session-130 batch, R-130: inspect next earlier LSDA-bearing `3A0D0 -> 0x114404` (`sub_3A0D0`, split-host geometry update). Direct unwind enumeration proves no LSDA-bearing function between `3A0D0` and `3AE50`. Scout decoded exactly three call-site entries: unprotected `0x3A0D0..0x3A1F4`, typed action-5 `0x3A1F4..0x3A254 -> 0x3A2A8`, then unprotected `0x3A254..0x3A2C0`. Expected catch `0x3A2A8` begin/end-catches and jumps to `0x3A254` final retained-view cleanup, skipping remaining frame/center/geometry synchronization; nonmatching resumes unwind at `0x3A2BC`. Map exact writes completed before each possible throw in the protected geometry block before promotion. 73E8/80D0 and full 7E908 remain unresolved; dynamic device verify still needed.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-129):
+## FILES CHANGED (session-130):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-129.md`.
+- Mới: `LOG/session-130.md`.
 
 ## TEST STATUS:
-Session-128 GitHub Actions build GREEN (`3e36eaa`, user-confirmed). Session-129 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-129 GitHub Actions build GREEN (`877e143`, user-confirmed). Session-130 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
