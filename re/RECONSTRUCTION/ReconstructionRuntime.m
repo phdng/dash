@@ -1221,6 +1221,28 @@ DDAuxSettingsMutationExceptionOutcome DDResolveAuxSettingsMutationExceptionOutco
     return outcome;
 }
 
+DDAuxSettingsExecutorExceptionOutcome DDResolveAuxSettingsExecutorExceptionOutcome(NSInteger currentFailureCounter) {
+    // 3EA0C LSDA 0x1148B8 protects only the private updateSettingsWithBlock: send. The expected
+    // typed catch skips the applied-state write, decrements dword_162F14 only when positive,
+    // clears reentrancy, and disposes both byref captures. A nonmatching type disposes captures
+    // then resumes unwind without the expected-catch counter decrement or reentrancy clear.
+    DDAuxSettingsExecutorExceptionOutcome outcome = {0};
+    outcome.shouldSwallowException = YES;
+    outcome.settingsAppliedWriteWouldBeSkipped = YES;
+    outcome.shouldDecrementFailureCounter = currentFailureCounter > 0;
+    outcome.nextFailureCounter = currentFailureCounter;
+    if (outcome.shouldDecrementFailureCounter) {
+        outcome.nextFailureCounter = currentFailureCounter - 1;
+    }
+    outcome.shouldClearReentrantState = YES;
+    outcome.shouldDisposeByrefCaptures = YES;
+    outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    outcome.nonmatchingCatchTypeWouldClearReentrantState = NO;
+    outcome.nonmatchingCatchTypeWouldDecrementFailureCounter = NO;
+    outcome.nonmatchingCatchTypeWouldDisposeByrefCaptures = YES;
+    return outcome;
+}
+
 static NSInteger DDConfiguredHostSlotIndexForBundleIdentifier(NSString *bundleIdentifier,
                                                                BOOL includeCarPlayUI) {
     // Post-identity half shared by 41E08/4138C. The caller supplies the already-resolved
