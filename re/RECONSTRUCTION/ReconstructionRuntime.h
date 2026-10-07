@@ -1166,6 +1166,100 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDRestoreTargetsExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDTickPresenterExceptionSite) {
+    DDTickPresenterExceptionSiteNone = 0,
+    DDTickPresenterExceptionSiteWindowAcquisition = 1,
+    DDTickPresenterExceptionSiteMissingWindowInvalidate = 2,
+    DDTickPresenterExceptionSiteNoopCheck = 3,
+    DDTickPresenterExceptionSiteNoopTickMaintenance = 4,
+    DDTickPresenterExceptionSiteWindowLayerAcquisition = 5,
+    DDTickPresenterExceptionSiteWindowHiddenCheck = 6,
+    DDTickPresenterExceptionSiteWindowOpacityAnimationLookup = 7,
+    DDTickPresenterExceptionSiteTargetsPresenceProbe = 8,
+    DDTickPresenterExceptionSiteTargetsProviderAcquisition = 9,
+    DDTickPresenterExceptionSiteTargetsCollectionAcquisition = 10,
+    DDTickPresenterExceptionSiteFallbackOpacityAltGate = 11,
+    DDTickPresenterExceptionSiteFallbackCollectionAcquisition = 12,
+    DDTickPresenterExceptionSiteSelectedCollectionCount = 13,
+    DDTickPresenterExceptionSitePhaseReadAndMutation = 14,
+    DDTickPresenterExceptionSitePhaseOpacityPreparation = 15,
+    DDTickPresenterExceptionSiteTransactionBegin = 16,
+    DDTickPresenterExceptionSiteDisableActions = 17,
+    DDTickPresenterExceptionSiteInitialEnumerationRead = 18,
+    DDTickPresenterExceptionSiteEnumerationMutationOrTypeFilter = 19,
+    DDTickPresenterExceptionSitePerLayerAnimationLookup = 20,
+    DDTickPresenterExceptionSitePerLayerOpacityAltGate = 21,
+    DDTickPresenterExceptionSiteGroupTargetsAcquisition = 22,
+    DDTickPresenterExceptionSiteGroupOpacityComparison = 23,
+    DDTickPresenterExceptionSiteGroupOpacityMutation = 24,
+    DDTickPresenterExceptionSiteOpacityMutation = 25,
+    DDTickPresenterExceptionSiteEnumerationAdvance = 26,
+    DDTickPresenterExceptionSiteTransactionCommit = 27,
+    DDTickPresenterExceptionSitePostCommitTicksRead = 28,
+    DDTickPresenterExceptionSitePostCommitTicksMutation = 29,
+    DDTickPresenterExceptionSiteAnimationResultReleaseActionZero = 30,
+    DDTickPresenterExceptionSiteGroupTargetsReleaseActionZero = 31,
+    DDTickPresenterExceptionSiteRetainedLayerReleaseActionZero = 32,
+    DDTickPresenterExceptionSiteEnumerationCollectionReleaseActionZero = 33,
+    DDTickPresenterExceptionSiteFinalSelectedCollectionReleaseActionZero = 34,
+    DDTickPresenterExceptionSiteFinalWindowLayerReleaseActionZero = 35,
+    DDTickPresenterExceptionSiteFinalWindowReleaseActionZero = 36,
+    DDTickPresenterExceptionSiteFinalTimerReleaseActionZero = 37,
+    DDTickPresenterExceptionSiteUnprotectedRange = 38,
+};
+
+typedef struct {
+    BOOL shouldSwallowExpectedException;
+    BOOL shouldContinueFinalTimerCleanup;
+    BOOL shouldResumeUnwind;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+    BOOL exceptionWouldPropagate;
+    BOOL retainedTimerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedTimerReleaseCouldBeBypassed;
+    BOOL timerInvalidateCouldHaveAppliedBeforeException;
+    BOOL ticksMutationCouldHaveAppliedBeforeException;
+    BOOL temporaryWindowAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedWindowDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedWindowReleaseCouldBeBypassed;
+    BOOL temporaryWindowLayerAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedWindowLayerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedWindowLayerReleaseCouldBeBypassed;
+    BOOL temporaryGateAnimationAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryGateAnimationReleaseCouldBeBypassed;
+    BOOL temporaryTargetsAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryTargetsReleaseCouldBeBypassed;
+    BOOL temporaryTargetsProviderAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryTargetsProviderReleaseCouldBeBypassed;
+    BOOL retainedTargetsProviderDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedTargetsProviderReleaseCouldBeBypassed;
+    BOOL temporarySelectedCollectionAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporarySelectedCollectionReleaseCouldBeBypassed;
+    BOOL selectedCollectionDefinitelyCommittedBeforeProtectedCall;
+    BOOL selectedCollectionReleaseCouldBeBypassed;
+    BOOL phaseMutationCouldHaveAppliedBeforeException;
+    BOOL phaseMutationDefinitelyCompletedBeforeProtectedCall;
+    BOOL transactionBeginCouldHaveAppliedBeforeException;
+    BOOL transactionBeginDefinitelyCompletedBeforeProtectedCall;
+    BOOL disableActionsCouldHaveAppliedBeforeException;
+    BOOL disableActionsDefinitelyCompletedBeforeProtectedCall;
+    BOOL enumerationCollectionRetainDefinitelyCommittedBeforeProtectedCall;
+    BOOL enumerationCollectionReleaseCouldBeBypassed;
+    BOOL retainedLayerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedLayerReleaseCouldBeBypassed;
+    BOOL temporaryOpacityAnimationAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryOpacityAnimationReleaseCouldBeBypassed;
+    BOOL opacityAnimationDefinitelyAbsentBeforeProtectedCall;
+    BOOL temporaryGroupTargetsAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryGroupTargetsReleaseCouldBeBypassed;
+    BOOL retainedGroupTargetsDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedGroupTargetsReleaseCouldBeBypassed;
+    BOOL groupOpacityMutationCouldHaveAppliedBeforeException;
+    BOOL opacityMutationCouldHaveAppliedBeforeException;
+    BOOL transactionCommitCouldHaveAppliedBeforeException;
+    BOOL transactionCommitDefinitelyCompletedBeforeProtectedCall;
+    BOOL actionZeroCurrentReleaseCouldHaveStartedBeforeException;
+} DDTickPresenterExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1848,6 +1942,7 @@ FOUNDATION_EXPORT DDSplashPresentationExceptionOutcome DDResolveSplashPresentati
 FOUNDATION_EXPORT DDSplashOpacityTransactionExceptionOutcome DDResolveSplashOpacityTransactionExceptionOutcome(DDSplashOpacityTransactionExceptionSite site);
 FOUNDATION_EXPORT DDSplashNudgePreparationExceptionOutcome DDResolveSplashNudgePreparationExceptionOutcome(DDSplashNudgePreparationExceptionSite site);
 FOUNDATION_EXPORT DDRestoreTargetsExceptionOutcome DDResolveRestoreTargetsExceptionOutcome(DDRestoreTargetsExceptionSite site);
+FOUNDATION_EXPORT DDTickPresenterExceptionOutcome DDResolveTickPresenterExceptionOutcome(DDTickPresenterExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);

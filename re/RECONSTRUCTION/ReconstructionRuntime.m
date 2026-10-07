@@ -3342,6 +3342,296 @@ DDRestoreTargetsExceptionOutcome DDResolveRestoreTargetsExceptionOutcome(DDResto
     return outcome;
 }
 
+DDTickPresenterExceptionOutcome DDResolveTickPresenterExceptionOutcome(DDTickPresenterExceptionSite site) {
+    // 34F28 LSDA 0x113D8C has 26 call-site entries. Typed action-5 ranges converge at
+    // 0x35314; expected type begin/end-catches and jumps to 0x352A8, so the retained timer/input
+    // receives its final release while the selected collection, window layer and window cleanup
+    // immediately before it are skipped. Action-0 release ranges and nonmatching typed exceptions
+    // resume unwind at 0x3530C instead and do not enter that final timer-cleanup continuation.
+    DDTickPresenterExceptionOutcome outcome = {0};
+    BOOL typedSite = site >= DDTickPresenterExceptionSiteWindowAcquisition &&
+                     site <= DDTickPresenterExceptionSitePostCommitTicksMutation;
+    if (typedSite) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.shouldContinueFinalTimerCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        outcome.retainedTimerDefinitelyCommittedBeforeProtectedCall = YES;
+    }
+
+    if (site == DDTickPresenterExceptionSiteWindowAcquisition) {
+        outcome.temporaryWindowAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.retainedWindowReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteMissingWindowInvalidate) {
+        outcome.timerInvalidateCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteNoopCheck) {
+        outcome.retainedWindowDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteNoopTickMaintenance) {
+        outcome.retainedWindowDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowReleaseCouldBeBypassed = YES;
+        outcome.ticksMutationCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+
+    BOOL windowSite = site >= DDTickPresenterExceptionSiteWindowLayerAcquisition &&
+                      site <= DDTickPresenterExceptionSitePostCommitTicksMutation;
+    if (windowSite) {
+        outcome.retainedWindowDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowReleaseCouldBeBypassed = YES;
+    }
+    if (site == DDTickPresenterExceptionSiteWindowLayerAcquisition) {
+        outcome.temporaryWindowLayerAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.retainedWindowLayerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+
+    BOOL windowLayerSite = site >= DDTickPresenterExceptionSiteWindowHiddenCheck &&
+                           site <= DDTickPresenterExceptionSitePostCommitTicksMutation;
+    if (windowLayerSite) {
+        outcome.retainedWindowLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowLayerReleaseCouldBeBypassed = YES;
+    }
+    if (site == DDTickPresenterExceptionSiteWindowHiddenCheck) {
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteWindowOpacityAnimationLookup) {
+        outcome.temporaryGateAnimationAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryGateAnimationReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteTargetsPresenceProbe) {
+        outcome.temporaryTargetsAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryTargetsReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteTargetsProviderAcquisition) {
+        outcome.temporaryTargetsProviderAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryTargetsProviderReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteTargetsCollectionAcquisition) {
+        outcome.retainedTargetsProviderDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedTargetsProviderReleaseCouldBeBypassed = YES;
+        outcome.temporarySelectedCollectionAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporarySelectedCollectionReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteFallbackOpacityAltGate) {
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteFallbackCollectionAcquisition) {
+        outcome.temporarySelectedCollectionAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporarySelectedCollectionReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+
+    BOOL selectedCollectionSite = site >= DDTickPresenterExceptionSiteSelectedCollectionCount &&
+                                  site <= DDTickPresenterExceptionSitePostCommitTicksMutation;
+    if (selectedCollectionSite) {
+        outcome.selectedCollectionDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedCollectionReleaseCouldBeBypassed = YES;
+    }
+    if (site == DDTickPresenterExceptionSiteSelectedCollectionCount) {
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSitePhaseReadAndMutation) {
+        outcome.phaseMutationCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+
+    BOOL postPhaseSite = site >= DDTickPresenterExceptionSitePhaseOpacityPreparation &&
+                         site <= DDTickPresenterExceptionSitePostCommitTicksMutation;
+    if (postPhaseSite) {
+        outcome.phaseMutationDefinitelyCompletedBeforeProtectedCall = YES;
+    }
+    if (site == DDTickPresenterExceptionSitePhaseOpacityPreparation) {
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteTransactionBegin) {
+        outcome.transactionBeginCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+
+    BOOL postBeginSite = site >= DDTickPresenterExceptionSiteDisableActions &&
+                         site <= DDTickPresenterExceptionSitePostCommitTicksMutation;
+    if (postBeginSite) {
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+    }
+    if (site == DDTickPresenterExceptionSiteDisableActions) {
+        outcome.disableActionsCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+
+    BOOL postDisableSite = site >= DDTickPresenterExceptionSiteInitialEnumerationRead &&
+                           site <= DDTickPresenterExceptionSitePostCommitTicksMutation;
+    if (postDisableSite) {
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+    }
+    BOOL enumerationSite = site >= DDTickPresenterExceptionSiteInitialEnumerationRead &&
+                           site <= DDTickPresenterExceptionSiteEnumerationAdvance;
+    if (enumerationSite) {
+        outcome.enumerationCollectionRetainDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.enumerationCollectionReleaseCouldBeBypassed = YES;
+    }
+    if (site == DDTickPresenterExceptionSiteInitialEnumerationRead) {
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteEnumerationMutationOrTypeFilter) {
+        return outcome;
+    }
+
+    BOOL retainedLayerSite = site >= DDTickPresenterExceptionSitePerLayerAnimationLookup &&
+                             site <= DDTickPresenterExceptionSiteOpacityMutation;
+    if (retainedLayerSite) {
+        outcome.retainedLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedLayerReleaseCouldBeBypassed = YES;
+    }
+    if (site == DDTickPresenterExceptionSitePerLayerAnimationLookup) {
+        outcome.temporaryOpacityAnimationAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryOpacityAnimationReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+
+    BOOL noAnimationSite = site >= DDTickPresenterExceptionSitePerLayerOpacityAltGate &&
+                           site <= DDTickPresenterExceptionSiteOpacityMutation;
+    if (noAnimationSite) {
+        outcome.opacityAnimationDefinitelyAbsentBeforeProtectedCall = YES;
+    }
+    if (site == DDTickPresenterExceptionSitePerLayerOpacityAltGate) {
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteGroupTargetsAcquisition) {
+        outcome.temporaryGroupTargetsAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryGroupTargetsReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteGroupOpacityComparison) {
+        outcome.retainedGroupTargetsDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedGroupTargetsReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteGroupOpacityMutation) {
+        outcome.groupOpacityMutationCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteOpacityMutation) {
+        outcome.groupOpacityMutationCouldHaveAppliedBeforeException = YES;
+        outcome.opacityMutationCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteEnumerationAdvance) {
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteTransactionCommit) {
+        outcome.transactionCommitCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSitePostCommitTicksRead) {
+        outcome.transactionCommitDefinitelyCompletedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSitePostCommitTicksMutation) {
+        outcome.transactionCommitDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.ticksMutationCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+
+    BOOL actionZeroSite = site >= DDTickPresenterExceptionSiteAnimationResultReleaseActionZero &&
+                          site <= DDTickPresenterExceptionSiteFinalTimerReleaseActionZero;
+    if (actionZeroSite) {
+        outcome.shouldResumeUnwind = YES;
+        outcome.exceptionWouldPropagate = YES;
+        outcome.retainedTimerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.actionZeroCurrentReleaseCouldHaveStartedBeforeException = YES;
+    }
+    if (site == DDTickPresenterExceptionSiteAnimationResultReleaseActionZero) {
+        outcome.retainedWindowDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowReleaseCouldBeBypassed = YES;
+        outcome.retainedWindowLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowLayerReleaseCouldBeBypassed = YES;
+        outcome.selectedCollectionDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedCollectionReleaseCouldBeBypassed = YES;
+        outcome.enumerationCollectionRetainDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.enumerationCollectionReleaseCouldBeBypassed = YES;
+        outcome.retainedLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedLayerReleaseCouldBeBypassed = YES;
+        outcome.retainedTimerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteGroupTargetsReleaseActionZero) {
+        outcome.retainedWindowDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowReleaseCouldBeBypassed = YES;
+        outcome.retainedWindowLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowLayerReleaseCouldBeBypassed = YES;
+        outcome.selectedCollectionDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedCollectionReleaseCouldBeBypassed = YES;
+        outcome.enumerationCollectionRetainDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.enumerationCollectionReleaseCouldBeBypassed = YES;
+        outcome.retainedLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedLayerReleaseCouldBeBypassed = YES;
+        outcome.retainedGroupTargetsDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedTimerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteRetainedLayerReleaseActionZero) {
+        outcome.retainedWindowDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowReleaseCouldBeBypassed = YES;
+        outcome.retainedWindowLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowLayerReleaseCouldBeBypassed = YES;
+        outcome.selectedCollectionDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedCollectionReleaseCouldBeBypassed = YES;
+        outcome.enumerationCollectionRetainDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.enumerationCollectionReleaseCouldBeBypassed = YES;
+        outcome.retainedLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedTimerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteEnumerationCollectionReleaseActionZero) {
+        outcome.retainedWindowDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowReleaseCouldBeBypassed = YES;
+        outcome.retainedWindowLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowLayerReleaseCouldBeBypassed = YES;
+        outcome.selectedCollectionDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedCollectionReleaseCouldBeBypassed = YES;
+        outcome.enumerationCollectionRetainDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedTimerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteFinalSelectedCollectionReleaseActionZero) {
+        outcome.retainedWindowDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowReleaseCouldBeBypassed = YES;
+        outcome.retainedWindowLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowLayerReleaseCouldBeBypassed = YES;
+        outcome.retainedTimerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteFinalWindowLayerReleaseActionZero) {
+        outcome.retainedWindowDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedWindowReleaseCouldBeBypassed = YES;
+        outcome.retainedWindowLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedTimerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteFinalWindowReleaseActionZero) {
+        outcome.retainedWindowDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedTimerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteFinalTimerReleaseActionZero) {
+        return outcome;
+    }
+    if (site == DDTickPresenterExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
