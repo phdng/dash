@@ -650,6 +650,27 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDPropertyListReaderExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDKeyboardLostRecoveryExceptionSite) {
+    DDKeyboardLostRecoveryExceptionSiteNone = 0,
+    DDKeyboardLostRecoveryExceptionSiteSharedControllerAcquisition = 1,
+    DDKeyboardLostRecoveryExceptionSiteSceneSummaryAcquisition = 2,
+    DDKeyboardLostRecoveryExceptionSiteUnprotectedRange = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldUseFallbackSceneSummary;
+    BOOL shouldContinueMarkerAndRebuildFlow;
+    BOOL temporaryControllerAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryControllerReleaseCouldBeBypassed;
+    BOOL retainedControllerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedControllerReleaseCouldBeBypassed;
+    BOOL temporarySceneSummaryAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporarySceneSummaryReleaseCouldBeBypassed;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDKeyboardLostRecoveryExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1247,6 +1268,7 @@ FOUNDATION_EXPORT DDDisplayScaleCapExceptionOutcome DDResolveDisplayScaleCapExce
 FOUNDATION_EXPORT DDPropertyListWriterExceptionOutcome DDResolvePropertyListWriterExceptionOutcome(DDPropertyListWriterExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneHostConstructionExceptionOutcome DDResolveKeyPaneHostConstructionExceptionOutcome(DDKeyPaneHostConstructionExceptionSite site);
 FOUNDATION_EXPORT DDPropertyListReaderExceptionOutcome DDResolvePropertyListReaderExceptionOutcome(DDPropertyListReaderExceptionSite site);
+FOUNDATION_EXPORT DDKeyboardLostRecoveryExceptionOutcome DDResolveKeyboardLostRecoveryExceptionOutcome(DDKeyboardLostRecoveryExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

@@ -2239,6 +2239,40 @@ DDPropertyListReaderExceptionOutcome DDResolvePropertyListReaderExceptionOutcome
     return outcome;
 }
 
+DDKeyboardLostRecoveryExceptionOutcome DDResolveKeyboardLostRecoveryExceptionOutcome(DDKeyboardLostRecoveryExceptionSite site) {
+    // 37A7C LSDA 0x11418C has one action-5 range around DDz2 shared acquisition and
+    // keyPaneSceneSummary acquisition. Expected catch at 0x37C20 does not abort recovery: it
+    // begin/end-catches, substitutes the static fallback summary into x20, and jumps to 0x37B18
+    // so the existing NSFileManager marker/rebuild flow continues. The semantic split is at
+    // mov x21,x0 (0x37ADC): shared-acquisition exceptions occur before a committed controller,
+    // while summary-acquisition exceptions occur with retained DDz2 x21 already committed.
+    DDKeyboardLostRecoveryExceptionOutcome outcome = {0};
+    if (site == DDKeyboardLostRecoveryExceptionSiteSharedControllerAcquisition) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldUseFallbackSceneSummary = YES;
+        outcome.shouldContinueMarkerAndRebuildFlow = YES;
+        outcome.temporaryControllerAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryControllerReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDKeyboardLostRecoveryExceptionSiteSceneSummaryAcquisition) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldUseFallbackSceneSummary = YES;
+        outcome.shouldContinueMarkerAndRebuildFlow = YES;
+        outcome.retainedControllerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedControllerReleaseCouldBeBypassed = YES;
+        outcome.temporarySceneSummaryAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporarySceneSummaryReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDKeyboardLostRecoveryExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
