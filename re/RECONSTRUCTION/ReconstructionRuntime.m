@@ -2460,6 +2460,39 @@ DDNudgePresentGateExceptionOutcome DDResolveNudgePresentGateExceptionOutcome(DDN
     return outcome;
 }
 
+DDDisplayBoundsFallbackExceptionOutcome DDResolveDisplayBoundsFallbackExceptionOutcome(DDDisplayBoundsFallbackExceptionSite site) {
+    // 36E00 LSDA 0x11409C has one typed action-5 range 0x36E18..0x36E2C around
+    // +[UIScreen mainScreen], retain-autoreleased UIScreen, x19 commit, and bounds. Expected catch
+    // at 0x36E80 begin/end-catches and jumps to 0x36E60, which writes d0=0.0 and returns. The
+    // range ends before d2/d3 are copied into d8/d9 and before normal x19 release. Thus no bounds
+    // dimensions are committed on the caught path. The semantic split is mov x19,x0 at 0x36E24.
+    DDDisplayBoundsFallbackExceptionOutcome outcome = {0};
+    if (site == DDDisplayBoundsFallbackExceptionSiteMainScreenAcquisition) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnZero = YES;
+        outcome.shouldIgnoreBoundsResult = YES;
+        outcome.boundsDimensionsDefinitelyUncommittedBeforeCatch = YES;
+        outcome.temporaryScreenAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryScreenReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDDisplayBoundsFallbackExceptionSiteBoundsRead) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnZero = YES;
+        outcome.shouldIgnoreBoundsResult = YES;
+        outcome.boundsDimensionsDefinitelyUncommittedBeforeCatch = YES;
+        outcome.retainedScreenDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedScreenReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDDisplayBoundsFallbackExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

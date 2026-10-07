@@ -775,6 +775,26 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDNudgePresentGateExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDDisplayBoundsFallbackExceptionSite) {
+    DDDisplayBoundsFallbackExceptionSiteNone = 0,
+    DDDisplayBoundsFallbackExceptionSiteMainScreenAcquisition = 1,
+    DDDisplayBoundsFallbackExceptionSiteBoundsRead = 2,
+    DDDisplayBoundsFallbackExceptionSiteUnprotectedRange = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnZero;
+    BOOL shouldIgnoreBoundsResult;
+    BOOL boundsDimensionsDefinitelyUncommittedBeforeCatch;
+    BOOL temporaryScreenAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryScreenReleaseCouldBeBypassed;
+    BOOL retainedScreenDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedScreenReleaseCouldBeBypassed;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDDisplayBoundsFallbackExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1445,6 +1465,7 @@ FOUNDATION_EXPORT DDDropSplashIfOverdueExceptionOutcome DDResolveDropSplashIfOve
 FOUNDATION_EXPORT DDDropServerNoticeNowExceptionOutcome DDResolveDropServerNoticeNowExceptionOutcome(DDDropServerNoticeNowExceptionSite site);
 FOUNDATION_EXPORT DDDropOverdueNoticeExceptionOutcome DDResolveDropOverdueNoticeExceptionOutcome(DDDropOverdueNoticeExceptionSite site);
 FOUNDATION_EXPORT DDNudgePresentGateExceptionOutcome DDResolveNudgePresentGateExceptionOutcome(DDNudgePresentGateExceptionSite site);
+FOUNDATION_EXPORT DDDisplayBoundsFallbackExceptionOutcome DDResolveDisplayBoundsFallbackExceptionOutcome(DDDisplayBoundsFallbackExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
