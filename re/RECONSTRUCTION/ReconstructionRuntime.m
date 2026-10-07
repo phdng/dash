@@ -1363,6 +1363,50 @@ DDBundleNormalizationExceptionOutcome DDResolveBundleNormalizationExceptionOutco
     return outcome;
 }
 
+DDDismissExceptionOutcome DDResolveDismissExceptionOutcome(DDDismissExceptionSite site) {
+    // 3D990 LSDA 0x1147A0 mixes typed local catches with action-0 cleanup/unwind ranges.
+    // Private teardown catches jump directly to the bridge-off phase, while publish catches
+    // continue later slots. Cleanup-only and resetHostingState exceptions are not swallowed.
+    DDDismissExceptionOutcome outcome = {0};
+    switch (site) {
+        case DDDismissExceptionSitePrimaryPrivateTeardown:
+            outcome.shouldSwallowException = YES;
+            outcome.shouldSkipRemainingPrivateTeardown = YES;
+            outcome.shouldContinueBridgeOffPhase = YES;
+            outcome.primaryControllerIvarWasAlreadyCleared = YES;
+            outcome.normalPrivateTeardownCleanupWouldBeBypassed = YES;
+            outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+            break;
+        case DDDismissExceptionSiteSecondaryPrivateTeardown:
+            outcome.shouldSwallowException = YES;
+            outcome.shouldSkipRemainingPrivateTeardown = YES;
+            outcome.shouldContinueBridgeOffPhase = YES;
+            outcome.primaryControllerIvarWasAlreadyCleared = YES;
+            outcome.secondaryControllerIvarsWereAlreadyCleared = YES;
+            outcome.normalPrivateTeardownCleanupWouldBeBypassed = YES;
+            outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+            break;
+        case DDDismissExceptionSiteSlotZeroBridgeOffPublish:
+            outcome.shouldSwallowException = YES;
+            outcome.shouldContinueLaterSlotPublications = YES;
+            outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+            break;
+        case DDDismissExceptionSiteLaterSlotBridgeOffPublish:
+            outcome.shouldSwallowException = YES;
+            outcome.shouldContinueSlotLoop = YES;
+            outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+            break;
+        case DDDismissExceptionSitePrivateCleanupRelease:
+        case DDDismissExceptionSiteResetHostingState:
+            outcome.exceptionWouldPropagate = YES;
+            break;
+        case DDDismissExceptionSiteNone:
+        default:
+            break;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

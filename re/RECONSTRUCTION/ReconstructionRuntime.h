@@ -149,6 +149,29 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDBundleNormalizationExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDDismissExceptionSite) {
+    DDDismissExceptionSiteNone = 0,
+    DDDismissExceptionSitePrimaryPrivateTeardown = 1,
+    DDDismissExceptionSiteSecondaryPrivateTeardown = 2,
+    DDDismissExceptionSitePrivateCleanupRelease = 3,
+    DDDismissExceptionSiteSlotZeroBridgeOffPublish = 4,
+    DDDismissExceptionSiteLaterSlotBridgeOffPublish = 5,
+    DDDismissExceptionSiteResetHostingState = 6,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldSkipRemainingPrivateTeardown;
+    BOOL shouldContinueBridgeOffPhase;
+    BOOL shouldContinueLaterSlotPublications;
+    BOOL shouldContinueSlotLoop;
+    BOOL primaryControllerIvarWasAlreadyCleared;
+    BOOL secondaryControllerIvarsWereAlreadyCleared;
+    BOOL normalPrivateTeardownCleanupWouldBeBypassed;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDDismissExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -726,6 +749,7 @@ FOUNDATION_EXPORT DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdenti
 FOUNDATION_EXPORT DDSceneResolverExceptionOutcome DDResolveSceneResolverExceptionOutcome(DDSceneResolverExceptionSite site);
 FOUNDATION_EXPORT DDSceneDiagnosticSummaryExceptionOutcome DDResolveSceneDiagnosticSummaryExceptionOutcome(DDSceneDiagnosticSummaryExceptionSite site);
 FOUNDATION_EXPORT DDBundleNormalizationExceptionOutcome DDResolveBundleNormalizationExceptionOutcome(DDBundleNormalizationExceptionSite site);
+FOUNDATION_EXPORT DDDismissExceptionOutcome DDResolveDismissExceptionOutcome(DDDismissExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
