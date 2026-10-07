@@ -188,6 +188,25 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDConvertSlotToCarPlayExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDSpikeHostSlotsLandscapeExceptionSite) {
+    DDSpikeHostSlotsLandscapeExceptionSiteNone = 0,
+    DDSpikeHostSlotsLandscapeExceptionSiteTypedBeforeAuxStateCommit = 1,
+    DDSpikeHostSlotsLandscapeExceptionSiteTypedAfterAuxStateCommit = 2,
+    DDSpikeHostSlotsLandscapeExceptionSiteActionZeroCleanup = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldClearParsedLandscapeOrientation;
+    BOOL shouldResolveFallbackOrientation;
+    BOOL shouldContinueHosting;
+    BOOL swapStateWouldRemainCommitted;
+    BOOL crossSwapStateWouldRemainCommitted;
+    BOOL rotationStateWouldRemainCommitted;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDSpikeHostSlotsLandscapeExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -767,6 +786,7 @@ FOUNDATION_EXPORT DDSceneDiagnosticSummaryExceptionOutcome DDResolveSceneDiagnos
 FOUNDATION_EXPORT DDBundleNormalizationExceptionOutcome DDResolveBundleNormalizationExceptionOutcome(DDBundleNormalizationExceptionSite site);
 FOUNDATION_EXPORT DDDismissExceptionOutcome DDResolveDismissExceptionOutcome(DDDismissExceptionSite site);
 FOUNDATION_EXPORT DDConvertSlotToCarPlayExceptionOutcome DDResolveConvertSlotToCarPlayExceptionOutcome(DDConvertSlotToCarPlayExceptionSite site);
+FOUNDATION_EXPORT DDSpikeHostSlotsLandscapeExceptionOutcome DDResolveSpikeHostSlotsLandscapeExceptionOutcome(DDSpikeHostSlotsLandscapeExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

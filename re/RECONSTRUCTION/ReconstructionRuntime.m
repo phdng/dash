@@ -1431,6 +1431,34 @@ DDConvertSlotToCarPlayExceptionOutcome DDResolveConvertSlotToCarPlayExceptionOut
     return outcome;
 }
 
+DDSpikeHostSlotsLandscapeExceptionOutcome DDResolveSpikeHostSlotsLandscapeExceptionOutcome(DDSpikeHostSlotsLandscapeExceptionSite site) {
+    // 3CC44 LSDA 0x11468C funnels every action-5 landscape-coordination range through common
+    // typed catch 0x3D4E0. The expected discriminator clears only parsed orientation and rejoins
+    // 0x3D21C, which resolves a fallback orientation before normal slot creation/hosting continues.
+    // Action-0 cleanup ranges and nonmatching catch types resume unwind instead of using that path.
+    DDSpikeHostSlotsLandscapeExceptionOutcome outcome = {0};
+    if (site == DDSpikeHostSlotsLandscapeExceptionSiteTypedBeforeAuxStateCommit ||
+        site == DDSpikeHostSlotsLandscapeExceptionSiteTypedAfterAuxStateCommit) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldClearParsedLandscapeOrientation = YES;
+        outcome.shouldResolveFallbackOrientation = YES;
+        outcome.shouldContinueHosting = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site == DDSpikeHostSlotsLandscapeExceptionSiteTypedAfterAuxStateCommit) {
+            // The common catch clears qword_163D58 only. Earlier writes to swap/cswap/rotation
+            // at 0x3D174..0x3D194 are not rolled back by later protected failures.
+            outcome.swapStateWouldRemainCommitted = YES;
+            outcome.crossSwapStateWouldRemainCommitted = YES;
+            outcome.rotationStateWouldRemainCommitted = YES;
+        }
+        return outcome;
+    }
+    if (site == DDSpikeHostSlotsLandscapeExceptionSiteActionZeroCleanup) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
