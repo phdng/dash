@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-155 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-156 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-86 (session-155): session-154 commit `2ca7d2a` đã sync origin; user yêu cầu tiếp tục nhưng chưa explicit xác nhận CI của batch đó trong turn này. Executable target thêm data-only `3640C` `+[DDz1 carPlayConnected]` typed-false outcome từ LSDA `0x113FD0` + raw ARM64. Một action-5 range `0x36418..0x3643C` bao AVExternalDevice class lookup, optional current-device send và retain-autoreleased result; range kết thúc trước pointer test/boolean commit/release. Expected catch force false; class-lookup site không có device ownership, current-device site có thể bypass temporary retained-device release. Nonmatching unwind `0x36470`; unprotected tail propagate. Không live class/device query, ownership mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-87 (session-156): GitHub Actions session-155 (`0be4c67`) đã xanh theo user. Executable target thêm data-only `361C4` shell-rebuild block catch-all outcome từ LSDA `0x113FBC` + raw ARM64. Một action-1 range `0x361D8..0x361E4` bao `teardownWindow` + `buildShellIfNeeded`; landing `0x361FC` unconditional begin/end-catch rồi return ngay. Range kết thúc đúng trước captured result-byte store `0x361E4..0x361EC`, nên caught path không ghi captured byte. Teardown-site có thể giữ partial teardown side effects; build-site chỉ reachable sau teardown return và có thể giữ partial build side effects. Unprotected store/tail propagate. Không teardown/build execution, block-state mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-155):
-- R-154 data-only 3640C `carPlayConnected` typed-false exception outcome: one typed range→false; exact class-lookup vs current-device acquisition timing, uncommitted boolean result, temporary-device release bypass, unprotected propagation and nonmatching unwind recorded.
+## LAST COMPLETED TASK (session-156):
+- R-155 data-only 361C4 shell-rebuild block catch-all outcome: action-1 catch-all→immediate return before captured result-byte store; teardown/build side-effect timing and unprotected propagation recorded.
 
 ## CURRENT TASK:
-- R-154 hoàn tất local; commit-only handoff. Session-154 commit `2ca7d2a` is synced with origin; this turn did not explicitly confirm its CI result. Assistant không push.
+- R-155 hoàn tất local; commit-only handoff. User confirmed session-155 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- R-155: inspect `361C4 -> 0x113FBC`, block helper around `teardownWindow` + `buildShellIfNeeded`. Exact action-1 catch-all `0x361D8..0x361E4 -> 0x361FC`, then unprotected tail `0x361E4..0x3620C`. Catch return occurs before the captured result byte store at `0x361E4..0x361EC`, so covered exceptions swallow+return and leave that byte unmodified while preserving any teardown/build side effect already applied before throw. After R-155, `36158 -> 0x113FA8` has action-1 catch-all only around `removeFromSuperview` (`0x3616C..0x36170 -> 0x361B8`); catch resumes at `0x36170`, continuing weak-owner clearing and `nudgePresent:@"splash.fade"` rather than returning. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
+- Sau compiler xanh cho session-156 batch, R-156: inspect `36158 -> 0x113FA8`. Exact action-1 catch-all `0x3616C..0x36170 -> 0x361B8` protects only `removeFromSuperview`; landing unconditionally begin/end-catches then branches back to `0x36170`, so expected catch does NOT return. It continues weak-owner acquisition, conditional owner-slot clear/release, `nudgePresent:@"splash.fade"`, and final weak-retained-owner release. Record possible remove side effect before throw, continued cleanup/nudge after catch, and unprotected later propagation. Next earlier LSDA-bearing function is `35FBC -> 0x113F94`, a larger UIView animation/capture-cleanup helper. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-155):
+## FILES CHANGED (session-156):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-155.md`.
+- Mới: `LOG/session-156.md`.
 
 ## TEST STATUS:
-Session-154 commit `2ca7d2a` is synchronized with origin; no explicit CI result was reported in this turn. Session-155 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-155 GitHub Actions build GREEN (`0be4c67`, user-confirmed). Session-156 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.

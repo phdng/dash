@@ -2858,6 +2858,33 @@ DDCarPlayConnectedExceptionOutcome DDResolveCarPlayConnectedExceptionOutcome(DDC
     return outcome;
 }
 
+DDShellRebuildBlockExceptionOutcome DDResolveShellRebuildBlockExceptionOutcome(DDShellRebuildBlockExceptionSite site) {
+    // 361C4 LSDA 0x113FBC has one action-1 catch-all range 0x361D8..0x361E4 around
+    // teardownWindow and buildShellIfNeeded. The range ends exactly before the captured block-result
+    // byte store at 0x361E4..0x361EC. Landing 0x361FC has no discriminator: it begin/end-catches
+    // and returns immediately, so the captured result byte remains untouched on the caught path.
+    DDShellRebuildBlockExceptionOutcome outcome = {0};
+    if (site == DDShellRebuildBlockExceptionSiteTeardownWindowSend) {
+        outcome.shouldSwallowAnyException = YES;
+        outcome.shouldReturnImmediately = YES;
+        outcome.capturedResultByteStoreWouldBeSkipped = YES;
+        outcome.teardownWindowCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDShellRebuildBlockExceptionSiteBuildShellIfNeededSend) {
+        outcome.shouldSwallowAnyException = YES;
+        outcome.shouldReturnImmediately = YES;
+        outcome.capturedResultByteStoreWouldBeSkipped = YES;
+        outcome.teardownWindowDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.buildShellCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDShellRebuildBlockExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
