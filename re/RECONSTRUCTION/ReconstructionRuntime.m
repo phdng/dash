@@ -2114,6 +2114,89 @@ DDPropertyListWriterExceptionOutcome DDResolvePropertyListWriterExceptionOutcome
     return outcome;
 }
 
+DDKeyPaneHostConstructionExceptionOutcome DDResolveKeyPaneHostConstructionExceptionOutcome(DDKeyPaneHostConstructionExceptionSite site) {
+    // 38240 LSDA 0x1141D0 has ten action-5 ranges spanning container construction, key creation,
+    // geometry/state commit, transparency, and late activation. Expected catches converge at 0x388E4.
+    // The catch explicitly nil/releases globals C88, C90, and C78, invokes the retained controller's
+    // teardown path, forces result=false, releases local aux-scene/controller ownerships, and rejoins
+    // splitHost/input cleanup. It does not explicitly clear C68 or C70, nor roll back size/flag/time/
+    // generation stores or already-scheduled dispatch work. This resolver records only those local
+    // control-flow facts and site timing; it does not infer additional teardown helper side effects.
+    DDKeyPaneHostConstructionExceptionOutcome outcome = {0};
+    BOOL typedSite =
+        site == DDKeyPaneHostConstructionExceptionSiteOuterViewBackgroundSetup ||
+        site == DDKeyPaneHostConstructionExceptionSiteOuterViewOpaqueSetter ||
+        site == DDKeyPaneHostConstructionExceptionSiteInnerViewAndSceneEmbedding ||
+        site == DDKeyPaneHostConstructionExceptionSiteInnerOpaqueAndHierarchyInsertion ||
+        site == DDKeyPaneHostConstructionExceptionSiteHideGapRead ||
+        site == DDKeyPaneHostConstructionExceptionSiteLeftHideKeyCreation ||
+        site == DDKeyPaneHostConstructionExceptionSiteRightHideKeyCreationAndInsertion ||
+        site == DDKeyPaneHostConstructionExceptionSiteGeometryAndStateCommit ||
+        site == DDKeyPaneHostConstructionExceptionSiteTransparencyWrapper ||
+        site == DDKeyPaneHostConstructionExceptionSiteFrontingAndActivation;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnFalse = YES;
+        outcome.shouldClearLeftKeyGlobal = YES;
+        outcome.shouldClearRightKeyGlobal = YES;
+        outcome.shouldInvokeAuxSceneTeardown = YES;
+        outcome.shouldClearOuterHostGlobal = YES;
+        outcome.shouldContinueAuxSceneAndControllerCleanup = YES;
+        outcome.shouldContinueSplitHostAndInputCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        outcome.outerViewReleaseCouldBeBypassed = YES;
+        if (site >= DDKeyPaneHostConstructionExceptionSiteInnerViewAndSceneEmbedding) {
+            outcome.innerViewReleaseCouldBeBypassed = YES;
+        }
+        if (site == DDKeyPaneHostConstructionExceptionSiteOuterViewBackgroundSetup ||
+            site == DDKeyPaneHostConstructionExceptionSiteInnerViewAndSceneEmbedding) {
+            outcome.temporaryColorReleaseCouldBeBypassed = YES;
+        }
+        if (site >= DDKeyPaneHostConstructionExceptionSiteInnerOpaqueAndHierarchyInsertion) {
+            outcome.hostHierarchyCouldHaveBeenMutatedBeforeException = YES;
+        }
+        if (site >= DDKeyPaneHostConstructionExceptionSiteHideGapRead) {
+            outcome.hostHierarchyDefinitelyInsertedBeforeProtectedCall = YES;
+        }
+        if (site >= DDKeyPaneHostConstructionExceptionSiteRightHideKeyCreationAndInsertion) {
+            outcome.leftKeyReleaseCouldBeBypassed = YES;
+            outcome.rightKeyReleaseCouldBeBypassed = YES;
+            outcome.keySubviewsCouldHaveBeenInsertedBeforeException = YES;
+        }
+        if (site >= DDKeyPaneHostConstructionExceptionSiteGeometryAndStateCommit) {
+            outcome.leftKeyReleaseCouldBeBypassed = YES;
+            outcome.rightKeyReleaseCouldBeBypassed = YES;
+            outcome.keySubviewsDefinitelyInsertedBeforeProtectedCall = YES;
+            outcome.allFiveViewGlobalsDefinitelyStoredBeforeProtectedCall = YES;
+            outcome.innerViewGlobalNotExplicitlyClearedByCatch = YES;
+            outcome.auxSceneGlobalNotExplicitlyClearedByCatch = YES;
+        }
+        if (site == DDKeyPaneHostConstructionExceptionSiteGeometryAndStateCommit) {
+            outcome.geometrySyncCouldHaveStartedBeforeException = YES;
+            outcome.sizeAndFlagsCouldBePartiallyCommittedBeforeException = YES;
+        }
+        if (site >= DDKeyPaneHostConstructionExceptionSiteTransparencyWrapper) {
+            outcome.geometrySizeAndFlagsDefinitelyCommittedBeforeProtectedCall = YES;
+            outcome.mediaTimeAndGenerationDefinitelyCommittedBeforeProtectedCall = YES;
+            outcome.initialDelayedDispatchesDefinitelyScheduledBeforeProtectedCall = YES;
+        }
+        if (site == DDKeyPaneHostConstructionExceptionSiteTransparencyWrapper) {
+            outcome.transparencyCouldHaveStartedBeforeException = YES;
+        }
+        if (site == DDKeyPaneHostConstructionExceptionSiteFrontingAndActivation) {
+            outcome.transparencyWrapperDefinitelyCompletedBeforeProtectedCall = YES;
+            outcome.fourStaggeredDispatchesDefinitelyScheduledBeforeProtectedCall = YES;
+            outcome.frontingCouldHaveAppliedBeforeException = YES;
+            outcome.activationCouldHaveStartedBeforeException = YES;
+        }
+        return outcome;
+    }
+    if (site == DDKeyPaneHostConstructionExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

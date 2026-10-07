@@ -579,6 +579,56 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDPropertyListWriterExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDKeyPaneHostConstructionExceptionSite) {
+    DDKeyPaneHostConstructionExceptionSiteNone = 0,
+    DDKeyPaneHostConstructionExceptionSiteOuterViewBackgroundSetup = 1,
+    DDKeyPaneHostConstructionExceptionSiteOuterViewOpaqueSetter = 2,
+    DDKeyPaneHostConstructionExceptionSiteInnerViewAndSceneEmbedding = 3,
+    DDKeyPaneHostConstructionExceptionSiteInnerOpaqueAndHierarchyInsertion = 4,
+    DDKeyPaneHostConstructionExceptionSiteHideGapRead = 5,
+    DDKeyPaneHostConstructionExceptionSiteLeftHideKeyCreation = 6,
+    DDKeyPaneHostConstructionExceptionSiteRightHideKeyCreationAndInsertion = 7,
+    DDKeyPaneHostConstructionExceptionSiteGeometryAndStateCommit = 8,
+    DDKeyPaneHostConstructionExceptionSiteTransparencyWrapper = 9,
+    DDKeyPaneHostConstructionExceptionSiteFrontingAndActivation = 10,
+    DDKeyPaneHostConstructionExceptionSiteUnprotectedRange = 11,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnFalse;
+    BOOL shouldClearLeftKeyGlobal;
+    BOOL shouldClearRightKeyGlobal;
+    BOOL shouldInvokeAuxSceneTeardown;
+    BOOL shouldClearOuterHostGlobal;
+    BOOL shouldContinueAuxSceneAndControllerCleanup;
+    BOOL shouldContinueSplitHostAndInputCleanup;
+    BOOL outerViewReleaseCouldBeBypassed;
+    BOOL innerViewReleaseCouldBeBypassed;
+    BOOL leftKeyReleaseCouldBeBypassed;
+    BOOL rightKeyReleaseCouldBeBypassed;
+    BOOL temporaryColorReleaseCouldBeBypassed;
+    BOOL hostHierarchyCouldHaveBeenMutatedBeforeException;
+    BOOL hostHierarchyDefinitelyInsertedBeforeProtectedCall;
+    BOOL keySubviewsCouldHaveBeenInsertedBeforeException;
+    BOOL keySubviewsDefinitelyInsertedBeforeProtectedCall;
+    BOOL allFiveViewGlobalsDefinitelyStoredBeforeProtectedCall;
+    BOOL innerViewGlobalNotExplicitlyClearedByCatch;
+    BOOL auxSceneGlobalNotExplicitlyClearedByCatch;
+    BOOL geometrySyncCouldHaveStartedBeforeException;
+    BOOL sizeAndFlagsCouldBePartiallyCommittedBeforeException;
+    BOOL geometrySizeAndFlagsDefinitelyCommittedBeforeProtectedCall;
+    BOOL mediaTimeAndGenerationDefinitelyCommittedBeforeProtectedCall;
+    BOOL initialDelayedDispatchesDefinitelyScheduledBeforeProtectedCall;
+    BOOL transparencyCouldHaveStartedBeforeException;
+    BOOL transparencyWrapperDefinitelyCompletedBeforeProtectedCall;
+    BOOL fourStaggeredDispatchesDefinitelyScheduledBeforeProtectedCall;
+    BOOL frontingCouldHaveAppliedBeforeException;
+    BOOL activationCouldHaveStartedBeforeException;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDKeyPaneHostConstructionExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1174,6 +1224,7 @@ FOUNDATION_EXPORT DDCNABKeyPaneHideSymbolExceptionOutcome DDResolveCNABKeyPaneHi
 FOUNDATION_EXPORT DDKeyPaneHideGapExceptionOutcome DDResolveKeyPaneHideGapExceptionOutcome(DDKeyPaneHideGapExceptionSite site);
 FOUNDATION_EXPORT DDDisplayScaleCapExceptionOutcome DDResolveDisplayScaleCapExceptionOutcome(DDDisplayScaleCapExceptionSite site);
 FOUNDATION_EXPORT DDPropertyListWriterExceptionOutcome DDResolvePropertyListWriterExceptionOutcome(DDPropertyListWriterExceptionSite site);
+FOUNDATION_EXPORT DDKeyPaneHostConstructionExceptionOutcome DDResolveKeyPaneHostConstructionExceptionOutcome(DDKeyPaneHostConstructionExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
