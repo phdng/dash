@@ -63,6 +63,22 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldDisposeByrefCaptures;
 } DDAuxSettingsExecutorExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDAuxSettingsPreparationExceptionSite) {
+    DDAuxSettingsPreparationExceptionSiteNone = 0,
+    DDAuxSettingsPreparationExceptionSiteInitialAuxGate = 1,
+    DDAuxSettingsPreparationExceptionSiteCurrentFrameRead = 2,
+    DDAuxSettingsPreparationExceptionSiteCurrentOrientationRead = 3,
+    DDAuxSettingsPreparationExceptionSiteLateUpdatePreparation = 4,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldSkipRemainingPreparation;
+    BOOL shouldContinueFinalOuterCleanup;
+    BOOL retainedWorkingObjectReleaseWouldBeBypassed;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDAuxSettingsPreparationExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDSceneIdentityRouteKind) {
     DDSceneIdentityRouteNone = 0,
     DDSceneIdentityRouteHostSlot = 1,
@@ -651,6 +667,7 @@ FOUNDATION_EXPORT BOOL DDBeginAuxSceneSettingsApply(uint64_t capturedGeneration)
 FOUNDATION_EXPORT BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGeneration);
 FOUNDATION_EXPORT DDAuxSettingsMutationExceptionOutcome DDResolveAuxSettingsMutationExceptionOutcome(DDAuxSettingsMutationExceptionSite site);
 FOUNDATION_EXPORT DDAuxSettingsExecutorExceptionOutcome DDResolveAuxSettingsExecutorExceptionOutcome(NSInteger currentFailureCounter);
+FOUNDATION_EXPORT DDAuxSettingsPreparationExceptionOutcome DDResolveAuxSettingsPreparationExceptionOutcome(DDAuxSettingsPreparationExceptionSite site);
 FOUNDATION_EXPORT BOOL DDBundleIdentifierMatchesAux(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdentityResolutionExceptionOutcome(void);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);

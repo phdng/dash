@@ -1243,6 +1243,26 @@ DDAuxSettingsExecutorExceptionOutcome DDResolveAuxSettingsExecutorExceptionOutco
     return outcome;
 }
 
+DDAuxSettingsPreparationExceptionOutcome DDResolveAuxSettingsPreparationExceptionOutcome(DDAuxSettingsPreparationExceptionSite site) {
+    // 3E670 LSDA 0x114880 routes four protected aux-preparation ranges into common typed catch
+    // 0x3E990. Expected catches swallow and jump to final outer cleanup at 0x3E944. The late
+    // preparation range begins after x22 was retained and this catch bypasses x22's normal release.
+    DDAuxSettingsPreparationExceptionOutcome outcome = { NO, NO, NO, NO, NO };
+    if (site == DDAuxSettingsPreparationExceptionSiteInitialAuxGate ||
+        site == DDAuxSettingsPreparationExceptionSiteCurrentFrameRead ||
+        site == DDAuxSettingsPreparationExceptionSiteCurrentOrientationRead ||
+        site == DDAuxSettingsPreparationExceptionSiteLateUpdatePreparation) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldSkipRemainingPreparation = YES;
+        outcome.shouldContinueFinalOuterCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site == DDAuxSettingsPreparationExceptionSiteLateUpdatePreparation) {
+            outcome.retainedWorkingObjectReleaseWouldBeBypassed = YES;
+        }
+    }
+    return outcome;
+}
+
 static NSInteger DDConfiguredHostSlotIndexForBundleIdentifier(NSString *bundleIdentifier,
                                                                BOOL includeCarPlayUI) {
     // Post-identity half shared by 41E08/4138C. The caller supplies the already-resolved
