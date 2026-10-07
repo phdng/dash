@@ -1816,6 +1816,63 @@ DDSlideAnimationExceptionOutcome DDResolveSlideAnimationExceptionOutcome(DDSlide
     return outcome;
 }
 
+DDRecursiveTransparencyExceptionOutcome DDResolveRecursiveTransparencyExceptionOutcome(DDRecursiveTransparencyExceptionSite site) {
+    // 39954 LSDA 0x11435C has five action-5 ranges around transparent-view writes and recursive
+    // fast enumeration. Their landing stubs converge at typed catch 0x39AC0. Expected type simply
+    // begin/end-catches and jumps to 0x39A6C, so all remaining sibling/descendant traversal is
+    // abandoned while the retained input view still receives its final cleanup. Already-completed
+    // background/opaque writes are not rolled back. A recursive child exception that escapes its
+    // own frame can therefore be swallowed by the parent protected recursive-call range.
+    DDRecursiveTransparencyExceptionOutcome outcome = {0};
+    BOOL typedSite =
+        site == DDRecursiveTransparencyExceptionSiteBackgroundColorSetup ||
+        site == DDRecursiveTransparencyExceptionSiteOpaqueSetter ||
+        site == DDRecursiveTransparencyExceptionSiteInitialSubviewsEnumeration ||
+        site == DDRecursiveTransparencyExceptionSiteRecursiveChildStep ||
+        site == DDRecursiveTransparencyExceptionSiteNextEnumerationBatch;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldAbortRemainingTraversal = YES;
+        outcome.shouldContinueInputCleanup = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site == DDRecursiveTransparencyExceptionSiteBackgroundColorSetup) {
+            outcome.backgroundColorCouldHaveAppliedBeforeException = YES;
+            outcome.retainedClearColorReleaseCouldBeBypassed = YES;
+        } else {
+            outcome.backgroundColorDefinitelyAppliedBeforeProtectedCall = YES;
+        }
+        if (site == DDRecursiveTransparencyExceptionSiteOpaqueSetter) {
+            outcome.opaqueCouldHaveAppliedBeforeException = YES;
+        } else if (site == DDRecursiveTransparencyExceptionSiteInitialSubviewsEnumeration ||
+                   site == DDRecursiveTransparencyExceptionSiteRecursiveChildStep ||
+                   site == DDRecursiveTransparencyExceptionSiteNextEnumerationBatch) {
+            outcome.opaqueDefinitelyAppliedBeforeProtectedCall = YES;
+        }
+        if (site == DDRecursiveTransparencyExceptionSiteInitialSubviewsEnumeration ||
+            site == DDRecursiveTransparencyExceptionSiteRecursiveChildStep ||
+            site == DDRecursiveTransparencyExceptionSiteNextEnumerationBatch) {
+            outcome.retainedSubviewsArrayReleaseCouldBeBypassed = YES;
+        }
+        if (site == DDRecursiveTransparencyExceptionSiteRecursiveChildStep) {
+            outcome.recursiveChildExceptionCouldBeSwallowedByParent = YES;
+            outcome.recursiveChildMayHavePartiallyMutatedDescendantsBeforeException = YES;
+        }
+        if (site == DDRecursiveTransparencyExceptionSiteNextEnumerationBatch) {
+            outcome.priorEnumerationBatchDefinitelyCompletedBeforeProtectedCall = YES;
+        }
+        return outcome;
+    }
+    if (site == DDRecursiveTransparencyExceptionSiteCleanupUnwind) {
+        outcome.shouldResumeUnwindFromCleanup = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDRecursiveTransparencyExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

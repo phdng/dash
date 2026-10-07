@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-06 session-133 (buildable reconstruction phase)_
+_Last updated: 2026-10-06 session-134 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-64 (session-133): GitHub Actions session-132 (`5b20ca6`) đã xanh theo user. Executable target thêm data-only `39B70` slide-animation exception outcome từ LSDA `0x11439C` + raw ARM64/helpers `3A004/3A034`. Protected UIView animation call xảy ra sau khi `byte_163C98=1`, generation snapshot capture, 1-second follow-up schedule, split-view retain, bounds read và target-center `d8/d9` computation. Expected catch direct `setCenter:` tới target đã tính rồi rejoin primary-view/input cleanup; normal local release của retained animation-block capture bị bypass, và animation có thể đã bắt đầu trước throw. Catch-internal fallback setter throw là action-0→end-catch+unwind và có thể xảy ra sau partial center side effect. Không dispatch scheduling, flag/UI mutation, animation/setCenter execution hay exception runtime.
+BUILDABLE RUNTIME PHASE-65 (session-134): GitHub Actions session-133 (`0cdbf25`) đã xanh theo user. Executable target thêm data-only `39954` recursive view-transparency exception outcome từ LSDA `0x11435C` + raw ARM64. Năm action-5 ranges quanh clearColor/background setter, opaque setter, initial subviews/enumeration, recursive-child step và next enumeration batch đều hội tụ catch `0x39AC0`: expected catch swallow rồi jump final input cleanup `0x39A6C`, bỏ toàn bộ remaining sibling/descendant traversal. Transparency writes không rollback; site-aware metadata ghi background/opaque definite-vs-possible writes, retained clearColor/subviews-array release bypass, recursive-child exception có thể bị parent swallow sau partial descendant mutation, và prior-batch completion. Cleanup action-0/unprotected propagate. Không UIColor/view setter execution, traversal/recursion hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-133):
-- R-132 data-only 39B70 slide-animation exception outcome: protected UIView animation throw→typed catch direct precomputed-center fallback+primary cleanup; prior slide flag/generation/1s-followup/target readiness, possible animation-start effects, capture-release bypass, and nested fallback-setter action-0 partial-write/unwind recorded.
+## LAST COMPLETED TASK (session-134):
+- R-133 data-only 39954 recursive transparency exception outcome: 5 typed ranges→swallow+abort remaining traversal+final input cleanup; site-aware background/opaque write persistence, retained clearColor/subviews release-bypass, parent-swallowed recursive-child exception with possible partial descendant mutation, prior-batch timing, and cleanup action-0 unwind recorded.
 
 ## CURRENT TASK:
-- R-132 hoàn tất local; commit-only handoff. User confirmed session-132 compiler green before this batch; assistant không push.
+- R-133 hoàn tất local; commit-only handoff. User confirmed session-133 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-133 batch, R-133: inspect next earlier LSDA-bearing `39954 -> 0x11435C` (`sub_39954`, recursive view-transparency traversal). Direct unwind enumeration shows no LSDA-bearing function between `39954` and `39B70`. Scout decoded 9 call-site entries with action-5 ranges `0x399A0..0x399BC`, `0x399C4..0x399D0`, `0x399DC..0x39A00`, `0x39A24..0x39A3C`, `0x39A48..0x39A5C`, plus action-0 cleanup `0x39A64..0x39A74`. All expected typed catches converge at `0x39AC0`, begin/end-catch, then jump to final input cleanup `0x39A6C`, abandoning remaining recursive traversal. Map exact transparency writes already applied, enumerator/current-batch release bypass, and recursive-child exception continuation before promotion. 73E8/80D0 and full 7E908 remain unresolved; dynamic device verify still needed.
+- Sau compiler xanh cho session-134 batch, R-134: inspect next earlier LSDA-bearing `39884 -> 0x114330` (`sub_39884`, top-level host/split/root transparency wrapper). Direct unwind enumeration shows no LSDA-bearing function between `39884` and `39954`. Scout decoded 6 entries with catch-all action-1 ranges `0x398A8..0x398C4`, `0x398D0..0x39904`, and `0x39910..0x3992C`, each landing at `0x3993C` which begin/end-catches and returns immediately. First range covers host clearColor/background setter; second covers host opaque setter plus split clearColor/background; third covers split opaque setter plus recursive `39954(root,0)`. Map exact host/split transparency persistence and recursive-root partial mutation before promotion. 73E8/80D0 and full 7E908 remain unresolved; dynamic device verify still needed.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-133):
+## FILES CHANGED (session-134):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-133.md`.
+- Mới: `LOG/session-134.md`.
 
 ## TEST STATUS:
-Session-132 GitHub Actions build GREEN (`5b20ca6`, user-confirmed). Session-133 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-133 GitHub Actions build GREEN (`0cdbf25`, user-confirmed). Session-134 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.

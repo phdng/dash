@@ -416,6 +416,35 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDSlideAnimationExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDRecursiveTransparencyExceptionSite) {
+    DDRecursiveTransparencyExceptionSiteNone = 0,
+    DDRecursiveTransparencyExceptionSiteBackgroundColorSetup = 1,
+    DDRecursiveTransparencyExceptionSiteOpaqueSetter = 2,
+    DDRecursiveTransparencyExceptionSiteInitialSubviewsEnumeration = 3,
+    DDRecursiveTransparencyExceptionSiteRecursiveChildStep = 4,
+    DDRecursiveTransparencyExceptionSiteNextEnumerationBatch = 5,
+    DDRecursiveTransparencyExceptionSiteCleanupUnwind = 6,
+    DDRecursiveTransparencyExceptionSiteUnprotectedRange = 7,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldAbortRemainingTraversal;
+    BOOL shouldContinueInputCleanup;
+    BOOL backgroundColorDefinitelyAppliedBeforeProtectedCall;
+    BOOL backgroundColorCouldHaveAppliedBeforeException;
+    BOOL opaqueDefinitelyAppliedBeforeProtectedCall;
+    BOOL opaqueCouldHaveAppliedBeforeException;
+    BOOL retainedClearColorReleaseCouldBeBypassed;
+    BOOL retainedSubviewsArrayReleaseCouldBeBypassed;
+    BOOL recursiveChildExceptionCouldBeSwallowedByParent;
+    BOOL recursiveChildMayHavePartiallyMutatedDescendantsBeforeException;
+    BOOL priorEnumerationBatchDefinitelyCompletedBeforeProtectedCall;
+    BOOL shouldResumeUnwindFromCleanup;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDRecursiveTransparencyExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1005,6 +1034,7 @@ FOUNDATION_EXPORT DDEvictFromPhoneExceptionOutcome DDResolveEvictFromPhoneExcept
 FOUNDATION_EXPORT DDSplitHostGeometryExceptionOutcome DDResolveSplitHostGeometryExceptionOutcome(DDSplitHostGeometryExceptionSite site);
 FOUNDATION_EXPORT DDSceneLayerHostPredicateExceptionOutcome DDResolveSceneLayerHostPredicateExceptionOutcome(DDSceneLayerHostPredicateExceptionSite site);
 FOUNDATION_EXPORT DDSlideAnimationExceptionOutcome DDResolveSlideAnimationExceptionOutcome(DDSlideAnimationExceptionSite site);
+FOUNDATION_EXPORT DDRecursiveTransparencyExceptionOutcome DDResolveRecursiveTransparencyExceptionOutcome(DDRecursiveTransparencyExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
