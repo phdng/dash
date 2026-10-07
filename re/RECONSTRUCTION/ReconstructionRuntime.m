@@ -1873,6 +1873,53 @@ DDRecursiveTransparencyExceptionOutcome DDResolveRecursiveTransparencyExceptionO
     return outcome;
 }
 
+DDTopLevelTransparencyExceptionOutcome DDResolveTopLevelTransparencyExceptionOutcome(DDTopLevelTransparencyExceptionSite site) {
+    // 39884 LSDA 0x114330 has three action-1 catch-all ranges. All land at 0x3993C, which
+    // unconditionally begin/end-catches and returns immediately. The broad ranges contain five
+    // semantically distinct write sites, so this resolver records exact already-completed host/split
+    // transparency and possible current-setter side effects. No caught path continues to later views.
+    DDTopLevelTransparencyExceptionOutcome outcome = {0};
+    BOOL caughtSite =
+        site == DDTopLevelTransparencyExceptionSiteHostBackgroundColor ||
+        site == DDTopLevelTransparencyExceptionSiteHostOpaqueSetter ||
+        site == DDTopLevelTransparencyExceptionSiteSplitBackgroundColor ||
+        site == DDTopLevelTransparencyExceptionSiteSplitOpaqueSetter ||
+        site == DDTopLevelTransparencyExceptionSiteRecursiveRoot;
+    if (caughtSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnImmediately = YES;
+        if (site == DDTopLevelTransparencyExceptionSiteHostBackgroundColor) {
+            outcome.hostBackgroundCouldHaveAppliedBeforeException = YES;
+            outcome.retainedClearColorReleaseCouldBeBypassed = YES;
+            return outcome;
+        }
+        outcome.hostBackgroundDefinitelyAppliedBeforeProtectedCall = YES;
+        if (site == DDTopLevelTransparencyExceptionSiteHostOpaqueSetter) {
+            outcome.hostOpaqueCouldHaveAppliedBeforeException = YES;
+            return outcome;
+        }
+        outcome.hostOpaqueDefinitelyAppliedBeforeProtectedCall = YES;
+        if (site == DDTopLevelTransparencyExceptionSiteSplitBackgroundColor) {
+            outcome.splitBackgroundCouldHaveAppliedBeforeException = YES;
+            outcome.retainedClearColorReleaseCouldBeBypassed = YES;
+            return outcome;
+        }
+        outcome.splitBackgroundDefinitelyAppliedBeforeProtectedCall = YES;
+        if (site == DDTopLevelTransparencyExceptionSiteSplitOpaqueSetter) {
+            outcome.splitOpaqueCouldHaveAppliedBeforeException = YES;
+            return outcome;
+        }
+        outcome.splitOpaqueDefinitelyAppliedBeforeProtectedCall = YES;
+        outcome.recursiveRootExceptionCouldBeSwallowedByWrapper = YES;
+        outcome.recursiveRootMayHavePartiallyMutatedSubtreeBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDTopLevelTransparencyExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

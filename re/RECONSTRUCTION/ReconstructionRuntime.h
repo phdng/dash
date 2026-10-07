@@ -445,6 +445,33 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDRecursiveTransparencyExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDTopLevelTransparencyExceptionSite) {
+    DDTopLevelTransparencyExceptionSiteNone = 0,
+    DDTopLevelTransparencyExceptionSiteHostBackgroundColor = 1,
+    DDTopLevelTransparencyExceptionSiteHostOpaqueSetter = 2,
+    DDTopLevelTransparencyExceptionSiteSplitBackgroundColor = 3,
+    DDTopLevelTransparencyExceptionSiteSplitOpaqueSetter = 4,
+    DDTopLevelTransparencyExceptionSiteRecursiveRoot = 5,
+    DDTopLevelTransparencyExceptionSiteUnprotectedRange = 6,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnImmediately;
+    BOOL hostBackgroundDefinitelyAppliedBeforeProtectedCall;
+    BOOL hostBackgroundCouldHaveAppliedBeforeException;
+    BOOL hostOpaqueDefinitelyAppliedBeforeProtectedCall;
+    BOOL hostOpaqueCouldHaveAppliedBeforeException;
+    BOOL splitBackgroundDefinitelyAppliedBeforeProtectedCall;
+    BOOL splitBackgroundCouldHaveAppliedBeforeException;
+    BOOL splitOpaqueDefinitelyAppliedBeforeProtectedCall;
+    BOOL splitOpaqueCouldHaveAppliedBeforeException;
+    BOOL retainedClearColorReleaseCouldBeBypassed;
+    BOOL recursiveRootExceptionCouldBeSwallowedByWrapper;
+    BOOL recursiveRootMayHavePartiallyMutatedSubtreeBeforeException;
+    BOOL exceptionWouldPropagate;
+} DDTopLevelTransparencyExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1035,6 +1062,7 @@ FOUNDATION_EXPORT DDSplitHostGeometryExceptionOutcome DDResolveSplitHostGeometry
 FOUNDATION_EXPORT DDSceneLayerHostPredicateExceptionOutcome DDResolveSceneLayerHostPredicateExceptionOutcome(DDSceneLayerHostPredicateExceptionSite site);
 FOUNDATION_EXPORT DDSlideAnimationExceptionOutcome DDResolveSlideAnimationExceptionOutcome(DDSlideAnimationExceptionSite site);
 FOUNDATION_EXPORT DDRecursiveTransparencyExceptionOutcome DDResolveRecursiveTransparencyExceptionOutcome(DDRecursiveTransparencyExceptionSite site);
+FOUNDATION_EXPORT DDTopLevelTransparencyExceptionOutcome DDResolveTopLevelTransparencyExceptionOutcome(DDTopLevelTransparencyExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
