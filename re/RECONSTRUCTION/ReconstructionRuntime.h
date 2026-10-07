@@ -96,6 +96,19 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDSceneIdentityResolutionExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDSceneResolverExceptionSite) {
+    DDSceneResolverExceptionSiteNone = 0,
+    DDSceneResolverExceptionSitePrimarySceneIfExistsPath = 1,
+    DDSceneResolverExceptionSiteFallbackScenePath = 2,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnNilScene;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDSceneResolverExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -670,6 +683,7 @@ FOUNDATION_EXPORT DDAuxSettingsExecutorExceptionOutcome DDResolveAuxSettingsExec
 FOUNDATION_EXPORT DDAuxSettingsPreparationExceptionOutcome DDResolveAuxSettingsPreparationExceptionOutcome(DDAuxSettingsPreparationExceptionSite site);
 FOUNDATION_EXPORT BOOL DDBundleIdentifierMatchesAux(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdentityResolutionExceptionOutcome(void);
+FOUNDATION_EXPORT DDSceneResolverExceptionOutcome DDResolveSceneResolverExceptionOutcome(DDSceneResolverExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

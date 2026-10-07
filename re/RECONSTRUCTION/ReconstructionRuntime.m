@@ -1291,6 +1291,22 @@ DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdentityResolutionExcept
     return outcome;
 }
 
+DDSceneResolverExceptionOutcome DDResolveSceneResolverExceptionOutcome(DDSceneResolverExceptionSite site) {
+    // 3E33C LSDA 0x114860 protects only the fallback scene capability/send range. The earlier
+    // sceneIfExists selector construction/capability/signature/send path has no local landing pad.
+    DDSceneResolverExceptionOutcome outcome = { NO, NO, NO, NO };
+    if (site == DDSceneResolverExceptionSitePrimarySceneIfExistsPath) {
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDSceneResolverExceptionSiteFallbackScenePath) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnNilScene = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
