@@ -109,6 +109,31 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDSceneResolverExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDSceneDiagnosticSummaryExceptionSite) {
+    DDSceneDiagnosticSummaryExceptionSiteNone = 0,
+    DDSceneDiagnosticSummaryExceptionSiteSceneHandleResolution = 1,
+    DDSceneDiagnosticSummaryExceptionSiteSceneResolution = 2,
+    DDSceneDiagnosticSummaryExceptionSiteSettingsResolution = 3,
+    DDSceneDiagnosticSummaryExceptionSiteSelectorConstruction = 4,
+    DDSceneDiagnosticSummaryExceptionSiteForegroundProbe = 5,
+    DDSceneDiagnosticSummaryExceptionSiteDiagnosticFormatting = 6,
+};
+
+typedef NS_ENUM(NSInteger, DDSceneDiagnosticSummaryFallbackKind) {
+    DDSceneDiagnosticSummaryFallbackNone = 0,
+    DDSceneDiagnosticSummaryFallbackThrew = 1,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnFallbackSummary;
+    DDSceneDiagnosticSummaryFallbackKind fallbackKind;
+    BOOL shouldContinueFinalOuterCleanup;
+    NSUInteger guaranteedRetainedIntermediateReleaseBypassCount;
+    BOOL additionalFormattedIntermediateReleaseCouldBeBypassed;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDSceneDiagnosticSummaryExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -684,6 +709,7 @@ FOUNDATION_EXPORT DDAuxSettingsPreparationExceptionOutcome DDResolveAuxSettingsP
 FOUNDATION_EXPORT BOOL DDBundleIdentifierMatchesAux(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdentityResolutionExceptionOutcome(void);
 FOUNDATION_EXPORT DDSceneResolverExceptionOutcome DDResolveSceneResolverExceptionOutcome(DDSceneResolverExceptionSite site);
+FOUNDATION_EXPORT DDSceneDiagnosticSummaryExceptionOutcome DDResolveSceneDiagnosticSummaryExceptionOutcome(DDSceneDiagnosticSummaryExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

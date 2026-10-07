@@ -1307,6 +1307,40 @@ DDSceneResolverExceptionOutcome DDResolveSceneResolverExceptionOutcome(DDSceneRe
     return outcome;
 }
 
+DDSceneDiagnosticSummaryExceptionOutcome DDResolveSceneDiagnosticSummaryExceptionOutcome(DDSceneDiagnosticSummaryExceptionSite site) {
+    // 3E02C LSDA 0x114818 funnels all protected diagnostic-summary ranges into common typed catch
+    // 0x3E27C. Expected catches substitute cfstr_Threw (0x147C18 == @"threw") and jump directly
+    // to final outer cleanup, bypassing normal releases for intermediates retained before the site.
+    DDSceneDiagnosticSummaryExceptionOutcome outcome = { NO, NO, DDSceneDiagnosticSummaryFallbackNone, NO, 0, NO, NO };
+    switch (site) {
+        case DDSceneDiagnosticSummaryExceptionSiteSceneHandleResolution:
+            break;
+        case DDSceneDiagnosticSummaryExceptionSiteSceneResolution:
+            outcome.guaranteedRetainedIntermediateReleaseBypassCount = 1;
+            break;
+        case DDSceneDiagnosticSummaryExceptionSiteSettingsResolution:
+            outcome.guaranteedRetainedIntermediateReleaseBypassCount = 2;
+            break;
+        case DDSceneDiagnosticSummaryExceptionSiteSelectorConstruction:
+        case DDSceneDiagnosticSummaryExceptionSiteForegroundProbe:
+            outcome.guaranteedRetainedIntermediateReleaseBypassCount = 3;
+            break;
+        case DDSceneDiagnosticSummaryExceptionSiteDiagnosticFormatting:
+            outcome.guaranteedRetainedIntermediateReleaseBypassCount = 3;
+            outcome.additionalFormattedIntermediateReleaseCouldBeBypassed = YES;
+            break;
+        case DDSceneDiagnosticSummaryExceptionSiteNone:
+        default:
+            return outcome;
+    }
+    outcome.shouldSwallowException = YES;
+    outcome.shouldReturnFallbackSummary = YES;
+    outcome.fallbackKind = DDSceneDiagnosticSummaryFallbackThrew;
+    outcome.shouldContinueFinalOuterCleanup = YES;
+    outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

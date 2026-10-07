@@ -29,11 +29,11 @@
 - [ ] Toggle files: `nodiscoclose` (skip kill), `discoclose_secs=5` (fire 5s), `reapdelay`, `noreap`, `noautostart`, `split_deactivate_dismiss`, `cpui_nonudge`.
 - [ ] Verify HYPOTHESIS mở: 74C8.c:251 filter đảo, 746C 1..8 vs 0..8, 85CDC arg inline, 10 keys off_154208 mapping, schedulers 1A820/7B9EC/7BD58, 162E60 setter, layout downstream use.
 
-## Build (session-119)
+## Build (session-120)
 - [x] `python scripts/verify_reconstruction.py` — PASS: 30 synthesis modules present + Makefile/runtime/filter wiring đúng.
 - [x] Substrate filter reconstruction đối chiếu artifact gốc: 4 Bundles + 2 Executables + Mode=Any.
 - [x] `Tweak.x` có compile-safe ctor gọi `DDReconstructionStart()`; runtime role-gates SpringBoard prefs/host-safe behavior và UIApp IPC/state consumer, các private-hook roles khác vẫn inactive.
-- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-118 batch (`d5fa917`, user-confirmed before session-119 changes).
-- [x] Static runtime contracts through session-119: verifier checks LSDA/raw-ARM64-confirmed 3E33C primary `sceneIfExists` path has no local landing pad and therefore propagates exceptions, while protected fallback `scene` capability/send exceptions → typed catch swallow + nil result; nonmatching catch type → resume unwind. No selector construction/invocation, runtime method-signature inspection, real scene lifetime effects, synthesized/runtime catch execution, or unwind execution.
+- [x] Theos compiler build `make clean all` — GitHub Actions macOS GREEN for session-119 batch (`3ac49b3`, user-confirmed before session-120 changes).
+- [x] Static runtime contracts through session-120: verifier checks LSDA/raw-ARM64-confirmed 3E02C protected diagnostic-summary exceptions → common typed catch swallow + exact `"threw"` fallback + final outer cleanup; nonmatching catch type → resume unwind. Site metadata records only guaranteed pre-existing retained-intermediate release bypass counts, plus possible extra formatted-intermediate bypass at the final formatting site. No private scene/settings traversal, selector/type-probe/NSString formatting, real object-lifetime changes, synthesized/runtime catch execution, or unwind execution.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
