@@ -61,6 +61,12 @@ typedef struct {
 
 typedef struct {
     BOOL shouldSwallowException;
+    BOOL shouldReturnFalse;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDFrontmostPhoneIdentityExceptionOutcome;
+
+typedef struct {
+    BOOL shouldSwallowException;
     BOOL shouldContinueCleanupAfterCatch;
 } DDActivatingEntitySetterExceptionOutcome;
 
@@ -619,6 +625,7 @@ FOUNDATION_EXPORT BOOL DDCompleteAuxSceneSettingsApply(uint64_t capturedGenerati
 FOUNDATION_EXPORT BOOL DDBundleIdentifierMatchesAux(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT DDSceneIdentityResolutionExceptionOutcome DDResolveSceneIdentityResolutionExceptionOutcome(void);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
+FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
 FOUNDATION_EXPORT DDHostUIAppRequestExceptionOutcome DDResolveHostUIAppRequestExceptionOutcome(void);
 FOUNDATION_EXPORT DDSceneIdentityRoute DDResolveFBSUpdateIdentityRoute(NSString * _Nullable bundleIdentifier);

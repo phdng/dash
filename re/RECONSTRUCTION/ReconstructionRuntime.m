@@ -1234,6 +1234,14 @@ DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     return outcome;
 }
 
+DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void) {
+    // 3EDFC LSDA 0x1148F4 funnels protected SpringBoard/frontmost-app/string-identity work through
+    // common typed catch 0x3EEE8. The expected catch swallows and forces a false result; a
+    // nonmatching catch discriminator resumes unwind at 0x3EF1C.
+    DDFrontmostPhoneIdentityExceptionOutcome outcome = { YES, YES, YES };
+    return outcome;
+}
+
 DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void) {
     // 3F100 LSDA 0x114948 protects only respondsToSelector:setActivatingEntity: plus the optional
     // setter send. Landing 0x3F158 unconditionally begin/end-catches and rejoins normal cleanup.

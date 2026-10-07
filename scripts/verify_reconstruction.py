@@ -189,6 +189,8 @@ for contract in [
     "DDSceneIdentityResolutionExceptionOutcome outcome = { YES, YES, YES }",
     "DDResolveStringSelectorExceptionOutcome",
     "DDStringSelectorExceptionOutcome outcome = { YES, YES, YES }",
+    "DDResolveFrontmostPhoneIdentityExceptionOutcome",
+    "DDFrontmostPhoneIdentityExceptionOutcome outcome = { YES, YES, YES }",
     "DDResolveActivatingEntitySetterExceptionOutcome",
     "DDActivatingEntitySetterExceptionOutcome outcome = { YES, YES }",
     "DDResolveHostUIAppRequestExceptionOutcome",

@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-06 session-114 (buildable reconstruction phase)_
+_Last updated: 2026-10-06 session-115 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-45 (session-114): GitHub Actions session-113 (`b8e355d`) đã xanh theo user. Executable target thêm data-only `3F3F0` post-resize publish exception outcome được xác nhận bằng LSDA `0x114994` + raw ARM64: only protected `89D8` publish range `0x3F4BC..0x3F4D4` lands at typed catch `0x3F5A8`; expected discriminator catch/swallow rồi rejoin `0x3F4D4`, nên counter normalization + `DDz2 shared`/`probeSceneForSlot:` + possible landscape-adjusted `3F5C0` follow-up vẫn eligible; nonmatching discriminator nhảy `0x3F5BC` resume unwind. Không invoke `89D8`, private scene probe/`3F5C0`, synthesize/catch exception hay mutate counters/state.
+BUILDABLE RUNTIME PHASE-46 (session-115): GitHub Actions session-114 (`72b94ef`) đã xanh theo user. Executable target thêm data-only `3EDFC` frontmost-phone identity exception outcome được xác nhận bằng LSDA `0x1148F4` + raw ARM64: protected SpringBoard class lookup, sharedApplication/frontmost capability, private frontmost-app send, và `3EFD4` bundle-string/string-equality ranges đều funnel vào common typed catch `0x3EEE8`; expected discriminator catch/swallow rồi force false tại `0x3EEF8`, nonmatching discriminator nhảy `0x3EF1C` resume unwind. Không query SpringBoard/private selectors, traverse frontmost objects, invoke `3EFD4`, synthesize/catch exception hay execute unwind.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-114):
-- R-113 data-only 3F3F0 publish exception continuation: protected `89D8` throw→swallow+continue post-publish follow-up; nonmatching type→resume unwind.
+## LAST COMPLETED TASK (session-115):
+- R-114 data-only 3EDFC exception outcome: protected frontmost-phone identity work→common catch swallow+false return; nonmatching type→resume unwind.
 
 ## CURRENT TASK:
-- R-113 hoàn tất local; commit-only handoff. User sẽ tự push và báo compiler green/pass trước khi R-114 bắt đầu.
+- R-114 hoàn tất local; commit-only handoff. User sẽ tự push và báo compiler green/pass trước khi R-115 bắt đầu.
 
 ## NEXT TASK:
-- Sau compiler xanh, R-114 promote exact `3EDFC` LSDA `0x1148F4`: protected SpringBoard/frontmost-app/string-identity throw→common typed catch swallow+false return; nonmatching type→resume unwind. Chỉ data-only swallow→false/unwind metadata, không private SpringBoard selector/object traversal, invoke `3EFD4` hay synthesize exceptions. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
+- Sau compiler xanh, R-115 promote exact `3EB9C` LSDA `0x1148D8`: catch-all around aux frame/orientation mutation→swallow+cleanup; frame-path throw has no frame-applied write, orientation-path throw preserves any already-recorded frame-applied state and does not reach orientation-applied write. Chỉ data-only site/persistence/cleanup metadata, không private setters/signature checks hay byref/settings mutation. 73E8/80D0 và full 7E908 vẫn unresolved; dynamic device verify vẫn cần.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-114):
+## FILES CHANGED (session-115):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-114.md`.
+- Mới: `LOG/session-115.md`.
 
 ## TEST STATUS:
-Session-113 GitHub Actions build GREEN (`b8e355d`, user-confirmed). Session-114 local verifier + py_compile PASS trước docs/log finalization; `git diff --check` sẽ chạy trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit; user tự push và báo compiler result. Dynamic device tests vẫn pending.
+Session-114 GitHub Actions build GREEN (`72b94ef`, user-confirmed). Session-115 local verifier + py_compile PASS trước docs/log finalization; `git diff --check` sẽ chạy trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit; user tự push và báo compiler result. Dynamic device tests vẫn pending.
