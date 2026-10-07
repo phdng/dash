@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-163 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-164 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-94 (session-163): GitHub Actions session-162 (`783c8ae`) đã xanh theo user. Executable target thêm data-only `34F28` `-[CNABLivePresenter tick:]` typed/action-0 outcome từ LSDA `0x113D8C` + raw ARM64. Exact table có 26 entries. Typed action-5 ranges bao window/noop/timer-maintenance admission, window-layer hidden/opacity-animation gate, targets presence/provider/fallback collection, phase + target-opacity preparation, CATransaction begin/disable, fast enumeration, per-layer opacity-animation/alt/group-opacity probes và mutations, transaction commit + tick increment. Expected type common catch `0x35314` begin/end-catch rồi jump `0x352A8`, nên chỉ final retained timer/input release được tiếp tục; selected collection/window-layer/window và site-local intermediates có thể bypass cleanup. Action-0 release failures và nonmatching typed exceptions resume unwind `0x3530C`, không vào timer-cleanup continuation. Final release range cũng phục vụ early-exit pre-transaction paths nên không infer commit từ cleanup PC. Không live timer/window/layer/collection/CATransaction/tick/ownership mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-95 (session-164): GitHub Actions session-163 (`316f678`) đã xanh theo user. Executable target thêm data-only `345E4` server-notice UI typed outcome từ LSDA `0x113CD4` + raw ARM64. Exact table có 29 entries. Early no-notice marker/text gates dùng action index 7 = typed catch-only; later backdrop/UI-build/presentation/remove ranges dùng action index 5 = typed catch + cleanup. Expected type common catch `0x34BA8` begin-catch, ghi confirmed `CFSTR("threw")` vào captured reason slot **trước** release reason cũ, rồi end-catch/return; catch-internal release nằm unprotected. Runtime tách manager/text/contentView/bounds/remove-existing, label/container styling, hierarchy/current-notice store, present/state/deadline/interaction ordering, unprotected weak+6s dispatch success tail, failed-present remove và unprotected slot-clear/`present-failed` teardown. Không live file/UI/global/dispatch/ownership mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-163):
-- R-162 data-only 34F28 `tick:` typed/action-0 exception outcome: 26-entry LSDA with typed catch→timer-only final cleanup, exact window/layer/targets/phase/transaction/enumeration/group-opacity/opacity/tick milestones, eight action-0 release→unwind stages, retained-local release bypass, and nonmatching propagation recorded.
+## LAST COMPLETED TASK (session-164):
+- R-163 data-only 345E4 server-notice UI exception outcome: 29-entry LSDA with action-7 early gates vs action-5 UI-build paths, confirmed catch reason `threw` replacement-before-release, exact backdrop/label/container/style/hierarchy/current-notice ownership, presentation/deadline side effects, unprotected success dispatch and failed-present teardown propagation recorded.
 
 ## CURRENT TASK:
-- R-162 hoàn tất local; commit-only handoff. User confirmed session-162 compiler green before this batch; assistant không push.
+- R-163 hoàn tất local; commit-only handoff. User confirmed session-163 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-163 batch, R-163: inspect `345E4 -> 0x113CD4`, server-notice UI construction pipeline. Exact LSDA has 29 entries. Initial file/text gates use action index 7 = typed catch-only; later UI-build ranges use action index 5 = typed catch + cleanup. Landing aliases `0x34B8C/90/94/98/9C/A0/A4/A8` converge at `0x34BA8`; expected type begin-catches, replaces the captured result/reason slot with a static failure reason, releases the previous slot value, then end-catches/returns; nonmatching resumes unwind at `0x34BFC`. Map no-notice marker, text validation, contentView/bounds gates, removeServerNotice, label/container/layer styling, hierarchy/global notice store, presentation/deadline/weak-dispatch path, failed-present teardown, and cleanup ownership separately. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
+- Sau compiler xanh cho session-164 batch, R-164: inspect `34524 -> 0x113CB8`. Exact 3-entry table has unprotected prefix `0x34524..0x34598`, action-1 catch-all `0x34598..0x345A4 -> 0x345B0`, then unprotected tail. When reset flag byte `+0xA9` is set, prefix clears reset flag, generation/sentinel, CGRectNull geometry, state bytes/counter, clears strong slot `+0x140` and releases old value before protected `removeAllObjects`; teardownWindow follows inside the same protected range. If flag is not set, control enters protected range directly at teardownWindow. Landing unconditionally begin/end-catches and returns. Split removeAllObjects, teardown-after-reset, teardown-without-reset, and unprotected partial-reset propagation. After R-164, `34250 -> 0x113C60` has 13 entries, mostly action-0 cleanup plus two typed action-5 ranges around matched-display bounds capability/read; typed expected catches continue local display cleanup/null fallback while action-0 failures resume unwind. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-163):
+## FILES CHANGED (session-164):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-163.md`.
+- Mới: `LOG/session-164.md`.
 
 ## TEST STATUS:
-Session-162 GitHub Actions build GREEN (`783c8ae`, user-confirmed). Session-163 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-163 GitHub Actions build GREEN (`316f678`, user-confirmed). Session-164 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.

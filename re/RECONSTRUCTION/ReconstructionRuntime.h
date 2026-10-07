@@ -1260,6 +1260,99 @@ typedef struct {
     BOOL actionZeroCurrentReleaseCouldHaveStartedBeforeException;
 } DDTickPresenterExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDServerNoticeBuildExceptionSite) {
+    DDServerNoticeBuildExceptionSiteNone = 0,
+    DDServerNoticeBuildExceptionSiteNoNoticeManagerAcquisition = 1,
+    DDServerNoticeBuildExceptionSiteNoNoticeFileProbe = 2,
+    DDServerNoticeBuildExceptionSiteTextTypeValidation = 3,
+    DDServerNoticeBuildExceptionSiteTextLengthValidation = 4,
+    DDServerNoticeBuildExceptionSiteFirstBackdropAcquisition = 5,
+    DDServerNoticeBuildExceptionSiteSecondBackdropAcquisition = 6,
+    DDServerNoticeBuildExceptionSiteBackdropBoundsRead = 7,
+    DDServerNoticeBuildExceptionSiteRemoveExistingNotice = 8,
+    DDServerNoticeBuildExceptionSiteLabelConstruction = 9,
+    DDServerNoticeBuildExceptionSiteLabelTextMutation = 10,
+    DDServerNoticeBuildExceptionSiteLabelFontMutation = 11,
+    DDServerNoticeBuildExceptionSiteLabelTextColorMutation = 12,
+    DDServerNoticeBuildExceptionSiteLabelPropertyMutation = 13,
+    DDServerNoticeBuildExceptionSiteLabelSizeThatFits = 14,
+    DDServerNoticeBuildExceptionSiteContainerConstruction = 15,
+    DDServerNoticeBuildExceptionSiteContainerBackgroundMutation = 16,
+    DDServerNoticeBuildExceptionSiteContainerCornerRadiusMutation = 17,
+    DDServerNoticeBuildExceptionSiteContainerBorderWidthMutation = 18,
+    DDServerNoticeBuildExceptionSiteBorderColorAcquisition = 19,
+    DDServerNoticeBuildExceptionSiteContainerBorderColorMutation = 20,
+    DDServerNoticeBuildExceptionSiteHierarchyAndFinalPropertyMutation = 21,
+    DDServerNoticeBuildExceptionSitePresentationCall = 22,
+    DDServerNoticeBuildExceptionSitePresentationStateAndDeadline = 23,
+    DDServerNoticeBuildExceptionSiteBackdropInteractionDisable = 24,
+    DDServerNoticeBuildExceptionSiteSuccessWeakDispatchTailUnprotected = 25,
+    DDServerNoticeBuildExceptionSiteFailedPresentationRemove = 26,
+    DDServerNoticeBuildExceptionSiteFailedPresentationTeardownUnprotected = 27,
+    DDServerNoticeBuildExceptionSiteUnprotectedRange = 28,
+};
+
+typedef struct {
+    BOOL shouldSwallowExpectedException;
+    BOOL shouldReplaceCapturedReasonWithThrew;
+    BOOL capturedReasonStoreDefinitelyPrecedesPreviousReasonRelease;
+    BOOL catchInternalReasonReleaseExceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+    BOOL protectedRangeUsesTypedOnlyActionChain;
+    BOOL protectedRangeUsesTypedPlusCleanupActionChain;
+    BOOL exceptionWouldPropagate;
+    BOOL temporaryFileManagerAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedFileManagerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedFileManagerReleaseCouldBeBypassed;
+    BOOL temporaryBackdropAcquisitionCouldHaveStartedBeforeException;
+    BOOL firstBackdropDefinitelyCommittedBeforeProtectedCall;
+    BOOL firstBackdropReleaseCouldBeBypassed;
+    BOOL retainedBackdropDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedBackdropReleaseCouldBeBypassed;
+    BOOL boundsDimensionsDefinitelyUncommittedBeforeCatch;
+    BOOL removeExistingNoticeCouldHaveAppliedBeforeException;
+    BOOL temporaryLabelAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedLabelDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedLabelReleaseCouldBeBypassed;
+    BOOL labelTextCouldHaveAppliedBeforeException;
+    BOOL temporaryStyleObjectAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedStyleObjectDefinitelyCommittedBeforeProtectedCall;
+    BOOL temporaryStyleObjectReleaseCouldBeBypassed;
+    BOOL labelFontCouldHaveAppliedBeforeException;
+    BOOL labelTextColorCouldHaveAppliedBeforeException;
+    BOOL labelPropertiesCouldHaveAppliedBeforeException;
+    BOOL sizingResultDefinitelyUncommittedBeforeCatch;
+    BOOL temporaryContainerAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedContainerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedContainerReleaseCouldBeBypassed;
+    BOOL containerBackgroundCouldHaveAppliedBeforeException;
+    BOOL containerCornerRadiusCouldHaveAppliedBeforeException;
+    BOOL containerBorderWidthCouldHaveAppliedBeforeException;
+    BOOL temporaryBorderColorAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedBorderColorDefinitelyCommittedBeforeProtectedCall;
+    BOOL temporaryBorderColorReleaseCouldBeBypassed;
+    BOOL containerBorderColorCouldHaveAppliedBeforeException;
+    BOOL hierarchyCouldHaveChangedBeforeException;
+    BOOL containerFinalPropertiesCouldHaveAppliedBeforeException;
+    BOOL currentNoticeDefinitelyStoredBeforeProtectedCall;
+    BOOL presentationCallCouldHaveAppliedBeforeException;
+    BOOL presentationAdmissionDefinitelyPassedBeforeProtectedCall;
+    BOOL presentationStateByteCouldHaveAppliedBeforeException;
+    BOOL presentationStateByteDefinitelyCommittedBeforeProtectedCall;
+    BOOL noticeDeadlineCouldHaveAppliedBeforeException;
+    BOOL noticeDeadlineDefinitelyCommittedBeforeProtectedCall;
+    BOOL backdropInteractionDisableCouldHaveAppliedBeforeException;
+    BOOL presentationStateAndDeadlineDefinitelyCommittedBeforeTail;
+    BOOL weakCaptureCouldHaveInitializedBeforeException;
+    BOOL delayedContainerCaptureCouldHaveBeenRetainedBeforeException;
+    BOOL delayedDispatchCouldHaveBeenScheduledBeforeException;
+    BOOL presentationCallDefinitelyReturnedFalseBeforeProtectedCall;
+    BOOL failedNoticeRemovalCouldHaveAppliedBeforeException;
+    BOOL failedNoticeRemovalDefinitelyCompletedBeforeTail;
+    BOOL currentNoticeCouldHaveClearedBeforeException;
+    BOOL capturedReasonCouldHaveBecomePresentFailedBeforeException;
+} DDServerNoticeBuildExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1943,6 +2036,7 @@ FOUNDATION_EXPORT DDSplashOpacityTransactionExceptionOutcome DDResolveSplashOpac
 FOUNDATION_EXPORT DDSplashNudgePreparationExceptionOutcome DDResolveSplashNudgePreparationExceptionOutcome(DDSplashNudgePreparationExceptionSite site);
 FOUNDATION_EXPORT DDRestoreTargetsExceptionOutcome DDResolveRestoreTargetsExceptionOutcome(DDRestoreTargetsExceptionSite site);
 FOUNDATION_EXPORT DDTickPresenterExceptionOutcome DDResolveTickPresenterExceptionOutcome(DDTickPresenterExceptionSite site);
+FOUNDATION_EXPORT DDServerNoticeBuildExceptionOutcome DDResolveServerNoticeBuildExceptionOutcome(DDServerNoticeBuildExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);

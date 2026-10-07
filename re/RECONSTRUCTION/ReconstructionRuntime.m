@@ -3632,6 +3632,211 @@ DDTickPresenterExceptionOutcome DDResolveTickPresenterExceptionOutcome(DDTickPre
     return outcome;
 }
 
+DDServerNoticeBuildExceptionOutcome DDResolveServerNoticeBuildExceptionOutcome(DDServerNoticeBuildExceptionSite site) {
+    // 345E4 LSDA 0x113CD4 has 29 call-site entries. The marker/text gates use action index 7
+    // (typed catch only); later UI-build ranges use action index 5 (typed catch plus cleanup).
+    // All expected typed exceptions converge at 0x34BA8. The catch stores CFSTR("threw") into the
+    // captured result/reason slot *before* releasing the previous slot value, then end-catches and
+    // returns. That catch-internal release is itself outside local protection and may propagate.
+    DDServerNoticeBuildExceptionOutcome outcome = {0};
+    BOOL typedOnlySite = site >= DDServerNoticeBuildExceptionSiteNoNoticeManagerAcquisition &&
+                         site <= DDServerNoticeBuildExceptionSiteTextLengthValidation;
+    BOOL typedPlusCleanupSite = site >= DDServerNoticeBuildExceptionSiteFirstBackdropAcquisition &&
+                                site <= DDServerNoticeBuildExceptionSiteBackdropInteractionDisable;
+    typedPlusCleanupSite = typedPlusCleanupSite || site == DDServerNoticeBuildExceptionSiteFailedPresentationRemove;
+    BOOL protectedSite = typedOnlySite || typedPlusCleanupSite;
+    if (protectedSite) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.shouldReplaceCapturedReasonWithThrew = YES;
+        outcome.capturedReasonStoreDefinitelyPrecedesPreviousReasonRelease = YES;
+        outcome.catchInternalReasonReleaseExceptionWouldPropagate = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        outcome.protectedRangeUsesTypedOnlyActionChain = typedOnlySite;
+        outcome.protectedRangeUsesTypedPlusCleanupActionChain = typedPlusCleanupSite;
+    }
+
+    if (site == DDServerNoticeBuildExceptionSiteNoNoticeManagerAcquisition) {
+        outcome.temporaryFileManagerAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteNoNoticeFileProbe) {
+        outcome.retainedFileManagerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedFileManagerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteTextTypeValidation ||
+        site == DDServerNoticeBuildExceptionSiteTextLengthValidation) {
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteFirstBackdropAcquisition) {
+        outcome.temporaryBackdropAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteSecondBackdropAcquisition) {
+        outcome.firstBackdropDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.firstBackdropReleaseCouldBeBypassed = YES;
+        outcome.temporaryBackdropAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+
+    BOOL backdropSite = site >= DDServerNoticeBuildExceptionSiteBackdropBoundsRead &&
+                        site <= DDServerNoticeBuildExceptionSiteBackdropInteractionDisable;
+    backdropSite = backdropSite || site == DDServerNoticeBuildExceptionSiteFailedPresentationRemove;
+    if (backdropSite) {
+        outcome.retainedBackdropDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedBackdropReleaseCouldBeBypassed = YES;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteBackdropBoundsRead) {
+        outcome.boundsDimensionsDefinitelyUncommittedBeforeCatch = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteRemoveExistingNotice) {
+        outcome.removeExistingNoticeCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteLabelConstruction) {
+        outcome.temporaryLabelAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+
+    BOOL labelSite = site >= DDServerNoticeBuildExceptionSiteLabelTextMutation &&
+                     site <= DDServerNoticeBuildExceptionSiteBackdropInteractionDisable;
+    labelSite = labelSite || site == DDServerNoticeBuildExceptionSiteFailedPresentationRemove;
+    if (labelSite) {
+        outcome.retainedLabelDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteLabelTextMutation) {
+        outcome.labelTextCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteLabelFontMutation) {
+        outcome.temporaryStyleObjectAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.retainedStyleObjectDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.temporaryStyleObjectReleaseCouldBeBypassed = YES;
+        outcome.labelFontCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteLabelTextColorMutation) {
+        outcome.temporaryStyleObjectAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.retainedStyleObjectDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.temporaryStyleObjectReleaseCouldBeBypassed = YES;
+        outcome.labelTextColorCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteLabelPropertyMutation) {
+        outcome.labelPropertiesCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteLabelSizeThatFits) {
+        outcome.sizingResultDefinitelyUncommittedBeforeCatch = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteContainerConstruction) {
+        outcome.temporaryContainerAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+
+    BOOL containerSite = site >= DDServerNoticeBuildExceptionSiteContainerBackgroundMutation &&
+                         site <= DDServerNoticeBuildExceptionSiteBackdropInteractionDisable;
+    containerSite = containerSite || site == DDServerNoticeBuildExceptionSiteFailedPresentationRemove;
+    if (containerSite) {
+        outcome.retainedContainerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedContainerReleaseCouldBeBypassed = YES;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteContainerBackgroundMutation) {
+        outcome.temporaryStyleObjectAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.retainedStyleObjectDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.temporaryStyleObjectReleaseCouldBeBypassed = YES;
+        outcome.containerBackgroundCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteContainerCornerRadiusMutation) {
+        outcome.temporaryStyleObjectAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.retainedStyleObjectDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.temporaryStyleObjectReleaseCouldBeBypassed = YES;
+        outcome.containerCornerRadiusCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteContainerBorderWidthMutation) {
+        outcome.temporaryStyleObjectAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.retainedStyleObjectDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.temporaryStyleObjectReleaseCouldBeBypassed = YES;
+        outcome.containerBorderWidthCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteBorderColorAcquisition) {
+        outcome.temporaryBorderColorAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryBorderColorReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteContainerBorderColorMutation) {
+        outcome.temporaryBorderColorAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.retainedBorderColorDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.temporaryBorderColorReleaseCouldBeBypassed = YES;
+        outcome.temporaryStyleObjectAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.retainedStyleObjectDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.temporaryStyleObjectReleaseCouldBeBypassed = YES;
+        outcome.containerBorderColorCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteHierarchyAndFinalPropertyMutation) {
+        outcome.hierarchyCouldHaveChangedBeforeException = YES;
+        outcome.containerFinalPropertiesCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+
+    BOOL postStoreProtectedSite = site >= DDServerNoticeBuildExceptionSitePresentationCall &&
+                                  site <= DDServerNoticeBuildExceptionSiteBackdropInteractionDisable;
+    if (postStoreProtectedSite || site == DDServerNoticeBuildExceptionSiteFailedPresentationRemove) {
+        outcome.currentNoticeDefinitelyStoredBeforeProtectedCall = YES;
+    }
+    if (site == DDServerNoticeBuildExceptionSitePresentationCall) {
+        outcome.presentationCallCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSitePresentationStateAndDeadline) {
+        outcome.presentationAdmissionDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.presentationStateByteDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.noticeDeadlineCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteBackdropInteractionDisable) {
+        outcome.presentationAdmissionDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.presentationStateByteDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.noticeDeadlineDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.backdropInteractionDisableCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteSuccessWeakDispatchTailUnprotected) {
+        outcome.currentNoticeDefinitelyStoredBeforeProtectedCall = YES;
+        outcome.presentationStateAndDeadlineDefinitelyCommittedBeforeTail = YES;
+        outcome.weakCaptureCouldHaveInitializedBeforeException = YES;
+        outcome.delayedContainerCaptureCouldHaveBeenRetainedBeforeException = YES;
+        outcome.delayedDispatchCouldHaveBeenScheduledBeforeException = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteFailedPresentationRemove) {
+        outcome.presentationCallDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.failedNoticeRemovalCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteFailedPresentationTeardownUnprotected) {
+        outcome.currentNoticeDefinitelyStoredBeforeProtectedCall = YES;
+        outcome.presentationCallDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.failedNoticeRemovalDefinitelyCompletedBeforeTail = YES;
+        outcome.currentNoticeCouldHaveClearedBeforeException = YES;
+        outcome.capturedReasonCouldHaveBecomePresentFailedBeforeException = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDServerNoticeBuildExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
