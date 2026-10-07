@@ -730,6 +730,32 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDKeyPaneRectangleForwardExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDKeyPaneCenterForwardExceptionSite) {
+    DDKeyPaneCenterForwardExceptionSiteNone = 0,
+    DDKeyPaneCenterForwardExceptionSitePreGeometryHelper = 1,
+    DDKeyPaneCenterForwardExceptionSiteCandidateGeometryHelper = 2,
+    DDKeyPaneCenterForwardExceptionSiteCandidateNullCheck = 3,
+    DDKeyPaneCenterForwardExceptionSiteCandidateMidX = 4,
+    DDKeyPaneCenterForwardExceptionSiteCandidateMidY = 5,
+    DDKeyPaneCenterForwardExceptionSiteUnprotectedRange = 6,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldForwardOriginalCallerCenter;
+    BOOL shouldSkipCandidateCenterAdoption;
+    BOOL shouldSkipGeometryCounterDecrement;
+    BOOL shouldInvokeCenterForwardCallback;
+    BOOL shouldContinueFinalRetainedInputCleanup;
+    BOOL retainedInputDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedInputReleaseCouldBeBypassed;
+    BOOL candidateRectangleDefinitelyAcquiredBeforeProtectedCall;
+    BOOL candidateNullCheckDefinitelyCompletedBeforeProtectedCall;
+    BOOL candidateMidXDefinitelyComputedBeforeProtectedCall;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDKeyPaneCenterForwardExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1331,6 +1357,7 @@ FOUNDATION_EXPORT DDKeyboardLostRecoveryExceptionOutcome DDResolveKeyboardLostRe
 FOUNDATION_EXPORT DDCarPlayUIStatusCallbackExceptionOutcome DDResolveCarPlayUIStatusCallbackExceptionOutcome(DDCarPlayUIStatusCallbackExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
+FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
