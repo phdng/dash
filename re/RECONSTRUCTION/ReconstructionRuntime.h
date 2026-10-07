@@ -743,6 +743,38 @@ typedef struct {
     BOOL exceptionWouldPropagate;
 } DDDropOverdueNoticeExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDNudgePresentGateExceptionSite) {
+    DDNudgePresentGateExceptionSiteNone = 0,
+    DDNudgePresentGateExceptionSiteSharedControllerAcquisition = 1,
+    DDNudgePresentGateExceptionSiteVisibleCheck = 2,
+    DDNudgePresentGateExceptionSiteLivePresentRunningCheck = 3,
+    DDNudgePresentGateExceptionSiteFileManagerAcquisition = 4,
+    DDNudgePresentGateExceptionSiteMarkerFileCheck = 5,
+    DDNudgePresentGateExceptionSiteNudgePresentSend = 6,
+    DDNudgePresentGateExceptionSiteUnprotectedRange = 7,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldReturnImmediately;
+    BOOL temporaryControllerAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryControllerReleaseCouldBeBypassed;
+    BOOL retainedControllerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedControllerReleaseCouldBeBypassed;
+    BOOL visibleCheckDefinitelyPassedBeforeProtectedCall;
+    BOOL livePresentCheckDefinitelyReturnedFalseBeforeProtectedCall;
+    BOOL temporaryFileManagerAcquisitionCouldHaveStartedBeforeException;
+    BOOL temporaryFileManagerReleaseCouldBeBypassed;
+    BOOL retainedFileManagerDefinitelyCommittedBeforeProtectedCall;
+    BOOL retainedFileManagerReleaseCouldBeBypassed;
+    BOOL markerCheckDefinitelyCompletedBeforeProtectedCall;
+    BOOL markerDefinitelyAbsentBeforeProtectedCall;
+    BOOL fileManagerReleaseDefinitelyCompletedBeforeProtectedCall;
+    BOOL nudgeCouldHaveAppliedSideEffectsBeforeException;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDNudgePresentGateExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1412,6 +1444,7 @@ FOUNDATION_EXPORT DDCarPlayUIStatusCallbackExceptionOutcome DDResolveCarPlayUISt
 FOUNDATION_EXPORT DDDropSplashIfOverdueExceptionOutcome DDResolveDropSplashIfOverdueExceptionOutcome(DDDropSplashIfOverdueExceptionSite site);
 FOUNDATION_EXPORT DDDropServerNoticeNowExceptionOutcome DDResolveDropServerNoticeNowExceptionOutcome(DDDropServerNoticeNowExceptionSite site);
 FOUNDATION_EXPORT DDDropOverdueNoticeExceptionOutcome DDResolveDropOverdueNoticeExceptionOutcome(DDDropOverdueNoticeExceptionSite site);
+FOUNDATION_EXPORT DDNudgePresentGateExceptionOutcome DDResolveNudgePresentGateExceptionOutcome(DDNudgePresentGateExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);

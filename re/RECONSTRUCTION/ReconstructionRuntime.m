@@ -2388,6 +2388,78 @@ DDDropOverdueNoticeExceptionOutcome DDResolveDropOverdueNoticeExceptionOutcome(D
     return outcome;
 }
 
+DDNudgePresentGateExceptionOutcome DDResolveNudgePresentGateExceptionOutcome(DDNudgePresentGateExceptionSite site) {
+    // 370F8 LSDA 0x1140B4 has typed action-5 ranges 0x37110..0x37158 and
+    // 0x37168..0x37178. Both land at 0x3718C: expected type begin/end-catches and returns,
+    // while nonmatching type resumes unwind at 0x371A8. The first range spans DDz1 shared,
+    // visible/livePresentRunning guards, NSFileManager acquisition, and fileExistsAtPath:.
+    // Its range ends before the file-marker result commits to w21. The second range is only
+    // nudgePresent:@"tick", reached after marker=false and after the retained file manager was
+    // released. Expected catches do not release any currently retained x19/x20 locals.
+    DDNudgePresentGateExceptionOutcome outcome = {0};
+    BOOL typedSite =
+        site == DDNudgePresentGateExceptionSiteSharedControllerAcquisition ||
+        site == DDNudgePresentGateExceptionSiteVisibleCheck ||
+        site == DDNudgePresentGateExceptionSiteLivePresentRunningCheck ||
+        site == DDNudgePresentGateExceptionSiteFileManagerAcquisition ||
+        site == DDNudgePresentGateExceptionSiteMarkerFileCheck ||
+        site == DDNudgePresentGateExceptionSiteNudgePresentSend;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldReturnImmediately = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    }
+    if (site == DDNudgePresentGateExceptionSiteSharedControllerAcquisition) {
+        outcome.temporaryControllerAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryControllerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDNudgePresentGateExceptionSiteVisibleCheck) {
+        outcome.retainedControllerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedControllerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDNudgePresentGateExceptionSiteLivePresentRunningCheck) {
+        outcome.retainedControllerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedControllerReleaseCouldBeBypassed = YES;
+        outcome.visibleCheckDefinitelyPassedBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDNudgePresentGateExceptionSiteFileManagerAcquisition) {
+        outcome.retainedControllerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedControllerReleaseCouldBeBypassed = YES;
+        outcome.visibleCheckDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.livePresentCheckDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.temporaryFileManagerAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryFileManagerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDNudgePresentGateExceptionSiteMarkerFileCheck) {
+        outcome.retainedControllerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedControllerReleaseCouldBeBypassed = YES;
+        outcome.visibleCheckDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.livePresentCheckDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.retainedFileManagerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedFileManagerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDNudgePresentGateExceptionSiteNudgePresentSend) {
+        outcome.retainedControllerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedControllerReleaseCouldBeBypassed = YES;
+        outcome.visibleCheckDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.livePresentCheckDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.markerCheckDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.markerDefinitelyAbsentBeforeProtectedCall = YES;
+        outcome.fileManagerReleaseDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.nudgeCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDNudgePresentGateExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
