@@ -2810,6 +2810,25 @@ DDDisplayConfigurationPublishExceptionOutcome DDResolveDisplayConfigurationPubli
     return outcome;
 }
 
+DDDisplayChangedWrapperExceptionOutcome DDResolveDisplayChangedWrapperExceptionOutcome(DDDisplayChangedWrapperExceptionSite site) {
+    // 365A8 LSDA 0x113FE8 has one action-1 catch-all range 0x365B0..0x365C0 around
+    // loading the static display.changed reason, force=YES, and calling sub_365D4. Landing 0x365C8
+    // has no discriminator: it unconditionally begin/end-catches and returns. The outer wrapper
+    // performs no rollback or local cleanup of inner sub_365D4 state; inner R-152 metadata remains
+    // authoritative for which display/global/preferences/notification effects could already exist.
+    DDDisplayChangedWrapperExceptionOutcome outcome = {0};
+    if (site == DDDisplayChangedWrapperExceptionSiteInnerDisplayConfigurationCall) {
+        outcome.shouldSwallowAnyException = YES;
+        outcome.shouldReturnImmediately = YES;
+        outcome.innerDisplayConfigurationCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDDisplayChangedWrapperExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

@@ -910,6 +910,19 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDDisplayConfigurationPublishExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDDisplayChangedWrapperExceptionSite) {
+    DDDisplayChangedWrapperExceptionSiteNone = 0,
+    DDDisplayChangedWrapperExceptionSiteInnerDisplayConfigurationCall = 1,
+    DDDisplayChangedWrapperExceptionSiteUnprotectedRange = 2,
+};
+
+typedef struct {
+    BOOL shouldSwallowAnyException;
+    BOOL shouldReturnImmediately;
+    BOOL innerDisplayConfigurationCouldHaveAppliedSideEffectsBeforeException;
+    BOOL exceptionWouldPropagate;
+} DDDisplayChangedWrapperExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1583,6 +1596,7 @@ FOUNDATION_EXPORT DDNudgePresentGateExceptionOutcome DDResolveNudgePresentGateEx
 FOUNDATION_EXPORT DDDisplayBoundsFallbackExceptionOutcome DDResolveDisplayBoundsFallbackExceptionOutcome(DDDisplayBoundsFallbackExceptionSite site);
 FOUNDATION_EXPORT DDLayoutAreaPublishExceptionOutcome DDResolveLayoutAreaPublishExceptionOutcome(DDLayoutAreaPublishExceptionSite site);
 FOUNDATION_EXPORT DDDisplayConfigurationPublishExceptionOutcome DDResolveDisplayConfigurationPublishExceptionOutcome(DDDisplayConfigurationPublishExceptionSite site);
+FOUNDATION_EXPORT DDDisplayChangedWrapperExceptionOutcome DDResolveDisplayChangedWrapperExceptionOutcome(DDDisplayChangedWrapperExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
