@@ -2332,6 +2332,37 @@ DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExcept
     return outcome;
 }
 
+DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site) {
+    // 374C4 LSDA 0x11413C has one action-5 range 0x374FC..0x3751C around candidate CGRect
+    // acquisition via 376DC and CGRectIsNull. The caller rectangle is preserved in d9/d8/d10/d11;
+    // candidate values are not copied into those forwarding registers until 0x3754C..0x37558,
+    // outside the protected range. Expected catch at 0x375A0 therefore jumps to 0x3755C with the
+    // original rectangle intact, skips candidate adoption and the dword_162EF0 decrement, invokes
+    // off_163C58 with the caller rectangle, and then performs the normal final retained-input cleanup.
+    DDKeyPaneRectangleForwardExceptionOutcome outcome = {0};
+    BOOL typedSite =
+        site == DDKeyPaneRectangleForwardExceptionSiteCandidateGeometryHelper ||
+        site == DDKeyPaneRectangleForwardExceptionSiteCandidateNullCheck;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldForwardOriginalCallerRectangle = YES;
+        outcome.shouldSkipCandidateRectangleAdoption = YES;
+        outcome.shouldSkipGeometryCounterDecrement = YES;
+        outcome.shouldInvokeForwardCallback = YES;
+        outcome.shouldContinueFinalInputCleanup = YES;
+        outcome.retainedInputDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site == DDKeyPaneRectangleForwardExceptionSiteCandidateNullCheck) {
+            outcome.candidateRectangleDefinitelyAcquiredBeforeProtectedCall = YES;
+        }
+        return outcome;
+    }
+    if (site == DDKeyPaneRectangleForwardExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

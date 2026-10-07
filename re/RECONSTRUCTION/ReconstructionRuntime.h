@@ -710,6 +710,26 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDKeyPaneCenterAdjustmentExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDKeyPaneRectangleForwardExceptionSite) {
+    DDKeyPaneRectangleForwardExceptionSiteNone = 0,
+    DDKeyPaneRectangleForwardExceptionSiteCandidateGeometryHelper = 1,
+    DDKeyPaneRectangleForwardExceptionSiteCandidateNullCheck = 2,
+    DDKeyPaneRectangleForwardExceptionSiteUnprotectedRange = 3,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldForwardOriginalCallerRectangle;
+    BOOL shouldSkipCandidateRectangleAdoption;
+    BOOL shouldSkipGeometryCounterDecrement;
+    BOOL shouldInvokeForwardCallback;
+    BOOL shouldContinueFinalInputCleanup;
+    BOOL retainedInputDefinitelyCommittedBeforeProtectedCall;
+    BOOL candidateRectangleDefinitelyAcquiredBeforeProtectedCall;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDKeyPaneRectangleForwardExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -1310,6 +1330,7 @@ FOUNDATION_EXPORT DDPropertyListReaderExceptionOutcome DDResolvePropertyListRead
 FOUNDATION_EXPORT DDKeyboardLostRecoveryExceptionOutcome DDResolveKeyboardLostRecoveryExceptionOutcome(DDKeyboardLostRecoveryExceptionSite site);
 FOUNDATION_EXPORT DDCarPlayUIStatusCallbackExceptionOutcome DDResolveCarPlayUIStatusCallbackExceptionOutcome(DDCarPlayUIStatusCallbackExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
+FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
