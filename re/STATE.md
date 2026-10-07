@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-158 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-159 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-89 (session-158): GitHub Actions session-157 (`dde603e`) đã xanh theo user. Executable target thêm data-only `35FBC` splash-fade UIView-animation action-0 cleanup outcome từ LSDA `0x113F94` + raw ARM64. Một action-0 range `0x3606C..0x36084` bao duration/arguments + `+[UIView animateWithDuration:animations:completion:]`; trước range, animation/completion strong captures đã retain/commit và completion weak capture đã copy. Landing `0x360B4` giữ active exception, destroy copied weak capture rồi resume unwind `0x360C4`, không swallow. Normal strong-capture releases ngoài range bị bypass trên unwind path; animation side effects có thể đã apply trước throw. Unprotected paths propagate. Không live animation/capture/ownership mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-90 (session-159): GitHub Actions session-158 (`93c1aea`) đã xanh theo user. Executable target thêm data-only `358F0` splash presentation/preferences/image/dispatch exception outcome từ LSDA `0x113EDC` + raw ARM64. Exact table có 29 call-site entries. Initial no-splash marker probe dùng action index 7 = typed catch-only; các protected ranges còn lại dùng action index 5 = typed catch + cleanup-chain. Tất cả expected typed exceptions hội tụ common catch `0x35F84` rồi return ngay; nonmatching unwind, action-5 ranges có thể qua local cleanup landing. Runtime tách marker manager, selected view/bounds, preference load+parse, image-path probing, removeSplash, splash UIView/image hierarchy, global splash store, duration parsing, disabled-selection removeSplash, và unprotected deadline/weak/two-dispatch tail. `qword_163C30`, weak captures và cả hai dispatch_after nằm unprotected nên exceptions propagate. Không live prefs/file/image/UI/dispatch/global/ownership mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-158):
-- R-157 data-only 35FBC splash-fade UIView-animation action-0 cleanup outcome: copied weak capture cleanup before resume unwind, precommitted strong capture lifetime/release bypass, possible animation side-effect persistence, and unprotected propagation recorded.
+## LAST COMPLETED TASK (session-159):
+- R-158 data-only 358F0 splash presentation/preferences/image/dispatch exception outcome: 29-entry LSDA with action-7 typed-only marker probe vs action-5 typed+cleanup ranges; exact ownership/side-effect milestones, global splash-store timing, expected catch return, nonmatching unwind, and unprotected deadline/weak/two-dispatch propagation recorded.
 
 ## CURRENT TASK:
-- R-157 hoàn tất local; commit-only handoff. User confirmed session-157 compiler green before this batch; assistant không push.
+- R-158 hoàn tất local; commit-only handoff. User confirmed session-158 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-158 batch, R-158: inspect `358F0 -> 0x113EDC`, large splash creation/preferences/image/dispatch pipeline. Exact LSDA call-site table has 29 entries, with protected action indices 5 plus initial action 7 and many unprotected gaps. Protected landing aliases `0x35F60/64/68/6C/70/74/78/7C/80` all converge at common discriminator `0x35F84`; expected type begin/end-catches and returns, nonmatching type resumes unwind at `0x35FB8`. Decode action-chain 7 separately before assigning semantics. Map NSFileManager no-splash gate, content-view/bounds, splash selection prefs/type parsing, image-path/image loading, view/image-view construction, global splash store, duration parsing, qword_163C30 timing, weak captures, and two dispatch_after blocks site-by-site without genericizing. After R-158, `35880 -> 0x113EC8` is an action-1 catch-all around opacity check + CATransaction begin/setDisableActions/setOpacity/commit. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
+- Sau compiler xanh cho session-159 batch, R-159: inspect `35880 -> 0x113EC8`. Exact table has action-1 catch-all `0x35894..0x358D4 -> 0x358E0`, then unprotected tail. Protected path covers layer opacity read and, only when opacity==0.99, CATransaction begin -> setDisableActions:YES -> setOpacity:1.0 -> commit. Landing `0x358E0` unconditional begin/end-catches and returns; no discriminator. Split opacity-read exception from transaction begin/disable/setOpacity/commit so prior side effects are preserved and no rollback is asserted. After R-159, `356A0 -> 0x113E98` is a typed multi-range weak-owner/layer-opacity/nudge helper with CATransaction, counter decrement and delayed dispatch; decode separately. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-158):
+## FILES CHANGED (session-159):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-158.md`.
+- Mới: `LOG/session-159.md`.
 
 ## TEST STATUS:
-Session-157 GitHub Actions build GREEN (`dde603e`, user-confirmed). Session-158 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-158 GitHub Actions build GREEN (`93c1aea`, user-confirmed). Session-159 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.

@@ -2932,6 +2932,106 @@ DDSplashFadeAnimationExceptionOutcome DDResolveSplashFadeAnimationExceptionOutco
     return outcome;
 }
 
+DDSplashPresentationExceptionOutcome DDResolveSplashPresentationExceptionOutcome(DDSplashPresentationExceptionSite site) {
+    // 358F0 LSDA 0x113EDC has 29 call-site entries. Protected ranges all converge on the typed
+    // catch at 0x35F84, whose expected type begin/end-catches and returns. The first marker-probe
+    // range uses action index 7 (typed catch only); the remaining protected ranges use action index
+    // 5 (typed catch plus cleanup action), so nonmatching exceptions for those ranges can route
+    // through the local landing before resume unwind. qword_163C30, weak captures and both
+    // dispatch_after calls are in the unprotected 0x35DB0..0x35F2C tail.
+    DDSplashPresentationExceptionOutcome outcome = {0};
+    BOOL protectedSite = site >= DDSplashPresentationExceptionSiteNoSplashMarkerProbe &&
+                         site <= DDSplashPresentationExceptionSiteRemoveExistingSplashForDisabledSelection;
+    if (protectedSite) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.shouldReturnImmediately = YES;
+        outcome.nonmatchingTypeWouldResumeUnwind = YES;
+    }
+    if (site == DDSplashPresentationExceptionSiteNoSplashMarkerProbe) {
+        outcome.temporaryFileManagerAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.fileManagerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (protectedSite) {
+        outcome.nonmatchingTypeWouldUseLocalCleanupLandingBeforeResume = YES;
+    }
+    if (site == DDSplashPresentationExceptionSiteContentViewSelection) {
+        outcome.selectedViewCouldBeCommittedBeforeException = YES;
+        outcome.selectedViewReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDSplashPresentationExceptionSiteBoundsRead) {
+        outcome.selectedViewDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedViewReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDSplashPresentationExceptionSitePreferenceLoadAndParse) {
+        outcome.selectedViewDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedViewReleaseCouldBeBypassed = YES;
+        outcome.preferencesSynchronizeCouldHaveAppliedBeforeException = YES;
+        outcome.preferenceValueCouldBeCommittedBeforeException = YES;
+        outcome.preferenceValueReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDSplashPresentationExceptionSiteImagePathSelectionAndProbe) {
+        outcome.selectedViewDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedViewReleaseCouldBeBypassed = YES;
+        outcome.temporaryFileManagerAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.fileManagerReleaseCouldBeBypassed = YES;
+        outcome.imagePathCouldBeCommittedBeforeException = YES;
+        outcome.imagePathReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDSplashPresentationExceptionSiteRemoveExistingSplashBeforeBuild) {
+        outcome.selectedViewDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedViewReleaseCouldBeBypassed = YES;
+        outcome.imagePathCouldBeCommittedBeforeException = YES;
+        outcome.imagePathReleaseCouldBeBypassed = YES;
+        outcome.removeSplashCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDSplashPresentationExceptionSiteSplashViewBuildAndHierarchy) {
+        outcome.selectedViewDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedViewReleaseCouldBeBypassed = YES;
+        outcome.imagePathCouldBeCommittedBeforeException = YES;
+        outcome.imagePathReleaseCouldBeBypassed = YES;
+        outcome.splashViewCouldBeCommittedBeforeException = YES;
+        outcome.splashHierarchyCouldHaveChangedBeforeException = YES;
+        outcome.splashViewPropertiesCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDSplashPresentationExceptionSiteDurationReadAndParse) {
+        outcome.selectedViewDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedViewReleaseCouldBeBypassed = YES;
+        outcome.imagePathCouldBeCommittedBeforeException = YES;
+        outcome.imagePathReleaseCouldBeBypassed = YES;
+        outcome.splashViewCouldBeCommittedBeforeException = YES;
+        outcome.globalSplashDefinitelyStoredBeforeProtectedCall = YES;
+        outcome.durationStringCouldBeCommittedBeforeException = YES;
+        outcome.deadlineDefinitelyUncommittedBeforeCatch = YES;
+        return outcome;
+    }
+    if (site == DDSplashPresentationExceptionSiteRemoveExistingSplashForDisabledSelection) {
+        outcome.selectedViewDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.selectedViewReleaseCouldBeBypassed = YES;
+        outcome.removeSplashCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDSplashPresentationExceptionSitePostDurationDispatchPipelineUnprotected) {
+        outcome.globalSplashDefinitelyStoredBeforeProtectedCall = YES;
+        outcome.deadlineDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.weakOwnerCaptureCouldHaveBeenInitializedBeforeException = YES;
+        outcome.firstDispatchCouldHaveBeenScheduledBeforeException = YES;
+        outcome.secondDispatchCouldHaveBeenScheduledBeforeException = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDSplashPresentationExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

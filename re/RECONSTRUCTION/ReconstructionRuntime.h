@@ -991,6 +991,50 @@ typedef struct {
     BOOL animationCouldHaveAppliedSideEffectsBeforeException;
 } DDSplashFadeAnimationExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDSplashPresentationExceptionSite) {
+    DDSplashPresentationExceptionSiteNone = 0,
+    DDSplashPresentationExceptionSiteNoSplashMarkerProbe = 1,
+    DDSplashPresentationExceptionSiteContentViewSelection = 2,
+    DDSplashPresentationExceptionSiteBoundsRead = 3,
+    DDSplashPresentationExceptionSitePreferenceLoadAndParse = 4,
+    DDSplashPresentationExceptionSiteImagePathSelectionAndProbe = 5,
+    DDSplashPresentationExceptionSiteRemoveExistingSplashBeforeBuild = 6,
+    DDSplashPresentationExceptionSiteSplashViewBuildAndHierarchy = 7,
+    DDSplashPresentationExceptionSiteDurationReadAndParse = 8,
+    DDSplashPresentationExceptionSiteRemoveExistingSplashForDisabledSelection = 9,
+    DDSplashPresentationExceptionSitePostDurationDispatchPipelineUnprotected = 10,
+    DDSplashPresentationExceptionSiteUnprotectedRange = 11,
+};
+
+typedef struct {
+    BOOL shouldSwallowExpectedException;
+    BOOL shouldReturnImmediately;
+    BOOL nonmatchingTypeWouldResumeUnwind;
+    BOOL nonmatchingTypeWouldUseLocalCleanupLandingBeforeResume;
+    BOOL temporaryFileManagerAcquisitionCouldHaveStartedBeforeException;
+    BOOL fileManagerReleaseCouldBeBypassed;
+    BOOL selectedViewCouldBeCommittedBeforeException;
+    BOOL selectedViewDefinitelyCommittedBeforeProtectedCall;
+    BOOL selectedViewReleaseCouldBeBypassed;
+    BOOL preferencesSynchronizeCouldHaveAppliedBeforeException;
+    BOOL preferenceValueCouldBeCommittedBeforeException;
+    BOOL preferenceValueReleaseCouldBeBypassed;
+    BOOL imagePathCouldBeCommittedBeforeException;
+    BOOL imagePathReleaseCouldBeBypassed;
+    BOOL removeSplashCouldHaveAppliedSideEffectsBeforeException;
+    BOOL splashViewCouldBeCommittedBeforeException;
+    BOOL splashHierarchyCouldHaveChangedBeforeException;
+    BOOL splashViewPropertiesCouldHaveAppliedBeforeException;
+    BOOL globalSplashDefinitelyStoredBeforeProtectedCall;
+    BOOL durationStringCouldBeCommittedBeforeException;
+    BOOL deadlineDefinitelyUncommittedBeforeCatch;
+    BOOL deadlineDefinitelyCommittedBeforeProtectedCall;
+    BOOL weakOwnerCaptureCouldHaveBeenInitializedBeforeException;
+    BOOL firstDispatchCouldHaveBeenScheduledBeforeException;
+    BOOL secondDispatchCouldHaveBeenScheduledBeforeException;
+    BOOL exceptionWouldPropagate;
+} DDSplashPresentationExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -1669,6 +1713,7 @@ FOUNDATION_EXPORT DDCarPlayConnectedExceptionOutcome DDResolveCarPlayConnectedEx
 FOUNDATION_EXPORT DDShellRebuildBlockExceptionOutcome DDResolveShellRebuildBlockExceptionOutcome(DDShellRebuildBlockExceptionSite site);
 FOUNDATION_EXPORT DDSplashFadeCompletionExceptionOutcome DDResolveSplashFadeCompletionExceptionOutcome(DDSplashFadeCompletionExceptionSite site);
 FOUNDATION_EXPORT DDSplashFadeAnimationExceptionOutcome DDResolveSplashFadeAnimationExceptionOutcome(DDSplashFadeAnimationExceptionSite site);
+FOUNDATION_EXPORT DDSplashPresentationExceptionOutcome DDResolveSplashPresentationExceptionOutcome(DDSplashPresentationExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
