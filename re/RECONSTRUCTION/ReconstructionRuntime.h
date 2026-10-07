@@ -261,6 +261,33 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDDegradeSlotExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDSpikeCreateSlotExceptionSite) {
+    DDSpikeCreateSlotExceptionSiteNone = 0,
+    DDSpikeCreateSlotExceptionSitePreControllerPrivateWork = 1,
+    DDSpikeCreateSlotExceptionSitePostControllerPrivateWork = 2,
+    DDSpikeCreateSlotExceptionSitePrivateDeviceDecoration = 3,
+    DDSpikeCreateSlotExceptionSitePlaceholderCreationAfterApplicationMiss = 4,
+    DDSpikeCreateSlotExceptionSiteFailureDegradeBeforeControllerStore = 5,
+    DDSpikeCreateSlotExceptionSiteFailureDegradeAfterControllerStore = 6,
+    DDSpikeCreateSlotExceptionSiteCatchDegrade = 7,
+    DDSpikeCreateSlotExceptionSiteUnprotectedRange = 8,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL spikeInProgressFlagWasAlreadySet;
+    BOOL hostedBidAndNativeStateWereCommittedBeforeProtectedRange;
+    BOOL controllerIvarHadBeenStoredBeforeProtectedCall;
+    BOOL shouldRouteThroughDegradeFromCatch;
+    BOOL shouldRetryDegradeFromCatch;
+    BOOL shouldSkipRemainingPrivateDecoration;
+    BOOL shouldContinueReturningMainView;
+    BOOL shouldReturnDegradedResult;
+    BOOL shouldEndActiveCatchBeforeResumeUnwind;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDSpikeCreateSlotExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -844,6 +871,7 @@ FOUNDATION_EXPORT DDSpikeHostSlotsLandscapeExceptionOutcome DDResolveSpikeHostSl
 FOUNDATION_EXPORT DDAuxSceneTeardownExceptionOutcome DDResolveAuxSceneTeardownExceptionOutcome(DDAuxSceneTeardownExceptionSite site);
 FOUNDATION_EXPORT DDAuxSceneCreationExceptionOutcome DDResolveAuxSceneCreationExceptionOutcome(DDAuxSceneCreationExceptionSite site);
 FOUNDATION_EXPORT DDDegradeSlotExceptionOutcome DDResolveDegradeSlotExceptionOutcome(DDDegradeSlotExceptionSite site);
+FOUNDATION_EXPORT DDSpikeCreateSlotExceptionOutcome DDResolveSpikeCreateSlotExceptionOutcome(DDSpikeCreateSlotExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

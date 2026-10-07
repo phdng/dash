@@ -1537,6 +1537,60 @@ DDDegradeSlotExceptionOutcome DDResolveDegradeSlotExceptionOutcome(DDDegradeSlot
     return outcome;
 }
 
+DDSpikeCreateSlotExceptionOutcome DDResolveSpikeCreateSlotExceptionOutcome(DDSpikeCreateSlotExceptionSite site) {
+    // 3BBF0 LSDA 0x114538 has twelve action-5 ranges. Eleven land through stubs into common typed
+    // catch 0x3C15C, which formats an exception reason and routes through degradeSlot before normal
+    // cleanup. The one special range 0x3BF00..0x3BF48 covers private device-controller/home-grabber
+    // decoration; expected catch 0x3C12C swallows and rejoins 0x3BF50 to retain/return the main view.
+    // All action-5 ranges occur after spike-in-progress, hosted-bid, and native-size state commits.
+    // The three normal failure-degrade ranges therefore retry degrade once via the common catch.
+    // Catch-internal degrade/formatting is action-0 at 0x3C184..0x3C1C4 and resumes unwind after
+    // ending the active catch if it throws.
+    DDSpikeCreateSlotExceptionOutcome outcome = {0};
+    BOOL commonDegradeSite =
+        site == DDSpikeCreateSlotExceptionSitePreControllerPrivateWork ||
+        site == DDSpikeCreateSlotExceptionSitePostControllerPrivateWork ||
+        site == DDSpikeCreateSlotExceptionSitePlaceholderCreationAfterApplicationMiss ||
+        site == DDSpikeCreateSlotExceptionSiteFailureDegradeBeforeControllerStore ||
+        site == DDSpikeCreateSlotExceptionSiteFailureDegradeAfterControllerStore;
+    if (commonDegradeSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.spikeInProgressFlagWasAlreadySet = YES;
+        outcome.hostedBidAndNativeStateWereCommittedBeforeProtectedRange = YES;
+        outcome.shouldRouteThroughDegradeFromCatch = YES;
+        outcome.shouldReturnDegradedResult = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site == DDSpikeCreateSlotExceptionSitePostControllerPrivateWork ||
+            site == DDSpikeCreateSlotExceptionSiteFailureDegradeAfterControllerStore) {
+            outcome.controllerIvarHadBeenStoredBeforeProtectedCall = YES;
+        }
+        if (site == DDSpikeCreateSlotExceptionSiteFailureDegradeBeforeControllerStore ||
+            site == DDSpikeCreateSlotExceptionSiteFailureDegradeAfterControllerStore) {
+            outcome.shouldRetryDegradeFromCatch = YES;
+        }
+        return outcome;
+    }
+    if (site == DDSpikeCreateSlotExceptionSitePrivateDeviceDecoration) {
+        outcome.shouldSwallowException = YES;
+        outcome.spikeInProgressFlagWasAlreadySet = YES;
+        outcome.hostedBidAndNativeStateWereCommittedBeforeProtectedRange = YES;
+        outcome.controllerIvarHadBeenStoredBeforeProtectedCall = YES;
+        outcome.shouldSkipRemainingPrivateDecoration = YES;
+        outcome.shouldContinueReturningMainView = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDSpikeCreateSlotExceptionSiteCatchDegrade) {
+        outcome.shouldEndActiveCatchBeforeResumeUnwind = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDSpikeCreateSlotExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
