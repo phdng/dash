@@ -3084,6 +3084,117 @@ DDSplashOpacityTransactionExceptionOutcome DDResolveSplashOpacityTransactionExce
     return outcome;
 }
 
+DDSplashNudgePreparationExceptionOutcome DDResolveSplashNudgePreparationExceptionOutcome(DDSplashNudgePreparationExceptionSite site) {
+    // 356A0 LSDA 0x113E98 has three typed action-5 ranges. Expected type at common landing
+    // 0x35858 begin/end-catches and returns immediately; nonmatching type resumes unwind at
+    // 0x3587C, with action-5 cleanup semantics available before resume. Weak owner x19 and target
+    // x20 are retained/committed in the unprotected prefix. Range 2 commits layer x21, but its
+    // animationForKey retain ends exactly before x23 commit. Range 3 is reachable only after
+    // opacity >= threshold and a nil opacity-animation result. Counter/deferred-dispatch work is
+    // entirely in the unprotected tail after a successful CATransaction commit.
+    DDSplashNudgePreparationExceptionOutcome outcome = {0};
+    BOOL protectedSite = site >= DDSplashNudgePreparationExceptionSiteTargetHiddenCheck &&
+                         site <= DDSplashNudgePreparationExceptionSiteTransactionCommit;
+    if (protectedSite) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.shouldReturnImmediately = YES;
+        outcome.retainedOwnerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedOwnerReleaseCouldBeBypassed = YES;
+        outcome.retainedTargetDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedTargetReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        outcome.nonmatchingCatchTypeCouldUseCleanupLandingBeforeResume = YES;
+    }
+    if (site == DDSplashNudgePreparationExceptionSiteTargetHiddenCheck) {
+        return outcome;
+    }
+    if (site == DDSplashNudgePreparationExceptionSiteLivePresentRunningCheck) {
+        outcome.targetHiddenCheckDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.ownerPresentationGateDefinitelyEnabledBeforeProtectedCall = YES;
+        return outcome;
+    }
+    if (site == DDSplashNudgePreparationExceptionSiteLayerAcquisition) {
+        outcome.targetHiddenCheckDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.ownerPresentationGateDefinitelyEnabledBeforeProtectedCall = YES;
+        outcome.livePresentRunningDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.temporaryLayerAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryLayerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDSplashNudgePreparationExceptionSiteLayerOpacityRead) {
+        outcome.targetHiddenCheckDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.ownerPresentationGateDefinitelyEnabledBeforeProtectedCall = YES;
+        outcome.livePresentRunningDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.retainedLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedLayerReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    if (site == DDSplashNudgePreparationExceptionSiteOpacityAnimationLookup) {
+        outcome.targetHiddenCheckDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.ownerPresentationGateDefinitelyEnabledBeforeProtectedCall = YES;
+        outcome.livePresentRunningDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.retainedLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedLayerReleaseCouldBeBypassed = YES;
+        outcome.opacityThresholdDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.temporaryOpacityAnimationAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.temporaryOpacityAnimationReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+    BOOL transactionSite = site >= DDSplashNudgePreparationExceptionSiteTransactionBegin &&
+                           site <= DDSplashNudgePreparationExceptionSiteTransactionCommit;
+    if (transactionSite) {
+        outcome.targetHiddenCheckDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.ownerPresentationGateDefinitelyEnabledBeforeProtectedCall = YES;
+        outcome.livePresentRunningDefinitelyReturnedFalseBeforeProtectedCall = YES;
+        outcome.retainedLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedLayerReleaseCouldBeBypassed = YES;
+        outcome.opacityThresholdDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.opacityAnimationDefinitelyAbsentBeforeProtectedCall = YES;
+    }
+    if (site == DDSplashNudgePreparationExceptionSiteTransactionBegin) {
+        outcome.transactionBeginCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDSplashNudgePreparationExceptionSiteDisableActions) {
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDSplashNudgePreparationExceptionSiteOpacityMutation) {
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.opacityMutationCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDSplashNudgePreparationExceptionSiteTransactionCommit) {
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.opacityMutationDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.transactionCommitCouldHaveAppliedBeforeException = YES;
+        return outcome;
+    }
+    if (site == DDSplashNudgePreparationExceptionSitePostTransactionCounterAndDispatchUnprotected) {
+        outcome.retainedOwnerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedTargetDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.retainedLayerDefinitelyCommittedBeforeProtectedCall = YES;
+        outcome.opacityThresholdDefinitelyPassedBeforeProtectedCall = YES;
+        outcome.opacityAnimationDefinitelyAbsentBeforeProtectedCall = YES;
+        outcome.transactionBeginDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.disableActionsDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.opacityMutationDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.transactionCommitDefinitelyCompletedBeforeTail = YES;
+        outcome.counterCouldHaveDecrementedBeforeException = YES;
+        outcome.delayedLayerCaptureCouldHaveBeenRetainedBeforeException = YES;
+        outcome.delayedDispatchCouldHaveBeenScheduledBeforeException = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+    if (site == DDSplashNudgePreparationExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

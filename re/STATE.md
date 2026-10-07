@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-160 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-161 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-91 (session-160): GitHub Actions session-159 (`65a413d`) đã xanh theo user. Executable target thêm data-only `35880` splash-opacity CATransaction catch-all outcome từ LSDA `0x113EC8` + raw ARM64. Một action-1 range `0x35894..0x358D4` bao layer opacity read và conditional CATransaction begin -> setDisableActions:YES -> setOpacity:1.0 -> commit; landing `0x358E0` unconditional begin/end-catch rồi return ngay, không discriminator. Runtime tách opacity read, begin, disable-actions, opacity mutation và commit; mỗi site ghi exact prior effects đã hoàn tất và current-call side effect có thể đã apply trước throw. Catch không chạy compensating commit/rollback hay opacity restore. Unprotected tail propagate. Không live CALayer/CATransaction/UI mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-92 (session-161): GitHub Actions session-160 (`07e9ad4`) đã xanh theo user. Executable target thêm data-only `356A0` splash-nudge preparation typed outcome từ LSDA `0x113E98` + raw ARM64. Ba action-5 ranges tách admission (`isHidden`/owner gate/`livePresentRunning`), layer acquisition + opacity/animation probe, và nil-animation-gated CATransaction begin/disable/setOpacity:0.99/commit. Weak owner x19 + retained target x20 commit trong unprotected prefix; layer x21 commit trong range 2; animation result vẫn temporary khi range 2 kết thúc trước x23 commit. Expected type common catch `0x35858` return ngay, có thể bypass normal owner/target/layer releases; nonmatching unwind `0x3587C`. Counter decrement + retained layer block capture + 50ms dispatch_after + normal releases nằm unprotected, nên exceptions propagate while prior counter/dispatch side effects may persist. Không live weak-owner/layer/CATransaction/counter/dispatch mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-160):
-- R-159 data-only 35880 splash-opacity CATransaction catch-all outcome: action-1 catch-all→immediate return with exact opacity/begin/disable/setOpacity/commit side-effect timing, no compensating transaction/opacity rollback, and unprotected-tail propagation recorded.
+## LAST COMPLETED TASK (session-161):
+- R-160 data-only 356A0 splash-nudge preparation typed exception outcome: three action-5 ranges with committed weak-owner/target admission, pre/post-layer commit opacity/animation probing, nil-animation-gated CATransaction opacity-0.99 mutation, expected catch return/release bypass, and unprotected counter/deferred-dispatch propagation recorded.
 
 ## CURRENT TASK:
-- R-159 hoàn tất local; commit-only handoff. User confirmed session-159 compiler green before this batch; assistant không push.
+- R-160 hoàn tất local; commit-only handoff. User confirmed session-160 compiler green before this batch; assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-160 batch, R-160: inspect `356A0 -> 0x113E98`. Exact 6-entry table: unprotected `0x356A0..0x356DC`; typed action-5 `0x356DC..0x356F8 -> 0x35858`; typed `0x356FC..0x3573C -> 0x35854`; unprotected `0x3573C..0x35750`; typed `0x35750..0x35778 -> 0x35854`; unprotected `0x35778..0x35880`. `0x35854` aliases common discriminator `0x35858`; expected type begin/end-catches and returns immediately, nonmatching resumes unwind at `0x3587C`. Map weak-owner and retained target/layer lifetime, hidden/livePresent admission, layer opacity and opacity-animation probe, CATransaction begin/disable/setOpacity/commit timing, counter decrement, retained layer capture, delayed dispatch, and which normal releases are bypassed by each catch. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
+- Sau compiler xanh cho session-161 batch, R-161: inspect `35328 -> 0x113E30`, `-[CNABLivePresenter restoreTargets]`. Exact LSDA has 16 call-site entries, mixing typed action-5 ranges and action-0 cleanup ranges. Typed landing aliases (`0x3551C/20/28/30/34`) converge at `0x35534`; expected type begin/end-catches then branches to epilogue `0x354DC`, **skipping final `+[CATransaction commit]` at `0x354D4`**. Action-0/nonmatching paths resume unwind via `0x3552C`. Map initial targets/CATransaction setup, fast-enumeration collection lifetime, CALayer type filtering, per-layer retain/opacity/animation probing, setOpacity:1.0 side effects, enumeration mutation, local releases, and which catches leave transaction begun but uncommitted. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-160):
+## FILES CHANGED (session-161):
 - Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-160.md`.
+- Mới: `LOG/session-161.md`.
 
 ## TEST STATUS:
-Session-159 GitHub Actions build GREEN (`65a413d`, user-confirmed). Session-160 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-160 GitHub Actions build GREEN (`07e9ad4`, user-confirmed). Session-161 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
