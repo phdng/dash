@@ -1739,6 +1739,47 @@ DDSplitHostGeometryExceptionOutcome DDResolveSplitHostGeometryExceptionOutcome(D
     return outcome;
 }
 
+DDSceneLayerHostPredicateExceptionOutcome DDResolveSceneLayerHostPredicateExceptionOutcome(DDSceneLayerHostPredicateExceptionSite site) {
+    // 39D4C LSDA 0x1143C8 has four action-5 ranges in the scene-layer-host-container scan. Their
+    // landing stubs converge at typed catch 0x39FE8. Expected type forces the local geometry
+    // predicate false and rejoins at 0x39E70: the signed-positive dword_162EF8 decrement is still
+    // attempted, then predicate=false bypasses dispatch-once/orientation-file/rotation-rebuild work
+    // and the function returns false. The catch jumps past normal releases of retained scan
+    // intermediates; which candidate/subviews objects may be affected depends on the protected site.
+    DDSceneLayerHostPredicateExceptionOutcome outcome = {0};
+    BOOL typedSite =
+        site == DDSceneLayerHostPredicateExceptionSiteClassAndTraversalArraySetup ||
+        site == DDSceneLayerHostPredicateExceptionSiteTraversalStep ||
+        site == DDSceneLayerHostPredicateExceptionSiteTraversalCountRefresh ||
+        site == DDSceneLayerHostPredicateExceptionSiteCandidateGeometryRead;
+    if (typedSite) {
+        outcome.shouldSwallowException = YES;
+        outcome.shouldForcePredicateFalse = YES;
+        outcome.shouldAttemptPostScanCounterDecrement = YES;
+        outcome.shouldSkipRotationRebuildEvaluation = YES;
+        outcome.shouldContinueInputCleanup = YES;
+        outcome.shouldReturnFalse = YES;
+        outcome.retainedRootViewReleaseCouldBeBypassed = YES;
+        outcome.retainedTraversalArrayReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        if (site == DDSceneLayerHostPredicateExceptionSiteTraversalStep ||
+            site == DDSceneLayerHostPredicateExceptionSiteCandidateGeometryRead) {
+            outcome.retainedCurrentCandidateReleaseCouldBeBypassed = YES;
+        }
+        if (site == DDSceneLayerHostPredicateExceptionSiteTraversalStep) {
+            outcome.retainedSubviewsReleaseCouldBeBypassed = YES;
+        }
+        if (site == DDSceneLayerHostPredicateExceptionSiteCandidateGeometryRead) {
+            outcome.candidateGeometryReadCouldHaveStartedBeforeException = YES;
+        }
+        return outcome;
+    }
+    if (site == DDSceneLayerHostPredicateExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the

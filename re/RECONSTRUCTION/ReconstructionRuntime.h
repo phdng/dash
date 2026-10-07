@@ -369,6 +369,31 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDSplitHostGeometryExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDSceneLayerHostPredicateExceptionSite) {
+    DDSceneLayerHostPredicateExceptionSiteNone = 0,
+    DDSceneLayerHostPredicateExceptionSiteClassAndTraversalArraySetup = 1,
+    DDSceneLayerHostPredicateExceptionSiteTraversalStep = 2,
+    DDSceneLayerHostPredicateExceptionSiteTraversalCountRefresh = 3,
+    DDSceneLayerHostPredicateExceptionSiteCandidateGeometryRead = 4,
+    DDSceneLayerHostPredicateExceptionSiteUnprotectedRange = 5,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL shouldForcePredicateFalse;
+    BOOL shouldAttemptPostScanCounterDecrement;
+    BOOL shouldSkipRotationRebuildEvaluation;
+    BOOL shouldContinueInputCleanup;
+    BOOL shouldReturnFalse;
+    BOOL retainedRootViewReleaseCouldBeBypassed;
+    BOOL retainedTraversalArrayReleaseCouldBeBypassed;
+    BOOL retainedCurrentCandidateReleaseCouldBeBypassed;
+    BOOL retainedSubviewsReleaseCouldBeBypassed;
+    BOOL candidateGeometryReadCouldHaveStartedBeforeException;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDSceneLayerHostPredicateExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -956,6 +981,7 @@ FOUNDATION_EXPORT DDSpikeCreateSlotExceptionOutcome DDResolveSpikeCreateSlotExce
 FOUNDATION_EXPORT DDCNABBuildSceneHostExceptionOutcome DDResolveCNABBuildSceneHostExceptionOutcome(DDCNABBuildSceneHostExceptionSite site);
 FOUNDATION_EXPORT DDEvictFromPhoneExceptionOutcome DDResolveEvictFromPhoneExceptionOutcome(DDEvictFromPhoneExceptionSite site);
 FOUNDATION_EXPORT DDSplitHostGeometryExceptionOutcome DDResolveSplitHostGeometryExceptionOutcome(DDSplitHostGeometryExceptionSite site);
+FOUNDATION_EXPORT DDSceneLayerHostPredicateExceptionOutcome DDResolveSceneLayerHostPredicateExceptionOutcome(DDSceneLayerHostPredicateExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);
