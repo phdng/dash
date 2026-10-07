@@ -207,6 +207,23 @@ typedef struct {
     BOOL nonmatchingCatchTypeWouldResumeUnwind;
 } DDSpikeHostSlotsLandscapeExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDAuxSceneTeardownExceptionSite) {
+    DDAuxSceneTeardownExceptionSiteNone = 0,
+    DDAuxSceneTeardownExceptionSitePrivateViewTeardown = 1,
+    DDAuxSceneTeardownExceptionSiteUnprotectedRange = 2,
+};
+
+typedef struct {
+    BOOL shouldSwallowException;
+    BOOL auxControllerIvarWasAlreadyClearedBeforeCatch;
+    BOOL shouldSkipRemainingPrivateTeardown;
+    BOOL shouldContinueAuxStateReset;
+    BOOL shouldRefreshAuxGenerationState;
+    BOOL retainedViewReleaseCouldBeBypassed;
+    BOOL exceptionWouldPropagate;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+} DDAuxSceneTeardownExceptionOutcome;
+
 typedef struct {
     BOOL shouldSwallowException;
     BOOL shouldReturnNilValue;
@@ -787,6 +804,7 @@ FOUNDATION_EXPORT DDBundleNormalizationExceptionOutcome DDResolveBundleNormaliza
 FOUNDATION_EXPORT DDDismissExceptionOutcome DDResolveDismissExceptionOutcome(DDDismissExceptionSite site);
 FOUNDATION_EXPORT DDConvertSlotToCarPlayExceptionOutcome DDResolveConvertSlotToCarPlayExceptionOutcome(DDConvertSlotToCarPlayExceptionSite site);
 FOUNDATION_EXPORT DDSpikeHostSlotsLandscapeExceptionOutcome DDResolveSpikeHostSlotsLandscapeExceptionOutcome(DDSpikeHostSlotsLandscapeExceptionSite site);
+FOUNDATION_EXPORT DDAuxSceneTeardownExceptionOutcome DDResolveAuxSceneTeardownExceptionOutcome(DDAuxSceneTeardownExceptionSite site);
 FOUNDATION_EXPORT DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void);
 FOUNDATION_EXPORT DDFrontmostPhoneIdentityExceptionOutcome DDResolveFrontmostPhoneIdentityExceptionOutcome(void);
 FOUNDATION_EXPORT DDActivatingEntitySetterExceptionOutcome DDResolveActivatingEntitySetterExceptionOutcome(void);

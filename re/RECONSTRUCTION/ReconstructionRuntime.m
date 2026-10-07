@@ -1459,6 +1459,29 @@ DDSpikeHostSlotsLandscapeExceptionOutcome DDResolveSpikeHostSlotsLandscapeExcept
     return outcome;
 }
 
+DDAuxSceneTeardownExceptionOutcome DDResolveAuxSceneTeardownExceptionOutcome(DDAuxSceneTeardownExceptionSite site) {
+    // 3C808 LSDA 0x11466C has one typed protected range at 0x3C858..0x3C894 around
+    // aux-controller view acquisition/removeFromSuperview/invalidate. The aux-controller ivar was
+    // already cleared before that range. Expected catch 0x3C8F0 swallows and rejoins 0x3C89C,
+    // skipping the remaining private teardown and continuing aux bundle/size/orientation reset plus
+    // 3E428 generation-state refresh. Other ranges have no local landing pad and propagate.
+    DDAuxSceneTeardownExceptionOutcome outcome = {0};
+    if (site == DDAuxSceneTeardownExceptionSitePrivateViewTeardown) {
+        outcome.shouldSwallowException = YES;
+        outcome.auxControllerIvarWasAlreadyClearedBeforeCatch = YES;
+        outcome.shouldSkipRemainingPrivateTeardown = YES;
+        outcome.shouldContinueAuxStateReset = YES;
+        outcome.shouldRefreshAuxGenerationState = YES;
+        outcome.retainedViewReleaseCouldBeBypassed = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+    if (site == DDAuxSceneTeardownExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDStringSelectorExceptionOutcome DDResolveStringSelectorExceptionOutcome(void) {
     // 3EFD4 LSDA 0x114924 protects both the selector-capability check and the selector-send plus
     // NSString class/kind validation. Both ranges converge on common typed catch 0x3F054; the
