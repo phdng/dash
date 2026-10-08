@@ -223,6 +223,17 @@ for prefs_contract in [
     "CFPreferencesSynchronize",
     "removeItemAtPath:@\"/var/tmp/duodash_ab_clearpanes\"",
     "#if 0 // Not executable yet",
+    "DDResolveBridgedFontFloor",
+    "/var/tmp/duodash_ab_fontfloor_force",
+    "value >= 8 && value <= 96",
+    "bridged_font_floor",
+    "CFNumberGetTypeID",
+    "DDResolveKeyPaneEnabled",
+    "keypane_enabled",
+    "return value || !exists",
+    "DDBooleanPreferenceDefaultTrue",
+    "CFBooleanGetTypeID",
+    "CFBooleanGetValue",
 ]:
     if prefs_contract not in prefs_resolver:
         raise SystemExit(f"PrefsResolver clearpanes executable slice missing contract: {prefs_contract}")

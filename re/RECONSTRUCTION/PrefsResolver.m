@@ -36,6 +36,62 @@ BOOL DDClearAppBridgePanesIfRequested(void) {
     return DDClearPanesIfNeeded([NSFileManager defaultManager]);
 }
 
+static BOOL DDUnsignedDecimalString(NSString *value) {
+    if (!value.length)
+        return NO;
+    for (NSUInteger index = 0; index < value.length; index++) {
+        unichar ch = [value characterAtIndex:index];
+        if (ch < '0' || ch > '9')
+            return NO;
+    }
+    return YES;
+}
+
+NSUInteger DDResolveBridgedFontFloor(void) {
+    NSString *raw = [NSString stringWithContentsOfFile:@"/var/tmp/duodash_ab_fontfloor_force"
+                                               encoding:NSUTF8StringEncoding
+                                                  error:nil];
+    if (raw) {
+        NSString *trimmed = [raw stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSUInteger length = trimmed.length;
+        if (length && DDUnsignedDecimalString(trimmed)) {
+            NSInteger value = trimmed.integerValue;
+            return (value >= 8 && value <= 96) ? (NSUInteger)value : 0;
+        }
+        if (!length)
+            return 0;
+        // Exact 7EA4 behavior: non-empty non-decimal force content falls back to prefs.
+    }
+
+    CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("bridged_font_floor"),
+                                                       (__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+    if (!pref)
+        return 0;
+    NSUInteger result = 0;
+    if (CFGetTypeID(pref) == CFNumberGetTypeID()) {
+        NSInteger value = [(__bridge NSNumber *)pref integerValue];
+        if (value >= 8 && value <= 96)
+            result = (NSUInteger)value;
+    }
+    CFRelease(pref);
+    return result;
+}
+
+BOOL DDResolveKeyPaneEnabled(void) {
+    CFPreferencesAppSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+    Boolean exists = false;
+    Boolean value = CFPreferencesGetAppBooleanValue(CFSTR("keypane_enabled"),
+                                                     (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                     &exists);
+    return value || !exists;
+}
+
+BOOL DDBooleanPreferenceDefaultTrue(CFTypeRef value) {
+    if (!value)
+        return YES;
+    return CFGetTypeID(value) == CFBooleanGetTypeID() && CFBooleanGetValue((CFBooleanRef)value);
+}
+
 // ---- Phase 1-4 + publish (B04-B11, TRACE 04-18) ----
 #if 0 // Not executable yet: phases below still depend on unresolved 7EA4/8058/7E568/7E908/85CDC contracts.
 void DDRepublishAppBridge(void) {                            // void sub_74C8(), 8 callers

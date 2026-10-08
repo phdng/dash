@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-187 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-188 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-118 (session-187): Promote exact front-of-`74C8` clearpanes phase trong existing `PrefsResolver.m` và đưa module vào executable target. Trigger mtime phải > done timestamp + 0.5; khi fire ghi done exact `%.3f`, clear đúng 9 AppBridge split/layout prefs dưới CurrentUser/AnyHost, synchronize, remove trigger. Later `74C8` republish phases còn unresolved helpers được compile-exclude bằng `#if 0`, không fabricate contracts.
+BUILDABLE RUNTIME PHASE-119 (session-188): Promote exact Foundation/CoreFoundation helpers `7EA4/8058/85CDC` trong executable `PrefsResolver.m`. Font-floor resolver mirror force-file/pref semantics với exact range 8..96; keypane resolver giữ missing-default-ON behavior; generic bool helper giữ nil-default-true và chỉ CFBoolean true là true khi non-nil. Later `74C8` republish body vẫn compile-excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-187):
-- R-186 executable `PrefsResolver` clearpanes promotion: module now compiles with exact one-shot clearpanes behavior while unresolved republish phases remain excluded.
+## LAST COMPLETED TASK (session-188):
+- R-187 executable `PrefsResolver` helper promotion: exact font-floor, keypane-enabled, and nil-default-true CFBoolean helper contracts added to the compiled module.
 
 ## CURRENT TASK:
-- R-186 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-187 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-187 batch, continue promoting bounded PrefsResolver phases only when helper contracts are fully decoded; otherwise move to another Foundation/CoreFoundation-safe synthesis module. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-188 batch, inspect the next `74C8` dependencies (`7E568/7E908` and exact bulk-key data) before promoting any republish phase; otherwise move to another bounded Foundation/CoreFoundation synthesis module. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
