@@ -34,13 +34,14 @@ for required in [
     RECON / "DDzPicker.m",
     RECON / "CrashReporting.m",
     RECON / "LocaleFlow.m",
+    RECON / "PrefsResolver.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -67,6 +68,7 @@ host_flow_adapter = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
 picker_adapter = (RECON / "DDzPicker.m").read_text(encoding="utf-8")
 crash_reporting = (RECON / "CrashReporting.m").read_text(encoding="utf-8")
 locale_flow = (RECON / "LocaleFlow.m").read_text(encoding="utf-8")
+prefs_resolver = (RECON / "PrefsResolver.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
 for integration_contract in [
     "DDRecoveryRoutingStart",
@@ -203,6 +205,27 @@ for locale_contract in [
         raise SystemExit(f"LocaleFlow executable resolution missing contract: {locale_contract}")
 if "DDLocaleFlowStart();" not in tweak:
     raise SystemExit("Tweak.x does not bootstrap LocaleFlow")
+for prefs_contract in [
+    "DDClearAppBridgePanesIfRequested",
+    "/var/tmp/duodash_ab_clearpanes",
+    "/var/tmp/duodash_ab_clearpanes.done",
+    "doubleValue] + 0.5",
+    "stringWithFormat:@\"%.3f\"",
+    "appbridge_split_left",
+    "appbridge_split_right",
+    "appbridge_split_third",
+    "appbridge_layout",
+    "appbridge_split_frac_a",
+    "appbridge_split_frac_b",
+    "appbridge_split_frac_layout",
+    "appbridge_split_carplay_ui",
+    "appbridge_split_carplay_ui_more",
+    "CFPreferencesSynchronize",
+    "removeItemAtPath:@\"/var/tmp/duodash_ab_clearpanes\"",
+    "#if 0 // Not executable yet",
+]:
+    if prefs_contract not in prefs_resolver:
+        raise SystemExit(f"PrefsResolver clearpanes executable slice missing contract: {prefs_contract}")
 for contract in [
     "DDDetectRole",
     "DDBuildKnownAppBridgeSnapshot",

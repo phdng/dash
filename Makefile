@@ -12,7 +12,8 @@ DuoDashReconstruction_FILES = \
 	re/RECONSTRUCTION/HostFlowAdapter.m \
 	re/RECONSTRUCTION/DDzPicker.m \
 	re/RECONSTRUCTION/CrashReporting.m \
-	re/RECONSTRUCTION/LocaleFlow.m
+	re/RECONSTRUCTION/LocaleFlow.m \
+	re/RECONSTRUCTION/PrefsResolver.m
 DuoDashReconstruction_CFLAGS = -fobjc-arc -Wall -Wextra
 DuoDashReconstruction_FRAMEWORKS = Foundation CoreFoundation
 DuoDashReconstruction_LIBRARIES = proc

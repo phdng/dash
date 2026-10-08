@@ -1,21 +1,19 @@
-// RECONSTRUCTION/PrefsResolver.m — APPROXIMATION synthesis (session-024)
-// Source: RECONSTRUCTION/functions/74C8.md (FULL direct read, 12 branches + 18-step trace).
-// KHÔNG compile ở đây (không toolchain iOS). UNKNOWN giữ nguyên (U-refs).
-// Semantics phải giữ: thứ tự phases, sync points, derives &&exists, no-SetValue ở publish path,
-// retain/release balance (MRC), silent-skips, post luôn cuối (kể cả write-fail INFERRED).
+// RECONSTRUCTION/PrefsResolver.m — executable clearpanes slice + synthesis notes
+// Original synthesis: session-024. Exact Foundation/CoreFoundation clearpanes phase promoted session-187.
+// Remaining republish phases retain unresolved private/helper contracts and are compile-excluded below.
 
 #import "DuoDashShared.h"
 // Record: functions/74C8.md. Helpers (bodies ở EVIDENCE/prefs_split_autostart.md): 7EA4/8058/85CDC/7E568/7E908.
 
 // ---- Phase 0: clearpanes one-shot (B01-B03; 9 keys wipe — F-041) ----
-static void DDClearPanesIfNeeded(NSFileManager *fm) {
+static BOOL DDClearPanesIfNeeded(NSFileManager *fm) {
     NSDictionary *attrs = [fm attributesOfItemAtPath:@"/var/tmp/duodash_ab_clearpanes" error:nil];
     NSDate *mtime = [attrs fileModificationDate];            // B01: nil → skip
-    if (!mtime) return;
+    if (!mtime) return NO;
     NSString *done = [NSString stringWithContentsOfFile:@"/var/tmp/duodash_ab_clearpanes.done"
                                               encoding:NSUTF8StringEncoding error:nil];
     double threshold = done.length ? [done doubleValue] + 0.5 : 0.5; // B02
-    if ([mtime timeIntervalSince1970] <= threshold) return;  // B03 false → giữ nguyên
+    if ([mtime timeIntervalSince1970] <= threshold) return NO; // B03 false → giữ nguyên
     [[NSString stringWithFormat:@"%.3f", [mtime timeIntervalSince1970]]
         writeToFile:@"/var/tmp/duodash_ab_clearpanes.done" atomically:YES
            encoding:NSUTF8StringEncoding error:nil];
@@ -31,9 +29,15 @@ static void DDClearPanesIfNeeded(NSFileManager *fm) {
     CFPreferencesSynchronize(CFSTR("com.sensetechlab.duodash.settings"),
                              kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
     [fm removeItemAtPath:@"/var/tmp/duodash_ab_clearpanes" error:nil];
+    return YES;
+}
+
+BOOL DDClearAppBridgePanesIfRequested(void) {
+    return DDClearPanesIfNeeded([NSFileManager defaultManager]);
 }
 
 // ---- Phase 1-4 + publish (B04-B11, TRACE 04-18) ----
+#if 0 // Not executable yet: phases below still depend on unresolved 7EA4/8058/7E568/7E908/85CDC contracts.
 void DDRepublishAppBridge(void) {                            // void sub_74C8(), 8 callers
     DDClearPanesIfNeeded([NSFileManager defaultManager]);
     CFPreferencesAppSynchronize(CFSTR("com.sensetechlab.duodash.settings"));
@@ -97,6 +101,7 @@ void DDRepublishAppBridge(void) {                            // void sub_74C8(),
     // B10 cf-check: `if (cf) CFRelease(cf)` — cf INDETERMINATE (U01, cùng lớp U01 2565C)
     notify_post("com.sensetechlab.appbridge.resolved");      // B: luôn cuối (kể cả write-fail INFERRED U06)
 }
+#endif
 
 // ---- Setters gọi republish (cross-ref records/EVIDENCE, không duplicate bodies) ----
 // 746C(layout): 1..8 mới SetAppValue+Sync+republish, else return nguyên (B-15/F-025).
