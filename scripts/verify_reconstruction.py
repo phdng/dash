@@ -244,6 +244,13 @@ for prefs_contract in [
     "appbridge_split_carplay_ui_more",
     "CFPreferencesCopyAppValue",
     "snapshot[key] = CFBridgingRelease(raw)",
+    "DDNormalizeCarPlayUIAdditional",
+    "if (![candidate isKindOfClass:[NSArray class]])",
+    "if (mainBundleIdentifier.length && [bundleIdentifier isEqualToString:mainBundleIdentifier])",
+    "if ([result containsObject:bundleIdentifier])",
+    "DDNormalizeAppBridgeIntegerSetting",
+    "return DDNormalizeIntegerSetting(source, key, minimum, maximum, fallback",
+    "#import \"ReconstructionRuntime.h\"",
 ]:
     if prefs_contract not in prefs_resolver:
         raise SystemExit(f"PrefsResolver clearpanes executable slice missing contract: {prefs_contract}")

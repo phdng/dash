@@ -129,6 +129,15 @@ FOUNDATION_EXPORT BOOL DDResolveKeyPaneEnabled(void);
 FOUNDATION_EXPORT BOOL DDBooleanPreferenceDefaultTrue(CFTypeRef _Nullable value);
 FOUNDATION_EXPORT BOOL DDAppBridgeIdentifierIsExcluded(id _Nullable identifier);
 FOUNDATION_EXPORT NSDictionary<NSString *, id> *DDCopyAppBridgeConfigPreferences(void);
+FOUNDATION_EXPORT NSArray<NSString *> *DDNormalizeCarPlayUIAdditional(id _Nullable candidate, NSString * _Nullable mainBundleIdentifier);
+FOUNDATION_EXPORT NSInteger DDNormalizeAppBridgeIntegerSetting(NSDictionary *source,
+                                                              NSString *key,
+                                                              NSInteger minimum,
+                                                              NSInteger maximum,
+                                                              NSInteger fallback,
+                                                              NSString *fixName,
+                                                              NSMutableDictionary *writes,
+                                                              NSMutableArray *fixes);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

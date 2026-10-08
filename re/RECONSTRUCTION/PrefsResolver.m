@@ -3,6 +3,7 @@
 // Remaining republish phases retain unresolved private/helper contracts and are compile-excluded below.
 
 #import "DuoDashShared.h"
+#import "ReconstructionRuntime.h"
 // Record: functions/74C8.md. Helpers (bodies ở EVIDENCE/prefs_split_autostart.md): 7EA4/8058/85CDC/7E568/7E908.
 
 // ---- Phase 0: clearpanes one-shot (B01-B03; 9 keys wipe — F-041) ----
@@ -110,6 +111,41 @@ BOOL DDAppBridgeIdentifierIsExcluded(id identifier) {
     return [excluded containsObject:identifier];
 }
 
+NSArray<NSString *> *DDNormalizeCarPlayUIAdditional(id candidate, NSString *mainBundleIdentifier) {
+    // Exact 7E730: non-array -> empty; keep ordered, unique, non-empty NSString values != main.
+    if (![candidate isKindOfClass:[NSArray class]])
+        return @[];
+
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
+    for (id item in (NSArray *)candidate) {
+        if (![item isKindOfClass:[NSString class]])
+            continue;
+        NSString *bundleIdentifier = item;
+        if (!bundleIdentifier.length)
+            continue;
+        if (mainBundleIdentifier.length && [bundleIdentifier isEqualToString:mainBundleIdentifier])
+            continue;
+        if ([result containsObject:bundleIdentifier])
+            continue;
+        [result addObject:[bundleIdentifier copy]];
+    }
+    return result;
+}
+
+NSInteger DDNormalizeAppBridgeIntegerSetting(NSDictionary *source,
+                                             NSString *key,
+                                             NSInteger minimum,
+                                             NSInteger maximum,
+                                             NSInteger fallback,
+                                             NSString *fixName,
+                                             NSMutableDictionary *writes,
+                                             NSMutableArray *fixes) {
+    // 7EEDC is already reconstructed exactly in ReconstructionRuntime; this executable
+    // PrefsResolver seam consumes that verified contract instead of duplicating it.
+    return DDNormalizeIntegerSetting(source, key, minimum, maximum, fallback,
+                                     fixName, writes, fixes);
+}
+
 NSDictionary<NSString *, id> *DDCopyAppBridgeConfigPreferences(void) {
     static NSArray<NSString *> *keys;
     static dispatch_once_t onceToken;
@@ -140,7 +176,7 @@ NSDictionary<NSString *, id> *DDCopyAppBridgeConfigPreferences(void) {
 }
 
 // ---- Phase 1-4 + publish (B04-B11, TRACE 04-18) ----
-#if 0 // Not executable yet: phases below still depend on unresolved 7EA4/8058/7E568/7E908/85CDC contracts.
+#if 0 // Not executable yet: full republish still depends on unresolved 7E908 layout/ratio normalization and ABCfgResult integration.
 void DDRepublishAppBridge(void) {                            // void sub_74C8(), 8 callers
     DDClearPanesIfNeeded([NSFileManager defaultManager]);
     CFPreferencesAppSynchronize(CFSTR("com.sensetechlab.duodash.settings"));
