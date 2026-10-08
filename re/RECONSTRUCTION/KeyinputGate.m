@@ -53,3 +53,11 @@ BOOL DDKeyinputForceIOEnabled(void) {
     NSString *trimmed = [raw stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     return [trimmed isEqualToString:@"1"];
 }
+
+BOOL DDKeyinputKnobPresentNow(NSString *name) {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *globalPath = [@"/var/tmp" stringByAppendingPathComponent:name];
+    if ([fileManager fileExistsAtPath:globalPath])
+        return YES;
+    return DDKeyinputResolvedTemporaryKnobPath(name) != nil;
+}

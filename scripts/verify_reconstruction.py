@@ -96,6 +96,9 @@ for keyinput_contract in [
     "/var/tmp/duodash_ab_forceio",
     "whitespaceAndNewlineCharacterSet",
     "[trimmed isEqualToString:@\"1\"]",
+    "DDKeyinputKnobPresentNow",
+    "NSString *globalPath = [@\"/var/tmp\" stringByAppendingPathComponent:name]",
+    "return DDKeyinputResolvedTemporaryKnobPath(name) != nil",
 ]:
     if keyinput_contract not in keyinput_gate:
         raise SystemExit(f"KeyinputGate executable secure-text gate missing contract: {keyinput_contract}")

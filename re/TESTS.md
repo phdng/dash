@@ -126,5 +126,6 @@
 - [x] Session-212 executable Keyinput secure-field gate contract: nil field returns false; non-nil field lacking `isSecureTextEntry` returns true; selector returning false returns true; selector returning true returns false. No relay/hook side effects are part of this helper.
 - [x] Session-213 executable Keyinput knob contract: temp resolver rejects empty temp/name, checks exact temp/name first, then duodash_ -> carnav_ legacy alias only; cache refreshes on negative state or age>=1s, checks /var/tmp first then temp resolver, stores sampled uptime and 0/1 state, otherwise returns cached state.
 - [x] Session-214 executable Keyinput force-I/O contract: read `/var/tmp/duodash_ab_forceio` as UTF-8, trim whitespace/newlines, return true only for exact trimmed `1`; missing/unreadable/empty/other content returns false.
+- [x] Session-215 executable Keyinput immediate knob contract: check `/var/tmp/<name>` first and return true on hit; on miss use exact temp/legacy resolver; no caching, timestamp, or global relay state participates.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
