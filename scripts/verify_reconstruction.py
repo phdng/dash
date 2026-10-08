@@ -127,6 +127,14 @@ for migration_contract in [
     "counters[3] += removeKeys.count",
     "CFPreferencesSetMultiple",
     "kCFPreferencesAnyHost, kCFPreferencesCurrentHost",
+    "DDMigrateTrueDashPreferenceDomains",
+    "@\"com.sensetechlab.truedash.settings\"",
+    "@\"com.sensetechlab.duodash.settings\"",
+    "@\"com.sensetechlab.truedash.rescuer\"",
+    "@\"com.sensetechlab.duodash.rescuer\"",
+    "for (NSString *key in DDMigrationSourceCleanupKeys())",
+    "CFPreferencesSetMultiple(NULL",
+    "return migratedSettings || migratedRescuer",
     "#if 0 // Import/license/file-migration synthesis remains non-executable",
 ]:
     if migration_contract not in migration:

@@ -239,6 +239,38 @@ BOOL DDMigratePreferenceDomain(NSString *sourceDomain,
     return YES;
 }
 
+BOOL DDMigrateTrueDashPreferenceDomains(NSUInteger settingsCounters[4],
+                                        NSUInteger rescuerCounters[4]) {
+    BOOL migratedSettings = DDMigratePreferenceDomain(@"com.sensetechlab.truedash.settings",
+                                                       @"com.sensetechlab.duodash.settings",
+                                                       settingsCounters);
+    BOOL migratedRescuer = DDMigratePreferenceDomain(@"com.sensetechlab.truedash.rescuer",
+                                                      @"com.sensetechlab.duodash.rescuer",
+                                                      rescuerCounters);
+
+    CFStringRef hosts[] = { kCFPreferencesAnyHost, kCFPreferencesCurrentHost };
+    for (NSUInteger hostIndex = 0; hostIndex < 2; hostIndex++) {
+        NSDictionary *source = DDMigrationCopyDomainSnapshot(@"com.sensetechlab.truedash.settings",
+                                                              hosts[hostIndex]);
+        NSMutableArray<NSString *> *removeKeys = [NSMutableArray array];
+        for (NSString *key in DDMigrationSourceCleanupKeys()) {
+            if (source[key])
+                [removeKeys addObject:key];
+        }
+        if (removeKeys.count) {
+            CFPreferencesSetMultiple(NULL,
+                                     (__bridge CFArrayRef)removeKeys,
+                                     CFSTR("com.sensetechlab.truedash.settings"),
+                                     kCFPreferencesCurrentUser,
+                                     hosts[hostIndex]);
+            CFPreferencesSynchronize(CFSTR("com.sensetechlab.truedash.settings"),
+                                     kCFPreferencesCurrentUser,
+                                     hosts[hostIndex]);
+        }
+    }
+    return migratedSettings || migratedRescuer;
+}
+
 BOOL DDRunDefaultsBootstrapIfNeeded(void) {
     struct stat st;
     if (stat("/var/mobile/Library/DuoDash/defaults.done", &st) == 0)
