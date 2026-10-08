@@ -4330,6 +4330,49 @@ DDShowWithHostViewBlockExceptionOutcome DDResolveShowWithHostViewBlockExceptionO
     return outcome;
 }
 
+DDMatAlphaResolverExceptionOutcome DDResolveMatAlphaResolverExceptionOutcome(DDMatAlphaResolverExceptionSite site) {
+    // 33DB4 LSDA 0x113BE8 has two typed action-5 ranges:
+    // 0x33DCC..0x33DF0 -> 0x33E40 covers file-read/retain/length work;
+    // 0x33DF8..0x33E00 -> 0x33E3C aliases the same typed catch around doubleValue.
+    // Expected type begin/end-catches, loads fallback alpha 0.996078431, and returns via epilogue.
+    // The normal retained NSString release at 0x33E20 is bypassed on caught paths.
+    // Nonmatching typed exceptions resume unwind at 0x33E5C.
+    DDMatAlphaResolverExceptionOutcome outcome = {0};
+    BOOL typedSite = site == DDMatAlphaResolverExceptionSiteFileReadOrRetainTyped ||
+                     site == DDMatAlphaResolverExceptionSiteLengthTyped ||
+                     site == DDMatAlphaResolverExceptionSiteDoubleValueTyped;
+    if (typedSite) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.shouldReturnFallbackAlpha = YES;
+        outcome.fallbackAlpha = 0.996078431372549;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    }
+
+    if (site == DDMatAlphaResolverExceptionSiteFileReadOrRetainTyped) {
+        outcome.temporaryStringAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+
+    if (site == DDMatAlphaResolverExceptionSiteLengthTyped) {
+        outcome.retainedStringDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedStringReleaseCouldBeBypassed = YES;
+        return outcome;
+    }
+
+    if (site == DDMatAlphaResolverExceptionSiteDoubleValueTyped) {
+        outcome.retainedStringDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedStringReleaseCouldBeBypassed = YES;
+        outcome.stringLengthDefinitelyNonzeroBeforeSite = YES;
+        outcome.doubleValueResultDefinitelyUncommittedBeforeCatch = YES;
+        return outcome;
+    }
+
+    if (site == DDMatAlphaResolverExceptionSiteUnprotectedRange) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

@@ -1518,6 +1518,27 @@ typedef struct {
     BOOL exceptionWouldPropagate;
 } DDShowWithHostViewBlockExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDMatAlphaResolverExceptionSite) {
+    DDMatAlphaResolverExceptionSiteNone = 0,
+    DDMatAlphaResolverExceptionSiteFileReadOrRetainTyped = 1,
+    DDMatAlphaResolverExceptionSiteLengthTyped = 2,
+    DDMatAlphaResolverExceptionSiteDoubleValueTyped = 3,
+    DDMatAlphaResolverExceptionSiteUnprotectedRange = 4,
+};
+
+typedef struct {
+    BOOL shouldSwallowExpectedException;
+    BOOL shouldReturnFallbackAlpha;
+    double fallbackAlpha;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+    BOOL exceptionWouldPropagate;
+    BOOL temporaryStringAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedStringDefinitelyCommittedBeforeSite;
+    BOOL retainedStringReleaseCouldBeBypassed;
+    BOOL stringLengthDefinitelyNonzeroBeforeSite;
+    BOOL doubleValueResultDefinitelyUncommittedBeforeCatch;
+} DDMatAlphaResolverExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -2206,6 +2227,7 @@ FOUNDATION_EXPORT DDResetTeardownExceptionOutcome DDResolveResetTeardownExceptio
 FOUNDATION_EXPORT DDCarPlayDisplayResolverExceptionOutcome DDResolveCarPlayDisplayResolverExceptionOutcome(DDCarPlayDisplayResolverExceptionSite site);
 FOUNDATION_EXPORT DDDisplayOKUIBuilderExceptionOutcome DDResolveDisplayOKUIBuilderExceptionOutcome(DDDisplayOKUIBuilderExceptionSite site);
 FOUNDATION_EXPORT DDShowWithHostViewBlockExceptionOutcome DDResolveShowWithHostViewBlockExceptionOutcome(DDShowWithHostViewBlockExceptionSite site);
+FOUNDATION_EXPORT DDMatAlphaResolverExceptionOutcome DDResolveMatAlphaResolverExceptionOutcome(DDMatAlphaResolverExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);

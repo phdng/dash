@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-168 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-169 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-99 (session-168): Executable target thêm data-only `33F5C` showWithHostView main-thread block catch-all outcome từ LSDA `0x113C08`. Single action-1 range `0x33F70..0x33F88 -> 0x33FA0` bảo vệ `buildShellIfNeeded`, conditional `installContent:hostView`, rồi `present`; landing begin/end-catches và return ngay. Captured present-result byte store `0x33F90` nằm ngoài protection nên mọi caught exception đều bỏ qua store này. Runtime tách build/install/present milestones, prior-success ordering và possible side-effect persistence. Không live DDz1/UI/state mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-100 (session-169): Executable target thêm data-only `33DB4` mat-alpha resolver outcome từ LSDA `0x113BE8` + raw ARM64. Exact table có two typed action-5 ranges: `0x33DCC..0x33DF0 -> 0x33E40` cho NSString file-read/retain/length và `0x33DF8..0x33E00 -> 0x33E3C` cho `doubleValue`; tail còn lại unprotected. Raw code xác nhận path `/var/tmp/duodash_ab_mat_alpha`, valid parsed range `(0,1]`, fallback exact `254/255 = 0.996078431372549`. Expected type catch trả fallback qua epilogue và bypass normal retained-string release `0x33E20`; nonmatching resume unwind `0x33E5C`. Không live file/Foundation/ownership mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-168):
-- R-167 data-only `33F5C` showWithHostView block catch-all outcome: exact protected sequence, unconditional catch return, captured result-byte store skip, prior-success ordering, possible side-effect persistence, and unprotected-tail propagation recorded.
+## LAST COMPLETED TASK (session-169):
+- R-168 data-only `33DB4` mat-alpha resolver exception outcome: exact two-range typed LSDA, `/var/tmp/duodash_ab_mat_alpha`, exact 254/255 fallback, temporary-vs-committed NSString timing, retained-string cleanup bypass, and nonmatching unwind recorded.
 
 ## CURRENT TASK:
-- R-167 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-168 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-168 batch, R-168: decode `33DB4 -> 0x113BE8` exactly before promotion. Existing evidence only identifies this function as a `duodash_ab_content_inset` value-read site, so no private/runtime behavior is inferred yet. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-169 batch, locate/decode the next earlier LSDA-bearing path below `33DB4` before promotion. `33D18`, `33D24`, and `33D70` are small helper/block-lifetime functions without local catch semantics in the export; `33A00` is decompiled as an exception landing/cleanup handler that jumps back to `0x339A4`, so its owning function/LSDA must be mapped from raw unwind metadata before assigning the next R-number. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
