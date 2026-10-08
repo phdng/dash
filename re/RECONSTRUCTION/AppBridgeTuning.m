@@ -12,3 +12,16 @@ double DDAppBridgeDashSettleSeconds(void) {
         return 0.45;
     return value;
 }
+
+double DDAppBridgeMaterialAlpha(void) {
+    NSString *raw = [NSString stringWithContentsOfFile:@"/var/tmp/duodash_ab_mat_alpha"
+                                               encoding:NSUTF8StringEncoding
+                                                  error:nil];
+    if (!raw.length)
+        return 0.996078431;
+
+    double value = [raw doubleValue];
+    if (value > 1.0 || value <= 0.0)
+        return 0.996078431;
+    return value;
+}

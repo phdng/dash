@@ -85,6 +85,10 @@ for appbridge_tuning_contract in [
     "double value = [raw doubleValue]",
     "if (value > 5.0 || value < 0.2)",
     "return 0.45",
+    "DDAppBridgeMaterialAlpha",
+    "/var/tmp/duodash_ab_mat_alpha",
+    "if (value > 1.0 || value <= 0.0)",
+    "return 0.996078431",
 ]:
     if appbridge_tuning_contract not in appbridge_tuning:
         raise SystemExit(f"AppBridgeTuning executable contract missing: {appbridge_tuning_contract}")

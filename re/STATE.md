@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-217 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-218 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-148 (session-217): Promote whole exact AppBridge tuning helper `1A18C` vào standalone executable `AppBridgeTuning.m`: read `/var/tmp/duodash_ab_dashsettle` UTF-8, accept inclusive 0.2..5.0 via NSString doubleValue, otherwise fallback 0.45. Dispatch scheduling remains excluded.
+BUILDABLE RUNTIME PHASE-149 (session-218): Promote whole exact AppBridge material-alpha helper `33DB4` vào executable `AppBridgeTuning.m`: read `/var/tmp/duodash_ab_mat_alpha` UTF-8, accept only `(0,1]`, otherwise exact fallback 0.996078431. No UIKit/cache/private selector behavior.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-217):
-- R-216 executable AppBridge dash-settle tuning helper: exact 1A18C file-read/range/fallback semantics now compile in standalone AppBridgeTuning.m.
+## LAST COMPLETED TASK (session-218):
+- R-217 executable AppBridge material-alpha tuning helper: exact 33DB4 file-read/range/fallback semantics now compile in AppBridgeTuning.m.
 
 ## CURRENT TASK:
-- R-216 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-217 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-217 batch, inspect another whole pure tuning/helper function before considering parser-only slices; keep dispatch/private UIKit behavior excluded. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-218 batch, continue with another whole pure AppBridge tuning/helper if exact and side-effect-free; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
