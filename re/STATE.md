@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-181 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-182 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-112 (session-181): Promote exact local outgoing crash-report retention policy từ `9E014` + comparator `A1CAC` vào executable `CrashReporting.m`. API mới enumerate `DD_REPORTS_OUTGOING`, lấy modification date (fallback `NSDate.distantPast`), sort newest-first bằng exact reversed-date comparator, giữ 3 newest và xóa index 3+ với delete errors ignored. API chỉ local-file mutation và không auto-run ở startup; collector/network/status vẫn excluded.
+BUILDABLE RUNTIME PHASE-113 (session-182): Promote exact crash-report recovery-status decision từ `A3490` vào executable `CrashReporting.m` nhưng không chạy `9DEEC` side effects. Collecting latch tồn tại → suggest exact `Disabled — last report crashed`; latch vắng → đọc typed synchronized `crashreport_status`, stale `Uploading*` / `Collecting…` / `Packaging…` / `Already sending` → suggest `Idle`; state khác → nil/no-op. Preference write, unfair-lock globals, BLE Darwin notify và `A2684` follow-up vẫn excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-181):
-- R-180 executable `CrashReporting` outgoing-queue retention promotion: exact newest-first mtime ordering with distantPast fallback, keep-three policy, and error-ignored removal exposed as a Foundation-only callable API.
+## LAST COMPLETED TASK (session-182):
+- R-181 executable `CrashReporting` recovery-status decision promotion: exact A3490 startup/recovery status suggestion exposed without executing status writer/global lock/Darwin notify side effects.
 
 ## CURRENT TASK:
-- R-180 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-181 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-181 batch, continue executable promotion in existing synthesis modules. Prefer another bounded Foundation/CoreFoundation behavior or a non-network crash-report helper; keep collector/network/private UI/global mutation excluded until separately proven. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-182 batch, continue executable promotion in an existing synthesis module with another bounded Foundation/CoreFoundation decision/helper. Crash-report `9DEEC` writer remains intentionally blocked until preference-write + notify side effects are promoted as an explicit subsystem action. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

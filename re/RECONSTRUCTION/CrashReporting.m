@@ -85,6 +85,24 @@ NSString *DDCrashReportingAuthorizationValue(void) {
     return [@"Bearer " stringByAppendingString:token];
 }
 
+NSString *DDCrashReportingRecoveryStatusSuggestion(void) {
+    if (!DDCrashReportingAdapterReady())
+        return nil;
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if ([fm fileExistsAtPath:DDCrashCollectingPath])
+        return @"Disabled — last report crashed";
+
+    NSString *status = DDCrashPreferenceString(@"crashreport_status");
+    if ([status hasPrefix:@"Uploading"] ||
+        [status isEqualToString:@"Collecting…"] ||
+        [status isEqualToString:@"Packaging…"] ||
+        [status isEqualToString:@"Already sending"]) {
+        return @"Idle";
+    }
+    return nil;
+}
+
 NSUInteger DDCrashReportingPruneOutgoingQueue(void) {
     if (!DDCrashReportingAdapterReady())
         return 0;
