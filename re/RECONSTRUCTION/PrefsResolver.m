@@ -4,6 +4,7 @@
 
 #import "DuoDashShared.h"
 #import "ReconstructionRuntime.h"
+#import <notify.h>
 // Record: functions/74C8.md. Helpers (bodies ở EVIDENCE/prefs_split_autostart.md): 7EA4/8058/85CDC/7E568/7E908.
 
 // ---- Phase 0: clearpanes one-shot (B01-B03; 9 keys wipe — F-041) ----
@@ -281,8 +282,89 @@ NSDictionary<NSString *, id> *DDCopyAppBridgeConfigPreferences(void) {
     return [snapshot copy];
 }
 
-// ---- Phase 1-4 + publish (B04-B11, TRACE 04-18) ----
-#if 0 // Not executable yet: full republish still depends on unresolved 7E908 layout/ratio normalization and ABCfgResult integration.
+BOOL DDRepublishAppBridgeResolvedSnapshot(void) {
+    // Bounded executable reconstruction of the publish-facing 74C8 path.
+    // Repair writes produced by 7E908 are intentionally NOT applied here: original 74C8 only reads fixes.count.
+    DDClearPanesIfNeeded([NSFileManager defaultManager]);
+    CFPreferencesAppSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+
+    // Preserve the original refresh/read ordering. These reconstruction helpers expose the resolved values;
+    // the original private/global cache destinations remain outside this bounded publisher surface.
+    (void)DDResolveBridgedFontFloor();
+    (void)DDResolveKeyPaneEnabled();
+
+    Boolean enabledExists = false;
+    Boolean enabledRaw = CFPreferencesGetAppBooleanValue(CFSTR("appbridge_enabled"),
+                                                          (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                          &enabledExists);
+
+    CFPropertyListRef bridgedRawRef = CFPreferencesCopyAppValue(CFSTR("bridgedApps"),
+                                                                (__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+    id bridgedRaw = CFBridgingRelease(bridgedRawRef);
+    NSArray *bridged = [bridgedRaw isKindOfClass:[NSArray class]] ? bridgedRaw : @[];
+    NSArray *filteredBridged = bridged;
+    if (bridged.count) {
+        NSMutableArray *filtered = [NSMutableArray arrayWithCapacity:bridged.count];
+        for (id item in bridged) {
+            if (![item isKindOfClass:[NSString class]] || !DDAppBridgeIdentifierIsExcluded(item))
+                [filtered addObject:item];
+        }
+        if (filtered.count != bridged.count)
+            filteredBridged = [filtered copy];
+    }
+
+    CFPropertyListRef autostartRaw = CFPreferencesCopyValue(CFSTR("appbridge_autostart"),
+                                                            (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                            kCFPreferencesCurrentUser,
+                                                            kCFPreferencesAnyHost);
+    BOOL autostart = DDBooleanPreferenceDefaultTrue(autostartRaw);
+    if (autostartRaw)
+        CFRelease(autostartRaw);
+
+    NSDictionary<NSString *, id> *configRaw = DDCopyAppBridgeConfigPreferences();
+    NSDictionary<NSString *, id> *config = DDNormalizeAppBridgeConfig(configRaw);
+    NSArray<NSString *> *panes = config[@"panes"];
+
+    NSMutableDictionary<NSString *, id> *plist = [@{
+        @"appbridge_enabled": @((enabledRaw && enabledExists) ? 1 : 0),
+        @"bridgedApps": filteredBridged,
+        @"appbridge_split_enabled": @YES,
+        @"appbridge_split_left": panes[0],
+        @"appbridge_split_right": panes[1],
+        @"appbridge_split_third": panes[2],
+        @"appbridge_split_ratio": config[@"ratio"],
+        @"appbridge_layout": config[@"layout"],
+        @"appbridge_split_frac_a": config[@"fracA"],
+        @"appbridge_split_frac_b": config[@"fracB"],
+        @"appbridge_split_frac_layout": config[@"fracLayout"],
+        @"appbridge_autostart": @(autostart),
+        @"appbridge_split_carplay_ui": config[@"cpuiMain"],
+        @"appbridge_split_carplay_ui_more": config[@"cpuiMore"],
+    } mutableCopy];
+
+    CFPropertyListRef navRaw = CFPreferencesCopyAppValue(CFSTR("navprovider_selected"),
+                                                         (__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+    NSString *navSelected = @"";
+    if (navRaw && CFGetTypeID(navRaw) == CFStringGetTypeID())
+        navSelected = [(__bridge NSString *)navRaw copy];
+    if (navRaw)
+        CFRelease(navRaw);
+    plist[@"navprovider_selected"] = navSelected;
+
+    Boolean navExists = false;
+    Boolean navRawBool = CFPreferencesGetAppBooleanValue(CFSTR("navprovider_autostart"),
+                                                         (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                         &navExists);
+    plist[@"navprovider_autostart"] = @((navRawBool && navExists) ? 1 : 0);
+
+    BOOL wrote = [plist writeToFile:DD_APPBRIDGE_CACHE atomically:YES];
+    notify_post([DD_N_APPBRIDGE_RESOLVED UTF8String]);
+    return wrote;
+}
+
+// ---- Historical synthesis reference for phase ordering; compile-excluded because the executable
+// publisher above replaces the old placeholder body without private helper/class calls. ----
+#if 0
 void DDRepublishAppBridge(void) {                            // void sub_74C8(), 8 callers
     DDClearPanesIfNeeded([NSFileManager defaultManager]);
     CFPreferencesAppSynchronize(CFSTR("com.sensetechlab.duodash.settings"));

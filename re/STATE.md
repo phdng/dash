@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-192 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-193 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-123 (session-192): Promote phần còn lại của `7E908` vào executable `PrefsResolver.m` bằng compile-safe immutable dictionary result thay vì private `ABCfgResult`. Exact three-pane normalization, numeric block, CarPlay main/more filtering, cùng `writes/fixes` repair semantics đã được giữ nguyên; không còn blocker hành vi trong core `7E908`.
+BUILDABLE RUNTIME PHASE-124 (session-193): Integrate normalized `7E908` result vào bounded executable `74C8` publisher. Exact bridgedApps filtering, enabled/autostart/nav derivation, 14+2 resolved plist schema, atomic cache write và unconditional `appbridge.resolved` notify đã executable. Raw ARM64 chốt `85CDC` nhận trực tiếp autostart CopyValue. Publisher không persist cfg repair writes vì original `74C8` không làm việc đó.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-192):
-- R-191 executable full-core `7E908` promotion: pane + numeric + CarPlay main/more normalization and exact repair writes/fixes now available through a compile-safe dictionary result without private class linkage.
+## LAST COMPLETED TASK (session-193):
+- R-192 executable bounded `74C8` republisher promotion: exact publish-facing AppBridge resolver path now consumes compiled PrefsResolver helpers and writes the resolved cache + notify without private class calls.
 
 ## CURRENT TASK:
-- R-191 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-192 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-192 batch, integrate this normalized result into the bounded `74C8` republish path: exact bridgedApps filtering, enabled/autostart/nav fields, repair writes back to prefs if evidenced, plist publish and resolved notify. Keep any still-unproven side effects excluded. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-193 batch, inspect the repair-write path in `27E20` and promote it separately only if exact prefs-write/synchronize/caller gating is fully evidenced; otherwise continue another bounded executable integration. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
