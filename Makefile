@@ -7,7 +7,8 @@ TWEAK_NAME = DuoDashReconstruction
 
 DuoDashReconstruction_FILES = \
 	re/RECONSTRUCTION/Tweak.x \
-	re/RECONSTRUCTION/ReconstructionRuntime.m
+	re/RECONSTRUCTION/ReconstructionRuntime.m \
+	re/RECONSTRUCTION/RecoveryRouting.m
 DuoDashReconstruction_CFLAGS = -fobjc-arc -Wall -Wextra
 DuoDashReconstruction_FRAMEWORKS = Foundation CoreFoundation
 DuoDashReconstruction_LIBRARIES = proc

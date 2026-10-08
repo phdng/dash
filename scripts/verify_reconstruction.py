@@ -29,13 +29,14 @@ for required in [
     RECON / "DuoDashShared.h",
     RECON / "ReconstructionRuntime.h",
     RECON / "ReconstructionRuntime.m",
+    RECON / "RecoveryRouting.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -57,6 +58,20 @@ if set(filter_dict.get("Executables", [])) != {"mediaserverd", "kbd"}:
     raise SystemExit("Substrate executable filter drifted from reconstructed artifact")
 
 runtime = (RECON / "ReconstructionRuntime.m").read_text(encoding="utf-8")
+recovery_routing = (RECON / "RecoveryRouting.m").read_text(encoding="utf-8")
+tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
+for integration_contract in [
+    "DDRecoveryRoutingStart",
+    "DDRecoveryRoutingCapabilities",
+    "DDResolveLayoutConfirmInitialEnumerationExceptionOutcome",
+    "DDResolveLayoutConfirmPostCommitExceptionOutcome",
+    "DDResolveReapplyMaximizeRecoveryExceptionOutcome",
+    "DDResolvePresentAndOverlayCleanupExceptionOutcome",
+]:
+    if integration_contract not in recovery_routing:
+        raise SystemExit(f"RecoveryRouting integration missing contract: {integration_contract}")
+if "DDRecoveryRoutingStart();" not in tweak:
+    raise SystemExit("Tweak.x does not bootstrap RecoveryRouting")
 for contract in [
     "DDDetectRole",
     "DDBuildKnownAppBridgeSnapshot",

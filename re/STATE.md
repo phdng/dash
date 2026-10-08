@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-175 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-176 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-106 (session-175): Tiếp tục site-scoped trong `sub_3257C -> LSDA 0x113860`. Runtime thêm exact typed action-5 `0x32A54..0x32A68 -> 0x33C30`, bao `present`, captured result-byte commit, và `sub_702BC` weak-overlay cleanup. `present` throw: result byte chưa commit nhưng presentation side effects có thể đã bắt đầu; `sub_702BC` throw: result byte đã commit và weak overlay removal/weak-slot clear có thể đã bắt đầu. Matching catch swallow rồi return thẳng qua epilogue, bỏ qua successful-present teardown/buildInHost; nonmatching resume unwind. Data-only only.
+BUILDABLE RUNTIME PHASE-107 (session-176): Bắt đầu executable subsystem promotion. `RecoveryRouting.m` là compilation unit riêng ngoài `ReconstructionRuntime`, được add vào Makefile target và bootstrap từ `Tweak.x`. Module consume các evidence-safe resolver R-169..R-174, xác nhận invariant và publish one-time capability mask cho các subsystem executable tiếp theo. Không private selector/UIKit/global recovery side effects; mục tiêu batch này là tạo seam compile/link thật thay vì tiếp tục chỉ mở rộng runtime contract.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-175):
-- R-174 data-only `3257C` present + weak-overlay-cleanup typed recovery: pre/post result-commit subsites, possible side-effect persistence, direct caught return, successful-present branch skip, and nonmatching unwind recorded.
+## LAST COMPLETED TASK (session-176):
+- R-175 executable `RecoveryRouting` promotion: separate compiled consumer of ReconstructionRuntime contracts, Makefile integration, Tweak bootstrap, stable exported capability surface, and verifier linkage checks.
 
 ## CURRENT TASK:
-- R-174 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-175 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-175 batch, continue site-scoped decoding inside `3257C -> LSDA 0x113860`; next candidate is the post-present-success DDz4 teardown/buildInHost typed range around `0x32A94..0x32AB4`. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-176 batch, promote one concrete compile-safe subsystem adapter that consumes RecoveryRouting rather than writing new resolver-only code. Natural target remains the present/host flow around `0x32A94..0x32AB4`, but implementation should land in a dedicated executable module instead of ReconstructionRuntime. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

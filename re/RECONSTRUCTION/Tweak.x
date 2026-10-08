@@ -29,6 +29,10 @@
         // Private role-specific hooks stay out of the executable target until their contracts
         // can be expressed without unresolved symbols.
         DDReconstructionStart();
+        // First promoted executable subsystem seam: consume verified recovery contracts
+        // from a separate compilation unit so future private-hook modules do not depend
+        // directly on ReconstructionRuntime internals.
+        DDRecoveryRoutingStart();
     }
 }
 

@@ -47,5 +47,11 @@ typedef NS_ENUM(NSInteger, DDRole) {
     DDRoleKbd = 6,
 };
 
+// Compile-safe recovery-routing integration seam (session-176).
+// This consumes ReconstructionRuntime evidence contracts without executing
+// private selectors/UIKit/global recovery side effects.
+FOUNDATION_EXPORT void DDRecoveryRoutingStart(void);
+FOUNDATION_EXPORT NSUInteger DDRecoveryRoutingCapabilities(void);
+
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).
