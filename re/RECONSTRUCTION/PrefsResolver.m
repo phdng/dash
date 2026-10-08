@@ -154,6 +154,24 @@ void DDPersistPickerArrayPreferenceAnyHost(NSString *key, NSArray *values) {
     notify_post([DD_N_APPBRIDGE_LISTCHANGED UTF8String]);
 }
 
+void DDPersistPickerScalarPreferenceAnyHost(NSString *key, NSString *selectedValue) {
+    CFTypeRef value = selectedValue.length ? (__bridge CFStringRef)selectedValue : NULL;
+    CFPreferencesSetValue((__bridge CFStringRef)key,
+                          value,
+                          (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                          kCFPreferencesCurrentUser,
+                          kCFPreferencesAnyHost);
+    CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                             kCFPreferencesCurrentUser,
+                             kCFPreferencesAnyHost);
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(),
+                                         (__bridge CFStringRef)DD_N_SETTINGS_CHANGED,
+                                         NULL,
+                                         NULL,
+                                         true);
+    notify_post([DD_N_APPBRIDGE_LISTCHANGED UTF8String]);
+}
+
 BOOL DDAppBridgeIdentifierIsExcluded(id identifier) {
     if (![identifier isKindOfClass:[NSString class]] || ![(NSString *)identifier length])
         return NO;

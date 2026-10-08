@@ -389,6 +389,8 @@ for prefs_contract in [
     "CFNotificationCenterGetDarwinNotifyCenter()",
     "(__bridge CFStringRef)DD_N_SETTINGS_CHANGED",
     "notify_post([DD_N_APPBRIDGE_LISTCHANGED UTF8String])",
+    "DDPersistPickerScalarPreferenceAnyHost",
+    "CFTypeRef value = selectedValue.length ? (__bridge CFStringRef)selectedValue : NULL",
     "DDAppBridgeIdentifierIsExcluded",
     "com.apple.springboard",
     "com.apple.CarPlayApp",

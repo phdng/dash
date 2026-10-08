@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-210 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-211 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-141 (session-210): Promote exact picker array persistence boundary từ `8B624` vào executable `PrefsResolver.m`: nil/empty key fallback `bridgedApps`, SetValue caller-supplied array, synchronize CurrentUser/AnyHost, post Darwin settings.changed, rồi notify appbridge.listchanged. NSMutableSet/maxSel/allObjects controller mutation vẫn excluded.
+BUILDABLE RUNTIME PHASE-142 (session-211): Promote exact picker scalar persistence boundary từ `8B624` vào executable `PrefsResolver.m`: scalar key dùng trực tiếp; selectedValue non-empty -> CFString, nil/empty -> NULL; rồi synchronize CurrentUser/AnyHost, Darwin settings.changed, notify appbridge.listchanged. excludeBid/set/anyObject UIKit semantics vẫn excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-210):
-- R-209 executable picker array writeback boundary: exact preference-write/synchronize/notification ordering now compiles without reconstructing UIKit selection mutation.
+## LAST COMPLETED TASK (session-211):
+- R-210 executable picker scalar writeback boundary: exact string-vs-NULL persistence and notification ordering now compile without reconstructing UIKit selection logic.
 
 ## CURRENT TASK:
-- R-209 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-210 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-210 batch, inspect scalar picker writeback boundary (empty selection -> NULL plus identical notify ordering) only if exact and independently isolatable; keep maxSel/NSMutableSet controller mutation excluded. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-211 batch, inspect a pure preference helper outside picker controller mutation or switch subsystem; keep UIKit selection/excludeBid/maxSel behavior excluded until independently modeled. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
