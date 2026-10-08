@@ -282,6 +282,61 @@ NSDictionary<NSString *, id> *DDCopyAppBridgeConfigPreferences(void) {
     return [snapshot copy];
 }
 
+BOOL DDRepairAppBridgeConfigIfNeeded(void) {
+    if ([[NSFileManager defaultManager] fileExistsAtPath:@"/var/tmp/duodash_ab_noconfigrepair"])
+        return NO;
+
+    static NSArray<NSString *> *keys;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        keys = @[
+            @"appbridge_split_left",
+            @"appbridge_split_right",
+            @"appbridge_split_third",
+            @"appbridge_layout",
+            @"appbridge_split_ratio",
+            @"appbridge_split_frac_a",
+            @"appbridge_split_frac_b",
+            @"appbridge_split_frac_layout",
+            @"appbridge_split_carplay_ui",
+            @"appbridge_split_carplay_ui_more",
+        ];
+    });
+
+    CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                             kCFPreferencesCurrentUser,
+                             kCFPreferencesAnyHost);
+
+    NSMutableDictionary<NSString *, id> *source = [NSMutableDictionary dictionaryWithCapacity:keys.count];
+    for (NSString *key in keys) {
+        CFPropertyListRef raw = CFPreferencesCopyValue((__bridge CFStringRef)key,
+                                                       (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                       kCFPreferencesCurrentUser,
+                                                       kCFPreferencesAnyHost);
+        if (raw)
+            source[key] = CFBridgingRelease(raw);
+    }
+
+    NSDictionary<NSString *, id> *normalized = DDNormalizeAppBridgeConfig(source);
+    NSDictionary<NSString *, id> *writes = normalized[@"writes"];
+    if (!writes.count)
+        return NO;
+
+    for (NSString *key in keys) {
+        id value = writes[key];
+        if (value) {
+            CFPreferencesSetValue((__bridge CFStringRef)key,
+                                  (__bridge CFPropertyListRef)value,
+                                  (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                  kCFPreferencesCurrentUser,
+                                  kCFPreferencesAnyHost);
+        }
+    }
+    return CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                    kCFPreferencesCurrentUser,
+                                    kCFPreferencesAnyHost);
+}
+
 BOOL DDRepublishAppBridgeResolvedSnapshot(void) {
     // Bounded executable reconstruction of the publish-facing 74C8 path.
     // Repair writes produced by 7E908 are intentionally NOT applied here: original 74C8 only reads fixes.count.

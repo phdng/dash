@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-193 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-194 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-124 (session-193): Integrate normalized `7E908` result vào bounded executable `74C8` publisher. Exact bridgedApps filtering, enabled/autostart/nav derivation, 14+2 resolved plist schema, atomic cache write và unconditional `appbridge.resolved` notify đã executable. Raw ARM64 chốt `85CDC` nhận trực tiếp autostart CopyValue. Publisher không persist cfg repair writes vì original `74C8` không làm việc đó.
+BUILDABLE RUNTIME PHASE-125 (session-194): Promote separate config-repair persistence action từ `27E20` vào executable `PrefsResolver.m`. Exact knob `/var/tmp/duodash_ab_noconfigrepair` short-circuits; otherwise CurrentUser/AnyHost sync -> exact ten-key CopyValue snapshot -> normalize -> nếu writes.count>0 thì SetValue từng repair theo key order và sync lần hai. Action explicit/manual, không auto-run startup; surrounding 27E20 UI/status logging excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-193):
-- R-192 executable bounded `74C8` republisher promotion: exact publish-facing AppBridge resolver path now consumes compiled PrefsResolver helpers and writes the resolved cache + notify without private class calls.
+## LAST COMPLETED TASK (session-194):
+- R-193 executable `27E20` config-repair persistence promotion: exact knob/snapshot/conditional-write/final-sync action now available separately from the bounded 74C8 publisher.
 
 ## CURRENT TASK:
-- R-192 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-193 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-193 batch, inspect the repair-write path in `27E20` and promote it separately only if exact prefs-write/synchronize/caller gating is fully evidenced; otherwise continue another bounded executable integration. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-194 batch, inspect whether an evidence-safe caller/integration point should explicitly invoke repair + republish together; otherwise continue another bounded executable subsystem. Keep startup auto-repair disabled unless exact call timing is proven. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

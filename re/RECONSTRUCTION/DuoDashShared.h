@@ -143,6 +143,7 @@ FOUNDATION_EXPORT NSDictionary<NSString *, NSNumber *> *DDNormalizeAppBridgeNume
                                                                                          NSMutableArray *fixes);
 FOUNDATION_EXPORT NSDictionary<NSString *, id> *DDNormalizeAppBridgeConfig(NSDictionary *source);
 FOUNDATION_EXPORT BOOL DDRepublishAppBridgeResolvedSnapshot(void);
+FOUNDATION_EXPORT BOOL DDRepairAppBridgeConfigIfNeeded(void);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).
