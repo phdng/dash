@@ -110,6 +110,25 @@ NSInteger DDAppBridgeBaseClassification(id identifier, id applicationType) {
     return 0;
 }
 
+NSDictionary<NSString *, NSString *> *DDCopyAppBridgeSectionOverrides(void) {
+    CFPreferencesAppSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+    id raw = CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("appbridge_app_sections"),
+                                                         (__bridge CFStringRef)DD_SETTINGS_DOMAIN));
+    if (![raw isKindOfClass:[NSDictionary class]])
+        return @{};
+
+    NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
+    [(NSDictionary *)raw enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
+        if (![key isKindOfClass:[NSString class]] || ![(NSString *)key length])
+            return;
+        if (![value isKindOfClass:[NSString class]])
+            return;
+        if ([(NSString *)value isEqualToString:@"user"] || [(NSString *)value isEqualToString:@"system"])
+            result[(NSString *)key] = (NSString *)value;
+    }];
+    return result;
+}
+
 BOOL DDDeepSleepEnabledCurrentHost(void) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,

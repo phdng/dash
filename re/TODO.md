@@ -270,3 +270,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-225] executable CFDictionary long-number accessor (session-226): exact 87C40 missing/non-number -> -1 and kCFNumberLongType extraction promoted; IOKit/power traversal remains excluded.
 - [x] [R-226] executable CFDictionary boolean accessor (session-227): exact 887A0 missing/non-boolean -> false and CFBoolean passthrough promoted; CarSleeper state-file/control behavior remains excluded.
 - [x] [R-227] executable AppBridge base classifier (session-228): exact 9D700 identifier/applicationType classification promoted; app-object selectors, overrides, hidden/prohibited flags, and private APIs remain excluded.
+- [x] [R-228] executable AppBridge section-override sanitizer (session-229): exact 9D4B4 preference read + dictionary/key/value filtering promoted; mutation/writeback and app-object/private behavior remain excluded.
