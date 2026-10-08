@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-213 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-214 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-144 (session-213): Promote exact Keyinput knob helpers `42F10/453B8` vào executable `KeyinputGate.m`. Temp resolver checks temp/name then duodash_ legacy carnav_ alias; cached gate refreshes when state<0 or age>=1s, checks /var/tmp first then temp resolver, stores sampled systemUptime + 0/1 state. Relay hooks/globals remain excluded.
+BUILDABLE RUNTIME PHASE-145 (session-214): Promote exact Keyinput force-I/O helper `42124` vào executable `KeyinputGate.m`: UTF-8 read `/var/tmp/duodash_ab_forceio`, trim whitespace/newline, true only when exact `1`. Adjacent private `421CC` settings mutation remains excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-213):
-- R-212 executable Keyinput knob resolver/cache: exact 42F10 temp/legacy path resolution and 453B8 negative-state/1s TTL semantics now compile without relay hooks.
+## LAST COMPLETED TASK (session-214):
+- R-213 executable Keyinput force-I/O knob: exact 42124 file-read/trim/exact-1 semantics now compile without private settings mutation.
 
 ## CURRENT TASK:
-- R-212 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-213 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-213 batch, inspect another Keyinput pure helper only if it does not require relay globals/private hooks; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-214 batch, inspect another pure Keyinput helper only if independent from relay globals/private selectors; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

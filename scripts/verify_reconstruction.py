@@ -92,6 +92,10 @@ for keyinput_contract in [
     "[@\"/var/tmp\" stringByAppendingPathComponent:name]",
     "present = DDKeyinputResolvedTemporaryKnobPath(name) != nil",
     "*cachedTimestamp = now",
+    "DDKeyinputForceIOEnabled",
+    "/var/tmp/duodash_ab_forceio",
+    "whitespaceAndNewlineCharacterSet",
+    "[trimmed isEqualToString:@\"1\"]",
 ]:
     if keyinput_contract not in keyinput_gate:
         raise SystemExit(f"KeyinputGate executable secure-text gate missing contract: {keyinput_contract}")

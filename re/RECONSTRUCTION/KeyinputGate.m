@@ -45,3 +45,11 @@ BOOL DDKeyinputKnobPresentCached(NSString *name, int *cachedState, double *cache
     }
     return *cachedState != 0;
 }
+
+BOOL DDKeyinputForceIOEnabled(void) {
+    NSString *raw = [NSString stringWithContentsOfFile:@"/var/tmp/duodash_ab_forceio"
+                                               encoding:NSUTF8StringEncoding
+                                                  error:nil];
+    NSString *trimmed = [raw stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    return [trimmed isEqualToString:@"1"];
+}
