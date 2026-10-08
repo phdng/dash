@@ -79,6 +79,23 @@ NSUInteger DDResolveBridgedFontFloor(void) {
     return result;
 }
 
+BOOL DDDeepSleepEnabledCurrentHost(void) {
+    CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                             kCFPreferencesCurrentUser,
+                             kCFPreferencesCurrentHost);
+    CFPropertyListRef value = CFPreferencesCopyValue(CFSTR("deepsleep_enabled"),
+                                                     (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                     kCFPreferencesCurrentUser,
+                                                     kCFPreferencesCurrentHost);
+    if (!value)
+        return NO;
+
+    BOOL enabled = CFGetTypeID(value) == CFBooleanGetTypeID()
+        && CFBooleanGetValue((CFBooleanRef)value);
+    CFRelease(value);
+    return enabled;
+}
+
 BOOL DDResolveKeyPaneEnabled(void) {
     CFPreferencesAppSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN);
     Boolean exists = false;

@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-224 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-225 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-155 (session-224): Switch subsystem và promote exact camera-relay source mapper `84258` vào standalone executable `CameraRelayHelpers.m`: waze->2, google_maps->1, provider->3, nil/other->0. Không file I/O/relay write/notify/DataRouter/global state.
+BUILDABLE RUNTIME PHASE-156 (session-225): Promote exact deep-sleep preference resolver `86338` vào executable `PrefsResolver.m`: synchronize settings CurrentUser/CurrentHost, copy `deepsleep_enabled`, chỉ CFBoolean true -> YES; missing/nonboolean/false -> NO. CarSleeper state/control remains excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-224):
-- R-223 executable camera-relay source mapper: exact 84258 source-token mapping now compiles in standalone CameraRelayHelpers.m.
+## LAST COMPLETED TASK (session-225):
+- R-224 executable deep-sleep CurrentHost preference resolver: exact 86338 preference/type semantics now compile in PrefsResolver.m without CarSleeper orchestration.
 
 ## CURRENT TASK:
-- R-223 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-224 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-224 batch, inspect another pure camera-relay helper only if independent from file scanning/relay writes/DataRouter/private state; otherwise switch subsystem again. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-225 batch, inspect another pure preference/state decoder only if independent from system control/private APIs; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

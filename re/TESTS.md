@@ -136,5 +136,6 @@
 - [x] Session-222 executable legacy TrueDash notification contract: nil returns false; exact CFEqual match to navUpdate, speedLimit, or cameraAlert returns true; every other notification name returns false.
 - [x] Session-223 executable NavProvider comparator contract: fetch right `lastSeen`, then left `lastSeen`, return `[rightLastSeen compare:leftLastSeen]` exactly for descending order; no class guards or normalization are added beyond native nil-message behavior.
 - [x] Session-224 executable camera-relay source-map contract: exact `waze` -> 2, `google_maps` -> 1, `provider` -> 3, nil/other -> 0; no file lookup, relay persistence, notifications, DataRouter calls, or global state participates.
+- [x] Session-225 executable deep-sleep preference contract: synchronize settings for CurrentUser/CurrentHost; copy `deepsleep_enabled`; only CFBoolean true returns YES; missing/nonboolean/false returns NO.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
