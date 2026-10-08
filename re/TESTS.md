@@ -130,5 +130,6 @@
 - [x] Session-216 executable Keyinput width-parser contract: empty/nil-UTF8/no-numeric-prefix/out-of-range nonzero -> 800; parsed zero -> -1 sentinel; nonzero [120,4096] -> value unchanged; valid numeric prefix with trailing junk remains accepted because only `endptr==start` is rejected.
 - [x] Session-217 executable AppBridge dash-settle contract: read `/var/tmp/duodash_ab_dashsettle` UTF-8; missing/empty -> 0.45; `doubleValue` outside [0.2,5.0] -> 0.45; inclusive-range value returned unchanged.
 - [x] Session-218 executable AppBridge material-alpha contract: read `/var/tmp/duodash_ab_mat_alpha` UTF-8; missing/empty -> 0.996078431; `doubleValue` <=0 or >1 -> default; `(0,1]` returned unchanged.
+- [x] Session-219 executable AirPlay pending-PID contract: UTF-8 file read; NSString type required; trim whitespace/newlines; every character must pass `decimalDigitCharacterSet`; `intValue` <=1 -> -1 sentinel, >1 -> returned PID. Restart/kill/unlink/dispatch side effects remain outside helper.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

@@ -193,6 +193,7 @@ FOUNDATION_EXPORT BOOL DDKeyinputKnobPresentNow(NSString *name);
 FOUNDATION_EXPORT double DDKeyinputParseWidthOverride(NSString * _Nullable rawValue);
 FOUNDATION_EXPORT double DDAppBridgeDashSettleSeconds(void);
 FOUNDATION_EXPORT double DDAppBridgeMaterialAlpha(void);
+FOUNDATION_EXPORT int DDReadAirPlayMediaServerPendingPID(void);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

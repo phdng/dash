@@ -89,6 +89,12 @@ for appbridge_tuning_contract in [
     "/var/tmp/duodash_ab_mat_alpha",
     "if (value > 1.0 || value <= 0.0)",
     "return 0.996078431",
+    "DDReadAirPlayMediaServerPendingPID",
+    "/var/mobile/Library/DuoDash/airplay_msrv_pending",
+    "whitespaceAndNewlineCharacterSet",
+    "decimalDigitCharacterSet",
+    "[trimmed intValue]",
+    "return value > 1 ? value : -1",
 ]:
     if appbridge_tuning_contract not in appbridge_tuning:
         raise SystemExit(f"AppBridgeTuning executable contract missing: {appbridge_tuning_contract}")
