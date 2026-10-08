@@ -81,7 +81,43 @@ static void DDMigrateFiles(void) {
 
 #endif
 
-static NSString *DDJoinOrNone(NSArray<NSString *> *values) {
+BOOL DDMigrateTrueDashFileNamed(NSString *name) {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *source = [@"/var/mobile/Library/TrueDash" stringByAppendingPathComponent:name];
+    if (![fm fileExistsAtPath:source])
+        return NO;
+
+    NSString *destination = [@"/var/mobile/Library/DuoDash" stringByAppendingPathComponent:name];
+    [fm removeItemAtPath:destination error:nil];
+    return [fm copyItemAtPath:source toPath:destination error:nil];
+}
+
+NSArray<NSString *> *DDMigrationUniqueNonemptyStrings(id candidate) {
+    if (![candidate isKindOfClass:[NSArray class]])
+        return nil;
+
+    NSMutableOrderedSet<NSString *> *ordered = [NSMutableOrderedSet orderedSet];
+    for (id item in (NSArray *)candidate) {
+        if ([item isKindOfClass:[NSString class]] && [(NSString *)item length])
+            [ordered addObject:item];
+    }
+    return ordered.array;
+}
+
+NSDictionary<NSString *, NSString *> *DDMigrationStringDictionary(id candidate) {
+    if (![candidate isKindOfClass:[NSDictionary class]])
+        return nil;
+
+    NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
+    [(NSDictionary *)candidate enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
+        (void)stop;
+        if ([key isKindOfClass:[NSString class]] && [value isKindOfClass:[NSString class]])
+            result[key] = value;
+    }];
+    return result;
+}
+
+NSString *DDMigrationJoinOrNone(NSArray<NSString *> *values) {
     return values.count ? [values componentsJoinedByString:@","] : @"none";
 }
 
@@ -155,10 +191,10 @@ BOOL DDRunDefaultsBootstrapIfNeeded(void) {
             [reasons addObject:@"airplay"];
         if (keyCount)
             [reasons addObject:[NSString stringWithFormat:@"keys:%lu", (unsigned long)keyCount]];
-        NSString *why = DDJoinOrNone(reasons);
+        NSString *why = DDMigrationJoinOrNone(reasons);
         record = [NSString stringWithFormat:
                   @"at=%lld v=1 result=existing why=%@ pinned=%@ kept=%@ sync=%@",
-                  nowMs, why, DDJoinOrNone(pinned), DDJoinOrNone(kept), syncResult];
+                  nowMs, why, DDMigrationJoinOrNone(pinned), DDMigrationJoinOrNone(kept), syncResult];
     } else {
         record = [NSString stringWithFormat:@"at=%lld v=1 result=new", nowMs];
     }

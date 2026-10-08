@@ -92,6 +92,18 @@ for migration_contract in [
     "result=new",
     "stringByAppendingString:@\"\\n\"",
     "writeToFile:@\"/var/mobile/Library/DuoDash/defaults.done\"",
+    "DDMigrateTrueDashFileNamed",
+    "/var/mobile/Library/TrueDash",
+    "removeItemAtPath:destination error:nil",
+    "copyItemAtPath:source toPath:destination error:nil",
+    "DDMigrationUniqueNonemptyStrings",
+    "NSMutableOrderedSet<NSString *> *ordered",
+    "[item isKindOfClass:[NSString class]] && [(NSString *)item length]",
+    "DDMigrationStringDictionary",
+    "enumerateKeysAndObjectsUsingBlock",
+    "[key isKindOfClass:[NSString class]] && [value isKindOfClass:[NSString class]]",
+    "DDMigrationJoinOrNone",
+    "componentsJoinedByString:@\",\"",
     "#if 0 // Import/license/file-migration synthesis remains non-executable",
 ]:
     if migration_contract not in migration:

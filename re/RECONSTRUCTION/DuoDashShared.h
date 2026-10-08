@@ -146,6 +146,10 @@ FOUNDATION_EXPORT BOOL DDRepublishAppBridgeResolvedSnapshot(void);
 FOUNDATION_EXPORT BOOL DDRepairAppBridgeConfigIfNeeded(void);
 FOUNDATION_EXPORT BOOL DDRepairAndRepublishAppBridge(void);
 FOUNDATION_EXPORT BOOL DDRunDefaultsBootstrapIfNeeded(void);
+FOUNDATION_EXPORT BOOL DDMigrateTrueDashFileNamed(NSString *name);
+FOUNDATION_EXPORT NSArray<NSString *> * _Nullable DDMigrationUniqueNonemptyStrings(id _Nullable candidate);
+FOUNDATION_EXPORT NSDictionary<NSString *, NSString *> * _Nullable DDMigrationStringDictionary(id _Nullable candidate);
+FOUNDATION_EXPORT NSString *DDMigrationJoinOrNone(NSArray<NSString *> *values);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).
