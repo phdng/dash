@@ -173,6 +173,85 @@ NSDictionary<NSString *, NSNumber *> *DDNormalizeAppBridgeNumericConfig(NSDictio
     };
 }
 
+NSDictionary<NSString *, id> *DDNormalizeAppBridgeConfig(NSDictionary *source) {
+    NSMutableDictionary<NSString *, id> *writes = [NSMutableDictionary dictionary];
+    NSMutableArray<NSString *> *fixes = [NSMutableArray array];
+    NSArray<NSString *> *paneKeys = @[@"appbridge_split_left", @"appbridge_split_right", @"appbridge_split_third"];
+    NSMutableArray<NSString *> *panes = [NSMutableArray arrayWithCapacity:3];
+
+    for (NSUInteger index = 0; index < paneKeys.count; index++) {
+        NSString *key = paneKeys[index];
+        id raw = source[key];
+        NSString *resolved = @"";
+        NSString *reason = nil;
+
+        if (raw) {
+            if (![raw isKindOfClass:[NSString class]]) {
+                reason = @"type";
+            } else if (DDAppBridgeIdentifierIsExcluded(raw)) {
+                reason = @"excluded";
+            } else if ([(NSString *)raw length] && [panes containsObject:raw]) {
+                reason = @"dup";
+            } else {
+                resolved = [raw copy];
+            }
+        }
+
+        if (reason) {
+            writes[key] = @"";
+            [fixes addObject:[NSString stringWithFormat:@"%@:%ld", reason, (long)index]];
+        }
+        [panes addObject:resolved];
+    }
+
+    NSDictionary<NSString *, NSNumber *> *numeric = DDNormalizeAppBridgeNumericConfig(source, writes, fixes);
+
+    id cpuiRaw = source[@"appbridge_split_carplay_ui"];
+    NSString *cpuiMain = @"";
+    BOOL cpuiMainNeedsRepair = NO;
+    if (cpuiRaw) {
+        if (![cpuiRaw isKindOfClass:[NSString class]]) {
+            cpuiMainNeedsRepair = YES;
+        } else if ([(NSString *)cpuiRaw length]) {
+            if (!DDAppBridgeIdentifierIsExcluded(cpuiRaw) && [panes containsObject:cpuiRaw]) {
+                cpuiMain = [cpuiRaw copy];
+            } else {
+                cpuiMainNeedsRepair = YES;
+            }
+        }
+    }
+    if (cpuiMainNeedsRepair) {
+        writes[@"appbridge_split_carplay_ui"] = @"";
+        [fixes addObject:@"cpui_main"];
+    }
+
+    id cpuiMoreRaw = source[@"appbridge_split_carplay_ui_more"];
+    NSArray<NSString *> *deduped = DDNormalizeCarPlayUIAdditional(cpuiMoreRaw, cpuiMain);
+    NSMutableArray<NSString *> *cpuiMore = [NSMutableArray array];
+    for (NSString *bundleIdentifier in deduped) {
+        if (!DDAppBridgeIdentifierIsExcluded(bundleIdentifier) && [panes containsObject:bundleIdentifier])
+            [cpuiMore addObject:bundleIdentifier];
+    }
+    if (cpuiMoreRaw &&
+        (![cpuiMoreRaw isKindOfClass:[NSArray class]] || ![(NSArray *)cpuiMoreRaw isEqualToArray:cpuiMore])) {
+        writes[@"appbridge_split_carplay_ui_more"] = [cpuiMore copy];
+        [fixes addObject:@"cpui_more"];
+    }
+
+    return @{
+        @"panes": [panes copy],
+        @"layout": numeric[@"appbridge_layout"],
+        @"ratio": numeric[@"appbridge_split_ratio"],
+        @"fracA": numeric[@"appbridge_split_frac_a"],
+        @"fracB": numeric[@"appbridge_split_frac_b"],
+        @"fracLayout": numeric[@"appbridge_split_frac_layout"],
+        @"cpuiMain": cpuiMain,
+        @"cpuiMore": [cpuiMore copy],
+        @"writes": [writes copy],
+        @"fixes": [fixes copy],
+    };
+}
+
 NSDictionary<NSString *, id> *DDCopyAppBridgeConfigPreferences(void) {
     static NSArray<NSString *> *keys;
     static dispatch_once_t onceToken;
