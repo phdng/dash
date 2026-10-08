@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-177 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-178 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-108 (session-177): Promote executable adapter cụ thể ngoài `ReconstructionRuntime`. `HostFlowAdapter.m` được compile + bootstrap, consume `RecoveryRouting` capability mask và model exact post-present action-5 `0x32A94..0x32AB4 -> 0x33A3C`: DDz4 shared acquisition/retain, teardown, buildInHost. Matching typed catch skip remainder host block và continue `0x32ABC`; retained host được release tại continuation, normal DDz4 release bị skip; nonmatching resume unwind. Adapter decision-only, không gọi private selector/UI/global mutation.
+BUILDABLE RUNTIME PHASE-109 (session-178): Promote phần evidence-safe của existing `DDzPicker.m` vào executable target. Picker adapter được bootstrap từ `Tweak.x`, readiness phụ thuộc `HostFlowAdapter`, và `DDResolvePickerAdmission` thực thi Foundation file gates đúng post-present flow: host-present required, `duodash_ab_nopicker` suppress, nếu không thì sample `picker_nowake`, `picker_nospin`, `picker_panesized`, expose initial budget 6. DDz3 init/private UI/global state vẫn chưa execute.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-177):
-- R-176 executable `HostFlowAdapter` promotion: concrete compiled consumer of RecoveryRouting for exact DDz4 post-present shared/teardown/buildInHost typed recovery, with site timing and continuation/lifetime decisions.
+## LAST COMPLETED TASK (session-178):
+- R-177 executable `DDzPicker` admission promotion: existing synthesis module is now compiled, bootstrapped, and executes exact Foundation-only picker file gates while DDz3/private UI remains excluded.
 
 ## CURRENT TASK:
-- R-176 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-177 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-177 batch, continue executable promotion by wiring the next bounded host-flow decision into a dedicated module/adapter rather than adding resolver-only code to ReconstructionRuntime. Candidate: follow-on success/failure state immediately after `0x32ABC` or another already-proven subsystem seam. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-178 batch, continue executable promotion inside an existing synthesis module where a Foundation/CoreFoundation-only slice is already evidence-safe. Natural continuation is further picker preflight/state after the four file gates, but DDz3 allocation/private UI should remain excluded until contracts are proven. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

@@ -1,12 +1,49 @@
-// RECONSTRUCTION/DDzPicker.m — APPROXIMATION synthesis (session-049)
-// Source: EVIDENCE/ddz_inventory.md §6 (F-034; DDz3 153 methods cluster map —
-//   tên methods CONFIRMED, diễn giải thân HYPOTHESIS).
-// KHÔNG compile ở đây (không toolchain iOS). UNKNOWN giữ nguyên.
-// Semantics phải giữ ở mức MAP (không bodies): cụm chức năng theo addr-range,
-//   commit-chain cross-ref (không duplicate), tầng-UI-trên-cùng điều phối shell+hosting,
-//   buildKitLevel asm-only (không suy thân), song-song commit paths.
+// RECONSTRUCTION/DDzPicker.m — executable picker-admission seam + DDz3 map
+// Original synthesis: session-049. Compile-safe admission promoted session-178.
+// Exact admission source: sub_3257C around 0x32AC4..0x32B00 and decompile lines 372+.
+// Private DDz3 construction remains documented-only; only Foundation file gates execute here.
 
 #import "DuoDashShared.h"
+
+static NSString * const DDPickerNoPickerPath = @"/var/tmp/duodash_ab_nopicker";
+static NSString * const DDPickerNoWakePath = @"/var/tmp/duodash_ab_picker_nowake";
+static NSString * const DDPickerNoSpinPath = @"/var/tmp/duodash_ab_picker_nospin";
+static NSString * const DDPickerPaneSizedPath = @"/var/tmp/duodash_ab_picker_panesized";
+
+static BOOL gDDPickerAdapterReady;
+
+void DDPickerAdapterStart(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        DDHostFlowAdapterStart();
+        gDDPickerAdapterReady = DDHostFlowAdapterReady();
+    });
+}
+
+BOOL DDPickerAdapterReady(void) {
+    DDPickerAdapterStart();
+    return gDDPickerAdapterReady;
+}
+
+DDPickerAdmissionDecision DDResolvePickerAdmission(BOOL hostPresent) {
+    DDPickerAdmissionDecision decision = {0};
+    decision.adapterEnabled = DDPickerAdapterReady();
+    decision.hostPresent = hostPresent;
+    decision.initialPickerBudget = 6;
+    if (!decision.adapterEnabled || !hostPresent)
+        return decision;
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    decision.pickerSuppressedByNoPickerFile = [fm fileExistsAtPath:DDPickerNoPickerPath];
+    if (decision.pickerSuppressedByNoPickerFile)
+        return decision;
+
+    decision.pickerAllowed = YES;
+    decision.noWake = [fm fileExistsAtPath:DDPickerNoWakePath];
+    decision.noSpin = [fm fileExistsAtPath:DDPickerNoSpinPath];
+    decision.paneSized = [fm fileExistsAtPath:DDPickerPaneSizedPath];
+    return decision;
+}
 // Commit chain bodies: DDzCommit.m (5F044/5F224/5F538/5F74C/5F8A4 + why + parallel).
 // Shell/hosting classes: DDzCore.m (DDz1 63 + DDz2 35 + division + cross-links).
 

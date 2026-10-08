@@ -86,5 +86,20 @@ FOUNDATION_EXPORT void DDHostFlowAdapterStart(void);
 FOUNDATION_EXPORT BOOL DDHostFlowAdapterReady(void);
 FOUNDATION_EXPORT DDPostPresentHostFlowDecision DDPostPresentHostFlowDecisionForSite(DDPostPresentHostFlowExceptionSite site);
 
+typedef struct {
+    BOOL adapterEnabled;
+    BOOL hostPresent;
+    BOOL pickerAllowed;
+    BOOL pickerSuppressedByNoPickerFile;
+    BOOL noWake;
+    BOOL noSpin;
+    BOOL paneSized;
+    NSUInteger initialPickerBudget;
+} DDPickerAdmissionDecision;
+
+FOUNDATION_EXPORT void DDPickerAdapterStart(void);
+FOUNDATION_EXPORT BOOL DDPickerAdapterReady(void);
+FOUNDATION_EXPORT DDPickerAdmissionDecision DDResolvePickerAdmission(BOOL hostPresent);
+
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

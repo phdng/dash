@@ -31,13 +31,14 @@ for required in [
     RECON / "ReconstructionRuntime.m",
     RECON / "RecoveryRouting.m",
     RECON / "HostFlowAdapter.m",
+    RECON / "DDzPicker.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -61,6 +62,7 @@ if set(filter_dict.get("Executables", [])) != {"mediaserverd", "kbd"}:
 runtime = (RECON / "ReconstructionRuntime.m").read_text(encoding="utf-8")
 recovery_routing = (RECON / "RecoveryRouting.m").read_text(encoding="utf-8")
 host_flow_adapter = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
+picker_adapter = (RECON / "DDzPicker.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
 for integration_contract in [
     "DDRecoveryRoutingStart",
@@ -92,6 +94,22 @@ for host_flow_contract in [
         raise SystemExit(f"HostFlowAdapter integration missing contract: {host_flow_contract}")
 if "DDHostFlowAdapterStart();" not in tweak:
     raise SystemExit("Tweak.x does not bootstrap HostFlowAdapter")
+for picker_contract in [
+    "DDPickerAdapterStart",
+    "DDPickerAdapterReady",
+    "DDResolvePickerAdmission",
+    "DDHostFlowAdapterReady",
+    "/var/tmp/duodash_ab_nopicker",
+    "/var/tmp/duodash_ab_picker_nowake",
+    "/var/tmp/duodash_ab_picker_nospin",
+    "/var/tmp/duodash_ab_picker_panesized",
+    "decision.initialPickerBudget = 6",
+    "decision.pickerAllowed = YES",
+]:
+    if picker_contract not in picker_adapter:
+        raise SystemExit(f"DDzPicker executable admission missing contract: {picker_contract}")
+if "DDPickerAdapterStart();" not in tweak:
+    raise SystemExit("Tweak.x does not bootstrap DDzPicker admission")
 for contract in [
     "DDDetectRole",
     "DDBuildKnownAppBridgeSnapshot",

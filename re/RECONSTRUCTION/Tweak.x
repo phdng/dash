@@ -34,6 +34,7 @@
         // directly on ReconstructionRuntime internals.
         DDRecoveryRoutingStart();
         DDHostFlowAdapterStart();
+        DDPickerAdapterStart();
     }
 }
 
