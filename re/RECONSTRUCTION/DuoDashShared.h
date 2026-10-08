@@ -101,5 +101,12 @@ FOUNDATION_EXPORT void DDPickerAdapterStart(void);
 FOUNDATION_EXPORT BOOL DDPickerAdapterReady(void);
 FOUNDATION_EXPORT DDPickerAdmissionDecision DDResolvePickerAdmission(BOOL hostPresent);
 
+FOUNDATION_EXPORT void DDCrashReportingAdapterStart(void);
+FOUNDATION_EXPORT BOOL DDCrashReportingAdapterReady(void);
+FOUNDATION_EXPORT BOOL DDCrashReportingMayCollect(void);
+FOUNDATION_EXPORT BOOL DDCrashReportingDryRunEnabled(void);
+FOUNDATION_EXPORT NSString * _Nullable DDCrashReportingEndpoint(void);
+FOUNDATION_EXPORT NSString * _Nullable DDCrashReportingToken(void);
+
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

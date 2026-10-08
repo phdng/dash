@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-178 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-179 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-109 (session-178): Promote phần evidence-safe của existing `DDzPicker.m` vào executable target. Picker adapter được bootstrap từ `Tweak.x`, readiness phụ thuộc `HostFlowAdapter`, và `DDResolvePickerAdmission` thực thi Foundation file gates đúng post-present flow: host-present required, `duodash_ab_nopicker` suppress, nếu không thì sample `picker_nowake`, `picker_nospin`, `picker_panesized`, expose initial budget 6. DDz3 init/private UI/global state vẫn chưa execute.
+BUILDABLE RUNTIME PHASE-110 (session-179): Promote phần Foundation/CoreFoundation-safe của existing `CrashReporting.m` vào executable target. Module được bootstrap từ `Tweak.x`; collect admission giờ thực thi exact `duodash_cr_off` + `crashreport_collecting` file gates, dry-run mirror `duodash_cr_dryrun`, và endpoint/token dùng exact 9DE28-style `CFPreferencesSynchronize(CurrentUser,AnyHost)` + typed `CFPreferencesCopyValue` NSString-only. Packaging/upload/network/status/notify execution vẫn excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-178):
-- R-177 executable `DDzPicker` admission promotion: existing synthesis module is now compiled, bootstrapped, and executes exact Foundation-only picker file gates while DDz3/private UI remains excluded.
+## LAST COMPLETED TASK (session-179):
+- R-178 executable `CrashReporting` guard/config promotion: existing synthesis module is now compiled and exposes exact file admission/dryrun gates plus synchronized typed endpoint/token preference getters.
 
 ## CURRENT TASK:
-- R-177 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-178 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-178 batch, continue executable promotion inside an existing synthesis module where a Foundation/CoreFoundation-only slice is already evidence-safe. Natural continuation is further picker preflight/state after the four file gates, but DDz3 allocation/private UI should remain excluded until contracts are proven. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-179 batch, continue executable promotion inside existing synthesis modules, prioritizing independent Foundation/CoreFoundation-only behavior. Good candidates: crash-report local queue/endpoint normalization without network side effects, or another prefs/file-state subsystem. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

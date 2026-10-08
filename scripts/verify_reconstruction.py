@@ -32,13 +32,14 @@ for required in [
     RECON / "RecoveryRouting.m",
     RECON / "HostFlowAdapter.m",
     RECON / "DDzPicker.m",
+    RECON / "CrashReporting.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -63,6 +64,7 @@ runtime = (RECON / "ReconstructionRuntime.m").read_text(encoding="utf-8")
 recovery_routing = (RECON / "RecoveryRouting.m").read_text(encoding="utf-8")
 host_flow_adapter = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
 picker_adapter = (RECON / "DDzPicker.m").read_text(encoding="utf-8")
+crash_reporting = (RECON / "CrashReporting.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
 for integration_contract in [
     "DDRecoveryRoutingStart",
@@ -110,6 +112,25 @@ for picker_contract in [
         raise SystemExit(f"DDzPicker executable admission missing contract: {picker_contract}")
 if "DDPickerAdapterStart();" not in tweak:
     raise SystemExit("Tweak.x does not bootstrap DDzPicker admission")
+for crash_contract in [
+    "DDCrashReportingAdapterStart",
+    "DDCrashReportingAdapterReady",
+    "DDCrashReportingMayCollect",
+    "DDCrashReportingDryRunEnabled",
+    "DDCrashReportingEndpoint",
+    "DDCrashReportingToken",
+    "/var/tmp/duodash_cr_off",
+    "/var/mobile/Library/DuoDash/crashreport_collecting",
+    "/var/tmp/duodash_cr_dryrun",
+    "CFPreferencesSynchronize",
+    "CFPreferencesCopyValue",
+    "crashreport_endpoint",
+    "crashreport_token",
+]:
+    if crash_contract not in crash_reporting:
+        raise SystemExit(f"CrashReporting executable guard/config missing contract: {crash_contract}")
+if "DDCrashReportingAdapterStart();" not in tweak:
+    raise SystemExit("Tweak.x does not bootstrap CrashReporting guard/config")
 for contract in [
     "DDDetectRole",
     "DDBuildKnownAppBridgeSnapshot",

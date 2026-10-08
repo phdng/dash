@@ -1,11 +1,64 @@
-// RECONSTRUCTION/CrashReporting.m — APPROXIMATION synthesis (session-034)
-// Sources: F-016 (endpoint/queue/timers), B-08 (guards/collect/upload),
-//   notify_matrix (crashreport.send row), strings (statuses/prefs UI).
-// KHÔNG compile ở đây (không toolchain iOS). UNKNOWN giữ nguyên.
-// Semantics phải giữ: re-entrancy guard, kill-switch, queue cap, endpoint-nil default,
-//   timeouts/semaphore, dryrun local-only, status strings, latch interaction.
+// RECONSTRUCTION/CrashReporting.m — executable guard/config seam + synthesis notes
+// Original synthesis: session-034. Foundation/CoreFoundation-safe slice promoted session-179.
+// Exact evidence: 9DE28 preference getter + 9E014 early collection gates/dry-run branch.
+// Network packaging/upload, queue mutation, status globals, and notify-trigger execution remain excluded.
 
 #import "DuoDashShared.h"
+
+static NSString * const DDCrashOffPath = @"/var/tmp/duodash_cr_off";
+static NSString * const DDCrashCollectingPath = @"/var/mobile/Library/DuoDash/crashreport_collecting";
+static NSString * const DDCrashDryRunPath = @"/var/tmp/duodash_cr_dryrun";
+static BOOL gDDCrashReportingAdapterReady;
+
+static NSString *DDCrashPreferenceString(NSString *key) {
+    CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                             kCFPreferencesCurrentUser,
+                             kCFPreferencesAnyHost);
+    CFPropertyListRef raw = CFPreferencesCopyValue((__bridge CFStringRef)key,
+                                                   (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                   kCFPreferencesCurrentUser,
+                                                   kCFPreferencesAnyHost);
+    id value = CFBridgingRelease(raw);
+    return [value isKindOfClass:[NSString class]] ? value : nil;
+}
+
+void DDCrashReportingAdapterStart(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gDDCrashReportingAdapterReady = YES;
+    });
+}
+
+BOOL DDCrashReportingAdapterReady(void) {
+    DDCrashReportingAdapterStart();
+    return gDDCrashReportingAdapterReady;
+}
+
+BOOL DDCrashReportingMayCollect(void) {
+    if (!DDCrashReportingAdapterReady())
+        return NO;
+    NSFileManager *fm = [NSFileManager defaultManager];
+    return ![fm fileExistsAtPath:DDCrashOffPath] &&
+           ![fm fileExistsAtPath:DDCrashCollectingPath];
+}
+
+BOOL DDCrashReportingDryRunEnabled(void) {
+    if (!DDCrashReportingAdapterReady())
+        return NO;
+    return [[NSFileManager defaultManager] fileExistsAtPath:DDCrashDryRunPath];
+}
+
+NSString *DDCrashReportingEndpoint(void) {
+    if (!DDCrashReportingAdapterReady())
+        return nil;
+    return DDCrashPreferenceString(@"crashreport_endpoint");
+}
+
+NSString *DDCrashReportingToken(void) {
+    if (!DDCrashReportingAdapterReady())
+        return nil;
+    return DDCrashPreferenceString(@"crashreport_token");
+}
 // Records: F-016 (session-002), B-08. Prefs UI: group/row/button/status (strings
 //   0xc7c4c/0xc7cf7/0xc5dcc/cr_collecting/cr_disabled). Manual trigger:
 //   prefs button → Darwin com.sensetechlab.crashreport.send (poster 948C0? —
@@ -41,10 +94,8 @@ static void DDCollectCrashReport(void) {
 
 // ---- Endpoint resolve: 9DE28 getter (F-016: 9DE28.c:18-35) ----
 static NSString *DDCrashEndpoint(void) {
-    // CFPreferencesCopyValue(duodash.settings, "crashreport_endpoint") —
-    //   chỉ trả NSString else nil. KHÔNG default literal (default nil).
-    // Token tương tự: "crashreport_token" (optional Bearer).
-    return nil; // APPROXIMATION returns
+    // Compile-safe wrapper over the exact 9DE28-compatible getter above.
+    return DDCrashReportingEndpoint();
 }
 
 // ---- Upload: multipart POST (F-016: 9E014.c:228-231+) ----

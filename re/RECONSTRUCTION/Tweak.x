@@ -35,6 +35,7 @@
         DDRecoveryRoutingStart();
         DDHostFlowAdapterStart();
         DDPickerAdapterStart();
+        DDCrashReportingAdapterStart();
     }
 }
 
