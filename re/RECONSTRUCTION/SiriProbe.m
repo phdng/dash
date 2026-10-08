@@ -6,7 +6,13 @@
 
 #import "DuoDashShared.h"
 #include <string.h>
+#import <os/lock.h>
 // Records: EVIDENCE/siriprobe.md (session-006, subagent FULL reads).
+
+static os_unfair_lock DDVoiceCmdCacheLock = OS_UNFAIR_LOCK_INIT;
+static BOOL DDVoiceCmdCachedEnabled = NO;
+static char DDVoiceCmdCachedSelected[97] = {0};
+static double DDVoiceCmdCacheTimestamp = 0.0;
 
 BOOL DDResolveVoiceCommandPreferences(NSString **selectedOut) {
     Boolean exists = false;
@@ -50,6 +56,56 @@ BOOL DDResolveVoiceCommandPreferences(NSString **selectedOut) {
     if (selectedOut) {
         NSString *resolved = selected[0] ? [NSString stringWithUTF8String:selected] : @"";
         *selectedOut = resolved ?: @"";
+    }
+    return enabled;
+}
+
+void DDReloadVoiceCommandPreferenceCache(void) {
+    CFPreferencesAppSynchronize(CFSTR("com.sensetechlab.duodash.settings"));
+    NSString *selected = nil;
+    BOOL enabled = DDResolveVoiceCommandPreferences(&selected);
+    const char *utf8 = [selected UTF8String] ?: "";
+    double now = [[NSProcessInfo processInfo] systemUptime];
+
+    os_unfair_lock_lock(&DDVoiceCmdCacheLock);
+    DDVoiceCmdCachedEnabled = enabled;
+    strlcpy(DDVoiceCmdCachedSelected, utf8, sizeof(DDVoiceCmdCachedSelected));
+    DDVoiceCmdCacheTimestamp = now;
+    os_unfair_lock_unlock(&DDVoiceCmdCacheLock);
+}
+
+BOOL DDVoiceCommandPreferenceCache(NSString **selectedOut) {
+    double now = [[NSProcessInfo processInfo] systemUptime];
+    char cachedSelected[97] = {0};
+    BOOL enabled;
+    double age;
+
+    os_unfair_lock_lock(&DDVoiceCmdCacheLock);
+    age = now - DDVoiceCmdCacheTimestamp;
+    enabled = DDVoiceCmdCachedEnabled;
+    if (selectedOut && age < 2.0)
+        strlcpy(cachedSelected, DDVoiceCmdCachedSelected, sizeof(cachedSelected));
+    os_unfair_lock_unlock(&DDVoiceCmdCacheLock);
+
+    if (age >= 2.0) {
+        NSString *selected = nil;
+        BOOL refreshedEnabled = DDResolveVoiceCommandPreferences(&selected);
+        const char *utf8 = [selected UTF8String] ?: "";
+
+        os_unfair_lock_lock(&DDVoiceCmdCacheLock);
+        enabled = refreshedEnabled;
+        DDVoiceCmdCachedEnabled = refreshedEnabled;
+        strlcpy(DDVoiceCmdCachedSelected, utf8, sizeof(DDVoiceCmdCachedSelected));
+        DDVoiceCmdCacheTimestamp = now;
+        os_unfair_lock_unlock(&DDVoiceCmdCacheLock);
+
+        if (selectedOut)
+            strlcpy(cachedSelected, utf8, sizeof(cachedSelected));
+    }
+
+    if (selectedOut) {
+        NSString *selected = cachedSelected[0] ? [NSString stringWithUTF8String:cachedSelected] : @"";
+        *selectedOut = selected ?: @"";
     }
     return enabled;
 }

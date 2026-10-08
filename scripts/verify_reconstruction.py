@@ -86,6 +86,15 @@ for siri_contract in [
     "BOOL sawDot = NO",
     "ch != '-' && !digit && !alpha",
     "if (!valid || !sawDot)",
+    "DDReloadVoiceCommandPreferenceCache",
+    "CFPreferencesAppSynchronize(CFSTR(\"com.sensetechlab.duodash.settings\"))",
+    "DDVoiceCommandPreferenceCache",
+    "OS_UNFAIR_LOCK_INIT",
+    "[[NSProcessInfo processInfo] systemUptime]",
+    "age = now - DDVoiceCmdCacheTimestamp",
+    "if (selectedOut && age < 2.0)",
+    "if (age >= 2.0)",
+    "DDVoiceCmdCacheTimestamp = now",
 ]:
     if siri_contract not in siri_probe:
         raise SystemExit(f"SiriProbe executable voicecmd resolver missing contract: {siri_contract}")

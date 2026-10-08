@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-204 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-205 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-135 (session-204): Promote exact `891F0` voicecmd prefs resolver và đưa `SiriProbe.m` vào executable target. `voicecmd_enabled` chỉ true khi value true + key valid/existing; `voicecmd_selected` chỉ giữ CFString UTF-8 1..96 bytes, ASCII alnum/dash/dot, không leading/trailing dot và phải có ít nhất một dot. Siri hooks/swallow/logger/cache globals vẫn không được activate.
+BUILDABLE RUNTIME PHASE-136 (session-205): Promote exact `88FD0/890A0` cache wrappers quanh voicecmd resolver trong executable `SiriProbe.m`. Explicit reload syncs prefs rồi stores enabled/selected/uptime under unfair lock; cached read dùng sampled systemUptime, age<2s trả cache, age>=2s resolve trực tiếp không sync rồi update cache/timestamp. Siri hooks/notifies vẫn không activate.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-204):
-- R-203 executable SiriProbe voicecmd resolver promotion: exact 891F0 enabled/selected preference semantics now compile in target while hook behavior remains inert.
+## LAST COMPLETED TASK (session-205):
+- R-204 executable SiriProbe cache-wrapper promotion: exact 88FD0 explicit reload and 890A0 TTL-2s cached read/refresh semantics now compile without hook wiring.
 
 ## CURRENT TASK:
-- R-203 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-204 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-204 batch, inspect exact 88FD0/890A0 cache wrapper only if lock/timestamp behavior can be represented without enabling hooks; otherwise continue another bounded executable subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-205 batch, inspect a pure SiriProbe gate helper (e.g. file-existence TTL cache) only if it can be isolated without globals shared by hooks; otherwise continue another bounded subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
