@@ -21,6 +21,17 @@ static NSArray<NSString *> *DDLocaleSupportedCodes(void) {
     return codes;
 }
 
+static NSArray<NSString *> *DDLocaleLanguageNames(void) {
+    static NSArray<NSString *> *names;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        names = @[@"English", @"简体中文", @"Español", @"日本語", @"한국어", @"Deutsch", @"Français",
+                  @"Português (Brasil)", @"Русский", @"العربية", @"繁體中文", @"Italiano", @"Türkçe",
+                  @"Tiếng Việt", @"Polski", @"Bahasa Indonesia", @"ไทย"];
+    });
+    return names;
+}
+
 void DDLocaleFlowStart(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -37,6 +48,19 @@ BOOL DDLocaleIsSupportedLanguage(NSString *language) {
     if (!language.length)
         return NO;
     return [DDLocaleSupportedCodes() containsObject:language];
+}
+
+NSArray<NSString *> *DDLocaleSupportedLanguages(void) {
+    return DDLocaleSupportedCodes();
+}
+
+NSString *DDLocaleLanguageDisplayName(NSString *language) {
+    if (!language.length)
+        return @"en";
+    NSUInteger index = [DDLocaleSupportedCodes() indexOfObject:language];
+    if (index == NSNotFound)
+        return language;
+    return DDLocaleLanguageNames()[index];
 }
 
 static NSString *DDLocaleTypedAppString(CFStringRef key) {

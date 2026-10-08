@@ -116,6 +116,8 @@ FOUNDATION_EXPORT NSString * _Nullable DDCrashReportingRecoveryStatusSuggestion(
 FOUNDATION_EXPORT void DDLocaleFlowStart(void);
 FOUNDATION_EXPORT BOOL DDLocaleFlowReady(void);
 FOUNDATION_EXPORT BOOL DDLocaleIsSupportedLanguage(NSString * _Nullable language);
+FOUNDATION_EXPORT NSArray<NSString *> *DDLocaleSupportedLanguages(void);
+FOUNDATION_EXPORT NSString *DDLocaleLanguageDisplayName(NSString * _Nullable language);
 FOUNDATION_EXPORT NSString *DDLocaleResolveLanguage(void);
 FOUNDATION_EXPORT void DDLocaleInvalidateCaches(void);
 
