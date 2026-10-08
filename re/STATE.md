@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-225 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-226 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-156 (session-225): Promote exact deep-sleep preference resolver `86338` vào executable `PrefsResolver.m`: synchronize settings CurrentUser/CurrentHost, copy `deepsleep_enabled`, chỉ CFBoolean true -> YES; missing/nonboolean/false -> NO. CarSleeper state/control remains excluded.
+BUILDABLE RUNTIME PHASE-157 (session-226): Promote exact pure CFDictionary numeric accessor `87C40` vào executable `PrefsResolver.m`: missing/non-CFNumber -> -1; CFNumber -> kCFNumberLongType extraction. Không IOKit/power traversal/system control.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-225):
-- R-224 executable deep-sleep CurrentHost preference resolver: exact 86338 preference/type semantics now compile in PrefsResolver.m without CarSleeper orchestration.
+## LAST COMPLETED TASK (session-226):
+- R-225 executable CFDictionary long-number accessor: exact 87C40 missing/type/extraction semantics now compile in PrefsResolver.m.
 
 ## CURRENT TASK:
-- R-224 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-225 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-225 batch, inspect another pure preference/state decoder only if independent from system control/private APIs; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-226 batch, inspect another pure decoder/helper only if independent from IOKit/system control/private APIs; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

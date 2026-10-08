@@ -79,6 +79,16 @@ NSUInteger DDResolveBridgedFontFloor(void) {
     return result;
 }
 
+long DDLongValueForCFDictionaryKey(CFDictionaryRef dictionary, const void *key) {
+    const void *raw = CFDictionaryGetValue(dictionary, key);
+    if (!raw || CFGetTypeID(raw) != CFNumberGetTypeID())
+        return -1;
+
+    long value = 0;
+    CFNumberGetValue((CFNumberRef)raw, kCFNumberLongType, &value);
+    return value;
+}
+
 BOOL DDDeepSleepEnabledCurrentHost(void) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,

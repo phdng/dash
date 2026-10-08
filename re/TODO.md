@@ -267,3 +267,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-222] executable NavProvider lastSeen comparator (session-223): exact 832C0 right-vs-left `lastSeen` compare promoted for descending ordering without added type guards or side effects.
 - [x] [R-223] executable camera-relay source mapper (session-224): exact 84258 waze/google_maps/provider -> 2/1/3 mapping promoted in standalone helper module; relay I/O/notify/DataRouter behavior remains excluded.
 - [x] [R-224] executable deep-sleep CurrentHost preference resolver (session-225): exact 86338 sync + CFBoolean-only `deepsleep_enabled` semantics promoted; CarSleeper state/control behavior remains excluded.
+- [x] [R-225] executable CFDictionary long-number accessor (session-226): exact 87C40 missing/non-number -> -1 and kCFNumberLongType extraction promoted; IOKit/power traversal remains excluded.
