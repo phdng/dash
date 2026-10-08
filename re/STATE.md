@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-207 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-208 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-138 (session-207): Promote exact `89338` press-notify helper vào executable `SiriProbe.m`. Helper reads selected via TTL cache but intentionally ignores enabled BOOL, revalidates identifier, builds exact `com.sensetechlab.voicecmd.press.<selected>` name, sets notify state to uptime-ms when register_check succeeds, cancels token, then always notify_post. Button hook remains uninstalled.
+BUILDABLE RUNTIME PHASE-139 (session-208): Promote exact picker scalar preference helper `8C2A0` vào executable `PrefsResolver.m`. Non-empty key only; synchronize DuoDash settings CurrentUser/AnyHost; CopyValue exact key; accept only non-empty CFString, otherwise nil. UIKit picker controller remains excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-207):
-- R-206 executable SiriProbe press-notify helper promotion: exact 89338 validation/name/state/register/cancel/post semantics now compile without button-hook installation.
+## LAST COMPLETED TASK (session-208):
+- R-207 executable picker scalar-pref helper promotion: exact 8C2A0 synchronized non-empty string preference resolution now compiles in PrefsResolver without UIKit picker classes.
 
 ## CURRENT TASK:
-- R-206 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-207 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-207 batch, inspect a hook-body-independent SiriProbe helper or move to another bounded subsystem; do not install button hooks until forwarding ABI and hook lifecycle are independently promoted. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-208 batch, inspect the picker array-selection read path or another bounded preference helper only if exact type/default semantics can be isolated without compiling UIKit controllers. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

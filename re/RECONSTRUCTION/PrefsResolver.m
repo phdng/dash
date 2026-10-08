@@ -94,6 +94,28 @@ BOOL DDBooleanPreferenceDefaultTrue(CFTypeRef value) {
     return CFGetTypeID(value) == CFBooleanGetTypeID() && CFBooleanGetValue((CFBooleanRef)value);
 }
 
+NSString *DDCopyNonemptyStringPreferenceAnyHost(NSString *key) {
+    if (!key.length)
+        return nil;
+
+    CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                             kCFPreferencesCurrentUser,
+                             kCFPreferencesAnyHost);
+    CFPropertyListRef raw = CFPreferencesCopyValue((__bridge CFStringRef)key,
+                                                   (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                   kCFPreferencesCurrentUser,
+                                                   kCFPreferencesAnyHost);
+    if (!raw)
+        return nil;
+
+    NSString *value = nil;
+    if (CFGetTypeID(raw) == CFStringGetTypeID())
+        value = [(__bridge NSString *)raw copy];
+    CFRelease(raw);
+
+    return value.length ? value : nil;
+}
+
 BOOL DDAppBridgeIdentifierIsExcluded(id identifier) {
     if (![identifier isKindOfClass:[NSString class]] || ![(NSString *)identifier length])
         return NO;

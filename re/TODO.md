@@ -249,3 +249,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-204] executable SiriProbe cache-wrapper promotion (session-205): exact 88FD0 explicit sync+reload and 890A0 unfair-lock/systemUptime TTL-2s cached read/refresh semantics; no notify/hook wiring activated.
 - [x] [R-205] executable SiriProbe decision-helper promotion (session-206): exact 894F0 0.5s file-existence cache, 89880 button-6 eligibility, and 89764 swallow precedence/id-file matching; no hooks installed.
 - [x] [R-206] executable SiriProbe press-notify helper promotion (session-207): exact 89338 selected revalidation, notify-name formatting, uptime-ms notify state, register/cancel ordering, and unconditional notify_post; no button hook installed.
+- [x] [R-207] executable picker scalar-pref helper promotion (session-208): exact 8C2A0 CurrentUser/AnyHost synchronized CFString non-empty read added to PrefsResolver; no UIKit picker controller compiled.
