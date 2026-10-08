@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-183 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-184 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-114 (session-183): Promote executable resolution core của existing `LocaleFlow.m`. Exact 17-code whitelist từ `off_130E88` đã decode; `DDLocaleResolveLanguage` mirror `9AFB0` precedence: UTF-8 trimmed `/var/tmp/duodash_lang_force` (existing empty file -> `en`), valid force, synchronized `duodash_language`, valid legacy `carnav_language` + migrate to CurrentUser/AnyHost, rồi fallback `en`. Original unfair-lock cache `164C38/164C40`, `9B314` invalidation, observers và language-change notify vẫn excluded.
+BUILDABLE RUNTIME PHASE-115 (session-184): Promote exact cache/invalidation boundary của `LocaleFlow`. Một `os_unfair_lock` bảo vệ resolved-language cache tương ứng `164C38` và reserved lookup-cache slot tương ứng `164C40`. Resolver check cache dưới lock, resolve ngoài lock khi miss, rồi store-if-empty dưới lock như `9AFB0`; `DDLocaleInvalidateCaches()` clear cả hai slot atomically như `9B314`. `9B360` lookup population/translation và observer/notify fan-out vẫn excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-183):
-- R-182 executable `LocaleFlow` resolution-core promotion: existing synthesis module is now compiled and bootstrapped with exact whitelist + force/current/legacy-migrate/default resolution behavior.
+## LAST COMPLETED TASK (session-184):
+- R-183 executable `LocaleFlow` cache/invalidation promotion: exact unfair-lock cache boundary, store-if-empty resolved-language cache, reserved lookup cache slot, and atomic two-slot invalidation.
 
 ## CURRENT TASK:
-- R-182 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-183 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-183 batch, continue LocaleFlow executable promotion only if the original cache/invalidation behavior can be reproduced exactly without introducing race/notify drift; otherwise move to another bounded Foundation/CoreFoundation synthesis slice. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-184 batch, inspect `9B360` translation lookup only if its key/table semantics can be decoded exactly; otherwise move to another bounded Foundation/CoreFoundation synthesis slice. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

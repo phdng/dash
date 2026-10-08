@@ -4,8 +4,12 @@
 // Original unfair-lock cache and observer fan-out remain excluded until separately promoted.
 
 #import "DuoDashShared.h"
+#import <os/lock.h>
 
 static BOOL gDDLocaleFlowReady;
+static os_unfair_lock gDDLocaleCacheLock = OS_UNFAIR_LOCK_INIT;
+static NSString *gDDLocaleResolvedLanguage;
+static NSMutableDictionary *gDDLocaleLookupCache;
 static NSString * const DDLocaleForcePath = @"/var/tmp/duodash_lang_force";
 static NSArray<NSString *> *DDLocaleSupportedCodes(void) {
     static NSArray<NSString *> *codes;
@@ -44,10 +48,7 @@ static NSString *DDLocaleTypedAppString(CFStringRef key) {
     return value;
 }
 
-NSString *DDLocaleResolveLanguage(void) {
-    if (!DDLocaleFlowReady())
-        return @"en";
-
+static NSString *DDLocaleResolveLanguageUncached(void) {
     NSString *forced = [NSString stringWithContentsOfFile:DDLocaleForcePath
                                                   encoding:NSUTF8StringEncoding
                                                      error:nil];
@@ -73,6 +74,33 @@ NSString *DDLocaleResolveLanguage(void) {
         return legacy;
     }
     return @"en";
+}
+
+NSString *DDLocaleResolveLanguage(void) {
+    if (!DDLocaleFlowReady())
+        return @"en";
+
+    os_unfair_lock_lock(&gDDLocaleCacheLock);
+    NSString *cached = gDDLocaleResolvedLanguage;
+    os_unfair_lock_unlock(&gDDLocaleCacheLock);
+    if (cached)
+        return cached;
+
+    NSString *resolved = DDLocaleResolveLanguageUncached();
+    os_unfair_lock_lock(&gDDLocaleCacheLock);
+    if (!gDDLocaleResolvedLanguage)
+        gDDLocaleResolvedLanguage = resolved;
+    cached = gDDLocaleResolvedLanguage;
+    os_unfair_lock_unlock(&gDDLocaleCacheLock);
+    return cached;
+}
+
+void DDLocaleInvalidateCaches(void) {
+    // Exact 9B314 boundary: resolved-language and lookup caches are cleared under one unfair lock.
+    os_unfair_lock_lock(&gDDLocaleCacheLock);
+    gDDLocaleResolvedLanguage = nil;
+    gDDLocaleLookupCache = nil;
+    os_unfair_lock_unlock(&gDDLocaleCacheLock);
 }
 // Q-10 info-schema bodies: License.m §DDInfo (cross-ref, không duplicate).
 // CF<1946.102 selector branch: Evict.m §3AE50-Bước 5 (branch version duy nhất).
