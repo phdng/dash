@@ -82,6 +82,16 @@ for keyinput_contract in [
     "isSecureTextEntry",
     "if (![field respondsToSelector:secureSelector])",
     "return !secure",
+    "DDKeyinputResolvedTemporaryKnobPath",
+    "NSTemporaryDirectory()",
+    "[name hasPrefix:@\"duodash_\"]",
+    "[name substringFromIndex:8]",
+    "[@\"carnav_\" stringByAppendingString:suffix]",
+    "DDKeyinputKnobPresentCached",
+    "*cachedState < 0 || now - *cachedTimestamp >= 1.0",
+    "[@\"/var/tmp\" stringByAppendingPathComponent:name]",
+    "present = DDKeyinputResolvedTemporaryKnobPath(name) != nil",
+    "*cachedTimestamp = now",
 ]:
     if keyinput_contract not in keyinput_gate:
         raise SystemExit(f"KeyinputGate executable secure-text gate missing contract: {keyinput_contract}")
