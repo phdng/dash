@@ -89,6 +89,13 @@ long DDLongValueForCFDictionaryKey(CFDictionaryRef dictionary, const void *key) 
     return value;
 }
 
+BOOL DDBooleanValueForCFDictionaryKey(CFDictionaryRef dictionary, const void *key) {
+    const void *raw = CFDictionaryGetValue(dictionary, key);
+    if (!raw || CFGetTypeID(raw) != CFBooleanGetTypeID())
+        return NO;
+    return CFBooleanGetValue((CFBooleanRef)raw);
+}
+
 BOOL DDDeepSleepEnabledCurrentHost(void) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,
