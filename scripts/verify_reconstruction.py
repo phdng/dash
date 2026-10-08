@@ -39,13 +39,14 @@ for required in [
     RECON / "SiriProbe.m",
     RECON / "KeyinputGate.m",
     RECON / "AppBridgeTuning.m",
+    RECON / "NavProviderHelpers.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -77,7 +78,17 @@ migration = (RECON / "Migration.m").read_text(encoding="utf-8")
 siri_probe = (RECON / "SiriProbe.m").read_text(encoding="utf-8")
 keyinput_gate = (RECON / "KeyinputGate.m").read_text(encoding="utf-8")
 appbridge_tuning = (RECON / "AppBridgeTuning.m").read_text(encoding="utf-8")
+navprovider_helpers = (RECON / "NavProviderHelpers.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
+for navprovider_contract in [
+    "DDNavProviderTimestamp",
+    "objectForKeyedSubscript:@\"timestamp\"",
+    "[value isKindOfClass:[NSNumber class]]",
+    "return 0.0",
+    "return [value doubleValue]",
+]:
+    if navprovider_contract not in navprovider_helpers:
+        raise SystemExit(f"NavProviderHelpers executable contract missing: {navprovider_contract}")
 for appbridge_tuning_contract in [
     "DDAppBridgeDashSettleSeconds",
     "/var/tmp/duodash_ab_dashsettle",
