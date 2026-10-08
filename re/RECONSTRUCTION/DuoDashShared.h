@@ -171,6 +171,7 @@ FOUNDATION_EXPORT BOOL DDFinalizeTrueDashImportRecord(const NSUInteger settingsC
                                                       NSString *undoStatus);
 FOUNDATION_EXPORT long long DDMigrationIssuedAtIfValid(NSInteger validationStatus,
                                                        NSDictionary * _Nullable payload);
+FOUNDATION_EXPORT BOOL DDResolveVoiceCommandPreferences(NSString * _Nullable * _Nullable selectedOut);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

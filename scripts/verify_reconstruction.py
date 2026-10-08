@@ -36,13 +36,14 @@ for required in [
     RECON / "LocaleFlow.m",
     RECON / "PrefsResolver.m",
     RECON / "Migration.m",
+    RECON / "SiriProbe.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -71,7 +72,23 @@ crash_reporting = (RECON / "CrashReporting.m").read_text(encoding="utf-8")
 locale_flow = (RECON / "LocaleFlow.m").read_text(encoding="utf-8")
 prefs_resolver = (RECON / "PrefsResolver.m").read_text(encoding="utf-8")
 migration = (RECON / "Migration.m").read_text(encoding="utf-8")
+siri_probe = (RECON / "SiriProbe.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
+for siri_contract in [
+    "DDResolveVoiceCommandPreferences",
+    "CFPreferencesGetAppBooleanValue(CFSTR(\"voicecmd_enabled\")",
+    "CFPreferencesCopyAppValue(CFSTR(\"voicecmd_selected\")",
+    "char selected[97] = {0}",
+    "CFStringGetCString",
+    "length <= 96",
+    "selected[0] != '.'",
+    "selected[length - 1] != '.'",
+    "BOOL sawDot = NO",
+    "ch != '-' && !digit && !alpha",
+    "if (!valid || !sawDot)",
+]:
+    if siri_contract not in siri_probe:
+        raise SystemExit(f"SiriProbe executable voicecmd resolver missing contract: {siri_contract}")
 for migration_contract in [
     "DDRunDefaultsBootstrapIfNeeded",
     "#import <sys/stat.h>",

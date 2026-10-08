@@ -1,11 +1,58 @@
-// RECONSTRUCTION/SiriProbe.m — APPROXIMATION synthesis (session-027)
+// RECONSTRUCTION/SiriProbe.m — executable voicecmd resolver + APPROXIMATION hook synthesis
 // Source: EVIDENCE/siriprobe.md (installer + gates + 7 hooks + voicecmd cache + fakepress/rescan).
 // KHÔNG compile ở đây (không toolchain iOS). UNKNOWN giữ nguyên (U-refs).
 // Semantics phải giữ: latch + master-enable gates, dlopen fallback, validate-signature,
 //   file-gate throttle/cache, swallow-vs-log matrix, rate-limit buckets, notify wiring.
 
 #import "DuoDashShared.h"
+#include <string.h>
 // Records: EVIDENCE/siriprobe.md (session-006, subagent FULL reads).
+
+BOOL DDResolveVoiceCommandPreferences(NSString **selectedOut) {
+    Boolean exists = false;
+    Boolean enabledRaw = CFPreferencesGetAppBooleanValue(CFSTR("voicecmd_enabled"),
+                                                          CFSTR("com.sensetechlab.duodash.settings"),
+                                                          &exists);
+    BOOL enabled = enabledRaw && exists;
+
+    char selected[97] = {0};
+    CFPropertyListRef raw = CFPreferencesCopyAppValue(CFSTR("voicecmd_selected"),
+                                                      CFSTR("com.sensetechlab.duodash.settings"));
+    if (raw) {
+        if (CFGetTypeID(raw) == CFStringGetTypeID()) {
+            CFStringGetCString((CFStringRef)raw,
+                               selected,
+                               sizeof(selected),
+                               kCFStringEncodingUTF8);
+        }
+        CFRelease(raw);
+    }
+
+    if (selected[0]) {
+        size_t length = strlen(selected);
+        BOOL valid = length > 0 && length <= 96 && selected[0] != '.' && selected[length - 1] != '.';
+        BOOL sawDot = NO;
+        for (size_t index = 0; valid && index < length; index++) {
+            unsigned char ch = (unsigned char)selected[index];
+            if (ch == '.') {
+                sawDot = YES;
+                continue;
+            }
+            BOOL digit = ch >= '0' && ch <= '9';
+            BOOL alpha = (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
+            if (ch != '-' && !digit && !alpha)
+                valid = NO;
+        }
+        if (!valid || !sawDot)
+            selected[0] = '\0';
+    }
+
+    if (selectedOut) {
+        NSString *resolved = selected[0] ? [NSString stringWithUTF8String:selected] : @"";
+        *selectedOut = resolved ?: @"";
+    }
+    return enabled;
+}
 
 // ---- Installer (EVIDENCE §0; 4C34.c:1279-1390) ----
 static void DDInstallSiriProbe(void) {
