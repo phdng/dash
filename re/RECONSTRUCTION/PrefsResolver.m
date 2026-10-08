@@ -116,6 +116,26 @@ NSString *DDCopyNonemptyStringPreferenceAnyHost(NSString *key) {
     return value.length ? value : nil;
 }
 
+NSArray *DDCopyPickerArrayPreferenceAnyHost(NSString *key) {
+    NSString *resolvedKey = key.length ? key : @"bridgedApps";
+    CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                             kCFPreferencesCurrentUser,
+                             kCFPreferencesAnyHost);
+    CFPropertyListRef raw = CFPreferencesCopyValue((__bridge CFStringRef)resolvedKey,
+                                                   (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                   kCFPreferencesCurrentUser,
+                                                   kCFPreferencesAnyHost);
+    if (!raw)
+        return @[];
+
+    NSArray *value = nil;
+    if (CFGetTypeID(raw) == CFArrayGetTypeID())
+        value = [(__bridge NSArray *)raw copy];
+    CFRelease(raw);
+
+    return [value isKindOfClass:[NSArray class]] ? value : @[];
+}
+
 BOOL DDAppBridgeIdentifierIsExcluded(id identifier) {
     if (![identifier isKindOfClass:[NSString class]] || ![(NSString *)identifier length])
         return NO;
