@@ -97,6 +97,10 @@ for navprovider_contract in [
     "com.sensetechlab.truedash.navUpdate",
     "com.sensetechlab.truedash.speedLimit",
     "com.sensetechlab.truedash.cameraAlert",
+    "DDNavProviderCompareLastSeenDescending",
+    "[right objectForKeyedSubscript:@\"lastSeen\"]",
+    "[left objectForKeyedSubscript:@\"lastSeen\"]",
+    "[rightLastSeen compare:leftLastSeen]",
 ]:
     if navprovider_contract not in navprovider_helpers:
         raise SystemExit(f"NavProviderHelpers executable contract missing: {navprovider_contract}")

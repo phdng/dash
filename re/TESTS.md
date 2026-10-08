@@ -134,5 +134,6 @@
 - [x] Session-220 executable NavProvider timestamp contract: fetch `timestamp`; only NSNumber accepted; NSNumber returns `doubleValue`; nil/missing/non-NSNumber returns 0.0. No directory scan, freshness policy, persistence, notify, or relay state is part of the helper.
 - [x] Session-221 executable NavProvider payload-match contract: payload must be NSDictionary; `v` must be NSNumber with intValue 2; payload `provider` must be NSString; result is `isEqualToString:` against caller provider. All earlier gate failures return false.
 - [x] Session-222 executable legacy TrueDash notification contract: nil returns false; exact CFEqual match to navUpdate, speedLimit, or cameraAlert returns true; every other notification name returns false.
+- [x] Session-223 executable NavProvider comparator contract: fetch right `lastSeen`, then left `lastSeen`, return `[rightLastSeen compare:leftLastSeen]` exactly for descending order; no class guards or normalization are added beyond native nil-message behavior.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

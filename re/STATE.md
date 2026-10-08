@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-222 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-223 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-153 (session-222): Promote exact pure legacy TrueDash notification predicate `83FDC` vào executable `NavProviderHelpers.m`: nil -> NO; chỉ ba names navUpdate/speedLimit/cameraAlert -> YES; mọi name khác -> NO. Observer/post/payload relay behavior remains excluded.
+BUILDABLE RUNTIME PHASE-154 (session-223): Promote exact NavProvider comparator `832C0` vào executable `NavProviderHelpers.m`: fetch right lastSeen, fetch left lastSeen, return `[rightLastSeen compare:leftLastSeen]` để giữ descending order. Không thêm type guards/normalization ngoài native message semantics.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-222):
-- R-221 executable legacy TrueDash NavProvider notification predicate: exact 83FDC three-name whitelist now compiles in NavProviderHelpers.m.
+## LAST COMPLETED TASK (session-223):
+- R-222 executable NavProvider lastSeen comparator: exact 832C0 right-vs-left compare semantics now compile in NavProviderHelpers.m.
 
 ## CURRENT TASK:
-- R-221 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-222 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-222 batch, inspect another pure shared helper only if non-duplicative and side-effect-free; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-223 batch, switch subsystem unless another clearly independent pure NavProvider helper appears. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

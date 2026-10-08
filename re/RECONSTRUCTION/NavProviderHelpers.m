@@ -30,3 +30,9 @@ BOOL DDNavProviderIsLegacyTrueDashNotification(CFStringRef name) {
         return YES;
     return CFEqual(name, CFSTR("com.sensetechlab.truedash.cameraAlert"));
 }
+
+NSComparisonResult DDNavProviderCompareLastSeenDescending(id left, id right) {
+    id rightLastSeen = [right objectForKeyedSubscript:@"lastSeen"];
+    id leftLastSeen = [left objectForKeyedSubscript:@"lastSeen"];
+    return (NSComparisonResult)[rightLastSeen compare:leftLastSeen];
+}
