@@ -1,0 +1,74 @@
+// RECONSTRUCTION/HostFlowAdapter.m — executable post-present host-flow adapter (session-177)
+// Exact source site: sub_3257C -> LSDA 0x113860, action-5
+// 0x32A94..0x32AB4 -> 0x33A3C.
+//
+// This adapter is intentionally decision-only. It is compiled into the tweak and consumes
+// RecoveryRouting capability state, but does not call DDz4/private selectors itself.
+
+#import "DuoDashShared.h"
+
+static BOOL gDDHostFlowAdapterReady;
+
+void DDHostFlowAdapterStart(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        DDRecoveryRoutingStart();
+        NSUInteger capabilities = DDRecoveryRoutingCapabilities();
+        gDDHostFlowAdapterReady =
+            (capabilities & DDRecoveryRoutingCapabilityPresentOverlayCleanup) != 0 &&
+            (capabilities & DDRecoveryRoutingCapabilityReapplyMaximize) != 0;
+    });
+}
+
+BOOL DDHostFlowAdapterReady(void) {
+    DDHostFlowAdapterStart();
+    return gDDHostFlowAdapterReady;
+}
+
+DDPostPresentHostFlowDecision DDPostPresentHostFlowDecisionForSite(DDPostPresentHostFlowExceptionSite site) {
+    DDPostPresentHostFlowDecision decision = {0};
+    decision.adapterEnabled = DDHostFlowAdapterReady();
+    if (!decision.adapterEnabled || site == DDPostPresentHostFlowExceptionSiteNone)
+        return decision;
+
+    // Matching type at 0x33A3C begin/end-catches then branches to 0x32ABC.
+    // 0x32ABC releases the retained host input and resumes the caller's post-block flow.
+    // Nonmatching type routes through 0x33CF0 -> 0x33D00 -> 0x33D1C.
+    decision.shouldSwallowExpectedException = YES;
+    decision.shouldContinueAfterHostBlock = YES;
+    decision.nonmatchingTypeWouldResumeUnwind = YES;
+    decision.remainingHostBlockDefinitelySkipped = YES;
+    decision.retainedHostDefinitelyReleasedOnContinuation = YES;
+
+    switch (site) {
+        case DDPostPresentHostFlowExceptionSiteSharedAcquisition:
+            // 0x32A94 +[DDz4 shared], retainAutoreleasedReturnValue at 0x32A9C.
+            // teardown/buildInHost are not reached. Because the catch jumps to 0x32ABC,
+            // the normal x22 release at 0x32AB4 is also skipped if acquisition got far
+            // enough to retain the shared controller.
+            decision.sharedControllerNormalReleaseDefinitelySkipped = YES;
+            break;
+
+        case DDPostPresentHostFlowExceptionSiteTeardown:
+            // x22 is already the retained DDz4 shared controller.
+            // teardown at 0x32AA4 may have applied side effects before throwing.
+            decision.sharedControllerDefinitelyAcquiredBeforeSite = YES;
+            decision.teardownCouldHaveAppliedBeforeException = YES;
+            decision.sharedControllerNormalReleaseDefinitelySkipped = YES;
+            break;
+
+        case DDPostPresentHostFlowExceptionSiteBuildInHost:
+            // teardown has returned normally; buildInHost: at 0x32AB0 may have partially
+            // attached/rebuilt against the retained host before throwing.
+            decision.sharedControllerDefinitelyAcquiredBeforeSite = YES;
+            decision.teardownDefinitelyCompletedBeforeSite = YES;
+            decision.buildInHostCouldHaveAppliedBeforeException = YES;
+            decision.sharedControllerNormalReleaseDefinitelySkipped = YES;
+            break;
+
+        case DDPostPresentHostFlowExceptionSiteNone:
+            break;
+    }
+
+    return decision;
+}

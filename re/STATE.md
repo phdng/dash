@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-176 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-177 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-107 (session-176): Bắt đầu executable subsystem promotion. `RecoveryRouting.m` là compilation unit riêng ngoài `ReconstructionRuntime`, được add vào Makefile target và bootstrap từ `Tweak.x`. Module consume các evidence-safe resolver R-169..R-174, xác nhận invariant và publish one-time capability mask cho các subsystem executable tiếp theo. Không private selector/UIKit/global recovery side effects; mục tiêu batch này là tạo seam compile/link thật thay vì tiếp tục chỉ mở rộng runtime contract.
+BUILDABLE RUNTIME PHASE-108 (session-177): Promote executable adapter cụ thể ngoài `ReconstructionRuntime`. `HostFlowAdapter.m` được compile + bootstrap, consume `RecoveryRouting` capability mask và model exact post-present action-5 `0x32A94..0x32AB4 -> 0x33A3C`: DDz4 shared acquisition/retain, teardown, buildInHost. Matching typed catch skip remainder host block và continue `0x32ABC`; retained host được release tại continuation, normal DDz4 release bị skip; nonmatching resume unwind. Adapter decision-only, không gọi private selector/UI/global mutation.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-176):
-- R-175 executable `RecoveryRouting` promotion: separate compiled consumer of ReconstructionRuntime contracts, Makefile integration, Tweak bootstrap, stable exported capability surface, and verifier linkage checks.
+## LAST COMPLETED TASK (session-177):
+- R-176 executable `HostFlowAdapter` promotion: concrete compiled consumer of RecoveryRouting for exact DDz4 post-present shared/teardown/buildInHost typed recovery, with site timing and continuation/lifetime decisions.
 
 ## CURRENT TASK:
-- R-175 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-176 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-176 batch, promote one concrete compile-safe subsystem adapter that consumes RecoveryRouting rather than writing new resolver-only code. Natural target remains the present/host flow around `0x32A94..0x32AB4`, but implementation should land in a dedicated executable module instead of ReconstructionRuntime. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-177 batch, continue executable promotion by wiring the next bounded host-flow decision into a dedicated module/adapter rather than adding resolver-only code to ReconstructionRuntime. Candidate: follow-on success/failure state immediately after `0x32ABC` or another already-proven subsystem seam. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

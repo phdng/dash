@@ -33,6 +33,7 @@
         // from a separate compilation unit so future private-hook modules do not depend
         // directly on ReconstructionRuntime internals.
         DDRecoveryRoutingStart();
+        DDHostFlowAdapterStart();
     }
 }
 

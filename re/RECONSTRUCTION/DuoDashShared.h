@@ -47,11 +47,44 @@ typedef NS_ENUM(NSInteger, DDRole) {
     DDRoleKbd = 6,
 };
 
-// Compile-safe recovery-routing integration seam (session-176).
+// Compile-safe recovery-routing integration seam (session-176+).
 // This consumes ReconstructionRuntime evidence contracts without executing
 // private selectors/UIKit/global recovery side effects.
+typedef NS_OPTIONS(NSUInteger, DDRecoveryRoutingCapability) {
+    DDRecoveryRoutingCapabilityLayoutInitialEnumeration = 1ull << 0,
+    DDRecoveryRoutingCapabilityLayoutSubsequentEnumeration = 1ull << 1,
+    DDRecoveryRoutingCapabilityLayoutSetRoot = 1ull << 2,
+    DDRecoveryRoutingCapabilityLayoutPostCommit = 1ull << 3,
+    DDRecoveryRoutingCapabilityReapplyMaximize = 1ull << 4,
+    DDRecoveryRoutingCapabilityPresentOverlayCleanup = 1ull << 5,
+};
 FOUNDATION_EXPORT void DDRecoveryRoutingStart(void);
 FOUNDATION_EXPORT NSUInteger DDRecoveryRoutingCapabilities(void);
+
+typedef NS_ENUM(NSInteger, DDPostPresentHostFlowExceptionSite) {
+    DDPostPresentHostFlowExceptionSiteNone = 0,
+    DDPostPresentHostFlowExceptionSiteSharedAcquisition = 1,
+    DDPostPresentHostFlowExceptionSiteTeardown = 2,
+    DDPostPresentHostFlowExceptionSiteBuildInHost = 3,
+};
+
+typedef struct {
+    BOOL adapterEnabled;
+    BOOL shouldSwallowExpectedException;
+    BOOL shouldContinueAfterHostBlock;
+    BOOL nonmatchingTypeWouldResumeUnwind;
+    BOOL sharedControllerDefinitelyAcquiredBeforeSite;
+    BOOL teardownDefinitelyCompletedBeforeSite;
+    BOOL teardownCouldHaveAppliedBeforeException;
+    BOOL buildInHostCouldHaveAppliedBeforeException;
+    BOOL remainingHostBlockDefinitelySkipped;
+    BOOL sharedControllerNormalReleaseDefinitelySkipped;
+    BOOL retainedHostDefinitelyReleasedOnContinuation;
+} DDPostPresentHostFlowDecision;
+
+FOUNDATION_EXPORT void DDHostFlowAdapterStart(void);
+FOUNDATION_EXPORT BOOL DDHostFlowAdapterReady(void);
+FOUNDATION_EXPORT DDPostPresentHostFlowDecision DDPostPresentHostFlowDecisionForSite(DDPostPresentHostFlowExceptionSite site);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

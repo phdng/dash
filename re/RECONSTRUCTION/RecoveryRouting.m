@@ -6,15 +6,6 @@
 #import "DuoDashShared.h"
 #import "ReconstructionRuntime.h"
 
-typedef NS_OPTIONS(NSUInteger, DDRecoveryRoutingCapabilityInternal) {
-    DDRecoveryRoutingCapabilityLayoutInitialEnumeration = 1ull << 0,
-    DDRecoveryRoutingCapabilityLayoutSubsequentEnumeration = 1ull << 1,
-    DDRecoveryRoutingCapabilityLayoutSetRoot = 1ull << 2,
-    DDRecoveryRoutingCapabilityLayoutPostCommit = 1ull << 3,
-    DDRecoveryRoutingCapabilityReapplyMaximize = 1ull << 4,
-    DDRecoveryRoutingCapabilityPresentOverlayCleanup = 1ull << 5,
-};
-
 static NSUInteger gDDRecoveryRoutingCapabilities;
 
 static BOOL DDLayoutInitialContractIsUsable(void) {

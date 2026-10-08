@@ -30,13 +30,14 @@ for required in [
     RECON / "ReconstructionRuntime.h",
     RECON / "ReconstructionRuntime.m",
     RECON / "RecoveryRouting.m",
+    RECON / "HostFlowAdapter.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -59,6 +60,7 @@ if set(filter_dict.get("Executables", [])) != {"mediaserverd", "kbd"}:
 
 runtime = (RECON / "ReconstructionRuntime.m").read_text(encoding="utf-8")
 recovery_routing = (RECON / "RecoveryRouting.m").read_text(encoding="utf-8")
+host_flow_adapter = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
 for integration_contract in [
     "DDRecoveryRoutingStart",
@@ -72,6 +74,24 @@ for integration_contract in [
         raise SystemExit(f"RecoveryRouting integration missing contract: {integration_contract}")
 if "DDRecoveryRoutingStart();" not in tweak:
     raise SystemExit("Tweak.x does not bootstrap RecoveryRouting")
+for host_flow_contract in [
+    "DDHostFlowAdapterStart",
+    "DDHostFlowAdapterReady",
+    "DDPostPresentHostFlowDecisionForSite",
+    "DDRecoveryRoutingCapabilities",
+    "DDRecoveryRoutingCapabilityPresentOverlayCleanup",
+    "DDRecoveryRoutingCapabilityReapplyMaximize",
+    "DDPostPresentHostFlowExceptionSiteSharedAcquisition",
+    "DDPostPresentHostFlowExceptionSiteTeardown",
+    "DDPostPresentHostFlowExceptionSiteBuildInHost",
+    "decision.shouldContinueAfterHostBlock = YES",
+    "decision.sharedControllerNormalReleaseDefinitelySkipped = YES",
+    "decision.retainedHostDefinitelyReleasedOnContinuation = YES",
+]:
+    if host_flow_contract not in host_flow_adapter:
+        raise SystemExit(f"HostFlowAdapter integration missing contract: {host_flow_contract}")
+if "DDHostFlowAdapterStart();" not in tweak:
+    raise SystemExit("Tweak.x does not bootstrap HostFlowAdapter")
 for contract in [
     "DDDetectRole",
     "DDBuildKnownAppBridgeSnapshot",
