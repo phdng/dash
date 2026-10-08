@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-190 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-191 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-121 (session-190): Promote exact `7E730` CarPlay UI-more normalization trong executable `PrefsResolver.m`, đồng thời nối PrefsResolver vào contract `DDNormalizeIntegerSetting` đã exact trong `ReconstructionRuntime` cho `7E63C/7EEDC` thay vì duplicate logic. Full `7E908` hiện chỉ còn blocked bởi exact layout/ratio call-site bounds/defaults và final `ABCfgResult` integration.
+BUILDABLE RUNTIME PHASE-122 (session-191): Raw ARM64 đã chốt exact numeric parameters cho `73E8/80D0` và toàn bộ 5 call `7E908 -> 7EEDC`. `PrefsResolver.m` giờ có `DDNormalizeAppBridgeNumericConfig`: layout 1..8/default2; ratio 1..99/default50; fracA/B 0..99/default0; fracLayout 0..8/default0; exact fix names layout/ratio/frac_a/frac_b/frac_tag. Tất cả delegate qua Runtime `DDNormalizeIntegerSetting`.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-190):
-- R-189 executable `PrefsResolver` normalization-helper promotion: exact 7E730 ordered/dedup CarPlay UI-more helper plus Runtime-backed 7E63C/7EEDC integer repair seam.
+## LAST COMPLETED TASK (session-191):
+- R-190 executable `PrefsResolver` numeric-block promotion: exact raw parameters for layout/ratio/frac fields are now executable through the verified Runtime repair contract; `73E8/80D0` are no longer unresolved.
 
 ## CURRENT TASK:
-- R-189 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-190 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-190 batch, resolve exact `73E8/80D0` numeric bounds/defaults from raw call sites or other evidence, then full `7E908` can be considered; do not guess those parameters. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-191 batch, implement the remaining evidence-safe pane/CarPlay assembly of `7E908` into a compile-safe result representation, preserving exact writes/fixes behavior; avoid inventing private class dependencies. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

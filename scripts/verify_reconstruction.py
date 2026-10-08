@@ -250,6 +250,17 @@ for prefs_contract in [
     "if ([result containsObject:bundleIdentifier])",
     "DDNormalizeAppBridgeIntegerSetting",
     "return DDNormalizeIntegerSetting(source, key, minimum, maximum, fallback",
+    "DDNormalizeAppBridgeNumericConfig",
+    "@\"appbridge_layout\", 1, 8, 2",
+    "@\"appbridge_split_ratio\", 1, 99, 50",
+    "@\"appbridge_split_frac_a\", 0, 99, 0",
+    "@\"appbridge_split_frac_b\", 0, 99, 0",
+    "@\"appbridge_split_frac_layout\", 0, 8, 0",
+    "@\"layout\", writes, fixes",
+    "@\"ratio\", writes, fixes",
+    "@\"frac_a\", writes, fixes",
+    "@\"frac_b\", writes, fixes",
+    "@\"frac_tag\", writes, fixes",
     "#import \"ReconstructionRuntime.h\"",
 ]:
     if prefs_contract not in prefs_resolver:

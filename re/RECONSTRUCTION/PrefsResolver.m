@@ -146,6 +146,33 @@ NSInteger DDNormalizeAppBridgeIntegerSetting(NSDictionary *source,
                                      fixName, writes, fixes);
 }
 
+NSDictionary<NSString *, NSNumber *> *DDNormalizeAppBridgeNumericConfig(NSDictionary *source,
+                                                                        NSMutableDictionary *writes,
+                                                                        NSMutableArray *fixes) {
+    // Exact raw ARM64 call setup inside 7E908:
+    // layout      -> 7EEDC(source,key,1,8,2,"layout",writes,fixes)
+    // ratio       -> 7EEDC(source,key,1,99,50,"ratio",writes,fixes)
+    // frac_a/b    -> 7EEDC(source,key,0,99,0,"frac_a"/"frac_b",writes,fixes)
+    // frac_layout -> 7EEDC(source,key,0,8,0,"frac_tag",writes,fixes)
+    NSInteger layout = DDNormalizeIntegerSetting(source, @"appbridge_layout", 1, 8, 2,
+                                                 @"layout", writes, fixes);
+    NSInteger ratio = DDNormalizeIntegerSetting(source, @"appbridge_split_ratio", 1, 99, 50,
+                                                @"ratio", writes, fixes);
+    NSInteger fracA = DDNormalizeIntegerSetting(source, @"appbridge_split_frac_a", 0, 99, 0,
+                                                @"frac_a", writes, fixes);
+    NSInteger fracB = DDNormalizeIntegerSetting(source, @"appbridge_split_frac_b", 0, 99, 0,
+                                                @"frac_b", writes, fixes);
+    NSInteger fracLayout = DDNormalizeIntegerSetting(source, @"appbridge_split_frac_layout", 0, 8, 0,
+                                                     @"frac_tag", writes, fixes);
+    return @{
+        @"appbridge_layout": @(layout),
+        @"appbridge_split_ratio": @(ratio),
+        @"appbridge_split_frac_a": @(fracA),
+        @"appbridge_split_frac_b": @(fracB),
+        @"appbridge_split_frac_layout": @(fracLayout),
+    };
+}
+
 NSDictionary<NSString *, id> *DDCopyAppBridgeConfigPreferences(void) {
     static NSArray<NSString *> *keys;
     static dispatch_once_t onceToken;
