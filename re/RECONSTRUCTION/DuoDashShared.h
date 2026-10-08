@@ -200,6 +200,7 @@ FOUNDATION_EXPORT BOOL DDNavProviderPayloadMatchesProvider(id _Nullable payload,
 FOUNDATION_EXPORT BOOL DDNavProviderIsLegacyTrueDashNotification(CFStringRef _Nullable name);
 FOUNDATION_EXPORT NSComparisonResult DDNavProviderCompareLastSeenDescending(id _Nullable left,
                                                                           id _Nullable right);
+FOUNDATION_EXPORT NSInteger DDCameraRelaySourceCode(NSString * _Nullable source);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

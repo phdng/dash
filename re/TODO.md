@@ -265,3 +265,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-220] executable NavProvider payload/provider validator (session-221): exact 83EB4 NSDictionary + v NSNumber==2 + provider NSString equality semantics promoted; duplicate 83184 wrapper and notify side effects remain excluded.
 - [x] [R-221] executable legacy TrueDash NavProvider notification predicate (session-222): exact 83FDC three-name CFEqual whitelist promoted; observer/post/relay behavior remains excluded.
 - [x] [R-222] executable NavProvider lastSeen comparator (session-223): exact 832C0 right-vs-left `lastSeen` compare promoted for descending ordering without added type guards or side effects.
+- [x] [R-223] executable camera-relay source mapper (session-224): exact 84258 waze/google_maps/provider -> 2/1/3 mapping promoted in standalone helper module; relay I/O/notify/DataRouter behavior remains excluded.

@@ -40,13 +40,14 @@ for required in [
     RECON / "KeyinputGate.m",
     RECON / "AppBridgeTuning.m",
     RECON / "NavProviderHelpers.m",
+    RECON / "CameraRelayHelpers.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -79,7 +80,20 @@ siri_probe = (RECON / "SiriProbe.m").read_text(encoding="utf-8")
 keyinput_gate = (RECON / "KeyinputGate.m").read_text(encoding="utf-8")
 appbridge_tuning = (RECON / "AppBridgeTuning.m").read_text(encoding="utf-8")
 navprovider_helpers = (RECON / "NavProviderHelpers.m").read_text(encoding="utf-8")
+camera_relay_helpers = (RECON / "CameraRelayHelpers.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
+for camera_relay_contract in [
+    "DDCameraRelaySourceCode",
+    "[source isEqualToString:@\"waze\"]",
+    "[source isEqualToString:@\"google_maps\"]",
+    "[source isEqualToString:@\"provider\"]",
+    "return 2",
+    "return 1",
+    "return 3",
+    "return 0",
+]:
+    if camera_relay_contract not in camera_relay_helpers:
+        raise SystemExit(f"CameraRelayHelpers executable contract missing: {camera_relay_contract}")
 for navprovider_contract in [
     "DDNavProviderTimestamp",
     "objectForKeyedSubscript:@\"timestamp\"",

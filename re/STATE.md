@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-223 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-224 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-154 (session-223): Promote exact NavProvider comparator `832C0` vào executable `NavProviderHelpers.m`: fetch right lastSeen, fetch left lastSeen, return `[rightLastSeen compare:leftLastSeen]` để giữ descending order. Không thêm type guards/normalization ngoài native message semantics.
+BUILDABLE RUNTIME PHASE-155 (session-224): Switch subsystem và promote exact camera-relay source mapper `84258` vào standalone executable `CameraRelayHelpers.m`: waze->2, google_maps->1, provider->3, nil/other->0. Không file I/O/relay write/notify/DataRouter/global state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-223):
-- R-222 executable NavProvider lastSeen comparator: exact 832C0 right-vs-left compare semantics now compile in NavProviderHelpers.m.
+## LAST COMPLETED TASK (session-224):
+- R-223 executable camera-relay source mapper: exact 84258 source-token mapping now compiles in standalone CameraRelayHelpers.m.
 
 ## CURRENT TASK:
-- R-222 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-223 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-223 batch, switch subsystem unless another clearly independent pure NavProvider helper appears. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-224 batch, inspect another pure camera-relay helper only if independent from file scanning/relay writes/DataRouter/private state; otherwise switch subsystem again. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

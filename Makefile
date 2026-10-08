@@ -18,7 +18,8 @@ DuoDashReconstruction_FILES = \
 	re/RECONSTRUCTION/SiriProbe.m \
 	re/RECONSTRUCTION/KeyinputGate.m \
 	re/RECONSTRUCTION/AppBridgeTuning.m \
-	re/RECONSTRUCTION/NavProviderHelpers.m
+	re/RECONSTRUCTION/NavProviderHelpers.m \
+	re/RECONSTRUCTION/CameraRelayHelpers.m
 DuoDashReconstruction_CFLAGS = -fobjc-arc -Wall -Wextra
 DuoDashReconstruction_FRAMEWORKS = Foundation CoreFoundation
 DuoDashReconstruction_LIBRARIES = proc
