@@ -84,6 +84,37 @@ NSString *DDCrashReportingAuthorizationValue(void) {
         return nil;
     return [@"Bearer " stringByAppendingString:token];
 }
+
+NSUInteger DDCrashReportingPruneOutgoingQueue(void) {
+    if (!DDCrashReportingAdapterReady())
+        return 0;
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSArray<NSString *> *names = [fm contentsOfDirectoryAtPath:DD_REPORTS_OUTGOING error:nil];
+    if (names.count < 4)
+        return 0;
+
+    NSMutableArray<NSDictionary *> *entries = [NSMutableArray arrayWithCapacity:names.count];
+    for (NSString *name in names) {
+        NSString *path = [DD_REPORTS_OUTGOING stringByAppendingPathComponent:name];
+        NSDictionary *attrs = [fm attributesOfItemAtPath:path error:nil];
+        NSDate *date = attrs.fileModificationDate ?: [NSDate distantPast];
+        [entries addObject:@{ @"p": path, @"d": date }];
+    }
+
+    // Exact A1CAC comparator: compare a3[@"d"] against a2[@"d"], newest first.
+    [entries sortUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+        return [b[@"d"] compare:a[@"d"]];
+    }];
+
+    NSUInteger removed = 0;
+    for (NSUInteger index = 3; index < entries.count; index++) {
+        NSString *path = entries[index][@"p"];
+        if ([fm removeItemAtPath:path error:nil])
+            removed++;
+    }
+    return removed;
+}
 // Records: F-016 (session-002), B-08. Prefs UI: group/row/button/status (strings
 //   0xc7c4c/0xc7cf7/0xc5dcc/cr_collecting/cr_disabled). Manual trigger:
 //   prefs button → Darwin com.sensetechlab.crashreport.send (poster 948C0? —

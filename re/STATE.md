@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-180 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-181 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-111 (session-180): Mở rộng executable `CrashReporting.m` bằng upload-preflight Foundation-only từ exact `9E014`. `DDCrashReportingShouldPrepareUpload` gate dryrun-off + endpoint non-empty; `DDCrashReportingReportsURLString` trim duy nhất ký tự `/` ở hai đầu rồi append `/v1/reports`; `DDCrashReportingAuthorizationValue` trả nil khi token rỗng, ngược lại exact `Bearer <token>`. Không tạo NSURLRequest, multipart body, upload task, semaphore, status hay cleanup side effects.
+BUILDABLE RUNTIME PHASE-112 (session-181): Promote exact local outgoing crash-report retention policy từ `9E014` + comparator `A1CAC` vào executable `CrashReporting.m`. API mới enumerate `DD_REPORTS_OUTGOING`, lấy modification date (fallback `NSDate.distantPast`), sort newest-first bằng exact reversed-date comparator, giữ 3 newest và xóa index 3+ với delete errors ignored. API chỉ local-file mutation và không auto-run ở startup; collector/network/status vẫn excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-180):
-- R-179 executable `CrashReporting` upload-preflight promotion: exact dryrun/endpoint admission, slash-only reports URL normalization, and optional Bearer authorization value added to the already-compiled module without network side effects.
+## LAST COMPLETED TASK (session-181):
+- R-180 executable `CrashReporting` outgoing-queue retention promotion: exact newest-first mtime ordering with distantPast fallback, keep-three policy, and error-ignored removal exposed as a Foundation-only callable API.
 
 ## CURRENT TASK:
-- R-179 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-180 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-180 batch, continue executable promotion inside existing synthesis modules. Natural next safe target is crash-report local outgoing-queue inspection/pruning policy if exact ordering can be represented without collector/network execution, otherwise choose another prefs/file-state subsystem. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-181 batch, continue executable promotion in existing synthesis modules. Prefer another bounded Foundation/CoreFoundation behavior or a non-network crash-report helper; keep collector/network/private UI/global mutation excluded until separately proven. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
