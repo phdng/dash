@@ -4421,6 +4421,33 @@ DDLayoutConfirmSubsequentEnumerationExceptionOutcome DDResolveLayoutConfirmSubse
     return outcome;
 }
 
+DDLayoutConfirmSetRootExceptionOutcome DDResolveLayoutConfirmSetRootExceptionOutcome(void) {
+    // sub_3257C -> LSDA 0x113860. This contract covers only typed action-5
+    // 0x338B4..0x338C0 -> landing stub 0x33A1C, exactly the
+    // -[CNABLayoutConfirm setRoot:] call after fast enumeration has completed.
+    // Stub 0x33A1C aliases shared typed cleanup at 0x33C64.
+    // Expected type therefore clears splash/layout-confirm globals and returns
+    // via outer cleanup. setRoot: itself may have mutated the controller before
+    // throwing, but the new qword_164510 storeStrong at 0x338CC, root addSubview:
+    // at 0x338D8, and tick: at 0x338E4 are all definitely not reached.
+    DDLayoutConfirmSetRootExceptionOutcome outcome = {0};
+    outcome.shouldSwallowExpectedException = YES;
+    outcome.shouldClearSplashInFlightFlag = YES;
+    outcome.shouldClearSplashRootSlot = YES;
+    outcome.shouldReleasePriorSplashRoot = YES;
+    outcome.shouldAttemptLayoutConfirmRootRemovalIfPresent = YES;
+    outcome.shouldClearLayoutConfirmSlotIfPresent = YES;
+    outcome.shouldReleaseCaughtException = YES;
+    outcome.shouldContinueOuterCleanupAndReturn = YES;
+    outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    outcome.controllerRootMutationCouldHaveAppliedBeforeException = YES;
+    outcome.newLayoutConfirmGlobalCommitDefinitelyNotReachedBeforeCatch = YES;
+    outcome.rootAttachDefinitelyNotReachedBeforeCatch = YES;
+    outcome.countdownTickDefinitelyNotReachedBeforeCatch = YES;
+    outcome.enumerationDefinitelyCompletedBeforeProtectedCall = YES;
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

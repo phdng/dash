@@ -1567,6 +1567,23 @@ typedef struct {
     BOOL newLayoutConfirmGlobalCommitDefinitelyNotReachedBeforeCatch;
 } DDLayoutConfirmSubsequentEnumerationExceptionOutcome;
 
+typedef struct {
+    BOOL shouldSwallowExpectedException;
+    BOOL shouldClearSplashInFlightFlag;
+    BOOL shouldClearSplashRootSlot;
+    BOOL shouldReleasePriorSplashRoot;
+    BOOL shouldAttemptLayoutConfirmRootRemovalIfPresent;
+    BOOL shouldClearLayoutConfirmSlotIfPresent;
+    BOOL shouldReleaseCaughtException;
+    BOOL shouldContinueOuterCleanupAndReturn;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+    BOOL controllerRootMutationCouldHaveAppliedBeforeException;
+    BOOL newLayoutConfirmGlobalCommitDefinitelyNotReachedBeforeCatch;
+    BOOL rootAttachDefinitelyNotReachedBeforeCatch;
+    BOOL countdownTickDefinitelyNotReachedBeforeCatch;
+    BOOL enumerationDefinitelyCompletedBeforeProtectedCall;
+} DDLayoutConfirmSetRootExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -2258,6 +2275,7 @@ FOUNDATION_EXPORT DDShowWithHostViewBlockExceptionOutcome DDResolveShowWithHostV
 FOUNDATION_EXPORT DDMatAlphaResolverExceptionOutcome DDResolveMatAlphaResolverExceptionOutcome(DDMatAlphaResolverExceptionSite site);
 FOUNDATION_EXPORT DDLayoutConfirmInitialEnumerationExceptionOutcome DDResolveLayoutConfirmInitialEnumerationExceptionOutcome(void);
 FOUNDATION_EXPORT DDLayoutConfirmSubsequentEnumerationExceptionOutcome DDResolveLayoutConfirmSubsequentEnumerationExceptionOutcome(void);
+FOUNDATION_EXPORT DDLayoutConfirmSetRootExceptionOutcome DDResolveLayoutConfirmSetRootExceptionOutcome(void);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
