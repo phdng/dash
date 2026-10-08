@@ -86,6 +86,13 @@ for navprovider_contract in [
     "[value isKindOfClass:[NSNumber class]]",
     "return 0.0",
     "return [value doubleValue]",
+    "DDNavProviderPayloadMatchesProvider",
+    "[payload isKindOfClass:[NSDictionary class]]",
+    "objectForKeyedSubscript:@\"v\"",
+    "[version intValue] != 2",
+    "objectForKeyedSubscript:@\"provider\"",
+    "[payloadProvider isKindOfClass:[NSString class]]",
+    "return [payloadProvider isEqualToString:provider]",
 ]:
     if navprovider_contract not in navprovider_helpers:
         raise SystemExit(f"NavProviderHelpers executable contract missing: {navprovider_contract}")

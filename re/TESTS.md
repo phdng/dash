@@ -132,5 +132,6 @@
 - [x] Session-218 executable AppBridge material-alpha contract: read `/var/tmp/duodash_ab_mat_alpha` UTF-8; missing/empty -> 0.996078431; `doubleValue` <=0 or >1 -> default; `(0,1]` returned unchanged.
 - [x] Session-219 executable AirPlay pending-PID contract: UTF-8 file read; NSString type required; trim whitespace/newlines; every character must pass `decimalDigitCharacterSet`; `intValue` <=1 -> -1 sentinel, >1 -> returned PID. Restart/kill/unlink/dispatch side effects remain outside helper.
 - [x] Session-220 executable NavProvider timestamp contract: fetch `timestamp`; only NSNumber accepted; NSNumber returns `doubleValue`; nil/missing/non-NSNumber returns 0.0. No directory scan, freshness policy, persistence, notify, or relay state is part of the helper.
+- [x] Session-221 executable NavProvider payload-match contract: payload must be NSDictionary; `v` must be NSNumber with intValue 2; payload `provider` must be NSString; result is `isEqualToString:` against caller provider. All earlier gate failures return false.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-220 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-221 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-151 (session-220): Promote exact shared NavProvider timestamp helper `83250` vào standalone executable `NavProviderHelpers.m`: fetch `timestamp`, require NSNumber, return doubleValue; nil/missing/non-number -> 0.0. Discovery/relay persistence/notify/global state remain excluded.
+BUILDABLE RUNTIME PHASE-152 (session-221): Promote exact NavProvider payload/provider validator `83EB4` vào executable `NavProviderHelpers.m`: payload NSDictionary, `v` NSNumber intValue==2, payload provider NSString, then isEqualToString:selected. Generic R-207 preference reader already covers 83184; notify side effects remain excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-220):
-- R-219 executable NavProvider timestamp accessor: exact 83250 NSNumber-only timestamp semantics now compile in standalone NavProviderHelpers.m.
+## LAST COMPLETED TASK (session-221):
+- R-220 executable NavProvider payload/provider validator: exact 83EB4 class/version/provider-equality semantics now compile in NavProviderHelpers.m.
 
 ## CURRENT TASK:
-- R-219 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-220 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-220 batch, inspect another pure NavProvider helper only if shared and side-effect-free; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-221 batch, inspect another pure shared NavProvider helper only if non-duplicative and side-effect-free; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
