@@ -4492,6 +4492,62 @@ DDLayoutConfirmPostCommitExceptionOutcome DDResolveLayoutConfirmPostCommitExcept
     return outcome;
 }
 
+DDReapplyMaximizeRecoveryExceptionOutcome DDResolveReapplyMaximizeRecoveryExceptionOutcome(DDReapplyMaximizeRecoveryExceptionSite site) {
+    // sub_3257C -> LSDA 0x113860. Top-level typed range
+    // 0x32A4C..0x32A50 -> 0x33A5C wraps reapplyMaximizeAfterHost.
+    // Expected catch resets host/maximize state, reveals every item in the recovery
+    // collection with setHidden:NO, clears that collection, conditionally rebuilds
+    // the mat, ends catch, then resumes normal flow at present (0x32A50).
+    //
+    // Recovery itself has nested LSDA protection:
+    // 0x33B1C..0x33B2C -> 0x33BE0 action 5: initial fast enumeration.
+    // 0x33B50..0x33B68 -> 0x33BF0 action 5: enumerationMutation/setHidden:NO.
+    // 0x33B74..0x33B88 -> 0x33BE4 action 5: subsequent fast enumeration.
+    // 0x33BA0..0x33BA4 -> 0x33BDC action 5: removeAllObjects.
+    // These typed recovery failures end the original catch then resume unwind.
+    // 0x33BAC..0x33BB0 -> 0x33BC0 action 5: rebuildMatForEnvironment.
+    // A matching nested rebuild exception is itself begin/end-caught and recovery
+    // still continues to present; a nonmatching nested type resumes unwind.
+    // Action-0 cleanup ranges also resume unwind.
+    DDReapplyMaximizeRecoveryExceptionOutcome outcome = {0};
+
+    if (site == DDReapplyMaximizeRecoveryExceptionSiteTopLevelTyped) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.shouldResetHostMaximizeState = YES;
+        outcome.shouldRevealRecoveryCollectionItems = YES;
+        outcome.shouldClearRecoveryCollection = YES;
+        outcome.shouldRebuildMatIfPreviouslyRequested = YES;
+        outcome.shouldContinuePresentAfterRecovery = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+
+    BOOL abortingNestedTypedSite =
+        site == DDReapplyMaximizeRecoveryExceptionSiteInitialEnumerationTyped ||
+        site == DDReapplyMaximizeRecoveryExceptionSiteMutationOrSetHiddenTyped ||
+        site == DDReapplyMaximizeRecoveryExceptionSiteSubsequentEnumerationTyped ||
+        site == DDReapplyMaximizeRecoveryExceptionSiteRemoveAllObjectsTyped;
+    if (abortingNestedTypedSite) {
+        outcome.nestedRecoveryExceptionWouldAbortRecoveryAndResumeUnwind = YES;
+        outcome.presentDefinitelyNotReached = YES;
+        outcome.exceptionWouldResumeUnwind = YES;
+        return outcome;
+    }
+
+    if (site == DDReapplyMaximizeRecoveryExceptionSiteRebuildMatTyped) {
+        outcome.shouldSwallowExpectedNestedRebuildException = YES;
+        outcome.shouldContinuePresentAfterNestedRebuildFailure = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        return outcome;
+    }
+
+    if (site == DDReapplyMaximizeRecoveryExceptionSiteCleanupOnly) {
+        outcome.presentDefinitelyNotReached = YES;
+        outcome.exceptionWouldResumeUnwind = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
