@@ -337,6 +337,14 @@ BOOL DDRepairAppBridgeConfigIfNeeded(void) {
                                     kCFPreferencesAnyHost);
 }
 
+BOOL DDRepairAndRepublishAppBridge(void) {
+    // Exact 27E20 tail ordering: repair attempt (including knob/clean paths) is followed
+    // unconditionally by 74C8 republish. The subsequent private springboard.bringup call
+    // remains outside this bounded executable seam.
+    (void)DDRepairAppBridgeConfigIfNeeded();
+    return DDRepublishAppBridgeResolvedSnapshot();
+}
+
 BOOL DDRepublishAppBridgeResolvedSnapshot(void) {
     // Bounded executable reconstruction of the publish-facing 74C8 path.
     // Repair writes produced by 7E908 are intentionally NOT applied here: original 74C8 only reads fixes.count.
