@@ -129,6 +129,8 @@ FOUNDATION_EXPORT BOOL DDResolveKeyPaneEnabled(void);
 FOUNDATION_EXPORT BOOL DDBooleanPreferenceDefaultTrue(CFTypeRef _Nullable value);
 FOUNDATION_EXPORT NSString * _Nullable DDCopyNonemptyStringPreferenceAnyHost(NSString * _Nullable key);
 FOUNDATION_EXPORT NSArray *DDCopyPickerArrayPreferenceAnyHost(NSString * _Nullable key);
+FOUNDATION_EXPORT void DDPersistPickerArrayPreferenceAnyHost(NSString * _Nullable key,
+                                                             NSArray *values);
 FOUNDATION_EXPORT BOOL DDAppBridgeIdentifierIsExcluded(id _Nullable identifier);
 FOUNDATION_EXPORT NSDictionary<NSString *, id> *DDCopyAppBridgeConfigPreferences(void);
 FOUNDATION_EXPORT NSArray<NSString *> *DDNormalizeCarPlayUIAdditional(id _Nullable candidate, NSString * _Nullable mainBundleIdentifier);

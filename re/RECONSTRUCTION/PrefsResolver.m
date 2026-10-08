@@ -136,6 +136,24 @@ NSArray *DDCopyPickerArrayPreferenceAnyHost(NSString *key) {
     return [value isKindOfClass:[NSArray class]] ? value : @[];
 }
 
+void DDPersistPickerArrayPreferenceAnyHost(NSString *key, NSArray *values) {
+    NSString *resolvedKey = key.length ? key : @"bridgedApps";
+    CFPreferencesSetValue((__bridge CFStringRef)resolvedKey,
+                          (__bridge CFArrayRef)values,
+                          (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                          kCFPreferencesCurrentUser,
+                          kCFPreferencesAnyHost);
+    CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                             kCFPreferencesCurrentUser,
+                             kCFPreferencesAnyHost);
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(),
+                                         (__bridge CFStringRef)DD_N_SETTINGS_CHANGED,
+                                         NULL,
+                                         NULL,
+                                         true);
+    notify_post([DD_N_APPBRIDGE_LISTCHANGED UTF8String]);
+}
+
 BOOL DDAppBridgeIdentifierIsExcluded(id identifier) {
     if (![identifier isKindOfClass:[NSString class]] || ![(NSString *)identifier length])
         return NO;
