@@ -4373,6 +4373,29 @@ DDMatAlphaResolverExceptionOutcome DDResolveMatAlphaResolverExceptionOutcome(DDM
     return outcome;
 }
 
+DDLayoutConfirmInitialEnumerationExceptionOutcome DDResolveLayoutConfirmInitialEnumerationExceptionOutcome(void) {
+    // sub_3257C -> LSDA 0x113860. This contract covers only the exact typed action-5
+    // range 0x33598..0x335AC -> landing stub 0x33A00. Raw ARM64 shows that this
+    // protected range is the initial countByEnumeratingWithState:objects:count: call
+    // for the layout-confirm row array. Stub 0x33A00 branches to shared typed cleanup
+    // at 0x33C64. Expected type begins catch, clears splash/layout-confirm globals,
+    // attempts root removal if a confirm controller is present, releases the caught
+    // exception, ends catch, then branches to outer cleanup at 0x339A4. Nonmatching
+    // types resume unwind through 0x33CF0 -> 0x33D00 -> 0x33D1C.
+    DDLayoutConfirmInitialEnumerationExceptionOutcome outcome = {0};
+    outcome.shouldSwallowExpectedException = YES;
+    outcome.shouldClearSplashInFlightFlag = YES;
+    outcome.shouldClearSplashRootSlot = YES;
+    outcome.shouldReleasePriorSplashRoot = YES;
+    outcome.shouldAttemptLayoutConfirmRootRemovalIfPresent = YES;
+    outcome.shouldClearLayoutConfirmSlotIfPresent = YES;
+    outcome.shouldReleaseCaughtException = YES;
+    outcome.shouldContinueOuterCleanupAndReturn = YES;
+    outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    outcome.initialEnumerationResultDefinitelyUncommittedBeforeCatch = YES;
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

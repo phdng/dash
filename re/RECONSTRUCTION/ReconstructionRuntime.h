@@ -1539,6 +1539,19 @@ typedef struct {
     BOOL doubleValueResultDefinitelyUncommittedBeforeCatch;
 } DDMatAlphaResolverExceptionOutcome;
 
+typedef struct {
+    BOOL shouldSwallowExpectedException;
+    BOOL shouldClearSplashInFlightFlag;
+    BOOL shouldClearSplashRootSlot;
+    BOOL shouldReleasePriorSplashRoot;
+    BOOL shouldAttemptLayoutConfirmRootRemovalIfPresent;
+    BOOL shouldClearLayoutConfirmSlotIfPresent;
+    BOOL shouldReleaseCaughtException;
+    BOOL shouldContinueOuterCleanupAndReturn;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+    BOOL initialEnumerationResultDefinitelyUncommittedBeforeCatch;
+} DDLayoutConfirmInitialEnumerationExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -2228,6 +2241,7 @@ FOUNDATION_EXPORT DDCarPlayDisplayResolverExceptionOutcome DDResolveCarPlayDispl
 FOUNDATION_EXPORT DDDisplayOKUIBuilderExceptionOutcome DDResolveDisplayOKUIBuilderExceptionOutcome(DDDisplayOKUIBuilderExceptionSite site);
 FOUNDATION_EXPORT DDShowWithHostViewBlockExceptionOutcome DDResolveShowWithHostViewBlockExceptionOutcome(DDShowWithHostViewBlockExceptionSite site);
 FOUNDATION_EXPORT DDMatAlphaResolverExceptionOutcome DDResolveMatAlphaResolverExceptionOutcome(DDMatAlphaResolverExceptionSite site);
+FOUNDATION_EXPORT DDLayoutConfirmInitialEnumerationExceptionOutcome DDResolveLayoutConfirmInitialEnumerationExceptionOutcome(void);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
