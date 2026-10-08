@@ -234,6 +234,16 @@ for prefs_contract in [
     "DDBooleanPreferenceDefaultTrue",
     "CFBooleanGetTypeID",
     "CFBooleanGetValue",
+    "DDAppBridgeIdentifierIsExcluded",
+    "com.apple.springboard",
+    "com.apple.CarPlayApp",
+    "com.apple.InCallService",
+    "com.sensetechlab.duodashkey",
+    "DDCopyAppBridgeConfigPreferences",
+    "appbridge_split_ratio",
+    "appbridge_split_carplay_ui_more",
+    "CFPreferencesCopyAppValue",
+    "snapshot[key] = CFBridgingRelease(raw)",
 ]:
     if prefs_contract not in prefs_resolver:
         raise SystemExit(f"PrefsResolver clearpanes executable slice missing contract: {prefs_contract}")

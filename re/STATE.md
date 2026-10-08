@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-188 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-189 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-119 (session-188): Promote exact Foundation/CoreFoundation helpers `7EA4/8058/85CDC` trong executable `PrefsResolver.m`. Font-floor resolver mirror force-file/pref semantics với exact range 8..96; keypane resolver giữ missing-default-ON behavior; generic bool helper giữ nil-default-true và chỉ CFBoolean true là true khi non-nil. Later `74C8` republish body vẫn compile-excluded.
+BUILDABLE RUNTIME PHASE-120 (session-189): Decode exact NSConstantArray boundaries cho `off_1541F0` và `off_154208`, rồi promote thêm hai primitive executable trong `PrefsResolver.m`: 5-entry AppBridge exclusion predicate (`7E568`) và sparse snapshot đúng 10 config prefs của `74C8`. Full `7E908` normalization vẫn excluded vì còn phụ thuộc `7EEDC`, `7E730`, `ABCfgResult`.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-188):
-- R-187 executable `PrefsResolver` helper promotion: exact font-floor, keypane-enabled, and nil-default-true CFBoolean helper contracts added to the compiled module.
+## LAST COMPLETED TASK (session-189):
+- R-188 executable `PrefsResolver` exclusion/bulk-key promotion: exact 5-ID exclusion set and exact sparse 10-key AppBridge config preference snapshot added to compiled module.
 
 ## CURRENT TASK:
-- R-187 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-188 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-188 batch, inspect the next `74C8` dependencies (`7E568/7E908` and exact bulk-key data) before promoting any republish phase; otherwise move to another bounded Foundation/CoreFoundation synthesis module. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-189 batch, inspect/decode `7EEDC`, `7E730`, and `ABCfgResult` before opening any part of `7E908`; otherwise continue another bounded Foundation/CoreFoundation synthesis slice. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

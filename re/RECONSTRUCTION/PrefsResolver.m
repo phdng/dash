@@ -92,6 +92,53 @@ BOOL DDBooleanPreferenceDefaultTrue(CFTypeRef value) {
     return CFGetTypeID(value) == CFBooleanGetTypeID() && CFBooleanGetValue((CFBooleanRef)value);
 }
 
+BOOL DDAppBridgeIdentifierIsExcluded(id identifier) {
+    if (![identifier isKindOfClass:[NSString class]] || ![(NSString *)identifier length])
+        return NO;
+
+    static NSSet<NSString *> *excluded;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        excluded = [NSSet setWithArray:@[
+            @"com.apple.springboard",
+            @"com.apple.CarPlayApp",
+            @"com.apple.InCallService",
+            @"com.sensetechlab.duodash",
+            @"com.sensetechlab.duodashkey",
+        ]];
+    });
+    return [excluded containsObject:identifier];
+}
+
+NSDictionary<NSString *, id> *DDCopyAppBridgeConfigPreferences(void) {
+    static NSArray<NSString *> *keys;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        keys = @[
+            @"appbridge_split_left",
+            @"appbridge_split_right",
+            @"appbridge_split_third",
+            @"appbridge_layout",
+            @"appbridge_split_ratio",
+            @"appbridge_split_frac_a",
+            @"appbridge_split_frac_b",
+            @"appbridge_split_frac_layout",
+            @"appbridge_split_carplay_ui",
+            @"appbridge_split_carplay_ui_more",
+        ];
+    });
+
+    NSMutableDictionary<NSString *, id> *snapshot = [NSMutableDictionary dictionaryWithCapacity:keys.count];
+    for (NSString *key in keys) {
+        CFPropertyListRef raw = CFPreferencesCopyAppValue((__bridge CFStringRef)key,
+                                                          (__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+        if (raw) {
+            snapshot[key] = CFBridgingRelease(raw);
+        }
+    }
+    return [snapshot copy];
+}
+
 // ---- Phase 1-4 + publish (B04-B11, TRACE 04-18) ----
 #if 0 // Not executable yet: phases below still depend on unresolved 7EA4/8058/7E568/7E908/85CDC contracts.
 void DDRepublishAppBridge(void) {                            // void sub_74C8(), 8 callers

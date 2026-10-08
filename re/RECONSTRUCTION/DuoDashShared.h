@@ -127,6 +127,8 @@ FOUNDATION_EXPORT BOOL DDClearAppBridgePanesIfRequested(void);
 FOUNDATION_EXPORT NSUInteger DDResolveBridgedFontFloor(void);
 FOUNDATION_EXPORT BOOL DDResolveKeyPaneEnabled(void);
 FOUNDATION_EXPORT BOOL DDBooleanPreferenceDefaultTrue(CFTypeRef _Nullable value);
+FOUNDATION_EXPORT BOOL DDAppBridgeIdentifierIsExcluded(id _Nullable identifier);
+FOUNDATION_EXPORT NSDictionary<NSString *, id> *DDCopyAppBridgeConfigPreferences(void);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).
