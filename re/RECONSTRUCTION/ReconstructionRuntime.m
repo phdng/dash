@@ -4179,6 +4179,117 @@ DDCarPlayDisplayResolverExceptionOutcome DDResolveCarPlayDisplayResolverExceptio
     return outcome;
 }
 
+DDDisplayOKUIBuilderExceptionOutcome DDResolveDisplayOKUIBuilderExceptionOutcome(DDDisplayOKUIBuilderExceptionSite site) {
+    // 34020 LSDA 0x113C1C: action-7 buildShellIfNeeded gate, then typed action-5
+    // ranges for root-view/background, label/white-color, font, and hierarchy/install/present.
+    // All expected typed aliases converge at 0x341C0, begin/end-catch, and return immediately.
+    // That return bypasses normal label/root-view cleanup; if present throws, it also occurs before
+    // the captured result-byte store at 0x34180. Nonmatching typed exceptions resume at 0x341DC.
+    // Interleaved color/font releases and the result-store/cleanup tail are unprotected.
+    DDDisplayOKUIBuilderExceptionOutcome outcome = {0};
+    BOOL typedSite = site == DDDisplayOKUIBuilderExceptionSiteBuildShellTyped ||
+                     site == DDDisplayOKUIBuilderExceptionSiteRootViewAndBackgroundTyped ||
+                     site == DDDisplayOKUIBuilderExceptionSiteLabelAndWhiteColorTyped ||
+                     site == DDDisplayOKUIBuilderExceptionSiteFontTyped ||
+                     site == DDDisplayOKUIBuilderExceptionSiteHierarchyInstallPresentTyped;
+    if (typedSite) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.shouldReturnImmediatelyFromCatch = YES;
+        outcome.shouldSkipRemainingUIBuildWork = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        outcome.capturedPresentResultByteStoreWouldBeSkipped = YES;
+    }
+
+    if (site == DDDisplayOKUIBuilderExceptionSiteBuildShellTyped) {
+        outcome.buildShellResultDefinitelyUncommittedBeforeCatch = YES;
+        return outcome;
+    }
+
+    if (site == DDDisplayOKUIBuilderExceptionSiteRootViewAndBackgroundTyped) {
+        outcome.temporaryRootViewAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.backgroundColorAcquisitionCouldHaveStartedBeforeException = YES;
+        return outcome;
+    }
+
+    if (site == DDDisplayOKUIBuilderExceptionSiteBackgroundColorReleaseUnprotected) {
+        outcome.retainedRootViewDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedRootViewReleaseCouldBeBypassed = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+
+    if (site == DDDisplayOKUIBuilderExceptionSiteLabelAndWhiteColorTyped) {
+        outcome.retainedRootViewDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedRootViewReleaseCouldBeBypassed = YES;
+        outcome.backgroundColorReleaseDefinitelyCompletedBeforeSite = YES;
+        outcome.temporaryLabelAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.labelPropertyMutationCouldHaveAppliedBeforeException = YES;
+        outcome.whiteColorAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.normalLabelAndRootViewCleanupWouldBeBypassed = YES;
+        return outcome;
+    }
+
+    if (site == DDDisplayOKUIBuilderExceptionSiteWhiteColorReleaseUnprotected) {
+        outcome.retainedRootViewDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedRootViewReleaseCouldBeBypassed = YES;
+        outcome.backgroundColorReleaseDefinitelyCompletedBeforeSite = YES;
+        outcome.retainedLabelDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+
+    if (site == DDDisplayOKUIBuilderExceptionSiteFontTyped) {
+        outcome.retainedRootViewDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedRootViewReleaseCouldBeBypassed = YES;
+        outcome.backgroundColorReleaseDefinitelyCompletedBeforeSite = YES;
+        outcome.retainedLabelDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.whiteColorReleaseDefinitelyCompletedBeforeSite = YES;
+        outcome.fontAcquisitionCouldHaveStartedBeforeException = YES;
+        outcome.fontMutationCouldHaveAppliedBeforeException = YES;
+        outcome.normalLabelAndRootViewCleanupWouldBeBypassed = YES;
+        return outcome;
+    }
+
+    if (site == DDDisplayOKUIBuilderExceptionSiteFontReleaseUnprotected) {
+        outcome.retainedRootViewDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedRootViewReleaseCouldBeBypassed = YES;
+        outcome.retainedLabelDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.whiteColorReleaseDefinitelyCompletedBeforeSite = YES;
+        outcome.exceptionWouldPropagate = YES;
+        return outcome;
+    }
+
+    if (site == DDDisplayOKUIBuilderExceptionSiteHierarchyInstallPresentTyped) {
+        outcome.retainedRootViewDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedRootViewReleaseCouldBeBypassed = YES;
+        outcome.retainedLabelDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedLabelReleaseCouldBeBypassed = YES;
+        outcome.backgroundColorReleaseDefinitelyCompletedBeforeSite = YES;
+        outcome.whiteColorReleaseDefinitelyCompletedBeforeSite = YES;
+        outcome.fontReleaseDefinitelyCompletedBeforeSite = YES;
+        outcome.labelTextMutationCouldHaveAppliedBeforeException = YES;
+        outcome.addSubviewCouldHaveAppliedBeforeException = YES;
+        outcome.installContentCouldHaveAppliedBeforeException = YES;
+        outcome.presentCouldHaveStartedBeforeException = YES;
+        outcome.normalLabelAndRootViewCleanupWouldBeBypassed = YES;
+        return outcome;
+    }
+
+    if (site == DDDisplayOKUIBuilderExceptionSiteResultStoreAndCleanupUnprotected) {
+        outcome.retainedRootViewDefinitelyCommittedBeforeSite = YES;
+        outcome.retainedLabelDefinitelyCommittedBeforeSite = YES;
+        outcome.backgroundColorReleaseDefinitelyCompletedBeforeSite = YES;
+        outcome.whiteColorReleaseDefinitelyCompletedBeforeSite = YES;
+        outcome.fontReleaseDefinitelyCompletedBeforeSite = YES;
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

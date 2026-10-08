@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-166 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-167 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-97 (session-166): GitHub Actions session-165 (`723505f`) đã xanh theo user. Executable target thêm data-only `34250` CarPlay CADisplay resolver outcome từ LSDA `0x113C60` + raw ARM64. Exact table có 13 entries: action-0 current-device/screenIDs, first-screenID/displays, enumeration/uniqueId và staged cleanup ranges; two typed action-5 ranges quanh matched-candidate bounds capability/read. Runtime tách class/type gates, displays double-retain, uniqueId acquisition/type/equality, unprotected matched-candidate retain, typed bounds checks, action-0 post-bounds candidate release, valid-bounds unprotected return re-retain, và từng final release stage. Expected typed catch swallow rồi qua unprotected end-catch → action-0 candidate release; x24 chỉ nil và remaining cleanup chỉ tiếp tục nếu nested catch cleanup hoàn tất. Nonmatching typed/action-0 failures resume unwind `0x34520`. Không live CADisplay/AVExternalDevice/enumeration/ownership mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-98 (session-167): Executable target thêm data-only `34020` Phase-4a display-OK UI builder outcome từ LSDA `0x113C1C`. Exact table có 9 entries: action-7 shell gate; action-5 root-view/background, label/white-color, font, và text/addSubview/installContent/present; xen giữa là unprotected style releases và result-store/final-cleanup tail. Expected typed aliases converge `0x341C0`, begin/end-catch rồi return ngay; nonmatching type resumes unwind `0x341DC`. Runtime ghi rõ root-view/label commitment, style-release milestones, possible UI side effects, present timing, cleanup bypass, và captured result-byte store skip. Không live UIKit/private presentation/ownership mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-166):
-- R-165 data-only 34250 CarPlay CADisplay resolver exception outcome: 13-entry LSDA with action-0 acquisition/enumeration/cleanup unwind, exact external-device/screenIDs/firstObject/displays/uniqueId/candidate ownership, typed bounds capability/read catches, conditional catch-cleanup nil fallback, valid-bounds return re-retain and staged final releases recorded.
+## LAST COMPLETED TASK (session-167):
+- R-166 data-only `34020` display-OK UI builder exception outcome: exact 9-entry LSDA split, immediate expected typed catch return, root-view/label ownership and style-release timing, UI-side-effect persistence, final cleanup bypass, and present-result-byte store skip recorded.
 
 ## CURRENT TASK:
-- R-165 hoàn tất local; commit-only handoff. User confirmed session-165 compiler green before this batch; assistant không push.
+- R-166 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-166 batch, R-166: inspect `34020 -> 0x113C1C`, Phase-4a display-OK UI builder. Exact 9-entry table: action-7 `0x34038..0x3403C -> 0x341B8` around `buildShellIfNeeded`; action-5 `0x34048..0x340A8 -> 0x341BC` UIView/background construction; unprotected color release `0x340A8..0x340B8`; action-5 `0x340B8..0x34118 -> 0x341C0` UILabel/properties/white-color path; unprotected color release; action-5 `0x34128..0x34148 -> 0x341C0` font path; unprotected font release; action-5 `0x34150..0x34180 -> 0x341C0` text/addSubview/installContent/present; unprotected tail stores present result byte then releases label/root view. Expected type common catch `0x341C0` begin/end-catches and returns immediately, bypassing normal retained label/root-view cleanup and, for present exceptions, before result-byte store; nonmatching resumes unwind `0x341DC`. After R-166, `33F5C -> 0x113C08` has one action-1 catch-all `0x33F70..0x33F88` over buildShellIfNeeded/installContent/present and returns before captured result-byte store; then `33DB4 -> 0x113BE8`. 73E8/80D0/full 7E908 and device smoke tests remain unresolved.
+- Sau compiler xanh cho session-167 batch, R-167: inspect `33F5C -> 0x113C08`. Single action-1 catch-all `0x33F70..0x33F88 -> 0x33FA0` protects `buildShellIfNeeded`; if true `installContent`; then `present`. Landing unconditionally begin/end-catches and returns. Captured present-result byte store at `0x33F90` is outside protection, so any caught protected exception skips it. Direct next after R-167 is `33DB4 -> 0x113BE8`. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

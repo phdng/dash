@@ -1455,6 +1455,48 @@ typedef struct {
     BOOL actionZeroCurrentReleaseCouldHaveStartedBeforeException;
 } DDCarPlayDisplayResolverExceptionOutcome;
 
+typedef NS_ENUM(NSInteger, DDDisplayOKUIBuilderExceptionSite) {
+    DDDisplayOKUIBuilderExceptionSiteNone = 0,
+    DDDisplayOKUIBuilderExceptionSiteBuildShellTyped = 1,
+    DDDisplayOKUIBuilderExceptionSiteRootViewAndBackgroundTyped = 2,
+    DDDisplayOKUIBuilderExceptionSiteBackgroundColorReleaseUnprotected = 3,
+    DDDisplayOKUIBuilderExceptionSiteLabelAndWhiteColorTyped = 4,
+    DDDisplayOKUIBuilderExceptionSiteWhiteColorReleaseUnprotected = 5,
+    DDDisplayOKUIBuilderExceptionSiteFontTyped = 6,
+    DDDisplayOKUIBuilderExceptionSiteFontReleaseUnprotected = 7,
+    DDDisplayOKUIBuilderExceptionSiteHierarchyInstallPresentTyped = 8,
+    DDDisplayOKUIBuilderExceptionSiteResultStoreAndCleanupUnprotected = 9,
+};
+
+typedef struct {
+    BOOL shouldSwallowExpectedException;
+    BOOL shouldReturnImmediatelyFromCatch;
+    BOOL shouldSkipRemainingUIBuildWork;
+    BOOL nonmatchingCatchTypeWouldResumeUnwind;
+    BOOL exceptionWouldPropagate;
+    BOOL buildShellResultDefinitelyUncommittedBeforeCatch;
+    BOOL temporaryRootViewAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedRootViewDefinitelyCommittedBeforeSite;
+    BOOL retainedRootViewReleaseCouldBeBypassed;
+    BOOL backgroundColorAcquisitionCouldHaveStartedBeforeException;
+    BOOL backgroundColorReleaseDefinitelyCompletedBeforeSite;
+    BOOL temporaryLabelAcquisitionCouldHaveStartedBeforeException;
+    BOOL retainedLabelDefinitelyCommittedBeforeSite;
+    BOOL retainedLabelReleaseCouldBeBypassed;
+    BOOL labelPropertyMutationCouldHaveAppliedBeforeException;
+    BOOL whiteColorAcquisitionCouldHaveStartedBeforeException;
+    BOOL whiteColorReleaseDefinitelyCompletedBeforeSite;
+    BOOL fontAcquisitionCouldHaveStartedBeforeException;
+    BOOL fontMutationCouldHaveAppliedBeforeException;
+    BOOL fontReleaseDefinitelyCompletedBeforeSite;
+    BOOL labelTextMutationCouldHaveAppliedBeforeException;
+    BOOL addSubviewCouldHaveAppliedBeforeException;
+    BOOL installContentCouldHaveAppliedBeforeException;
+    BOOL presentCouldHaveStartedBeforeException;
+    BOOL capturedPresentResultByteStoreWouldBeSkipped;
+    BOOL normalLabelAndRootViewCleanupWouldBeBypassed;
+} DDDisplayOKUIBuilderExceptionOutcome;
+
 typedef NS_ENUM(NSInteger, DDKeyPaneCenterAdjustmentExceptionSite) {
     DDKeyPaneCenterAdjustmentExceptionSiteNone = 0,
     DDKeyPaneCenterAdjustmentExceptionSiteGeometryHelpers = 1,
@@ -2141,6 +2183,7 @@ FOUNDATION_EXPORT DDTickPresenterExceptionOutcome DDResolveTickPresenterExceptio
 FOUNDATION_EXPORT DDServerNoticeBuildExceptionOutcome DDResolveServerNoticeBuildExceptionOutcome(DDServerNoticeBuildExceptionSite site);
 FOUNDATION_EXPORT DDResetTeardownExceptionOutcome DDResolveResetTeardownExceptionOutcome(DDResetTeardownExceptionSite site);
 FOUNDATION_EXPORT DDCarPlayDisplayResolverExceptionOutcome DDResolveCarPlayDisplayResolverExceptionOutcome(DDCarPlayDisplayResolverExceptionSite site);
+FOUNDATION_EXPORT DDDisplayOKUIBuilderExceptionOutcome DDResolveDisplayOKUIBuilderExceptionOutcome(DDDisplayOKUIBuilderExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneRectangleForwardExceptionOutcome DDResolveKeyPaneRectangleForwardExceptionOutcome(DDKeyPaneRectangleForwardExceptionSite site);
 FOUNDATION_EXPORT DDKeyPaneCenterForwardExceptionOutcome DDResolveKeyPaneCenterForwardExceptionOutcome(DDKeyPaneCenterForwardExceptionSite site);
