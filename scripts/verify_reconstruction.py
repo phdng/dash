@@ -35,13 +35,14 @@ for required in [
     RECON / "CrashReporting.m",
     RECON / "LocaleFlow.m",
     RECON / "PrefsResolver.m",
+    RECON / "Migration.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -69,7 +70,32 @@ picker_adapter = (RECON / "DDzPicker.m").read_text(encoding="utf-8")
 crash_reporting = (RECON / "CrashReporting.m").read_text(encoding="utf-8")
 locale_flow = (RECON / "LocaleFlow.m").read_text(encoding="utf-8")
 prefs_resolver = (RECON / "PrefsResolver.m").read_text(encoding="utf-8")
+migration = (RECON / "Migration.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
+for migration_contract in [
+    "DDRunDefaultsBootstrapIfNeeded",
+    "#import <sys/stat.h>",
+    "/var/mobile/Library/DuoDash/defaults.done",
+    "/var/mobile/Library/DuoDash/import.done",
+    "/var/mobile/Library/DuoDash/airplay_backup.plist",
+    "/var/mobile/Library/DuoDash/airplay_absent",
+    "kCFPreferencesAnyHost, kCFPreferencesCurrentHost",
+    "CFPreferencesCopyKeyList",
+    "pane_unload_close_enabled",
+    "appbridge_autostart",
+    "disconnect_close_enabled",
+    "CFPreferencesCopyValue",
+    "kCFBooleanFalse",
+    "CFPreferencesSetValue",
+    "keys:%lu",
+    "result=existing why=%@ pinned=%@ kept=%@ sync=%@",
+    "result=new",
+    "stringByAppendingString:@\"\\n\"",
+    "writeToFile:@\"/var/mobile/Library/DuoDash/defaults.done\"",
+    "#if 0 // Import/license/file-migration synthesis remains non-executable",
+]:
+    if migration_contract not in migration:
+        raise SystemExit(f"Migration executable defaults slice missing contract: {migration_contract}")
 for integration_contract in [
     "DDRecoveryRoutingStart",
     "DDRecoveryRoutingCapabilities",

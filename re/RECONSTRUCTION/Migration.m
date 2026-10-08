@@ -1,17 +1,15 @@
-// RECONSTRUCTION/Migration.m — APPROXIMATION synthesis (session-035)
-// Sources: F-019/F-020 (session-003), EVIDENCE/4C34_import_defaults.md
-//   (§1-§7, từ 4C34.c 1465 dòng + helpers 84F74/85028/84FD8/8509C/85664/85748/
-//   85800/8597C/85B14/85C5C/85D30/A3558/A4450/A4558/A50CC).
-// KHÔNG compile ở đây (không toolchain iOS). UNKNOWN giữ nguyên.
-// Semantics phải giữ: once-only guards, thứ tự import→defaults, wipe-then-migrate,
-//   4 nhánh license, navapps merge rules, seed-false-only, log formats exact.
+// RECONSTRUCTION/Migration.m — executable defaults-bootstrap slice + synthesis notes
+// Original synthesis: session-035. Exact Foundation/CoreFoundation defaults phase promoted session-196.
+// Import/license/file-migration phases retain unresolved tables/private contracts and are compile-excluded.
 
 #import "DuoDashShared.h"
+#import <sys/stat.h>
 // License branch bodies: cross-ref RECONSTRUCTION/License.m §DDMigrateLicense
 //   (không duplicate ở đây; chi tiết dòng xem EVIDENCE §4).
 // CarSleeper/SiriProbe/SBApplication tails 4C34.c:1121-1457: cross-ref
 //   RECONSTRUCTION/CarSleeper.m + SiriProbe.m (ngoài scope file này).
 
+#if 0 // Import/license/file-migration synthesis remains non-executable pending unresolved static tables/contracts.
 // ---- §1 Guards: import.done / import.running (4C34.c:275-293) ----
 static BOOL DDMigrationShouldRun(void) {
     // import.done tồn tại → goto LABEL_162 (4C34.c:908), skip toàn bộ import.
@@ -81,18 +79,95 @@ static void DDMigrateFiles(void) {
     //   ok → remove import.running.
 }
 
-// ---- §6 Defaults bootstrap (4C34.c:908-1119; F-020) ----
-static void DDBootstrapDefaults(void) {
-    // Guard stat(defaults.done)!=0 mới chạy (912).
-    // existing = (airplay marker || settings keys) ? 1 : (import.done existed) (914-944).
-    // existing==1: với 3 keys 85C5C (pane_unload_close_enabled, appbridge_autostart,
-    //   disconnect_close_enabled), keys nào CopyValue(AnyHost) nil → seed
-    //   CFPreferencesSetValue(key,kCFBooleanFalse,...,CurrentUser,AnyHost) —
-    //   LUÔN false (949-1032). sync ok/failed (1040-1048).
-    // existing==0 (fresh): không seed (946,1052).
-    // Ghi defaults.done: existing → "at=<ms> v=1 result=existing why=<import/airplay/keys:N> "
-    //   "pinned=<join missing> kept=<join kept> sync=<ok/failed>"; new → "at=<ms> v=1 result=new";
-    //   append "\n" UTF-8 (1054-1114).
+#endif
+
+static NSString *DDJoinOrNone(NSArray<NSString *> *values) {
+    return values.count ? [values componentsJoinedByString:@","] : @"none";
+}
+
+BOOL DDRunDefaultsBootstrapIfNeeded(void) {
+    struct stat st;
+    if (stat("/var/mobile/Library/DuoDash/defaults.done", &st) == 0)
+        return NO;
+
+    BOOL importExists = (stat("/var/mobile/Library/DuoDash/import.done", &st) == 0);
+    BOOL airplayExists = (stat("/var/mobile/Library/DuoDash/airplay_backup.plist", &st) == 0) ||
+                         (stat("/var/mobile/Library/DuoDash/airplay_absent", &st) == 0);
+
+    CFIndex keyCount = 0;
+    CFStringRef hosts[] = { kCFPreferencesAnyHost, kCFPreferencesCurrentHost };
+    for (NSUInteger index = 0; index < 2; index++) {
+        CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                 kCFPreferencesCurrentUser,
+                                 hosts[index]);
+        CFArrayRef keys = CFPreferencesCopyKeyList((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                   kCFPreferencesCurrentUser,
+                                                   hosts[index]);
+        if (keys) {
+            keyCount += CFArrayGetCount(keys);
+            CFRelease(keys);
+        }
+    }
+
+    BOOL existing = airplayExists || keyCount > 0 || importExists;
+    NSArray<NSString *> *safetyKeys = @[
+        @"pane_unload_close_enabled",
+        @"appbridge_autostart",
+        @"disconnect_close_enabled",
+    ];
+    NSMutableArray<NSString *> *kept = [NSMutableArray array];
+    NSMutableArray<NSString *> *pinned = [NSMutableArray array];
+    NSString *syncResult = @"ok";
+
+    if (existing) {
+        for (NSString *key in safetyKeys) {
+            CFPropertyListRef raw = CFPreferencesCopyValue((__bridge CFStringRef)key,
+                                                           (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                           kCFPreferencesCurrentUser,
+                                                           kCFPreferencesAnyHost);
+            if (raw) {
+                [kept addObject:key];
+                CFRelease(raw);
+            } else {
+                [pinned addObject:key];
+            }
+        }
+        for (NSString *key in pinned) {
+            CFPreferencesSetValue((__bridge CFStringRef)key,
+                                  kCFBooleanFalse,
+                                  (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                  kCFPreferencesCurrentUser,
+                                  kCFPreferencesAnyHost);
+        }
+        syncResult = CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                              kCFPreferencesCurrentUser,
+                                              kCFPreferencesAnyHost) ? @"ok" : @"failed";
+    }
+
+    mkdir("/var/mobile/Library/DuoDash", 0755);
+    long long nowMs = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
+    NSString *record;
+    if (existing) {
+        NSMutableArray<NSString *> *reasons = [NSMutableArray array];
+        if (importExists)
+            [reasons addObject:@"import"];
+        if (airplayExists)
+            [reasons addObject:@"airplay"];
+        if (keyCount)
+            [reasons addObject:[NSString stringWithFormat:@"keys:%lu", (unsigned long)keyCount]];
+        NSString *why = DDJoinOrNone(reasons);
+        record = [NSString stringWithFormat:
+                  @"at=%lld v=1 result=existing why=%@ pinned=%@ kept=%@ sync=%@",
+                  nowMs, why, DDJoinOrNone(pinned), DDJoinOrNone(kept), syncResult];
+    } else {
+        record = [NSString stringWithFormat:@"at=%lld v=1 result=new", nowMs];
+    }
+
+    NSString *line = [record stringByAppendingString:@"\n"];
+    return [line writeToFile:@"/var/mobile/Library/DuoDash/defaults.done"
+                  atomically:YES
+                    encoding:NSUTF8StringEncoding
+                       error:nil];
 }
 
 // ---- §7 TrueDash = rename/fork kế nhiệm một chiều (HYPOTHESIS mạnh, F-019) ----
