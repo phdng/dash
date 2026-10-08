@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-167 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-168 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-98 (session-167): Executable target thêm data-only `34020` Phase-4a display-OK UI builder outcome từ LSDA `0x113C1C`. Exact table có 9 entries: action-7 shell gate; action-5 root-view/background, label/white-color, font, và text/addSubview/installContent/present; xen giữa là unprotected style releases và result-store/final-cleanup tail. Expected typed aliases converge `0x341C0`, begin/end-catch rồi return ngay; nonmatching type resumes unwind `0x341DC`. Runtime ghi rõ root-view/label commitment, style-release milestones, possible UI side effects, present timing, cleanup bypass, và captured result-byte store skip. Không live UIKit/private presentation/ownership mutation hay exception runtime.
+BUILDABLE RUNTIME PHASE-99 (session-168): Executable target thêm data-only `33F5C` showWithHostView main-thread block catch-all outcome từ LSDA `0x113C08`. Single action-1 range `0x33F70..0x33F88 -> 0x33FA0` bảo vệ `buildShellIfNeeded`, conditional `installContent:hostView`, rồi `present`; landing begin/end-catches và return ngay. Captured present-result byte store `0x33F90` nằm ngoài protection nên mọi caught exception đều bỏ qua store này. Runtime tách build/install/present milestones, prior-success ordering và possible side-effect persistence. Không live DDz1/UI/state mutation hay exception runtime.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-167):
-- R-166 data-only `34020` display-OK UI builder exception outcome: exact 9-entry LSDA split, immediate expected typed catch return, root-view/label ownership and style-release timing, UI-side-effect persistence, final cleanup bypass, and present-result-byte store skip recorded.
+## LAST COMPLETED TASK (session-168):
+- R-167 data-only `33F5C` showWithHostView block catch-all outcome: exact protected sequence, unconditional catch return, captured result-byte store skip, prior-success ordering, possible side-effect persistence, and unprotected-tail propagation recorded.
 
 ## CURRENT TASK:
-- R-166 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-167 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-167 batch, R-167: inspect `33F5C -> 0x113C08`. Single action-1 catch-all `0x33F70..0x33F88 -> 0x33FA0` protects `buildShellIfNeeded`; if true `installContent`; then `present`. Landing unconditionally begin/end-catches and returns. Captured present-result byte store at `0x33F90` is outside protection, so any caught protected exception skips it. Direct next after R-167 is `33DB4 -> 0x113BE8`. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-168 batch, R-168: decode `33DB4 -> 0x113BE8` exactly before promotion. Existing evidence only identifies this function as a `duodash_ab_content_inset` value-read site, so no private/runtime behavior is inferred yet. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

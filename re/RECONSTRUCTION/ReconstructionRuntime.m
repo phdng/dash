@@ -4290,6 +4290,46 @@ DDDisplayOKUIBuilderExceptionOutcome DDResolveDisplayOKUIBuilderExceptionOutcome
     return outcome;
 }
 
+DDShowWithHostViewBlockExceptionOutcome DDResolveShowWithHostViewBlockExceptionOutcome(DDShowWithHostViewBlockExceptionSite site) {
+    // 33F5C LSDA 0x113C08 has one action-1 catch-all range 0x33F70..0x33F88.
+    // Protected sequence: buildShellIfNeeded; if true, installContent:hostView; then present.
+    // Landing 0x33FA0 unconditionally begin/end-catches and returns. The captured present-result
+    // byte store at 0x33F90 is outside protection, so every caught protected exception skips it.
+    DDShowWithHostViewBlockExceptionOutcome outcome = {0};
+    BOOL protectedSite = site == DDShowWithHostViewBlockExceptionSiteBuildShellIfNeeded ||
+                         site == DDShowWithHostViewBlockExceptionSiteInstallContent ||
+                         site == DDShowWithHostViewBlockExceptionSitePresent;
+    if (protectedSite) {
+        outcome.shouldSwallowAnyException = YES;
+        outcome.shouldReturnImmediatelyFromCatch = YES;
+        outcome.capturedPresentResultByteStoreWouldBeSkipped = YES;
+    }
+
+    if (site == DDShowWithHostViewBlockExceptionSiteBuildShellIfNeeded) {
+        outcome.buildShellCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+
+    if (site == DDShowWithHostViewBlockExceptionSiteInstallContent) {
+        outcome.buildShellDefinitelyReturnedTrueBeforeProtectedCall = YES;
+        outcome.installContentCouldHaveAppliedSideEffectsBeforeException = YES;
+        return outcome;
+    }
+
+    if (site == DDShowWithHostViewBlockExceptionSitePresent) {
+        outcome.buildShellDefinitelyReturnedTrueBeforeProtectedCall = YES;
+        outcome.installContentDefinitelyCompletedBeforeProtectedCall = YES;
+        outcome.presentCouldHaveAppliedSideEffectsBeforeException = YES;
+        outcome.presentResultDefinitelyUncommittedBeforeCatch = YES;
+        return outcome;
+    }
+
+    if (site == DDShowWithHostViewBlockExceptionSiteUnprotectedTail) {
+        outcome.exceptionWouldPropagate = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
