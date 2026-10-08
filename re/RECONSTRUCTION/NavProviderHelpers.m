@@ -20,3 +20,13 @@ BOOL DDNavProviderPayloadMatchesProvider(id payload, id provider) {
         return NO;
     return [payloadProvider isEqualToString:provider];
 }
+
+BOOL DDNavProviderIsLegacyTrueDashNotification(CFStringRef name) {
+    if (!name)
+        return NO;
+    if (CFEqual(name, CFSTR("com.sensetechlab.truedash.navUpdate")))
+        return YES;
+    if (CFEqual(name, CFSTR("com.sensetechlab.truedash.speedLimit")))
+        return YES;
+    return CFEqual(name, CFSTR("com.sensetechlab.truedash.cameraAlert"));
+}

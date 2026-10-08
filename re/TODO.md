@@ -263,3 +263,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-218] executable AirPlay media-server pending PID reader (session-219): exact 811B0 trim + Unicode decimal-digit validation + intValue + >1 acceptance promoted; restart/kill/unlink/dispatch callers remain excluded.
 - [x] [R-219] executable NavProvider timestamp accessor (session-220): exact 83250 NSNumber-only timestamp/doubleValue semantics promoted in standalone helper module; discovery/relay side effects remain excluded.
 - [x] [R-220] executable NavProvider payload/provider validator (session-221): exact 83EB4 NSDictionary + v NSNumber==2 + provider NSString equality semantics promoted; duplicate 83184 wrapper and notify side effects remain excluded.
+- [x] [R-221] executable legacy TrueDash NavProvider notification predicate (session-222): exact 83FDC three-name CFEqual whitelist promoted; observer/post/relay behavior remains excluded.

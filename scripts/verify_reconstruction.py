@@ -93,6 +93,10 @@ for navprovider_contract in [
     "objectForKeyedSubscript:@\"provider\"",
     "[payloadProvider isKindOfClass:[NSString class]]",
     "return [payloadProvider isEqualToString:provider]",
+    "DDNavProviderIsLegacyTrueDashNotification",
+    "com.sensetechlab.truedash.navUpdate",
+    "com.sensetechlab.truedash.speedLimit",
+    "com.sensetechlab.truedash.cameraAlert",
 ]:
     if navprovider_contract not in navprovider_helpers:
         raise SystemExit(f"NavProviderHelpers executable contract missing: {navprovider_contract}")
