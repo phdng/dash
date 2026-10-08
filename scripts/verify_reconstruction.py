@@ -352,6 +352,11 @@ for picker_contract in [
 if "DDPickerAdapterStart();" not in tweak:
     raise SystemExit("Tweak.x does not bootstrap DDzPicker admission")
 for crash_contract in [
+    "DDCrashSHA256Hex",
+    "#import <CommonCrypto/CommonDigest.h>",
+    "CC_SHA256(data.bytes, (CC_LONG)data.length, digest)",
+    "[hex appendFormat:@\"%02x\", digest[index]]",
+    "[hex substringToIndex:prefixLength]",
     "DDCrashReportingAdapterStart",
     "DDCrashReportingAdapterReady",
     "DDCrashReportingMayCollect",

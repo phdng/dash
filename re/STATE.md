@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-230 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-231 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-161 (session-230): Promote whole exact AnyHost CString string preference reader `9DE28` vào executable `PrefsResolver.m`: sync CurrentUser/AnyHost, UTF-8 C key conversion, return only NSString while preserving empty strings. Không notify/global/private behavior.
+BUILDABLE RUNTIME PHASE-162 (session-231): Promote exact pure crash-report SHA-256 formatter `A2560` vào executable `CrashReporting.m`: hash exact NSData bytes, lowercase 64-char hex, optional prefix truncation. Không report I/O/tar-gzip/upload/queue/global state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-230):
-- R-229 executable AnyHost CString string preference reader: exact 9DE28 sync/key/type semantics now compile in PrefsResolver.m while preserving empty strings.
+## LAST COMPLETED TASK (session-231):
+- R-230 executable crash-report SHA-256 formatter: exact A2560 hashing/hex/prefix semantics now compile in CrashReporting.m.
 
 ## CURRENT TASK:
-- R-229 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-230 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-230 batch, inspect another pure helper only if independently evidenced and non-duplicative; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-231 batch, inspect another pure crash-report formatter/filter only if independent from filesystem/archive/upload state; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

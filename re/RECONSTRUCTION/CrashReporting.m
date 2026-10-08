@@ -4,11 +4,25 @@
 // Network packaging/upload, queue mutation, status globals, and notify-trigger execution remain excluded.
 
 #import "DuoDashShared.h"
+#import <CommonCrypto/CommonDigest.h>
 
 static NSString * const DDCrashOffPath = @"/var/tmp/duodash_cr_off";
 static NSString * const DDCrashCollectingPath = @"/var/mobile/Library/DuoDash/crashreport_collecting";
 static NSString * const DDCrashDryRunPath = @"/var/tmp/duodash_cr_dryrun";
 static BOOL gDDCrashReportingAdapterReady;
+
+NSString *DDCrashSHA256Hex(NSData *data, NSUInteger prefixLength) {
+    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256(data.bytes, (CC_LONG)data.length, digest);
+
+    NSMutableString *hex = [NSMutableString stringWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
+    for (NSUInteger index = 0; index < CC_SHA256_DIGEST_LENGTH; index++)
+        [hex appendFormat:@"%02x", digest[index]];
+
+    if (prefixLength && hex.length > prefixLength)
+        return [hex substringToIndex:prefixLength];
+    return hex;
+}
 
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
