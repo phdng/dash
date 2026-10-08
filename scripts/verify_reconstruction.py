@@ -33,13 +33,14 @@ for required in [
     RECON / "HostFlowAdapter.m",
     RECON / "DDzPicker.m",
     RECON / "CrashReporting.m",
+    RECON / "LocaleFlow.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -65,6 +66,7 @@ recovery_routing = (RECON / "RecoveryRouting.m").read_text(encoding="utf-8")
 host_flow_adapter = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
 picker_adapter = (RECON / "DDzPicker.m").read_text(encoding="utf-8")
 crash_reporting = (RECON / "CrashReporting.m").read_text(encoding="utf-8")
+locale_flow = (RECON / "LocaleFlow.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
 for integration_contract in [
     "DDRecoveryRoutingStart",
@@ -152,6 +154,26 @@ for crash_contract in [
         raise SystemExit(f"CrashReporting executable guard/config missing contract: {crash_contract}")
 if "DDCrashReportingAdapterStart();" not in tweak:
     raise SystemExit("Tweak.x does not bootstrap CrashReporting guard/config")
+for locale_contract in [
+    "DDLocaleFlowStart",
+    "DDLocaleFlowReady",
+    "DDLocaleIsSupportedLanguage",
+    "DDLocaleResolveLanguage",
+    "/var/tmp/duodash_lang_force",
+    "@\"zh-Hans\"",
+    "@\"pt-BR\"",
+    "@\"zh-Hant\"",
+    "@\"vi\"",
+    "CFPreferencesAppSynchronize",
+    "duodash_language",
+    "carnav_language",
+    "CFPreferencesSetValue",
+    "return @\"en\"",
+]:
+    if locale_contract not in locale_flow:
+        raise SystemExit(f"LocaleFlow executable resolution missing contract: {locale_contract}")
+if "DDLocaleFlowStart();" not in tweak:
+    raise SystemExit("Tweak.x does not bootstrap LocaleFlow")
 for contract in [
     "DDDetectRole",
     "DDBuildKnownAppBridgeSnapshot",

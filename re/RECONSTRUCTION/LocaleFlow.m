@@ -1,11 +1,79 @@
-// RECONSTRUCTION/LocaleFlow.m — APPROXIMATION synthesis (session-053)
-// Source: EVIDENCE/version_device_ainfo.md §A (F-030/B-20/P3-5; 4008/A3558/ACF1C +
-//   greps + language flow L1-L14). §B (Q-10 info-schema) ngoài scope — cross-ref License.m.
-// KHÔNG compile ở đây (không toolchain iOS). UNKNOWN giữ nguyên.
-// Semantics phải giữ: fail-soft mọi nơi (không branch loại OS/device),
-//   write→post, read 4-tầng + whitelist + cache, clear-fan-out, dead keys giữ nguyên.
+// RECONSTRUCTION/LocaleFlow.m — executable language-resolution core + synthesis notes
+// Original synthesis: session-053. Foundation/CoreFoundation-safe resolution core promoted session-183.
+// Exact evidence: 9AFB0 resolution precedence, 9B284 whitelist, off_130E88 code/name table.
+// Original unfair-lock cache and observer fan-out remain excluded until separately promoted.
 
 #import "DuoDashShared.h"
+
+static BOOL gDDLocaleFlowReady;
+static NSString * const DDLocaleForcePath = @"/var/tmp/duodash_lang_force";
+static NSArray<NSString *> *DDLocaleSupportedCodes(void) {
+    static NSArray<NSString *> *codes;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        codes = @[@"en", @"zh-Hans", @"es", @"ja", @"ko", @"de", @"fr", @"pt-BR",
+                  @"ru", @"ar", @"zh-Hant", @"it", @"tr", @"vi", @"pl", @"id", @"th"];
+    });
+    return codes;
+}
+
+void DDLocaleFlowStart(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gDDLocaleFlowReady = (DDLocaleSupportedCodes().count == 17);
+    });
+}
+
+BOOL DDLocaleFlowReady(void) {
+    DDLocaleFlowStart();
+    return gDDLocaleFlowReady;
+}
+
+BOOL DDLocaleIsSupportedLanguage(NSString *language) {
+    if (!language.length)
+        return NO;
+    return [DDLocaleSupportedCodes() containsObject:language];
+}
+
+static NSString *DDLocaleTypedAppString(CFStringRef key) {
+    CFPropertyListRef raw = CFPreferencesCopyAppValue(key, (__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+    if (!raw)
+        return nil;
+    NSString *value = CFGetTypeID(raw) == CFStringGetTypeID() ? [(__bridge NSString *)raw copy] : nil;
+    CFRelease(raw);
+    return value;
+}
+
+NSString *DDLocaleResolveLanguage(void) {
+    if (!DDLocaleFlowReady())
+        return @"en";
+
+    NSString *forced = [NSString stringWithContentsOfFile:DDLocaleForcePath
+                                                  encoding:NSUTF8StringEncoding
+                                                     error:nil];
+    forced = [forced stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (forced && forced.length == 0)
+        return @"en";
+    if (DDLocaleIsSupportedLanguage(forced))
+        return forced;
+
+    CFPreferencesAppSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+    NSString *current = DDLocaleTypedAppString(CFSTR("duodash_language"));
+    if (DDLocaleIsSupportedLanguage(current))
+        return current;
+
+    NSString *legacy = DDLocaleTypedAppString(CFSTR("carnav_language"));
+    if (DDLocaleIsSupportedLanguage(legacy)) {
+        CFPreferencesSetValue(CFSTR("duodash_language"),
+                              (__bridge CFStringRef)legacy,
+                              (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                              kCFPreferencesCurrentUser,
+                              kCFPreferencesAnyHost);
+        CFPreferencesAppSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+        return legacy;
+    }
+    return @"en";
+}
 // Q-10 info-schema bodies: License.m §DDInfo (cross-ref, không duplicate).
 // CF<1946.102 selector branch: Evict.m §3AE50-Bước 5 (branch version duy nhất).
 // device_hash (A3558): License.m (UDID-hash đính chính — không duplicate).

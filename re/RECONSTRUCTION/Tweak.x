@@ -36,6 +36,7 @@
         DDHostFlowAdapterStart();
         DDPickerAdapterStart();
         DDCrashReportingAdapterStart();
+        DDLocaleFlowStart();
     }
 }
 
