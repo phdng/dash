@@ -139,5 +139,6 @@
 - [x] Session-225 executable deep-sleep preference contract: synchronize settings for CurrentUser/CurrentHost; copy `deepsleep_enabled`; only CFBoolean true returns YES; missing/nonboolean/false returns NO.
 - [x] Session-226 executable CFDictionary numeric-accessor contract: fetch exact key; missing/non-CFNumber -> -1; CFNumber extracts through `kCFNumberLongType` into zero-initialized long and returns that value.
 - [x] Session-227 executable CFDictionary boolean-accessor contract: fetch exact key; missing/non-CFBoolean -> false; CFBoolean returns its stored boolean value unchanged.
+- [x] Session-228 executable AppBridge base-classifier contract: invalid identifier/type -> 0; `User` -> 1; empty or `System` type -> `com.apple.` prefix ? 2 : 1; other nonempty type -> 0.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

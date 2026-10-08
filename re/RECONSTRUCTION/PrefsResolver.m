@@ -96,6 +96,20 @@ BOOL DDBooleanValueForCFDictionaryKey(CFDictionaryRef dictionary, const void *ke
     return CFBooleanGetValue((CFBooleanRef)raw);
 }
 
+NSInteger DDAppBridgeBaseClassification(id identifier, id applicationType) {
+    if (![identifier isKindOfClass:[NSString class]] || ![(NSString *)identifier length])
+        return 0;
+    if (![applicationType isKindOfClass:[NSString class]])
+        return 0;
+
+    NSString *type = (NSString *)applicationType;
+    if ([type isEqualToString:@"User"])
+        return 1;
+    if (!type.length || [type isEqualToString:@"System"])
+        return [(NSString *)identifier hasPrefix:@"com.apple."] ? 2 : 1;
+    return 0;
+}
+
 BOOL DDDeepSleepEnabledCurrentHost(void) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,

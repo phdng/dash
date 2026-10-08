@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-227 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-228 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-158 (session-227): Promote exact pure CFDictionary boolean accessor `887A0` vào executable `PrefsResolver.m`: missing/non-CFBoolean -> NO; CFBoolean -> stored value. Không CarSleeper state-file I/O/system control.
+BUILDABLE RUNTIME PHASE-159 (session-228): Promote exact pure AppBridge base classifier `9D700` vào executable `PrefsResolver.m`: invalid inputs -> 0; User -> 1; empty/System type -> com.apple. prefix ? 2 : 1; other nonempty type -> 0. Không app-object selectors/overrides/private flags.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-227):
-- R-226 executable CFDictionary boolean accessor: exact 887A0 missing/type/value semantics now compile in PrefsResolver.m.
+## LAST COMPLETED TASK (session-228):
+- R-227 executable AppBridge base classifier: exact 9D700 identifier/applicationType semantics now compile in PrefsResolver.m.
 
 ## CURRENT TASK:
-- R-226 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-227 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-227 batch, inspect another pure decoder/helper only if independent from state-file I/O/system control/private APIs; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-228 batch, inspect another pure AppBridge classifier/helper only if independent from private app-object selectors/flags; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
