@@ -110,6 +110,21 @@ NSInteger DDAppBridgeBaseClassification(id identifier, id applicationType) {
     return 0;
 }
 
+NSString *DDCopyStringPreferenceAnyHostForCString(const char *key) {
+    CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                             kCFPreferencesCurrentUser,
+                             kCFPreferencesAnyHost);
+    NSString *resolvedKey = [NSString stringWithUTF8String:key];
+    CFPropertyListRef raw = CFPreferencesCopyValue((__bridge CFStringRef)resolvedKey,
+                                                   (__bridge CFStringRef)DD_SETTINGS_DOMAIN,
+                                                   kCFPreferencesCurrentUser,
+                                                   kCFPreferencesAnyHost);
+    if (!raw)
+        return nil;
+    id value = CFBridgingRelease(raw);
+    return [value isKindOfClass:[NSString class]] ? value : nil;
+}
+
 NSDictionary<NSString *, NSString *> *DDCopyAppBridgeSectionOverrides(void) {
     CFPreferencesAppSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN);
     id raw = CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("appbridge_app_sections"),

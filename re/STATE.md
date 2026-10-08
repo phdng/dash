@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-229 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-230 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-160 (session-229): Promote whole exact AppBridge section-override sanitizer `9D4B4` vào executable `PrefsResolver.m`: sync app prefs, copy `appbridge_app_sections`, require dictionary, retain only nonempty NSString keys with exact lowercase user/system NSString values. Không writeback/private app-object behavior.
+BUILDABLE RUNTIME PHASE-161 (session-230): Promote whole exact AnyHost CString string preference reader `9DE28` vào executable `PrefsResolver.m`: sync CurrentUser/AnyHost, UTF-8 C key conversion, return only NSString while preserving empty strings. Không notify/global/private behavior.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-229):
-- R-228 executable AppBridge section-override sanitizer: exact 9D4B4 preference read/type/key/value filtering now compiles in PrefsResolver.m.
+## LAST COMPLETED TASK (session-230):
+- R-229 executable AnyHost CString string preference reader: exact 9DE28 sync/key/type semantics now compile in PrefsResolver.m while preserving empty strings.
 
 ## CURRENT TASK:
-- R-228 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-229 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-229 batch, inspect another pure AppBridge helper only if independent from private app-object selectors/flags and writeback side effects; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-230 batch, inspect another pure helper only if independently evidenced and non-duplicative; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
