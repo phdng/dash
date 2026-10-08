@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-202 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-203 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-133 (session-202): Promote exact parameterized import-success finalizer từ raw `4C34` tail. ARM64 chốt settings field = counter[0] gated by settings BOOL; renamed/dropped/removed = settings counters[1..3] ungated; rescuer field = rescuer counters[0]+[1] gated by rescuer BOOL. Finalizer writes exact result=ok record, removes import.running only on successful import.done write; license status derivation vẫn excluded.
+BUILDABLE RUNTIME PHASE-134 (session-203): Promote exact helper `85748` vào executable `Migration.m` dưới pure boundary `DDMigrationIssuedAtIfValid`: validation status phải bằng 0; `iat` phải là NSNumber; return longLongValue, mọi case khác return 0. Không enable verify/reseal/device-ID/licence status branches.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-202):
-- R-201 executable parameterized import-success finalizer: exact counter mapping + result record/write/remove ordering now compile without reconstructing license/device-ID derivation.
+## LAST COMPLETED TASK (session-203):
+- R-202 executable `85748` issued-at helper promotion: exact status/NSNumber gating and longLongValue extraction now compile independently of license verification/status derivation.
 
 ## CURRENT TASK:
-- R-201 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-202 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-202 batch, inspect a license-independent migration helper or another bounded subsystem; do not synthesize licence/blob/key/old_key/undo derivation until those branches are individually proven. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-203 batch, inspect another bounded helper outside unproven license derivation or move to a different executable subsystem; keep verification/reseal/device-ID branches excluded until individually proven. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

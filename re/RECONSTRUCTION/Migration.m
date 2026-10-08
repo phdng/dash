@@ -299,6 +299,15 @@ BOOL DDPrepareTrueDashImportIfNeeded(void) {
     return DDMigrationWriteRecord(running, record);
 }
 
+long long DDMigrationIssuedAtIfValid(NSInteger validationStatus, NSDictionary *payload) {
+    if (validationStatus != 0)
+        return 0;
+    id issuedAt = payload[@"iat"];
+    if (![issuedAt isKindOfClass:[NSNumber class]])
+        return 0;
+    return [issuedAt longLongValue];
+}
+
 BOOL DDFinalizeTrueDashImportRecord(const NSUInteger settingsCounters[4],
                                      BOOL settingsMigrated,
                                      const NSUInteger rescuerCounters[4],
