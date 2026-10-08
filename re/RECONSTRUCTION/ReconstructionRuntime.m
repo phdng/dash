@@ -4396,6 +4396,31 @@ DDLayoutConfirmInitialEnumerationExceptionOutcome DDResolveLayoutConfirmInitialE
     return outcome;
 }
 
+DDLayoutConfirmSubsequentEnumerationExceptionOutcome DDResolveLayoutConfirmSubsequentEnumerationExceptionOutcome(void) {
+    // sub_3257C -> LSDA 0x113860. This contract covers only typed action-5
+    // 0x33890..0x338A4 -> landing stub 0x33A30. Raw ARM64 maps it to the
+    // subsequent countByEnumeratingWithState:objects:count: fetch after at least
+    // one enumeration batch has already been processed. Stub 0x33A30 aliases the
+    // same shared typed cleanup at 0x33C64 used by the initial enumeration catch.
+    // Expected type therefore clears splash/layout-confirm globals and returns via
+    // outer cleanup at 0x339A4. Already-applied view mutations from prior items are
+    // not rolled back. The new qword_164510 storeStrong occurs later at 0x338C0.
+    DDLayoutConfirmSubsequentEnumerationExceptionOutcome outcome = {0};
+    outcome.shouldSwallowExpectedException = YES;
+    outcome.shouldClearSplashInFlightFlag = YES;
+    outcome.shouldClearSplashRootSlot = YES;
+    outcome.shouldReleasePriorSplashRoot = YES;
+    outcome.shouldAttemptLayoutConfirmRootRemovalIfPresent = YES;
+    outcome.shouldClearLayoutConfirmSlotIfPresent = YES;
+    outcome.shouldReleaseCaughtException = YES;
+    outcome.shouldContinueOuterCleanupAndReturn = YES;
+    outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    outcome.subsequentEnumerationResultDefinitelyUncommittedBeforeCatch = YES;
+    outcome.priorEnumerationItemsCouldHaveAppliedViewHierarchyMutations = YES;
+    outcome.newLayoutConfirmGlobalCommitDefinitelyNotReachedBeforeCatch = YES;
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

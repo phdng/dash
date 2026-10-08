@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-170 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-171 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-101 (session-170): Compact unwind maps `sub_3257C` to LSDA `0x113860` with 150 call-site entries. Runtime promotes only the closed site `0x33598..0x335AC -> 0x33A00`, typed action-5, which raw ARM64 maps to the initial `countByEnumeratingWithState:objects:count:` for layout-confirm rows. Stub `0x33A00` aliases shared typed cleanup `0x33C64`: expected type clears splash in-flight/root state, conditionally removes and clears layout-confirm root/controller state, releases caught exception, ends catch, then continues outer cleanup at `0x339A4`; nonmatching type resumes unwind. Data-only only; 149 other entries remain unpromoted.
+BUILDABLE RUNTIME PHASE-102 (session-171): Tiếp tục site-scoped trong `sub_3257C -> LSDA 0x113860`. Runtime thêm exact typed action-5 site `0x33890..0x338A4 -> 0x33A30`, raw ARM64 map tới subsequent `countByEnumeratingWithState:objects:count:` sau khi một hoặc nhiều layout-confirm rows có thể đã mutate background/layer/label/view hierarchy. Stub `0x33A30` alias shared typed cleanup `0x33C64`, nên expected catch clear cùng splash/layout-confirm globals rồi return qua outer cleanup. Earlier UI mutations không rollback; new enumeration result chưa commit; layout-confirm global `storeStrong` ở `0x338C0` chưa chạy. Data-only only.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-170):
-- R-169 data-only `3257C` layout-confirm initial-enumeration typed recovery: owner/LSDA mapping, exact one-site action-5 range, shared cleanup continuation, global-clear intent, uncommitted enumeration result, and nonmatching unwind recorded.
+## LAST COMPLETED TASK (session-171):
+- R-170 data-only `3257C` subsequent layout-confirm enumeration typed recovery: exact action-5 site, shared cleanup alias, prior-view-side-effect persistence, uncommitted enumeration result, pre-global-store timing, and nonmatching unwind recorded.
 
 ## CURRENT TASK:
-- R-169 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-170 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-170 batch, continue site-scoped decoding inside `3257C -> LSDA 0x113860`; do not promote all 150 entries at once. Prefer the next self-contained landing alias whose protected operation and continuation can be mapped exactly from raw ARM64/decompile. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-171 batch, continue site-scoped decoding inside `3257C -> LSDA 0x113860`; prefer another closed landing alias with one clearly mapped protected operation/continuation rather than broad grouping. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
