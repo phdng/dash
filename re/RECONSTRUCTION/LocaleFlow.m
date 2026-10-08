@@ -4,6 +4,7 @@
 // Original unfair-lock cache and observer fan-out remain excluded until separately promoted.
 
 #import "DuoDashShared.h"
+#import <notify.h>
 #import <os/lock.h>
 
 static BOOL gDDLocaleFlowReady;
@@ -32,10 +33,29 @@ static NSArray<NSString *> *DDLocaleLanguageNames(void) {
     return names;
 }
 
+static void DDLocaleLanguageChangedCallback(CFNotificationCenterRef center,
+                                            void *observer,
+                                            CFStringRef name,
+                                            const void *object,
+                                            CFDictionaryRef userInfo) {
+    (void)center;
+    (void)observer;
+    (void)name;
+    (void)object;
+    (void)userInfo;
+    DDLocaleInvalidateCaches();
+}
+
 void DDLocaleFlowStart(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         gDDLocaleFlowReady = (DDLocaleSupportedCodes().count == 17);
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                        &gDDLocaleCacheLock,
+                                        DDLocaleLanguageChangedCallback,
+                                        (__bridge CFStringRef)DD_N_LANGUAGE_CHANGED,
+                                        NULL,
+                                        CFNotificationSuspensionBehaviorDeliverImmediately);
     });
 }
 
@@ -61,6 +81,19 @@ NSString *DDLocaleLanguageDisplayName(NSString *language) {
     if (index == NSNotFound)
         return language;
     return DDLocaleLanguageNames()[index];
+}
+
+BOOL DDLocaleSetLanguage(NSString *language) {
+    if (!DDLocaleIsSupportedLanguage(language))
+        return NO;
+
+    CFPreferencesSetAppValue(CFSTR("duodash_language"),
+                             (__bridge CFStringRef)language,
+                             (__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+    CFPreferencesAppSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN);
+    DDLocaleInvalidateCaches();
+    notify_post([DD_N_LANGUAGE_CHANGED UTF8String]);
+    return YES;
 }
 
 static NSString *DDLocaleTypedAppString(CFStringRef key) {

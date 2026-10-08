@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-185 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-186 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-116 (session-185): Promote exact `9AE54/9AF00` language-list/display-name helpers trong executable `LocaleFlow`. Public API expose đúng 17 codes theo `off_130E88`; display-name helper mirror binary: nil/empty -> `en`, supported code -> paired exact display name, unsupported non-empty -> passthrough input. Full `9B360` translation lookup dùng 17 bảng × 317 cặp nên chưa promote một phần để tránh sai fidelity.
+BUILDABLE RUNTIME PHASE-117 (session-186): Promote exact language setter/invalidation notify chain của `LocaleFlow` từ `6A4E4` + `9B848/9B87C`. Valid language -> `CFPreferencesSetAppValue(duodash_language)` -> AppSynchronize -> invalidate both locale caches -> post exact `com.sensetechlab.language.changed`. `DDLocaleFlowStart` đăng ký DeliverImmediately Darwin observer; callback chỉ invalidate caches. Caller-specific `deferSwapToKitLevel:` UI side effect vẫn excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-185):
-- R-184 executable `LocaleFlow` language-list/display-name promotion: exact 17-code list and paired display-name behavior from `9AE54/9AF00`, with unsupported passthrough preserved.
+## LAST COMPLETED TASK (session-186):
+- R-185 executable `LocaleFlow` setter/notify promotion: exact whitelist-gated language write, app sync, cache invalidation, Darwin language.changed post, and cache-only DeliverImmediately observer.
 
 ## CURRENT TASK:
-- R-184 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-185 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-185 batch, either decode full `9B360` translation tables as a complete data promotion or move to another bounded Foundation/CoreFoundation synthesis module; do not land partial localization tables. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-186 batch, either promote a complete bounded Foundation/CoreFoundation subsystem from another synthesis module or decode all `9B360` translation tables as a complete dataset; partial localization remains forbidden. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

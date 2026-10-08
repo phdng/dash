@@ -27,6 +27,7 @@
 #define DD_N_CPCONNECT @"com.sensetechlab.appbridge.cpconnect"
 #define DD_N_CPDISCONNECT @"com.sensetechlab.appbridge.cpdisconnect"
 #define DD_N_KEYINPUT_SEED @"com.sensetechlab.keyinput.seed"
+#define DD_N_LANGUAGE_CHANGED @"com.sensetechlab.language.changed"
 
 // File toggles: fileExists == feature DISABLED (mẫu duodash_cpui_noelemguard — F-011đ)
 // Persistent (F-005)
@@ -118,6 +119,7 @@ FOUNDATION_EXPORT BOOL DDLocaleFlowReady(void);
 FOUNDATION_EXPORT BOOL DDLocaleIsSupportedLanguage(NSString * _Nullable language);
 FOUNDATION_EXPORT NSArray<NSString *> *DDLocaleSupportedLanguages(void);
 FOUNDATION_EXPORT NSString *DDLocaleLanguageDisplayName(NSString * _Nullable language);
+FOUNDATION_EXPORT BOOL DDLocaleSetLanguage(NSString * _Nullable language);
 FOUNDATION_EXPORT NSString *DDLocaleResolveLanguage(void);
 FOUNDATION_EXPORT void DDLocaleInvalidateCaches(void);
 
