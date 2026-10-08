@@ -121,6 +121,41 @@ NSString *DDMigrationJoinOrNone(NSArray<NSString *> *values) {
     return values.count ? [values componentsJoinedByString:@","] : @"none";
 }
 
+NSDictionary<NSString *, NSString *> *DDMigrationRenameMap(void) {
+    return @{ @"truedash_language": @"duodash_language" };
+}
+
+NSSet<NSString *> *DDMigrationDeniedPreferenceKeys(void) {
+    return [NSSet setWithArray:@[
+        @"license_pending_key",
+        @"license_pending_email",
+        @"license_endpoint",
+        @"duodash_reenable_tweaks",
+    ]];
+}
+
+NSArray<NSString *> *DDMigrationSourceCleanupKeys(void) {
+    return @[
+        @"license_pending_key",
+        @"license_pending_email",
+    ];
+}
+
+NSString *DDMigrationDestinationKeyForSourceKey(id sourceKey) {
+    if (![sourceKey isKindOfClass:[NSString class]] || ![(NSString *)sourceKey length])
+        return nil;
+
+    NSString *key = sourceKey;
+    NSString *renamed = DDMigrationRenameMap()[key];
+    if (renamed)
+        return renamed;
+    if ([DDMigrationDeniedPreferenceKeys() containsObject:key])
+        return nil;
+    if ([key rangeOfString:@"truedash" options:NSCaseInsensitiveSearch].location != NSNotFound)
+        return nil;
+    return key;
+}
+
 BOOL DDRunDefaultsBootstrapIfNeeded(void) {
     struct stat st;
     if (stat("/var/mobile/Library/DuoDash/defaults.done", &st) == 0)

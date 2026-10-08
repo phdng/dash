@@ -104,6 +104,18 @@ for migration_contract in [
     "[key isKindOfClass:[NSString class]] && [value isKindOfClass:[NSString class]]",
     "DDMigrationJoinOrNone",
     "componentsJoinedByString:@\",\"",
+    "DDMigrationRenameMap",
+    "@\"truedash_language\": @\"duodash_language\"",
+    "DDMigrationDeniedPreferenceKeys",
+    "@\"license_pending_key\"",
+    "@\"license_pending_email\"",
+    "@\"license_endpoint\"",
+    "@\"duodash_reenable_tweaks\"",
+    "DDMigrationSourceCleanupKeys",
+    "DDMigrationDestinationKeyForSourceKey",
+    "rangeOfString:@\"truedash\" options:NSCaseInsensitiveSearch",
+    "return renamed",
+    "return key",
     "#if 0 // Import/license/file-migration synthesis remains non-executable",
 ]:
     if migration_contract not in migration:

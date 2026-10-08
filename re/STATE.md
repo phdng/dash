@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-197 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-198 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-128 (session-197): Promote exact Foundation helpers `85800/8597C/85B14+85BCC/85D30` trong executable `Migration.m`. Có one-way TrueDash→DuoDash file copy, ordered unique non-empty string sanitizer, NSString:NSString dictionary sanitizer, và comma-join-or-none formatter. Không static rename/deny/license/navapps table nào được enable.
+BUILDABLE RUNTIME PHASE-129 (session-198): Raw constant-object headers + backing strings đã chốt exact `off_154718` rename map (1 entry), `off_154250` denylist (4 entries), `off_154268` source-cleanup list (2 entries). `Migration.m` giờ expose các table và exact pure `85148` source-key classifier: non-empty NSString only; rename thắng trước; denylist hoặc chứa `truedash` case-insensitive thì drop; còn lại giữ nguyên key. Full SetMultiple/counter loop vẫn excluded do ABI/signature decompile méo.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-197):
-- R-196 executable `Migration` helper promotion: exact one-way file copy, ordered string sanitizer, string dictionary sanitizer, and join-or-none formatter now compile in target.
+## LAST COMPLETED TASK (session-198):
+- R-197 executable `Migration` static-table/classifier promotion: exact rename/deny/cleanup data and pure 85148 key-decision semantics now compile in target.
 
 ## CURRENT TASK:
-- R-196 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-197 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-197 batch, inspect static migration tables (`off_154718`, `off_154250`, `off_154268`) only if raw object boundaries and all entries can be decoded completely; otherwise switch to another bounded executable subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-198 batch, either recover the full `85148` caller ABI/raw register mapping before promoting cross-domain SetMultiple migration, or move to another bounded subsystem. Do not infer the malformed decompiler signature. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
