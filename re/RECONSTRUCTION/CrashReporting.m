@@ -59,6 +59,31 @@ NSString *DDCrashReportingToken(void) {
         return nil;
     return DDCrashPreferenceString(@"crashreport_token");
 }
+
+BOOL DDCrashReportingShouldPrepareUpload(void) {
+    // 9E014 checks dry-run before endpoint length. Both prevent request preparation.
+    if (!DDCrashReportingAdapterReady() || DDCrashReportingDryRunEnabled())
+        return NO;
+    return DDCrashReportingEndpoint().length > 0;
+}
+
+NSString *DDCrashReportingReportsURLString(void) {
+    NSString *endpoint = DDCrashReportingEndpoint();
+    if (!endpoint.length)
+        return nil;
+
+    // Exact 9E014 normalization: trim only '/' from both ends, then append /v1/reports.
+    NSCharacterSet *slashes = [NSCharacterSet characterSetWithCharactersInString:@"/"];
+    NSString *trimmed = [endpoint stringByTrimmingCharactersInSet:slashes];
+    return [trimmed stringByAppendingString:@"/v1/reports"];
+}
+
+NSString *DDCrashReportingAuthorizationValue(void) {
+    NSString *token = DDCrashReportingToken();
+    if (!token.length)
+        return nil;
+    return [@"Bearer " stringByAppendingString:token];
+}
 // Records: F-016 (session-002), B-08. Prefs UI: group/row/button/status (strings
 //   0xc7c4c/0xc7cf7/0xc5dcc/cr_collecting/cr_disabled). Manual trigger:
 //   prefs button → Darwin com.sensetechlab.crashreport.send (poster 948C0? —
