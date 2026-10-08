@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-200 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-201 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-131 (session-200): Promote bounded `4C34` preference-migration orchestration vào executable `Migration.m`: settings migration trước, rescuer migration sau, mỗi domain có counter block riêng; rồi re-snapshot chỉ TrueDash settings trên AnyHost+CurrentHost để xóa đúng 2 source-cleanup keys nếu present và synchronize host đó. Seam dừng trước toàn bộ license/device-ID branch.
+BUILDABLE RUNTIME PHASE-132 (session-201): Promote exact import preflight/running-marker seam từ `4C34` dựa trên `84F74/84FD8/85028/8509C`. `DDPrepareTrueDashImportIfNeeded` now handles import.done short-circuit, stale import.running -> exact aborted done record recovery, license-or-domain-key eligibility, and exact running-marker write. Preference migration và license branches vẫn separate.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-200):
-- R-199 executable bounded `4C34` preference-migration orchestration: exact settings→rescuer order plus two-key TrueDash settings cleanup now compile independently of license handling.
+## LAST COMPLETED TASK (session-201):
+- R-200 executable import preflight/running-marker promotion: exact guards, stale-run abort recovery, eligibility probing, and running-marker write now compile in Migration.m.
 
 ## CURRENT TASK:
-- R-199 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-200 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-200 batch, inspect the import guard/running-marker helpers (`84F74/84FD8/85028/8509C`) and promote only a bounded preflight/marker seam if all semantics are exact; keep license migration branches excluded. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-201 batch, inspect post-migration import.done finalization/accounting before license handling only if exact record/counter semantics can be isolated; otherwise move to another bounded subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

@@ -239,6 +239,66 @@ BOOL DDMigratePreferenceDomain(NSString *sourceDomain,
     return YES;
 }
 
+static BOOL DDMigrationPathExists(NSString *path) {
+    return [[NSFileManager defaultManager] fileExistsAtPath:path];
+}
+
+static long long DDMigrationNowMilliseconds(void) {
+    return (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
+}
+
+static BOOL DDMigrationWriteRecord(NSString *path, NSString *record) {
+    NSString *line = [record stringByAppendingString:@"\n"];
+    return [line writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+}
+
+static NSUInteger DDMigrationPreferenceKeyCount(NSString *domain) {
+    NSUInteger total = 0;
+    CFStringRef hosts[] = { kCFPreferencesAnyHost, kCFPreferencesCurrentHost };
+    for (NSUInteger index = 0; index < 2; index++) {
+        CFArrayRef keys = CFPreferencesCopyKeyList((__bridge CFStringRef)domain,
+                                                   kCFPreferencesCurrentUser,
+                                                   hosts[index]);
+        if (keys) {
+            total += (NSUInteger)CFArrayGetCount(keys);
+            CFRelease(keys);
+        }
+    }
+    return total;
+}
+
+BOOL DDPrepareTrueDashImportIfNeeded(void) {
+    NSString *root = @"/var/mobile/Library/DuoDash";
+    NSString *done = [root stringByAppendingPathComponent:@"import.done"];
+    NSString *running = [root stringByAppendingPathComponent:@"import.running"];
+    NSFileManager *fm = [NSFileManager defaultManager];
+
+    if (DDMigrationPathExists(done))
+        return NO;
+
+    mkdir([root fileSystemRepresentation], 0755);
+
+    if (DDMigrationPathExists(running)) {
+        NSString *record = [NSString stringWithFormat:@"at=%lld result=aborted",
+                            DDMigrationNowMilliseconds()];
+        if (DDMigrationWriteRecord(done, record))
+            [fm removeItemAtPath:running error:nil];
+        return NO;
+    }
+
+    BOOL hasLicenseArtifact =
+        DDMigrationPathExists(@"/var/mobile/Library/TrueDash/license.blob") ||
+        DDMigrationPathExists(@"/var/mobile/Library/TrueDash/license.key");
+    if (!hasLicenseArtifact &&
+        DDMigrationPreferenceKeyCount(@"com.sensetechlab.truedash.settings") == 0 &&
+        DDMigrationPreferenceKeyCount(@"com.sensetechlab.truedash.rescuer") == 0) {
+        return NO;
+    }
+
+    NSString *record = [NSString stringWithFormat:@"at=%lld", DDMigrationNowMilliseconds()];
+    return DDMigrationWriteRecord(running, record);
+}
+
 BOOL DDMigrateTrueDashPreferenceDomains(NSUInteger settingsCounters[4],
                                         NSUInteger rescuerCounters[4]) {
     BOOL migratedSettings = DDMigratePreferenceDomain(@"com.sensetechlab.truedash.settings",
