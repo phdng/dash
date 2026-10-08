@@ -128,5 +128,6 @@
 - [x] Session-214 executable Keyinput force-I/O contract: read `/var/tmp/duodash_ab_forceio` as UTF-8, trim whitespace/newlines, return true only for exact trimmed `1`; missing/unreadable/empty/other content returns false.
 - [x] Session-215 executable Keyinput immediate knob contract: check `/var/tmp/<name>` first and return true on hit; on miss use exact temp/legacy resolver; no caching, timestamp, or global relay state participates.
 - [x] Session-216 executable Keyinput width-parser contract: empty/nil-UTF8/no-numeric-prefix/out-of-range nonzero -> 800; parsed zero -> -1 sentinel; nonzero [120,4096] -> value unchanged; valid numeric prefix with trailing junk remains accepted because only `endptr==start` is rejected.
+- [x] Session-217 executable AppBridge dash-settle contract: read `/var/tmp/duodash_ab_dashsettle` UTF-8; missing/empty -> 0.45; `doubleValue` outside [0.2,5.0] -> 0.45; inclusive-range value returned unchanged.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

@@ -258,3 +258,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-213] executable Keyinput force-I/O knob (session-214): exact 42124 UTF-8 read + whitespace/newline trim + exact `1` comparison promoted; private 421CC settings mutation remains excluded.
 - [x] [R-214] executable Keyinput immediate knob probe (session-215): exact 4A780 `/var/tmp`-first then 42F10 temp/legacy fallback promoted without cache or relay globals.
 - [x] [R-215] executable Keyinput width parser (session-216): exact 4A0F8 strtod-prefix/range semantics promoted as a pure helper; global enable, file lookup, and TTL cache remain excluded.
+- [x] [R-216] executable AppBridge dash-settle tuning helper (session-217): exact 1A18C UTF-8 file read, 0.2..5.0 range, and 0.45 fallback promoted in standalone module; dispatch scheduling remains excluded.
