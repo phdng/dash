@@ -15,7 +15,8 @@ DuoDashReconstruction_FILES = \
 	re/RECONSTRUCTION/LocaleFlow.m \
 	re/RECONSTRUCTION/PrefsResolver.m \
 	re/RECONSTRUCTION/Migration.m \
-	re/RECONSTRUCTION/SiriProbe.m
+	re/RECONSTRUCTION/SiriProbe.m \
+	re/RECONSTRUCTION/KeyinputGate.m
 DuoDashReconstruction_CFLAGS = -fobjc-arc -Wall -Wextra
 DuoDashReconstruction_FRAMEWORKS = Foundation CoreFoundation
 DuoDashReconstruction_LIBRARIES = proc

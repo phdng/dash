@@ -183,6 +183,7 @@ FOUNDATION_EXPORT BOOL DDVoiceCommandPreferenceCache(NSString * _Nullable * _Nul
 FOUNDATION_EXPORT BOOL DDSiriProbePressEligible(long long buttonIdentifier);
 FOUNDATION_EXPORT BOOL DDSiriProbeShouldSwallow(long long buttonIdentifier);
 FOUNDATION_EXPORT int DDPostVoiceCommandPress(void);
+FOUNDATION_EXPORT BOOL DDKeyinputFieldMayRelay(id _Nullable field);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

@@ -37,13 +37,14 @@ for required in [
     RECON / "PrefsResolver.m",
     RECON / "Migration.m",
     RECON / "SiriProbe.m",
+    RECON / "KeyinputGate.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -73,7 +74,17 @@ locale_flow = (RECON / "LocaleFlow.m").read_text(encoding="utf-8")
 prefs_resolver = (RECON / "PrefsResolver.m").read_text(encoding="utf-8")
 migration = (RECON / "Migration.m").read_text(encoding="utf-8")
 siri_probe = (RECON / "SiriProbe.m").read_text(encoding="utf-8")
+keyinput_gate = (RECON / "KeyinputGate.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
+for keyinput_contract in [
+    "DDKeyinputFieldMayRelay",
+    "if (!field)",
+    "isSecureTextEntry",
+    "if (![field respondsToSelector:secureSelector])",
+    "return !secure",
+]:
+    if keyinput_contract not in keyinput_gate:
+        raise SystemExit(f"KeyinputGate executable secure-text gate missing contract: {keyinput_contract}")
 for siri_contract in [
     "DDResolveVoiceCommandPreferences",
     "CFPreferencesGetAppBooleanValue(CFSTR(\"voicecmd_enabled\")",
