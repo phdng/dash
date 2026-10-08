@@ -1,5 +1,6 @@
 #import "DuoDashShared.h"
 #import <objc/message.h>
+#include <stdlib.h>
 
 BOOL DDKeyinputFieldMayRelay(id field) {
     if (!field)
@@ -60,4 +61,23 @@ BOOL DDKeyinputKnobPresentNow(NSString *name) {
     if ([fileManager fileExistsAtPath:globalPath])
         return YES;
     return DDKeyinputResolvedTemporaryKnobPath(name) != nil;
+}
+
+double DDKeyinputParseWidthOverride(NSString *rawValue) {
+    if (!rawValue.length)
+        return 800.0;
+
+    const char *utf8 = [rawValue UTF8String];
+    if (!utf8)
+        return 800.0;
+
+    char *end = NULL;
+    double value = strtod(utf8, &end);
+    if (end == utf8)
+        return 800.0;
+    if (value == 0.0)
+        return -1.0;
+    if (value < 120.0 || value > 4096.0)
+        return 800.0;
+    return value;
 }

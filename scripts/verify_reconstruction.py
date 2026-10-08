@@ -99,6 +99,13 @@ for keyinput_contract in [
     "DDKeyinputKnobPresentNow",
     "NSString *globalPath = [@\"/var/tmp\" stringByAppendingPathComponent:name]",
     "return DDKeyinputResolvedTemporaryKnobPath(name) != nil",
+    "DDKeyinputParseWidthOverride",
+    "double value = strtod(utf8, &end)",
+    "if (end == utf8)",
+    "if (value == 0.0)",
+    "if (value < 120.0 || value > 4096.0)",
+    "return 800.0",
+    "return -1.0",
 ]:
     if keyinput_contract not in keyinput_gate:
         raise SystemExit(f"KeyinputGate executable secure-text gate missing contract: {keyinput_contract}")

@@ -257,3 +257,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-212] executable Keyinput knob resolver/cache (session-213): exact 42F10 temp+legacy carnav path resolution and 453B8 negative-state/1s TTL `/var/tmp`-first cache semantics promoted without relay hooks.
 - [x] [R-213] executable Keyinput force-I/O knob (session-214): exact 42124 UTF-8 read + whitespace/newline trim + exact `1` comparison promoted; private 421CC settings mutation remains excluded.
 - [x] [R-214] executable Keyinput immediate knob probe (session-215): exact 4A780 `/var/tmp`-first then 42F10 temp/legacy fallback promoted without cache or relay globals.
+- [x] [R-215] executable Keyinput width parser (session-216): exact 4A0F8 strtod-prefix/range semantics promoted as a pure helper; global enable, file lookup, and TTL cache remain excluded.
