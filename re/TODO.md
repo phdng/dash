@@ -247,3 +247,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-202] executable `85748` issued-at helper promotion (session-203): valid status==0 + NSNumber `iat` -> longLongValue; every invalid/missing/non-number case -> 0. No license verification/status derivation enabled.
 - [x] [R-203] executable SiriProbe voicecmd resolver promotion (session-204): compile `SiriProbe.m` with exact `891F0` enabled/existence semantics and 1..96 ASCII reverse-DNS selected validation; hook/swallow/logger/cache behavior remains unactivated synthesis.
 - [x] [R-204] executable SiriProbe cache-wrapper promotion (session-205): exact 88FD0 explicit sync+reload and 890A0 unfair-lock/systemUptime TTL-2s cached read/refresh semantics; no notify/hook wiring activated.
+- [x] [R-205] executable SiriProbe decision-helper promotion (session-206): exact 894F0 0.5s file-existence cache, 89880 button-6 eligibility, and 89764 swallow precedence/id-file matching; no hooks installed.

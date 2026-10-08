@@ -95,6 +95,19 @@ for siri_contract in [
     "if (selectedOut && age < 2.0)",
     "if (age >= 2.0)",
     "DDVoiceCmdCacheTimestamp = now",
+    "DDSiriProbePressEligible",
+    "DDSiriProbeShouldSwallow",
+    "DDSiriProbeFileExistsCached",
+    "now - cache->timestamp >= 0.5",
+    "stat(path, &st) == 0",
+    "buttonIdentifier != 6",
+    "/var/tmp/duodash_siriprobe_off",
+    "/var/tmp/duodash_siriprobe_swallow",
+    "/var/tmp/duodash_siriprobe_swallow_id",
+    "return selected.length > 0 ? enabled : NO",
+    "if (!raw.length)",
+    "whitespaceAndNewlineCharacterSet",
+    "[trimmed longLongValue] == buttonIdentifier",
 ]:
     if siri_contract not in siri_probe:
         raise SystemExit(f"SiriProbe executable voicecmd resolver missing contract: {siri_contract}")

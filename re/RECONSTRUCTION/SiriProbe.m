@@ -6,6 +6,7 @@
 
 #import "DuoDashShared.h"
 #include <string.h>
+#include <sys/stat.h>
 #import <os/lock.h>
 // Records: EVIDENCE/siriprobe.md (session-006, subagent FULL reads).
 
@@ -74,6 +75,24 @@ void DDReloadVoiceCommandPreferenceCache(void) {
     os_unfair_lock_unlock(&DDVoiceCmdCacheLock);
 }
 
+typedef struct {
+    double timestamp;
+    BOOL exists;
+} DDSiriProbeFileGateCache;
+
+static DDSiriProbeFileGateCache DDSiriProbeOffGate = {0};
+static DDSiriProbeFileGateCache DDSiriProbeSwallowGate = {0};
+
+static BOOL DDSiriProbeFileExistsCached(const char *path, DDSiriProbeFileGateCache *cache) {
+    double now = [[NSProcessInfo processInfo] systemUptime];
+    if (now - cache->timestamp >= 0.5) {
+        struct stat st;
+        cache->exists = stat(path, &st) == 0;
+        cache->timestamp = now;
+    }
+    return cache->exists;
+}
+
 BOOL DDVoiceCommandPreferenceCache(NSString **selectedOut) {
     double now = [[NSProcessInfo processInfo] systemUptime];
     char cachedSelected[97] = {0};
@@ -108,6 +127,35 @@ BOOL DDVoiceCommandPreferenceCache(NSString **selectedOut) {
         *selectedOut = selected ?: @"";
     }
     return enabled;
+}
+
+BOOL DDSiriProbePressEligible(long long buttonIdentifier) {
+    if (buttonIdentifier != 6)
+        return NO;
+    if (DDSiriProbeFileExistsCached("/var/tmp/duodash_siriprobe_off", &DDSiriProbeOffGate))
+        return NO;
+
+    NSString *selected = nil;
+    BOOL enabled = DDVoiceCommandPreferenceCache(&selected);
+    return selected.length > 0 ? enabled : NO;
+}
+
+BOOL DDSiriProbeShouldSwallow(long long buttonIdentifier) {
+    if (DDSiriProbeFileExistsCached("/var/tmp/duodash_siriprobe_off", &DDSiriProbeOffGate))
+        return NO;
+    if (DDSiriProbePressEligible(buttonIdentifier))
+        return YES;
+    if (!DDSiriProbeFileExistsCached("/var/tmp/duodash_siriprobe_swallow", &DDSiriProbeSwallowGate))
+        return NO;
+
+    NSString *raw = [NSString stringWithContentsOfFile:@"/var/tmp/duodash_siriprobe_swallow_id"
+                                              encoding:NSUTF8StringEncoding
+                                                 error:nil];
+    if (!raw.length)
+        return YES;
+
+    NSString *trimmed = [raw stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    return [trimmed longLongValue] == buttonIdentifier;
 }
 
 // ---- Installer (EVIDENCE §0; 4C34.c:1279-1390) ----
