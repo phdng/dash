@@ -108,6 +108,14 @@ for siri_contract in [
     "if (!raw.length)",
     "whitespaceAndNewlineCharacterSet",
     "[trimmed longLongValue] == buttonIdentifier",
+    "DDPostVoiceCommandPress",
+    "DDSiriProbeIdentifierIsValidCString",
+    "com.sensetechlab.voicecmd.press.",
+    "length + 33 > sizeof(name)",
+    "notify_register_check(name, &token)",
+    "notify_set_state(token, (uint64_t)(uptime * 1000.0))",
+    "notify_cancel(token)",
+    "return notify_post(name)",
 ]:
     if siri_contract not in siri_probe:
         raise SystemExit(f"SiriProbe executable voicecmd resolver missing contract: {siri_contract}")

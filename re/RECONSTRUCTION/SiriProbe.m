@@ -7,6 +7,7 @@
 #import "DuoDashShared.h"
 #include <string.h>
 #include <sys/stat.h>
+#include <notify.h>
 #import <os/lock.h>
 // Records: EVIDENCE/siriprobe.md (session-006, subagent FULL reads).
 
@@ -140,6 +141,28 @@ BOOL DDSiriProbePressEligible(long long buttonIdentifier) {
     return selected.length > 0 ? enabled : NO;
 }
 
+static BOOL DDSiriProbeIdentifierIsValidCString(const char *identifier) {
+    if (!identifier || !identifier[0])
+        return NO;
+    size_t length = strlen(identifier);
+    if (length == 0 || length > 96 || identifier[0] == '.' || identifier[length - 1] == '.')
+        return NO;
+
+    BOOL sawDot = NO;
+    for (size_t index = 0; index < length; index++) {
+        unsigned char ch = (unsigned char)identifier[index];
+        if (ch == '.') {
+            sawDot = YES;
+            continue;
+        }
+        BOOL digit = ch >= '0' && ch <= '9';
+        BOOL alpha = (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
+        if (ch != '-' && !digit && !alpha)
+            return NO;
+    }
+    return sawDot;
+}
+
 BOOL DDSiriProbeShouldSwallow(long long buttonIdentifier) {
     if (DDSiriProbeFileExistsCached("/var/tmp/duodash_siriprobe_off", &DDSiriProbeOffGate))
         return NO;
@@ -156,6 +179,30 @@ BOOL DDSiriProbeShouldSwallow(long long buttonIdentifier) {
 
     NSString *trimmed = [raw stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     return [trimmed longLongValue] == buttonIdentifier;
+}
+
+int DDPostVoiceCommandPress(void) {
+    NSString *selected = nil;
+    (void)DDVoiceCommandPreferenceCache(&selected);
+    const char *identifier = [selected UTF8String];
+    if (!DDSiriProbeIdentifierIsValidCString(identifier))
+        return 0;
+
+    char name[129] = {0};
+    size_t length = strlen(identifier);
+    if (length + 33 > sizeof(name))
+        return 0;
+
+    strlcpy(name, "com.sensetechlab.voicecmd.press.", sizeof(name));
+    strlcat(name, identifier, sizeof(name));
+
+    double uptime = [[NSProcessInfo processInfo] systemUptime];
+    int token = 0;
+    if (notify_register_check(name, &token) == 0) {
+        notify_set_state(token, (uint64_t)(uptime * 1000.0));
+        notify_cancel(token);
+    }
+    return notify_post(name);
 }
 
 // ---- Installer (EVIDENCE §0; 4C34.c:1279-1390) ----
