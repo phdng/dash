@@ -4448,6 +4448,50 @@ DDLayoutConfirmSetRootExceptionOutcome DDResolveLayoutConfirmSetRootExceptionOut
     return outcome;
 }
 
+DDLayoutConfirmPostCommitExceptionOutcome DDResolveLayoutConfirmPostCommitExceptionOutcome(DDLayoutConfirmPostCommitExceptionSite site) {
+    // sub_3257C -> LSDA 0x113860. Adjacent post-setRoot ranges are materially different:
+    // 0x338C0..0x338D0 -> 0x33D18 action 0 covers objc_storeStrong(qword_164510, controller)
+    // and only resumes unwind; it is not a typed swallow.
+    // 0x338D0..0x338E8 -> 0x33A1C action 5 covers host addSubview: followed by tick:15.
+    // The typed landing aliases shared cleanup at 0x33C64, which removes the committed
+    // root when present, clears/releases qword_164510, and returns via outer cleanup.
+    DDLayoutConfirmPostCommitExceptionOutcome outcome = {0};
+    outcome.setRootDefinitelyCompletedBeforeSite =
+        site == DDLayoutConfirmPostCommitExceptionSiteGlobalStoreStrongCleanupOnly ||
+        site == DDLayoutConfirmPostCommitExceptionSiteRootAttachTyped ||
+        site == DDLayoutConfirmPostCommitExceptionSiteCountdownTickTyped;
+
+    if (site == DDLayoutConfirmPostCommitExceptionSiteGlobalStoreStrongCleanupOnly) {
+        outcome.exceptionWouldResumeUnwind = YES;
+        outcome.newLayoutConfirmGlobalCommitCouldHaveAppliedBeforeException = YES;
+        outcome.countdownTickDefinitelyNotReachedBeforeCatch = YES;
+        return outcome;
+    }
+
+    BOOL typedSite = site == DDLayoutConfirmPostCommitExceptionSiteRootAttachTyped ||
+                     site == DDLayoutConfirmPostCommitExceptionSiteCountdownTickTyped;
+    if (typedSite) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.newLayoutConfirmGlobalDefinitelyCommittedBeforeSite = YES;
+        outcome.cleanupAttemptsRemoveCommittedRoot = YES;
+        outcome.cleanupClearsCommittedLayoutConfirmGlobal = YES;
+        outcome.shouldContinueOuterCleanupAndReturn = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+    }
+
+    if (site == DDLayoutConfirmPostCommitExceptionSiteRootAttachTyped) {
+        outcome.rootAttachCouldHaveAppliedBeforeException = YES;
+        outcome.countdownTickDefinitelyNotReachedBeforeCatch = YES;
+        return outcome;
+    }
+
+    if (site == DDLayoutConfirmPostCommitExceptionSiteCountdownTickTyped) {
+        outcome.rootAttachDefinitelyCompletedBeforeSite = YES;
+        outcome.countdownTickCouldHaveAppliedBeforeException = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps

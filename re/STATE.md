@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-07 session-172 (buildable reconstruction phase)_
+_Last updated: 2026-10-07 session-173 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-103 (session-172): Tiếp tục site-scoped trong `sub_3257C -> LSDA 0x113860`. Runtime thêm exact typed action-5 site `0x338B4..0x338C0 -> 0x33A1C`, raw ARM64 map đúng `-[CNABLayoutConfirm setRoot:]` sau khi fast enumeration đã hoàn tất. Stub `0x33A1C` alias shared typed cleanup `0x33C64`. `setRoot:` có thể đã mutate controller trước khi throw, nhưng new `qword_164510` `storeStrong` ở `0x338CC`, host `addSubview:` ở `0x338D8`, và `tick:15` ở `0x338E4` đều chắc chắn chưa chạy. Expected catch clear splash/layout-confirm state rồi outer-return; nonmatching resume unwind. Data-only only.
+BUILDABLE RUNTIME PHASE-104 (session-173): Tiếp tục site-scoped trong `sub_3257C -> LSDA 0x113860`. Exact adjacent entries được tách đúng: `0x338C0..0x338D0 -> 0x33D18`, action 0, bao `objc_storeStrong(&qword_164510, controller)` và chỉ resume unwind; `0x338D0..0x338E8 -> 0x33A1C`, action 5, bao host `addSubview:` rồi `tick:15`. Với root-attach catch, global controller đã commit, attach có thể đã áp dụng, tick chưa chạy; với tick catch, global commit + attach đã hoàn tất, tick có thể đã áp dụng. Shared typed cleanup remove committed root khi có, clear/release `qword_164510`, rồi outer-return. Data-only only.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-172):
-- R-171 data-only `3257C` layout-confirm `setRoot:` typed recovery: exact action-5 site, completed-enumeration milestone, possible controller-root mutation, definite pre-global-store/pre-host-attach/pre-tick timing, shared cleanup, and nonmatching unwind recorded.
+## LAST COMPLETED TASK (session-173):
+- R-172 data-only `3257C` post-commit layout-confirm routing: cleanup-only global storeStrong unwind plus typed root-attach/tick recovery, exact progress timing, committed-root cleanup, and nonmatching unwind recorded.
 
 ## CURRENT TASK:
-- R-171 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-172 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-172 batch, continue site-scoped decoding inside `3257C -> LSDA 0x113860`; next candidate should again be one protected operation or tightly bounded sequence with exact continuation. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-173 batch, continue site-scoped decoding inside `3257C -> LSDA 0x113860`; prefer the next exact protected operation/sequence after the layout-confirm post-commit region. 73E8/80D0/full 7E908 and jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
