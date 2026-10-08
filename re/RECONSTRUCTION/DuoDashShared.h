@@ -154,6 +154,9 @@ FOUNDATION_EXPORT NSDictionary<NSString *, NSString *> *DDMigrationRenameMap(voi
 FOUNDATION_EXPORT NSSet<NSString *> *DDMigrationDeniedPreferenceKeys(void);
 FOUNDATION_EXPORT NSArray<NSString *> *DDMigrationSourceCleanupKeys(void);
 FOUNDATION_EXPORT NSString * _Nullable DDMigrationDestinationKeyForSourceKey(id _Nullable sourceKey);
+FOUNDATION_EXPORT BOOL DDMigratePreferenceDomain(NSString *sourceDomain,
+                                                NSString *destinationDomain,
+                                                NSUInteger counters[4]);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

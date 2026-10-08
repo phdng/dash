@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-198 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-199 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-129 (session-198): Raw constant-object headers + backing strings đã chốt exact `off_154718` rename map (1 entry), `off_154250` denylist (4 entries), `off_154268` source-cleanup list (2 entries). `Migration.m` giờ expose các table và exact pure `85148` source-key classifier: non-empty NSString only; rename thắng trước; denylist hoặc chứa `truedash` case-insensitive thì drop; còn lại giữ nguyên key. Full SetMultiple/counter loop vẫn excluded do ABI/signature decompile méo.
+BUILDABLE RUNTIME PHASE-130 (session-199): Raw ARM64 tại hai call-site `4E18..4E48` đã phục hồi exact ABI `85148(sourceDomain,destinationDomain,counters[4])` cho settings và rescuer. `Migration.m` giờ expose full `DDMigratePreferenceDomain`: snapshot AnyHost+CurrentHost, zero-total guard, exact rename/drop/copy counters, destination-only removals, `CFPreferencesSetMultiple` + per-host synchronize. Không còn ABI ambiguity cho `85148`.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-198):
-- R-197 executable `Migration` static-table/classifier promotion: exact rename/deny/cleanup data and pure 85148 key-decision semantics now compile in target.
+## LAST COMPLETED TASK (session-199):
+- R-198 executable full `85148` preference-domain migration promotion: raw ABI, two-host snapshots, exact migration counters, destination removals and SetMultiple/sync semantics now compile in target.
 
 ## CURRENT TASK:
-- R-197 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-198 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-198 batch, either recover the full `85148` caller ABI/raw register mapping before promoting cross-domain SetMultiple migration, or move to another bounded subsystem. Do not infer the malformed decompiler signature. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-199 batch, inspect the direct 4C34 orchestration around the two proven `85148` calls and source-cleanup array; promote a bounded settings+rescuer migration orchestration only if import guards/running-marker timing can be kept exact without pulling license branches. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

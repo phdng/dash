@@ -156,6 +156,89 @@ NSString *DDMigrationDestinationKeyForSourceKey(id sourceKey) {
     return key;
 }
 
+static NSDictionary *DDMigrationCopyDomainSnapshot(NSString *domain, CFStringRef host) {
+    CFPreferencesSynchronize((__bridge CFStringRef)domain,
+                             kCFPreferencesCurrentUser,
+                             host);
+    CFArrayRef keys = CFPreferencesCopyKeyList((__bridge CFStringRef)domain,
+                                               kCFPreferencesCurrentUser,
+                                               host);
+    if (!keys)
+        return @{};
+
+    CFDictionaryRef values = NULL;
+    if (CFArrayGetCount(keys)) {
+        values = CFPreferencesCopyMultiple(keys,
+                                           (__bridge CFStringRef)domain,
+                                           kCFPreferencesCurrentUser,
+                                           host);
+    }
+    CFRelease(keys);
+
+    id bridged = CFBridgingRelease(values);
+    return [bridged isKindOfClass:[NSDictionary class]] ? bridged : @{};
+}
+
+BOOL DDMigratePreferenceDomain(NSString *sourceDomain,
+                               NSString *destinationDomain,
+                               NSUInteger counters[4]) {
+    CFStringRef hosts[] = { kCFPreferencesAnyHost, kCFPreferencesCurrentHost };
+    NSDictionary *sourceSnapshots[] = {
+        DDMigrationCopyDomainSnapshot(sourceDomain, hosts[0]),
+        DDMigrationCopyDomainSnapshot(sourceDomain, hosts[1]),
+    };
+
+    NSUInteger totalSourceCount = sourceSnapshots[0].count + sourceSnapshots[1].count;
+    if (!totalSourceCount)
+        return NO;
+
+    for (NSUInteger hostIndex = 0; hostIndex < 2; hostIndex++) {
+        NSDictionary *source = sourceSnapshots[hostIndex];
+        NSMutableDictionary *desired = [NSMutableDictionary dictionary];
+
+        for (id rawKey in source) {
+            if (![rawKey isKindOfClass:[NSString class]] || ![(NSString *)rawKey length]) {
+                counters[2] += 1;
+                continue;
+            }
+
+            NSString *key = rawKey;
+            NSString *renamed = DDMigrationRenameMap()[key];
+            if (renamed) {
+                desired[renamed] = source[key];
+                counters[1] += 1;
+                continue;
+            }
+            if ([DDMigrationDeniedPreferenceKeys() containsObject:key] ||
+                [key rangeOfString:@"truedash" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                counters[2] += 1;
+                continue;
+            }
+
+            desired[key] = source[key];
+            counters[0] += 1;
+        }
+
+        NSDictionary *destination = DDMigrationCopyDomainSnapshot(destinationDomain, hosts[hostIndex]);
+        NSMutableArray *removeKeys = [NSMutableArray array];
+        for (id key in destination) {
+            if (!desired[key])
+                [removeKeys addObject:key];
+        }
+        counters[3] += removeKeys.count;
+
+        CFPreferencesSetMultiple((__bridge CFDictionaryRef)desired,
+                                 (__bridge CFArrayRef)removeKeys,
+                                 (__bridge CFStringRef)destinationDomain,
+                                 kCFPreferencesCurrentUser,
+                                 hosts[hostIndex]);
+        CFPreferencesSynchronize((__bridge CFStringRef)destinationDomain,
+                                 kCFPreferencesCurrentUser,
+                                 hosts[hostIndex]);
+    }
+    return YES;
+}
+
 BOOL DDRunDefaultsBootstrapIfNeeded(void) {
     struct stat st;
     if (stat("/var/mobile/Library/DuoDash/defaults.done", &st) == 0)

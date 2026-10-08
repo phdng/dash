@@ -116,6 +116,17 @@ for migration_contract in [
     "rangeOfString:@\"truedash\" options:NSCaseInsensitiveSearch",
     "return renamed",
     "return key",
+    "DDMigratePreferenceDomain",
+    "DDMigrationCopyDomainSnapshot",
+    "CFPreferencesCopyKeyList",
+    "CFPreferencesCopyMultiple",
+    "sourceSnapshots[0].count + sourceSnapshots[1].count",
+    "counters[0] += 1",
+    "counters[1] += 1",
+    "counters[2] += 1",
+    "counters[3] += removeKeys.count",
+    "CFPreferencesSetMultiple",
+    "kCFPreferencesAnyHost, kCFPreferencesCurrentHost",
     "#if 0 // Import/license/file-migration synthesis remains non-executable",
 ]:
     if migration_contract not in migration:
