@@ -4548,6 +4548,45 @@ DDReapplyMaximizeRecoveryExceptionOutcome DDResolveReapplyMaximizeRecoveryExcept
     return outcome;
 }
 
+DDPresentAndOverlayCleanupExceptionOutcome DDResolvePresentAndOverlayCleanupExceptionOutcome(DDPresentAndOverlayCleanupExceptionSite site) {
+    // sub_3257C -> LSDA 0x113860. Exact typed action-5 range
+    // 0x32A54..0x32A68 -> 0x33C30 spans:
+    //   0x32A54 present
+    //   0x32A60 result-byte commit
+    //   0x32A64 sub_702BC weak-overlay cleanup.
+    // Matching discriminator 1 begin/end-catches and returns directly through the
+    // function epilogue at 0x339B4. Therefore all later success-only teardown/buildInHost
+    // work is skipped. sub_702BC removes the retained weak overlay from its superview
+    // and clears qword_164550; an exception during that helper can happen after the
+    // present-result byte has already committed.
+    DDPresentAndOverlayCleanupExceptionOutcome outcome = {0};
+    if (site == DDPresentAndOverlayCleanupExceptionSitePresentCall) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.shouldReturnImmediatelyAfterCatch = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        outcome.presentResultDefinitelyUncommittedBeforeCatch = YES;
+        outcome.presentSideEffectsCouldHaveAppliedBeforeException = YES;
+        outcome.laterSuccessfulPresentBranchDefinitelySkipped = YES;
+        outcome.laterSharedTeardownDefinitelySkipped = YES;
+        outcome.laterBuildInHostDefinitelySkipped = YES;
+        return outcome;
+    }
+
+    if (site == DDPresentAndOverlayCleanupExceptionSiteWeakOverlayCleanup) {
+        outcome.shouldSwallowExpectedException = YES;
+        outcome.shouldReturnImmediatelyAfterCatch = YES;
+        outcome.nonmatchingCatchTypeWouldResumeUnwind = YES;
+        outcome.presentResultDefinitelyCommittedBeforeSite = YES;
+        outcome.presentSideEffectsCouldHaveAppliedBeforeException = YES;
+        outcome.weakOverlayCleanupCouldHaveStartedBeforeException = YES;
+        outcome.weakOverlayCouldHaveBeenRemovedBeforeException = YES;
+        outcome.laterSuccessfulPresentBranchDefinitelySkipped = YES;
+        outcome.laterSharedTeardownDefinitelySkipped = YES;
+        outcome.laterBuildInHostDefinitelySkipped = YES;
+    }
+    return outcome;
+}
+
 DDKeyPaneCenterAdjustmentExceptionOutcome DDResolveKeyPaneCenterAdjustmentExceptionOutcome(DDKeyPaneCenterAdjustmentExceptionSite site) {
     // 375B8 LSDA 0x11415C has one action-5 range 0x375EC..0x37610 around geometry helpers,
     // CGRectIsNull, center, and setCenter:. Expected catch at 0x37628 begin/end-catches then jumps
