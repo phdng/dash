@@ -299,6 +299,42 @@ BOOL DDPrepareTrueDashImportIfNeeded(void) {
     return DDMigrationWriteRecord(running, record);
 }
 
+BOOL DDFinalizeTrueDashImportRecord(const NSUInteger settingsCounters[4],
+                                     BOOL settingsMigrated,
+                                     const NSUInteger rescuerCounters[4],
+                                     BOOL rescuerMigrated,
+                                     NSString *licenceStatus,
+                                     NSString *blobStatus,
+                                     NSString *keyStatus,
+                                     NSString *oldKeyStatus,
+                                     NSString *undoStatus) {
+    NSUInteger settingsCopied = settingsMigrated ? settingsCounters[0] : 0;
+    NSUInteger rescuerCopiedOrRenamed =
+        rescuerMigrated ? (rescuerCounters[0] + rescuerCounters[1]) : 0;
+    NSString *record = [NSString stringWithFormat:
+        @"at=%lld result=ok settings=%lu renamed=%lu dropped=%lu removed=%lu rescuer=%lu licence=%@ blob=%@ key=%@ old_key=%@ undo=%@",
+        DDMigrationNowMilliseconds(),
+        (unsigned long)settingsCopied,
+        (unsigned long)settingsCounters[1],
+        (unsigned long)settingsCounters[2],
+        (unsigned long)settingsCounters[3],
+        (unsigned long)rescuerCopiedOrRenamed,
+        licenceStatus,
+        blobStatus,
+        keyStatus,
+        oldKeyStatus,
+        undoStatus];
+
+    NSString *done = @"/var/mobile/Library/DuoDash/import.done";
+    if (!DDMigrationWriteRecord(done, record))
+        return NO;
+
+    [[NSFileManager defaultManager]
+        removeItemAtPath:@"/var/mobile/Library/DuoDash/import.running"
+                   error:nil];
+    return YES;
+}
+
 BOOL DDMigrateTrueDashPreferenceDomains(NSUInteger settingsCounters[4],
                                         NSUInteger rescuerCounters[4]) {
     BOOL migratedSettings = DDMigratePreferenceDomain(@"com.sensetechlab.truedash.settings",
