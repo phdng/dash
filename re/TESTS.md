@@ -145,5 +145,6 @@
 - [x] Session-231 executable crash-report SHA-256 contract: hash exact NSData bytes with CC_SHA256; render 32 digest bytes as lowercase `%02x`; prefixLength=0 or >=64 returns full hex, otherwise returns exact leading substring.
 - [x] Session-232 executable crash-report string-comparator contract: longer string sorts first; shorter sorts after; equal-length strings return native `[left compare:right]` ordering unchanged.
 - [x] Session-233 executable crash-report dictionary-date comparator contract: fetch right `date`, then left `date`, and return native `[rightDate compare:leftDate]` unchanged for descending date ordering; no guards/normalization/global/I/O side effects are added.
+- [x] Session-234 executable crash-report identifier-sanitizer contract: trim whitespace/newlines, lowercase, require length 16..64 inclusive, reject any character outside `0123456789abcdef-`, otherwise return normalized value; no global/I/O/network side effects.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

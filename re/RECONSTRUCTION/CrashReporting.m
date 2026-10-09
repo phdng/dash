@@ -36,6 +36,18 @@ NSComparisonResult DDCrashDictionaryDateDescendingComparator(NSDictionary *left,
     return [rightDate compare:leftDate];
 }
 
+NSString *DDCrashNormalizeIdentifier(NSString *value) {
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString *normalized = [[value stringByTrimmingCharactersInSet:whitespace] lowercaseString];
+    if (normalized.length < 16 || normalized.length > 64)
+        return nil;
+
+    NSCharacterSet *allowed = [NSCharacterSet characterSetWithCharactersInString:@"0123456789abcdef-"];
+    if ([normalized rangeOfCharacterFromSet:allowed.invertedSet].location != NSNotFound)
+        return nil;
+    return normalized;
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,
