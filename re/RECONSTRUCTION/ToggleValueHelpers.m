@@ -4,7 +4,8 @@
 // Exact pure reapdelay string parser from 202D0 promoted session-256.
 // Exact pure holdsec parser from 163EC promoted session-257.
 // Exact pure discoclose-seconds parser from 7B9EC promoted session-258.
-// File reads, CFPreferences fallback, scheduling/host state, and cache/global mutation remain excluded.
+// Exact pure splash-seconds parser from 358F0 promoted session-259.
+// File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
     NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
@@ -57,4 +58,13 @@ double DDDisconnectCloseSecondsOverrideValue(NSString *value) {
     if (parsed >= 0.0 && parsed <= 120.0)
         result = parsed;
     return result;
+}
+
+double DDSplashSecondsOverrideValue(NSString *value) {
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString *trimmed = [value stringByTrimmingCharactersInSet:whitespace];
+    double parsed = trimmed.length ? trimmed.doubleValue : 0.0;
+    if (parsed > 15.0 || parsed < 0.5)
+        return 3.0;
+    return parsed;
 }
