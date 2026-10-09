@@ -433,6 +433,10 @@ for license_contract in [
     "Not activated",
     "verificationStatus != 0",
     "return refusalMatches ? @\"Licence invalid\" : @\"Active\"",
+    "DDLicenseIsPrintableASCIIString",
+    "isKindOfClass:[NSString class]",
+    "[value length] == 0",
+    "character < 33 || character > 126",
 ]:
     if license_contract not in license_helpers:
         raise SystemExit(f"LicenseHelpers executable helper missing contract: {license_contract}")

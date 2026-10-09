@@ -2,6 +2,7 @@
 // Exact A4208 base64url decoding promoted session-235.
 // Exact A4304 hexadecimal decoding promoted session-236.
 // Exact A54A4 decision-only status mapping promoted session-237.
+// Exact A4744 printable-ASCII validator promoted session-238.
 // Full A397C verification, key iteration, filesystem, network, and verdict state acquisition remain excluded.
 
 #import "DuoDashShared.h"
@@ -58,4 +59,17 @@ NSString *DDLicenseStatusTextForVerification(NSInteger verificationStatus, BOOL 
     if (verificationStatus != 0)
         return @"Licence invalid";
     return refusalMatches ? @"Licence invalid" : @"Active";
+}
+
+BOOL DDLicenseIsPrintableASCIIString(id value) {
+    if (![value isKindOfClass:[NSString class]] || [value length] == 0)
+        return NO;
+
+    NSString *string = value;
+    for (NSUInteger index = 0; index < string.length; ++index) {
+        unichar character = [string characterAtIndex:index];
+        if (character < 33 || character > 126)
+            return NO;
+    }
+    return YES;
 }
