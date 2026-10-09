@@ -7,6 +7,8 @@
 #import <Foundation/Foundation.h>
 #import <CoreFoundation/CoreFoundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 // Prefs domain chính (F-004)
 #define DD_SETTINGS_DOMAIN @"com.sensetechlab.duodash.settings"
 // Cache publish bởi sub_74C8 (F-004)
@@ -317,6 +319,8 @@ FOUNDATION_EXPORT NSString *DDVersionDeviceFormatClientVersion(NSString * _Nulla
 FOUNDATION_EXPORT NSString *DDVersionDeviceFormatOSVersion(NSInteger major,
                                                           NSInteger minor,
                                                           NSInteger patch);
+
+NS_ASSUME_NONNULL_END
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).
