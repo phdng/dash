@@ -206,13 +206,13 @@ FOUNDATION_EXPORT NSArray<NSString *> *DDMigrationSourceCleanupKeys(void);
 FOUNDATION_EXPORT NSString * _Nullable DDMigrationDestinationKeyForSourceKey(id _Nullable sourceKey);
 FOUNDATION_EXPORT BOOL DDMigratePreferenceDomain(NSString *sourceDomain,
                                                 NSString *destinationDomain,
-                                                NSUInteger counters[4] _Nonnull);
-FOUNDATION_EXPORT BOOL DDMigrateTrueDashPreferenceDomains(NSUInteger settingsCounters[4] _Nonnull,
-                                                          NSUInteger rescuerCounters[4] _Nonnull);
+                                                NSUInteger * _Nonnull counters);
+FOUNDATION_EXPORT BOOL DDMigrateTrueDashPreferenceDomains(NSUInteger * _Nonnull settingsCounters,
+                                                          NSUInteger * _Nonnull rescuerCounters);
 FOUNDATION_EXPORT BOOL DDPrepareTrueDashImportIfNeeded(void);
-FOUNDATION_EXPORT BOOL DDFinalizeTrueDashImportRecord(const NSUInteger settingsCounters[4] _Nonnull,
+FOUNDATION_EXPORT BOOL DDFinalizeTrueDashImportRecord(const NSUInteger * _Nonnull settingsCounters,
                                                       BOOL settingsMigrated,
-                                                      const NSUInteger rescuerCounters[4] _Nonnull,
+                                                      const NSUInteger * _Nonnull rescuerCounters,
                                                       BOOL rescuerMigrated,
                                                       NSString *licenceStatus,
                                                       NSString *blobStatus,
@@ -264,7 +264,7 @@ FOUNDATION_EXPORT BOOL DDCrashShouldIncludeImageName(NSString * _Nullable name);
 FOUNDATION_EXPORT NSString *DDCrashJailbreakFamilyForPrefixCString(const char * _Nullable prefix);
 FOUNDATION_EXPORT NSString * _Nullable DDCrashJailbreakPrefixString(const char * _Nullable prefix);
 FOUNDATION_EXPORT NSString *DDCrashArchitectureNameForCPUSubtype(uint32_t cpuSubtype);
-FOUNDATION_EXPORT NSString *DDCrashMachOUUIDHex(const uint8_t uuidBytes[16] _Nonnull);
+FOUNDATION_EXPORT NSString *DDCrashMachOUUIDHex(const uint8_t * _Nonnull uuidBytes);
 FOUNDATION_EXPORT BOOL DDCrashMachOIsFatMagic(uint32_t magic);
 FOUNDATION_EXPORT uint32_t DDCrashMachOFatValueHostOrder(uint32_t magic, uint32_t value);
 FOUNDATION_EXPORT BOOL DDCrashMachOIs64BitMagic(uint32_t magic);

@@ -181,7 +181,7 @@ static NSDictionary *DDMigrationCopyDomainSnapshot(NSString *domain, CFStringRef
 
 BOOL DDMigratePreferenceDomain(NSString *sourceDomain,
                                NSString *destinationDomain,
-                               NSUInteger counters[4] _Nonnull) {
+                               NSUInteger * _Nonnull counters) {
     CFStringRef hosts[] = { kCFPreferencesAnyHost, kCFPreferencesCurrentHost };
     NSDictionary *sourceSnapshots[] = {
         DDMigrationCopyDomainSnapshot(sourceDomain, hosts[0]),
@@ -308,9 +308,9 @@ long long DDMigrationIssuedAtIfValid(NSInteger validationStatus, NSDictionary *p
     return [issuedAt longLongValue];
 }
 
-BOOL DDFinalizeTrueDashImportRecord(const NSUInteger settingsCounters[4] _Nonnull,
+BOOL DDFinalizeTrueDashImportRecord(const NSUInteger * _Nonnull settingsCounters,
                                      BOOL settingsMigrated,
-                                     const NSUInteger rescuerCounters[4] _Nonnull,
+                                     const NSUInteger * _Nonnull rescuerCounters,
                                      BOOL rescuerMigrated,
                                      NSString *licenceStatus,
                                      NSString *blobStatus,
@@ -344,8 +344,8 @@ BOOL DDFinalizeTrueDashImportRecord(const NSUInteger settingsCounters[4] _Nonnul
     return YES;
 }
 
-BOOL DDMigrateTrueDashPreferenceDomains(NSUInteger settingsCounters[4] _Nonnull,
-                                        NSUInteger rescuerCounters[4] _Nonnull) {
+BOOL DDMigrateTrueDashPreferenceDomains(NSUInteger * _Nonnull settingsCounters,
+                                        NSUInteger * _Nonnull rescuerCounters) {
     BOOL migratedSettings = DDMigratePreferenceDomain(@"com.sensetechlab.truedash.settings",
                                                        @"com.sensetechlab.duodash.settings",
                                                        settingsCounters);
