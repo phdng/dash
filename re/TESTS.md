@@ -191,5 +191,6 @@
 - [x] Session-277 executable crash image-name contract: nil/non-dylib -> false; `DuoDash.dylib` and `DuoDashFoo.dylib` -> true; `CarSleeperBT.dylib` -> true; matching prefix without `.dylib` suffix -> false; unrelated `.dylib` -> false; enumeration/file/report side effects excluded.
 - [x] Session-278 executable jailbreak-family contract: null C pointer -> `rootful`; empty string -> `rootful`; any nonempty prefix, regardless of contents, -> `rootless`; prefix/global acquisition and metadata/report side effects excluded.
 - [x] Session-279 executable jailbreak-prefix contract: null C pointer -> empty NSString through `stringWithUTF8String:""`; empty string -> empty NSString; valid UTF-8 preserved exactly; invalid UTF-8 -> nil per Foundation; prefix/global acquisition and metadata/report side effects excluded.
+- [x] Session-280 executable crash architecture contract: `(subtype & 0xFFFFFF) == 2` -> `arm64e`; zero, `1`, `3`, and values with high capability bits but masked low 24 bits not equal to 2 -> `arm64`; Mach-O/file/UUID/artifact side effects excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

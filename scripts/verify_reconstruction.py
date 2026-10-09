@@ -539,6 +539,8 @@ for crash_contract in [
     "prefix && prefix[0] ? @\"rootless\" : @\"rootful\"",
     "DDCrashJailbreakPrefixString",
     "stringWithUTF8String:prefix ? prefix : \"\"",
+    "DDCrashArchitectureNameForCPUSubtype",
+    "(cpuSubtype & 0xFFFFFFU) == 2U ? @\"arm64e\" : @\"arm64\"",
     "DDCrashReportingAdapterStart",
     "DDCrashReportingAdapterReady",
     "DDCrashReportingMayCollect",

@@ -62,6 +62,10 @@ NSString *DDCrashJailbreakPrefixString(const char *prefix) {
     return [NSString stringWithUTF8String:prefix ? prefix : ""];
 }
 
+NSString *DDCrashArchitectureNameForCPUSubtype(uint32_t cpuSubtype) {
+    return (cpuSubtype & 0xFFFFFFU) == 2U ? @"arm64e" : @"arm64";
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,
