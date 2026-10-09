@@ -147,5 +147,6 @@
 - [x] Session-233 executable crash-report dictionary-date comparator contract: fetch right `date`, then left `date`, and return native `[rightDate compare:leftDate]` unchanged for descending date ordering; no guards/normalization/global/I/O side effects are added.
 - [x] Session-234 executable crash-report identifier-sanitizer contract: trim whitespace/newlines, lowercase, require length 16..64 inclusive, reject any character outside `0123456789abcdef-`, otherwise return normalized value; no global/I/O/network side effects.
 - [x] Session-235 executable license base64url-decoder contract: empty input -> nil; replace `-`→`+`, `_`→`/`; append `=` until length mod 4 is zero; strict `NSData` Base64 decode with options 0; no full verification/global/I/O/network side effects.
+- [x] Session-236 executable license hex-decoder contract: empty/odd-length input -> nil; decode ASCII `0-9/a-f/A-F` pairs into bytes; invalid character -> nil; no full verification/key/global/I/O/network side effects.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

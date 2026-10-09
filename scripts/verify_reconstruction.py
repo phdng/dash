@@ -418,6 +418,14 @@ for license_contract in [
     "while ((base64.length & 3) != 0)",
     "appendString:@\"=\"",
     "initWithBase64EncodedString:base64 options:0",
+    "DDLicenseDecodeHex",
+    "if ((length & 1) != 0 || length == 0)",
+    "[NSMutableData dataWithCapacity:length >> 1]",
+    "const char *bytes = [value UTF8String]",
+    "(unsigned int)(character - '0') < 10",
+    "(unsigned int)(character - 'a') < 6",
+    "(unsigned int)(character - 'A') < 6",
+    "[data appendBytes:&decoded length:1]",
 ]:
     if license_contract not in license_helpers:
         raise SystemExit(f"LicenseHelpers executable helper missing contract: {license_contract}")

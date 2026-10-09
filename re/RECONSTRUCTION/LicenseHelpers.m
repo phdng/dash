@@ -1,5 +1,6 @@
 // RECONSTRUCTION/LicenseHelpers.m — executable evidence-safe license helpers
 // Exact A4208 base64url decoding promoted session-235.
+// Exact A4304 hexadecimal decoding promoted session-236.
 // Full A397C verification, key iteration, filesystem, network, and verdict state remain excluded.
 
 #import "DuoDashShared.h"
@@ -18,4 +19,32 @@ NSData *DDLicenseDecodeBase64URL(NSString *value) {
         [base64 appendString:@"="];
 
     return [[NSData alloc] initWithBase64EncodedString:base64 options:0];
+}
+
+NSData *DDLicenseDecodeHex(NSString *value) {
+    NSUInteger length = value.length;
+    if ((length & 1) != 0 || length == 0)
+        return nil;
+
+    NSMutableData *data = [NSMutableData dataWithCapacity:length >> 1];
+    const char *bytes = [value UTF8String];
+    for (NSUInteger index = 0; index < length; index += 2) {
+        unsigned char decoded = 0;
+        for (NSUInteger half = 0; half < 2; ++half) {
+            int character = bytes[index + half];
+            unsigned char nibble;
+            if ((unsigned int)(character - '0') < 10) {
+                nibble = (unsigned char)(character - '0');
+            } else if ((unsigned int)(character - 'a') < 6) {
+                nibble = (unsigned char)(character - 'a' + 10);
+            } else if ((unsigned int)(character - 'A') < 6) {
+                nibble = (unsigned char)(character - 'A' + 10);
+            } else {
+                return nil;
+            }
+            decoded = half == 0 ? (unsigned char)(nibble << 4) : (unsigned char)(decoded | nibble);
+        }
+        [data appendBytes:&decoded length:1];
+    }
+    return data;
 }
