@@ -2,6 +2,7 @@
 
 // Exact pure string-value branch from 7EA4 promoted session-255.
 // Exact pure reapdelay string parser from 202D0 promoted session-256.
+// Exact pure holdsec parser from 163EC promoted session-257.
 // File reads, CFPreferences fallback, scheduling/host state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -31,5 +32,12 @@ double DDReapDelayOverrideValue(NSString *value) {
     double parsed = trimmed.doubleValue;
     if (parsed > 60.0 || parsed <= 0.0)
         return 0.0;
+    return parsed;
+}
+
+double DDHoldSecondsOverrideValue(NSString *value) {
+    double parsed = value ? value.doubleValue : 0.0;
+    if (parsed > 3600.0 || parsed < 10.0)
+        return 900.0;
     return parsed;
 }

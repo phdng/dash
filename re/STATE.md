@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-187 (session-256): Promote exact pure 202D0 reap-delay VALUE parser vào executable `ToggleValueHelpers.m`: trim whitespace/newlines, empty -> 0.0, parse `doubleValue`, accept only `(0,60]`, else 0.0. Không file read, host-slot orchestration, scheduling hay global state.
+BUILDABLE RUNTIME PHASE-188 (session-257): Promote exact pure 163EC holdsec VALUE parser vào executable `ToggleValueHelpers.m`: direct `doubleValue`, accept `[10,3600]` inclusive, otherwise exact default 900.0. Không file read, dispatch scheduling, host orchestration hay global state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-256):
-- R-255 executable reap-delay parser: exact 202D0 trim/double/range semantics now compile in ToggleValueHelpers.m.
+## LAST COMPLETED TASK (session-257):
+- R-256 executable hold-seconds parser: exact 163EC direct-double/range/default semantics now compile in ToggleValueHelpers.m.
 
 ## CURRENT TASK:
-- R-255 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-256 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-256 batch, continue toggle-matrix with another CONFIRMED VALUE parser. Prefer discoclose or holdsec if the parser can be isolated exactly from file I/O and orchestration. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-257 batch, continue toggle-matrix with another CONFIRMED VALUE parser. Prefer discoclose_secs if its default/range semantics can be isolated exactly. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

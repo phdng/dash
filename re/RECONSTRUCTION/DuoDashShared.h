@@ -58,6 +58,7 @@ FOUNDATION_EXPORT BOOL DDKeepAwakeShouldCountSlowBlank(double elapsedMillisecond
                                                        uint32_t currentCount);
 FOUNDATION_EXPORT NSUInteger DDFontFloorOverrideValue(NSString * _Nullable value);
 FOUNDATION_EXPORT double DDReapDelayOverrideValue(NSString * _Nullable value);
+FOUNDATION_EXPORT double DDHoldSecondsOverrideValue(NSString * _Nullable value);
 
 // Compile-safe recovery-routing integration seam (session-176+).
 // This consumes ReconstructionRuntime evidence contracts without executing
