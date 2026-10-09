@@ -269,6 +269,7 @@ FOUNDATION_EXPORT BOOL DDCrashMachOLoadCommandFits(uint32_t commandSize,
                                                     uint64_t remainingSize);
 FOUNDATION_EXPORT BOOL DDCrashMachOFatHeaderFits(uint64_t fileLength, uint32_t architectureCount);
 FOUNDATION_EXPORT BOOL DDCrashMachOSliceOffsetFits(uint64_t fileLength, uint32_t sliceOffset);
+FOUNDATION_EXPORT BOOL DDCrashMachOHasMinimumHeaderBytes(uint64_t fileLength);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeBase64URL(NSString * _Nullable value);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeHex(NSString * _Nullable value);
 FOUNDATION_EXPORT NSString *DDLicenseStatusTextForVerification(NSInteger verificationStatus,
