@@ -95,6 +95,13 @@ for perf_tuning_contract in [
     "CFGetTypeID(copied) != CFNumberGetTypeID()",
     "CFNumberGetValue((CFNumberRef)copied, kCFNumberIntType, &value)",
     "value = -2",
+    "DDPerfTweakEnabledFromPreferenceValue",
+    "CFGetTypeID(value) == CFBooleanGetTypeID()",
+    "CFBooleanGetValue((CFBooleanRef)value)",
+    "DDAirPlayTargetFPSForPerfEnabled",
+    "return enabled ? 15 : -1",
+    "DDAirPlayFPSPreferencesMatchTarget",
+    "return maxFPS == target && encoderFPSFixed == target",
 ]:
     if perf_tuning_contract not in perf_tuning:
         raise SystemExit(f"PerfTuning missing A81B14 contract: {perf_tuning_contract}")

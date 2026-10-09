@@ -231,6 +231,11 @@ FOUNDATION_EXPORT NSString *DDLicenseVerdictText(NSUInteger verificationStatus,
                                                 BOOL deviceHashPresent);
 FOUNDATION_EXPORT BOOL DDLicenseStatusRequiresIntervention(NSString * _Nullable status);
 FOUNDATION_EXPORT NSInteger DDAirPlayIntegerPreference(NSString *key);
+FOUNDATION_EXPORT BOOL DDPerfTweakEnabledFromPreferenceValue(CFTypeRef _Nullable value);
+FOUNDATION_EXPORT NSInteger DDAirPlayTargetFPSForPerfEnabled(BOOL enabled);
+FOUNDATION_EXPORT BOOL DDAirPlayFPSPreferencesMatchTarget(NSInteger maxFPS,
+                                                         NSInteger encoderFPSFixed,
+                                                         BOOL enabled);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

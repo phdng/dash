@@ -1,6 +1,7 @@
 #import "DuoDashShared.h"
 
 // Exact A81B14 read-only AirPlay integer preference helper promoted session-243.
+// Exact A8009C decision-only perf target/current-match semantics promoted session-244.
 // A8009C backup/write/restore/notify/global-state behavior remains excluded.
 
 NSInteger DDAirPlayIntegerPreference(NSString *key) {
@@ -19,4 +20,21 @@ NSInteger DDAirPlayIntegerPreference(NSString *key) {
     }
     CFRelease(copied);
     return value;
+}
+
+BOOL DDPerfTweakEnabledFromPreferenceValue(CFTypeRef value) {
+    return value != NULL
+        && CFGetTypeID(value) == CFBooleanGetTypeID()
+        && CFBooleanGetValue((CFBooleanRef)value);
+}
+
+NSInteger DDAirPlayTargetFPSForPerfEnabled(BOOL enabled) {
+    return enabled ? 15 : -1;
+}
+
+BOOL DDAirPlayFPSPreferencesMatchTarget(NSInteger maxFPS,
+                                        NSInteger encoderFPSFixed,
+                                        BOOL enabled) {
+    NSInteger target = DDAirPlayTargetFPSForPerfEnabled(enabled);
+    return maxFPS == target && encoderFPSFixed == target;
 }

@@ -155,5 +155,6 @@
 - [x] Session-241 executable license verdict-text contract: present nonce + refusal match -> `refused`; else nonzero status + missing device hash -> `no_device_id`; else verify code 0..10 -> exact evidenced verdict strings; >10 -> `unknown`; no blob/refusal/device state acquisition.
 - [x] Session-242 executable license intervention-status predicate contract: true exactly for revoked/clock/update/no-device-id UI texts; false for every other or nil input; no global/I/O/network side effects.
 - [x] Session-243 executable AirPlay perf integer-reader contract: CurrentUser/AnyHost `com.apple.airplay` lookup; missing -> -1; non-CFNumber or int conversion failure -> -2; valid CFNumber -> int; no backup/write/restore/notify/global-state side effects.
+- [x] Session-244 executable perf decision contract: only CFBoolean true enables perf; target FPS 15 when enabled else -1; settings match only when both AirPlay FPS keys equal target; no backup/write/restore/notify/global-state side effects.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
