@@ -184,5 +184,6 @@
 - [x] Session-270 executable live-present animation alpha-token contract: nil/empty -> invalid; nonnumeric nonempty -> 0.0 -> invalid; `0.49` -> invalid; `0.5` -> valid; `1.0` -> valid; `1.01` -> invalid; full list splitting/duration/easing/presenter behavior excluded.
 - [x] Session-271 executable live-present animation easing contract: nil/empty -> false; case-insensitive via `lowercaseString`; `lin`, `linear`, `LINEAR` -> true; `ease`, `spline`, other tokens -> false; full animation parsing/duration/presenter behavior excluded.
 - [x] Session-272 executable canvas portrait contract: nil/empty/trim-empty -> false; surrounding whitespace/newlines trimmed; exact `portrait` -> true; `Portrait`, `landscape`, and other tokens -> false; file/screen/rscale/layout side effects excluded.
+- [x] Session-273 executable GPS bundle contract: nil/empty/trim-empty -> `com.sensetechlab.duodash`; surrounding whitespace/newlines trimmed; any other nonempty trimmed bundle string preserved exactly; file/CoreLocation/authorization/manager side effects excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
