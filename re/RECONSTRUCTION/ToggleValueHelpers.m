@@ -1,4 +1,5 @@
 #import "DuoDashShared.h"
+#include <stdlib.h>
 
 // Exact pure string-value branch from 7EA4 promoted session-255.
 // Exact pure reapdelay string parser from 202D0 promoted session-256.
@@ -7,6 +8,7 @@
 // Exact pure splash-seconds parser from 358F0 promoted session-259.
 // Exact pure dash-settle parser from 1A18C promoted session-260.
 // Exact pure dash-launch-seconds parser from 19A08 promoted session-261.
+// Exact pure keypane-hidegap parser from 38E14 promoted session-262.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -88,4 +90,19 @@ double DDDashLaunchSecondsOverrideValue(NSString *value) {
     if (parsed >= 0.5 && parsed <= 30.0)
         result = parsed;
     return result;
+}
+
+double DDKeypaneHideGapOverrideValue(NSString *value) {
+    if (value.length == 0)
+        return 71.0;
+
+    const char *start = value.UTF8String;
+    if (!start)
+        return 71.0;
+
+    char *end = NULL;
+    double parsed = strtod(start, &end);
+    if (parsed > 200.0 || parsed < 0.0 || end == start)
+        return 71.0;
+    return parsed;
 }
