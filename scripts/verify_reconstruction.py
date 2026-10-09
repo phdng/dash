@@ -608,6 +608,8 @@ for respring_contract in [
     "prefix && prefix[0] ? 60.0 : 8.0",
     "DDRespringCooldownAllowsElapsed",
     "elapsedSeconds < 0.0 || elapsedSeconds >= threshold",
+    "DDRespringCarsleepGateAllows",
+    "notifyRegisterResult != 0 || sleepingState == 0",
 ]:
     if respring_contract not in respring:
         raise SystemExit(f"Respring executable cooldown missing contract: {respring_contract}")

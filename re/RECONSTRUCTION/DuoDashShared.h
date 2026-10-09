@@ -274,6 +274,8 @@ FOUNDATION_EXPORT BOOL DDRespringReenablePreferenceEnabled(CFTypeRef _Nullable v
 FOUNDATION_EXPORT double DDRespringCooldownSecondsForJailbreakPrefixCString(const char * _Nullable prefix);
 FOUNDATION_EXPORT BOOL DDRespringCooldownAllowsElapsed(double elapsedSeconds,
                                                        const char * _Nullable prefix);
+FOUNDATION_EXPORT BOOL DDRespringCarsleepGateAllows(int notifyRegisterResult,
+                                                    uint64_t sleepingState);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeBase64URL(NSString * _Nullable value);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeHex(NSString * _Nullable value);
 FOUNDATION_EXPORT NSString *DDLicenseStatusTextForVerification(NSInteger verificationStatus,
