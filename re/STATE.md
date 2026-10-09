@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-207 (session-276): Promote exact pure 218D8 pane-padding VALUE parser vào executable `ToggleValueHelpers.m`: nil/empty -> 4.0, direct `doubleValue`, preserve `(0,40]`, otherwise 4.0. Không file read, pane-round/layout/panefracs hay global state.
+BUILDABLE RUNTIME PHASE-208 (session-277): Switch sang crash metadata và promote exact pure 9EE88 image-name predicate vào executable `CrashReporting.m`: require `.dylib` suffix và prefix `DuoDash` hoặc `CarSleeperBT`. Không directory enumeration, file I/O/hash/copy hay report packaging state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-276):
-- R-275 executable pane-padding parser: exact 218D8 direct-double/range/default semantics now compile in ToggleValueHelpers.m.
+## LAST COMPLETED TASK (session-277):
+- R-276 executable crash image-name predicate: exact 9EE88 suffix/prefix selection semantics now compile in CrashReporting.m.
 
 ## CURRENT TASK:
-- R-275 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-276 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-276 batch, reassess remaining toggle VALUE candidates. Promote only with direct exact pure evidence; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-277 batch, continue crash metadata only with exact pure evidence, otherwise reassess another subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

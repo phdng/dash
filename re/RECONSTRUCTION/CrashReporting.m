@@ -48,6 +48,12 @@ NSString *DDCrashNormalizeIdentifier(NSString *value) {
     return normalized;
 }
 
+BOOL DDCrashShouldIncludeImageName(NSString *name) {
+    if (![name hasSuffix:@".dylib"])
+        return NO;
+    return [name hasPrefix:@"DuoDash"] || [name hasPrefix:@"CarSleeperBT"];
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,

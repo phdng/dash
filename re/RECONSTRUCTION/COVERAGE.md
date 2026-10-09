@@ -67,7 +67,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Subsystem | Artifact | Status | Ghi chú |
 |---|---|---|---|
 | License verify/clients/validators/unrefuse | License.m + LicenseHelpers.m (F-006/B-09/F-016/F-030) | SYNTH + BUILDABLE PARTIAL | MITM/server-side UNKNOWN; s235 A4208 base64url; s236 A4304 hex; s237 A54A4 status mapping; s238 A4744 printable-ASCII; s239 A4688 prefix classifier; s240 A5F60 action-status; s241 A774C exact verdict-text precedence/table from evidenced `off_1468F8`; s242 A7838 exact intervention-status predicate, all without blob/refusal/device acquisition or key/global/I/O/network state |
-| Crash reporting | CrashReporting.m (B-08/F-016) | SYNTH (APPROXIMATION) | session-034 từ evidence + strings |
+| Crash reporting | CrashReporting.m (B-08/F-016) | SYNTH + BUILDABLE PARTIAL | session-034 synthesis; s230 SHA256; s231 string comparator; s232 date comparator; s233 identifier sanitizer; s277 exact 9EE88 image-name predicate `.dylib` + `DuoDash`/`CarSleeperBT`; enumeration/I/O/packaging/network/status state remain excluded |
 | Respring/latch pipeline | Respring.m (F-023) | SYNTH (APPROXIMATION) | session-036: 80574/8097C/96D60 từ notify/toggle rows |
 
 ## H. Data / HUD / apps
