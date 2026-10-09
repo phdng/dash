@@ -535,6 +535,8 @@ for crash_contract in [
     "hasSuffix:@\".dylib\"",
     "hasPrefix:@\"DuoDash\"",
     "hasPrefix:@\"CarSleeperBT\"",
+    "DDCrashJailbreakFamilyForPrefixCString",
+    "prefix && prefix[0] ? @\"rootless\" : @\"rootful\"",
     "DDCrashReportingAdapterStart",
     "DDCrashReportingAdapterReady",
     "DDCrashReportingMayCollect",

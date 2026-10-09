@@ -54,6 +54,10 @@ BOOL DDCrashShouldIncludeImageName(NSString *name) {
     return [name hasPrefix:@"DuoDash"] || [name hasPrefix:@"CarSleeperBT"];
 }
 
+NSString *DDCrashJailbreakFamilyForPrefixCString(const char *prefix) {
+    return prefix && prefix[0] ? @"rootless" : @"rootful";
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,
