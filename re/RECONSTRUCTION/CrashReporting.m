@@ -30,6 +30,12 @@ NSComparisonResult DDCrashStringLengthDescendingComparator(NSString *left, NSStr
     return left.length > right.length ? NSOrderedAscending : NSOrderedDescending;
 }
 
+NSComparisonResult DDCrashDictionaryDateDescendingComparator(NSDictionary *left, NSDictionary *right) {
+    id rightDate = right[@"date"];
+    id leftDate = left[@"date"];
+    return [rightDate compare:leftDate];
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,

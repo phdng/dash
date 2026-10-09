@@ -274,3 +274,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-229] executable AnyHost CString string preference reader (session-230): exact 9DE28 sync + UTF8 key conversion + NSString-only return promoted, preserving empty strings; notify/global/private behavior remains excluded.
 - [x] [R-230] executable crash-report SHA-256 formatter (session-231): exact A2560 NSData SHA-256 lowercase hex + optional prefix truncation promoted; report I/O/upload/global state remains excluded.
 - [x] [R-231] executable crash-report string comparator (session-232): exact A3214 length-descending then lexical-ascending comparator promoted; regex/global/report I/O state remains excluded.
+- [x] [R-232] executable crash-report dictionary-date comparator (session-233): exact A3138 `date` extraction and descending `[rightDate compare:leftDate]` ordering promoted; regex/global/report I/O state remains excluded.
