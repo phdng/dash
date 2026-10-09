@@ -47,6 +47,10 @@ BOOL DDRespringCarsleepGateAllows(int notifyRegisterResult, uint64_t sleepingSta
     return notifyRegisterResult != 0 || sleepingState == 0;
 }
 
+BOOL DDRespringUsesDirectExecutionForWorkerCount(int workerCount) {
+    return workerCount < 1;
+}
+
 // ---- respring.request → 8097C (7F14C.c:129-135) ----
 static void DDOnRespringRequest(void) {
     // Guard 1 — kill-switch file: `duodash_norespring` tồn tại (stat!=0) → return,
