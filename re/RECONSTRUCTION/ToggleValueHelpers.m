@@ -15,6 +15,7 @@
 // Exact pure orientation parser from 3DFC8 promoted session-266.
 // Exact pure render-scale parser from 3B2D8 promoted session-267.
 // Exact pure live-present alpha parser from 2A610 promoted session-268.
+// Exact pure live-present target canonicalizer from 2A610 promoted session-269.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -169,4 +170,12 @@ float DDLivePresentAlphaOverrideValue(NSString *value) {
     if (parsed > 0.99999f || parsed < 0.9f)
         return 0.995f;
     return parsed;
+}
+
+NSString *DDLivePresentTargetOverrideValue(NSString *value) {
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString *trimmed = [value stringByTrimmingCharactersInSet:whitespace];
+    if ([trimmed isEqualToString:@"host"] || [trimmed isEqualToString:@"panes"])
+        return trimmed;
+    return @"root";
 }

@@ -136,6 +136,10 @@ for toggle_value_contract in [
     "DDLivePresentAlphaOverrideValue",
     "parsed > 0.99999f || parsed < 0.9f",
     "return 0.995f",
+    "DDLivePresentTargetOverrideValue",
+    "isEqualToString:@\"host\"",
+    "isEqualToString:@\"panes\"",
+    "return @\"root\"",
 ]:
     if toggle_value_contract not in toggle_value_helpers:
         raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")
