@@ -50,6 +50,7 @@ typedef NS_ENUM(NSInteger, DDRole) {
 FOUNDATION_EXPORT NSString * _Nullable DDRoleName(DDRole role);
 FOUNDATION_EXPORT BOOL DDRoleCStringHasSuffix(const char * _Nullable value,
                                              const char * _Nullable suffix);
+FOUNDATION_EXPORT DDRole DDRoleForExecutablePathCString(const char * _Nullable path);
 
 // Compile-safe recovery-routing integration seam (session-176+).
 // This consumes ReconstructionRuntime evidence contracts without executing

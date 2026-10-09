@@ -7,7 +7,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Subsystem | Artifact | Status | Ghi chú |
 |---|---|---|---|
 | Role dispatcher 44C0 | functions/44C0.md | RECORD (INFERRED) | + F-042 blocklist errata |
-| Role detect AC5FC/AC7A4 | InitRoleHelpers.m + F-011/F-012 | BUILDABLE PARTIAL | s249 exact AC7A4 role-code -> role-name mapping; s250 exact AC738 null-safe C-string suffix predicate; AC5FC suffix constants/path-cache classification and AC7A4 latch/filesystem/notify/arming/global state remain excluded |
+| Role detect AC5FC/AC7A4 | InitRoleHelpers.m + F-011/F-012 | BUILDABLE PARTIAL | s249 exact AC7A4 role-name mapping; s250 exact AC738 suffix predicate; s251 exact F-012 AC5FC supplied-path suffix classification 1/2/3/4/6 else 5; `_NSGetExecutablePath` acquisition/cache and AC7A4 latch/filesystem/notify/arming/global state remain excluded |
 | Mega-ctor 4C34 | — (EVIDENCE: F-003/F-019/F-020/F-021 + 4C34_import_defaults.md) | EVIDENCE-only | 1465 dòng, phases đã cover; record riêng là R-item mở |
 | Host ctor 27E20 | functions/27E20.md | RECORD (INFERRED) | + P0-3 blocked (4049C args) |
 | CarPlay ctor 163EC | functions/163EC.md | RECORD (INFERRED) | session-033 FULL direct read (529 dòng, B01-B11) + SE-163EC-001..006 |

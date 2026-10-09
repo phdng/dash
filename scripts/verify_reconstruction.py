@@ -105,6 +105,13 @@ for init_role_contract in [
     "strlen(suffix)",
     "valueLength >= suffixLength",
     "strcmp(value + valueLength - suffixLength, suffix) == 0",
+    "DDRoleForExecutablePathCString",
+    "\"/SpringBoard.app/SpringBoard\"",
+    "\"/Preferences.app/Preferences\"",
+    "\"/CarPlay.app/CarPlay\"",
+    "\"/mediaserverd\"",
+    "\"/TextInput/kbd\"",
+    "return DDRoleUIApp",
 ]:
     if init_role_contract not in init_role_helpers:
         raise SystemExit(f"InitRoleHelpers missing AC7A4 role-name contract: {init_role_contract}")

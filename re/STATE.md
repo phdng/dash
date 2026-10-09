@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-181 (session-250): Promote exact pure AC738 C-string suffix predicate vào executable `InitRoleHelpers.m`: null-safe, length gate bằng `strlen`, tail match bằng `strcmp`. Không đoán suffix constants của AC5FC; executable-path/cache classification và AC7A4 latch/filesystem/notify/arming/global state vẫn excluded.
+BUILDABLE RUNTIME PHASE-182 (session-251): Recheck F-012 và promote exact AC5FC supplied-path role classifier vào executable `InitRoleHelpers.m`: suffix order SpringBoard->1, Preferences->2, CarPlay->3, mediaserverd->4, TextInput/kbd->6, fallback->5. `_NSGetExecutablePath` acquisition/cache globals và AC7A4 state vẫn excluded.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-250):
-- R-249 executable init suffix predicate: exact AC738 null-safe C-string suffix semantics now compile in InitRoleHelpers.m.
+## LAST COMPLETED TASK (session-251):
+- R-250 executable supplied-path role classifier: exact F-012 AC5FC suffix constants/order now compile in InitRoleHelpers.m over caller-supplied paths.
 
 ## CURRENT TASK:
-- R-249 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-250 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-250 batch, do not synthesize full AC5FC classifier until its five suffix constants are independently resolved. Prefer switching subsystem; only return if pointer/disassembly evidence resolves those constants exactly. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-251 batch, init role pure classification scope is sufficiently covered. Switch subsystem rather than enabling `_NSGetExecutablePath`/cache globals or AC7A4 latch/filesystem/notify/arming state. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
