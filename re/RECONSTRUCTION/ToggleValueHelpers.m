@@ -16,6 +16,7 @@
 // Exact pure render-scale parser from 3B2D8 promoted session-267.
 // Exact pure live-present alpha parser from 2A610 promoted session-268.
 // Exact pure live-present target canonicalizer from 2A610 promoted session-269.
+// Exact pure live-present animation alpha-token validator from 2A610 promoted session-270.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -178,4 +179,15 @@ NSString *DDLivePresentTargetOverrideValue(NSString *value) {
     if ([trimmed isEqualToString:@"host"] || [trimmed isEqualToString:@"panes"])
         return trimmed;
     return @"root";
+}
+
+BOOL DDLivePresentAnimationAlphaTokenValue(NSString *value, float *outValue) {
+    if (value.length == 0)
+        return NO;
+    float parsed = value.floatValue;
+    if (parsed < 0.5f || parsed > 1.0f)
+        return NO;
+    if (outValue)
+        *outValue = parsed;
+    return YES;
 }
