@@ -211,6 +211,8 @@ FOUNDATION_EXPORT NSInteger DDAppBridgeBaseClassification(id _Nullable identifie
 FOUNDATION_EXPORT NSDictionary<NSString *, NSString *> *DDCopyAppBridgeSectionOverrides(void);
 FOUNDATION_EXPORT NSString * _Nullable DDCopyStringPreferenceAnyHostForCString(const char *key);
 FOUNDATION_EXPORT NSString *DDCrashSHA256Hex(NSData *data, NSUInteger prefixLength);
+FOUNDATION_EXPORT NSComparisonResult DDCrashStringLengthDescendingComparator(NSString *left,
+                                                                            NSString *right);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-231 (buildable reconstruction phase)_
+_Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-162 (session-231): Promote exact pure crash-report SHA-256 formatter `A2560` vào executable `CrashReporting.m`: hash exact NSData bytes, lowercase 64-char hex, optional prefix truncation. Không report I/O/tar-gzip/upload/queue/global state.
+BUILDABLE RUNTIME PHASE-163 (session-232): Promote exact pure crash-report string comparator `A3214` vào executable `CrashReporting.m`: longer strings sort first; equal length -> native compare:. Không regex/global/report I/O/archive/upload/private state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-231):
-- R-230 executable crash-report SHA-256 formatter: exact A2560 hashing/hex/prefix semantics now compile in CrashReporting.m.
+## LAST COMPLETED TASK (session-232):
+- R-231 executable crash-report string comparator: exact A3214 length-descending then lexical compare semantics now compile in CrashReporting.m.
 
 ## CURRENT TASK:
-- R-230 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-231 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-231 batch, inspect another pure crash-report formatter/filter only if independent from filesystem/archive/upload state; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-232 batch, inspect another pure crash-report helper only if independent from regex/global/filesystem/archive/upload state; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

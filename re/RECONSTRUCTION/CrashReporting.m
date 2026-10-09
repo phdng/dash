@@ -24,6 +24,12 @@ NSString *DDCrashSHA256Hex(NSData *data, NSUInteger prefixLength) {
     return hex;
 }
 
+NSComparisonResult DDCrashStringLengthDescendingComparator(NSString *left, NSString *right) {
+    if (left.length == right.length)
+        return [left compare:right];
+    return left.length > right.length ? NSOrderedAscending : NSOrderedDescending;
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,

@@ -143,5 +143,6 @@
 - [x] Session-229 executable AppBridge section-override contract: synchronize app preferences; copy `appbridge_app_sections`; non-dictionary -> empty dictionary; keep only nonempty NSString keys with exact lowercase `user`/`system` NSString values.
 - [x] Session-230 executable AnyHost CString string-preference contract: synchronize settings CurrentUser/AnyHost; convert C key with `stringWithUTF8String:`; copy value; return NSString including empty string; missing/non-string -> nil.
 - [x] Session-231 executable crash-report SHA-256 contract: hash exact NSData bytes with CC_SHA256; render 32 digest bytes as lowercase `%02x`; prefixLength=0 or >=64 returns full hex, otherwise returns exact leading substring.
+- [x] Session-232 executable crash-report string-comparator contract: longer string sorts first; shorter sorts after; equal-length strings return native `[left compare:right]` ordering unchanged.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
