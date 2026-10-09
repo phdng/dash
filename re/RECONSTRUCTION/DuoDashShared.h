@@ -85,6 +85,7 @@ FOUNDATION_EXPORT BOOL DDContentInsetOverrideValue(NSString * _Nullable value,
                                                     double * _Nullable outTop,
                                                     double * _Nullable outRight,
                                                     double * _Nullable outBottom);
+FOUNDATION_EXPORT double DDPanePaddingOverrideValue(NSString * _Nullable value);
 
 // Compile-safe recovery-routing integration seam (session-176+).
 // This consumes ReconstructionRuntime evidence contracts without executing

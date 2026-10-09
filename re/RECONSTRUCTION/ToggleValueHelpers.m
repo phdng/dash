@@ -23,6 +23,7 @@
 // Exact pure GPS bundle canonicalizer from 706A0 promoted session-273.
 // Exact pure rotate quarter-turn canonicalizer from 2BF84 promoted session-274.
 // Exact pure content-inset parser from 3620C promoted session-275.
+// Exact pure pane-padding parser from 218D8 promoted session-276.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -257,4 +258,13 @@ BOOL DDContentInsetOverrideValue(NSString *value,
     if (outBottom)
         *outBottom = bottom;
     return YES;
+}
+
+double DDPanePaddingOverrideValue(NSString *value) {
+    if (value.length == 0)
+        return 4.0;
+    double parsed = value.doubleValue;
+    if (parsed > 40.0 || parsed <= 0.0)
+        return 4.0;
+    return parsed;
 }

@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-206 (session-275): Promote exact whole pure 3620C content-inset parser vào executable `ToggleValueHelpers.m`: trim, require 4 comma-separated doubles, nonnegative, strict `left+right < width-40` và `top+bottom < height-40`, optional outputs on success. Không file read, prefs fallback, window/safe-area hay layout state.
+BUILDABLE RUNTIME PHASE-207 (session-276): Promote exact pure 218D8 pane-padding VALUE parser vào executable `ToggleValueHelpers.m`: nil/empty -> 4.0, direct `doubleValue`, preserve `(0,40]`, otherwise 4.0. Không file read, pane-round/layout/panefracs hay global state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-275):
-- R-274 executable content-inset parser: exact whole 3620C trim/split/range/margin semantics now compile in ToggleValueHelpers.m.
+## LAST COMPLETED TASK (session-276):
+- R-275 executable pane-padding parser: exact 218D8 direct-double/range/default semantics now compile in ToggleValueHelpers.m.
 
 ## CURRENT TASK:
-- R-274 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-275 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-275 batch, reassess remaining toggle VALUE candidates. Promote only with direct exact pure evidence; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-276 batch, reassess remaining toggle VALUE candidates. Promote only with direct exact pure evidence; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
