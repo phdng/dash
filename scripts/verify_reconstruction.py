@@ -614,6 +614,8 @@ for respring_contract in [
     "return workerCount < 1",
     "DDRespringPlannedMarkerFresh",
     "elapsedSeconds >= 0.0 && elapsedSeconds < 120.0",
+    "DDRespringUsesAlternatePlannedMarkerBasePath",
+    "![basePath isEqualToString:@\"/var/mobile/Library/DuoDash\"]",
 ]:
     if respring_contract not in respring:
         raise SystemExit(f"Respring executable cooldown missing contract: {respring_contract}")

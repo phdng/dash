@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-225 (session-294): Promote exact pure 9C7EC planned-respring marker freshness predicate vào executable `Respring.m`: `0 <= elapsedSeconds < 120`. Không file open/unlink/fsync/chmod/stat hay current-time acquisition.
+BUILDABLE RUNTIME PHASE-226 (session-295): Promote exact pure 9C8A8 alternate planned-marker base-path routing vào executable `Respring.m`: base path phải non-null và khác `/var/mobile/Library/DuoDash`. Không base-path acquisition, path construction hay file side effects.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-294):
-- R-293 executable planned-respring marker freshness predicate: exact 9C7EC `0<=elapsed<120` window now compile in Respring.m.
+## LAST COMPLETED TASK (session-295):
+- R-294 executable alternate planned-marker base-path predicate: exact 9C8A8 non-null/non-canonical routing gate now compile in Respring.m.
 
 ## CURRENT TASK:
-- R-293 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-294 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Reassess respring; switch subsystem if only stateful side-effect bodies remain. A2800 remains exhausted. Jailbroken-device smoke tests remain unresolved.
+- Reassess respring; switch subsystem if only stateful/path side-effect bodies remain. A2800 remains exhausted. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
