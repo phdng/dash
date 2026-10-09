@@ -169,5 +169,6 @@
 - [x] Session-255 executable font-floor override contract: surrounding whitespace/newlines trimmed; empty/non-digit -> 0; `7` -> 0; `8` -> 8; `96` -> 96; `97` -> 0; file/preferences/cache side effects excluded.
 - [x] Session-256 executable reap-delay contract: surrounding whitespace/newlines trimmed; empty -> 0.0; parsed `0`/negative -> 0.0; `0.1` -> 0.1; `60` -> 60; `>60` -> 0.0; file/host/scheduling/global side effects excluded.
 - [x] Session-257 executable hold-seconds contract: nil/empty/non-numeric -> 900 via `doubleValue` range fallback; `9.9` -> 900; `10` -> 10; `3600` -> 3600; `3600.1` -> 900; no explicit trim stage; file/scheduling/global side effects excluded.
+- [x] Session-258 executable disconnect-close seconds contract: nil/empty/trim-empty -> 12.0; trimmed `0` -> 0; `120` -> 120; negative or `>120` -> 12.0; surrounding whitespace is trimmed; file/generation/scheduling/global side effects excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

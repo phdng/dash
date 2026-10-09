@@ -104,6 +104,9 @@ for toggle_value_contract in [
     "DDHoldSecondsOverrideValue",
     "parsed > 3600.0 || parsed < 10.0",
     "return 900.0",
+    "DDDisconnectCloseSecondsOverrideValue",
+    "double result = 12.0",
+    "parsed >= 0.0 && parsed <= 120.0",
 ]:
     if toggle_value_contract not in toggle_value_helpers:
         raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")
