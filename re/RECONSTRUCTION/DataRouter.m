@@ -17,6 +17,14 @@
 //   crashreport.send/mapBgUpdate/mapBgClear (subsystems khác — cross-ref F-023/F-024/B-08).
 // 715C0: navprovider.relayed → 71664 (Coalesce, guard !started).
 
+BOOL DDDataRouterIsTrueDashNotification(CFStringRef name) {
+    if (!name)
+        return NO;
+    return CFEqual(name, CFSTR("com.sensetechlab.truedash.navUpdate")) ||
+           CFEqual(name, CFSTR("com.sensetechlab.truedash.speedLimit")) ||
+           CFEqual(name, CFSTR("com.sensetechlab.truedash.cameraAlert"));
+}
+
 // ---- Nav update race: GMaps vs Waze (duo + true variants) ----
 static void DDNavUpdate(BOOL isTrueDash) {
     // 7F5A4 (duodash.navUpdate + truedash.navUpdate chung):

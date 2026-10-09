@@ -80,6 +80,7 @@ host_flow_adapter = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
 picker_adapter = (RECON / "DDzPicker.m").read_text(encoding="utf-8")
 crash_reporting = (RECON / "CrashReporting.m").read_text(encoding="utf-8")
 respring = (RECON / "Respring.m").read_text(encoding="utf-8")
+data_router = (RECON / "DataRouter.m").read_text(encoding="utf-8")
 license_helpers = (RECON / "LicenseHelpers.m").read_text(encoding="utf-8")
 locale_flow = (RECON / "LocaleFlow.m").read_text(encoding="utf-8")
 prefs_resolver = (RECON / "PrefsResolver.m").read_text(encoding="utf-8")
@@ -619,6 +620,14 @@ for respring_contract in [
 ]:
     if respring_contract not in respring:
         raise SystemExit(f"Respring executable cooldown missing contract: {respring_contract}")
+for data_router_contract in [
+    "DDDataRouterIsTrueDashNotification",
+    "com.sensetechlab.truedash.navUpdate",
+    "com.sensetechlab.truedash.speedLimit",
+    "com.sensetechlab.truedash.cameraAlert",
+]:
+    if data_router_contract not in data_router:
+        raise SystemExit(f"DataRouter executable classifier missing contract: {data_router_contract}")
 for license_contract in [
     "DDLicenseDecodeBase64URL",
     "stringByReplacingOccurrencesOfString:@\"-\" withString:@\"+\"",
