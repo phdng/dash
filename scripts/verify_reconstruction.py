@@ -437,6 +437,12 @@ for license_contract in [
     "isKindOfClass:[NSString class]",
     "[value length] == 0",
     "character < 33 || character > 126",
+    "DDLicenseKeyPrefixIndex",
+    "hasPrefix:@\"duodash-key v1 \"",
+    "hasPrefix:@\"truedash-key v1 \"",
+    "return 0",
+    "return 1",
+    "return -1",
 ]:
     if license_contract not in license_helpers:
         raise SystemExit(f"LicenseHelpers executable helper missing contract: {license_contract}")

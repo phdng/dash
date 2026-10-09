@@ -150,5 +150,6 @@
 - [x] Session-236 executable license hex-decoder contract: empty/odd-length input -> nil; decode ASCII `0-9/a-f/A-F` pairs into bytes; invalid character -> nil; no full verification/key/global/I/O/network side effects.
 - [x] Session-237 executable license status-decision contract: 6 -> `Expired — connect to the internet`; 1 -> `Not activated`; other nonzero -> `Licence invalid`; zero + refusal match -> `Licence invalid`; zero + no refusal match -> `Active`; state acquisition remains excluded.
 - [x] Session-238 executable license printable-ASCII validator contract: non-NSString/empty -> false; every character must be within codepoint 33..126 inclusive; whitespace/control/non-ASCII -> false; no key/global/I/O/network side effects.
+- [x] Session-239 executable license key-prefix classifier contract: non-NSString/no match -> -1; `duodash-key v1 ` -> 0; `truedash-key v1 ` -> 1; DuoDash checked first; no key/global/I/O/network side effects.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

@@ -3,6 +3,7 @@
 // Exact A4304 hexadecimal decoding promoted session-236.
 // Exact A54A4 decision-only status mapping promoted session-237.
 // Exact A4744 printable-ASCII validator promoted session-238.
+// Exact A4688 key-prefix classifier promoted session-239.
 // Full A397C verification, key iteration, filesystem, network, and verdict state acquisition remain excluded.
 
 #import "DuoDashShared.h"
@@ -72,4 +73,16 @@ BOOL DDLicenseIsPrintableASCIIString(id value) {
             return NO;
     }
     return YES;
+}
+
+NSInteger DDLicenseKeyPrefixIndex(id value) {
+    if (![value isKindOfClass:[NSString class]])
+        return -1;
+
+    NSString *string = value;
+    if ([string hasPrefix:@"duodash-key v1 "])
+        return 0;
+    if ([string hasPrefix:@"truedash-key v1 "])
+        return 1;
+    return -1;
 }
