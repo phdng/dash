@@ -100,6 +100,11 @@ for init_role_contract in [
     "return @\"appbridge_uiapp\"",
     "return @\"kbdpoc\"",
     "return nil",
+    "DDRoleCStringHasSuffix",
+    "strlen(value)",
+    "strlen(suffix)",
+    "valueLength >= suffixLength",
+    "strcmp(value + valueLength - suffixLength, suffix) == 0",
 ]:
     if init_role_contract not in init_role_helpers:
         raise SystemExit(f"InitRoleHelpers missing AC7A4 role-name contract: {init_role_contract}")
