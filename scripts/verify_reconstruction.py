@@ -43,13 +43,14 @@ for required in [
     RECON / "NavProviderHelpers.m",
     RECON / "CameraRelayHelpers.m",
     RECON / "PerfTuning.m",
+    RECON / "VersionDeviceHelpers.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LicenseHelpers.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m", "PerfTuning.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LicenseHelpers.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m", "PerfTuning.m", "VersionDeviceHelpers.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -85,7 +86,19 @@ appbridge_tuning = (RECON / "AppBridgeTuning.m").read_text(encoding="utf-8")
 navprovider_helpers = (RECON / "NavProviderHelpers.m").read_text(encoding="utf-8")
 camera_relay_helpers = (RECON / "CameraRelayHelpers.m").read_text(encoding="utf-8")
 perf_tuning = (RECON / "PerfTuning.m").read_text(encoding="utf-8")
+version_device_helpers = (RECON / "VersionDeviceHelpers.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
+for version_device_contract in [
+    "DDVersionTupleAtLeast",
+    "installedMajor > requiredMajor",
+    "installedMajor < requiredMajor",
+    "installedMinor > requiredMinor",
+    "installedMinor < requiredMinor",
+    "return installedPatch >= requiredPatch",
+]:
+    if version_device_contract not in version_device_helpers:
+        raise SystemExit(f"VersionDeviceHelpers missing A4008 fallback contract: {version_device_contract}")
+
 for perf_tuning_contract in [
     "DDAirPlayIntegerPreference",
     "CFPreferencesCopyValue",

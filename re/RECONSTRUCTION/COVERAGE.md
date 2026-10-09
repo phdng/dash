@@ -76,7 +76,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | DataRouter/nav | DataRouter.m (F-022) | SYNTH | Worker bodies cross-ref |
 | HUD/BLE/speed | HudBle.m (F-024 + strings) | SYNTH | Scan/pairing bodies UNKNOWN |
 | DuoDash.app / DuoDashKey.app / Prefs.bundle | F-007/F-008 (essentials persisted) | EVIDENCE-only | Full KeyApp 255-func breakdown chỉ trong conversation session-001 (nguy cơ mất như sweep-002 — KHÔNG re-derive trừ khi cần) |
-| Version/device | F-030/B-20 | EVIDENCE-only | Nhỏ, ít behavior (fail-soft) |
+| Version/device | F-030/B-20 + VersionDeviceHelpers.m | BUILDABLE PARTIAL | s245 exact A4008 fallback major/minor/patch `installed >= required` comparator; weak-import availability path, global init, plist parsing, sysctl/device telemetry remain excluded |
 
 ## I. IPC / notify / IPC model
 | Subsystem | Artifact | Status | Ghi chú |

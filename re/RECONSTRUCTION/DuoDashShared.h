@@ -236,6 +236,12 @@ FOUNDATION_EXPORT NSInteger DDAirPlayTargetFPSForPerfEnabled(BOOL enabled);
 FOUNDATION_EXPORT BOOL DDAirPlayFPSPreferencesMatchTarget(NSInteger maxFPS,
                                                          NSInteger encoderFPSFixed,
                                                          BOOL enabled);
+FOUNDATION_EXPORT BOOL DDVersionTupleAtLeast(NSInteger installedMajor,
+                                            NSInteger installedMinor,
+                                            NSInteger installedPatch,
+                                            NSInteger requiredMajor,
+                                            NSInteger requiredMinor,
+                                            NSInteger requiredPatch);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).

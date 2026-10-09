@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-175 (session-244): Promote exact decision-only core của `A8009C` vào executable `PerfTuning.m`: CFBoolean true mới enable perf; target AirPlay FPS = 15 khi enable, -1 khi disable; current pair match chỉ khi cả maxFPS và encoderFPSFixed bằng target. Không backup/write/restore/notify/global state.
+BUILDABLE RUNTIME PHASE-176 (session-245): Switch subsystem sang Version/device và promote exact pure fallback comparator từ `A4008` vào executable `VersionDeviceHelpers.m`: so major/minor/patch theo thứ tự và trả `installed >= required`. Không weak-import availability check, global init, SystemVersion.plist parsing hay device telemetry.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-244):
-- R-243 executable perf decisions: exact A8009C CFBoolean-enable, target 15/-1, and current-pair-match semantics now compile in PerfTuning.m.
+## LAST COMPLETED TASK (session-245):
+- R-244 executable version tuple comparator: exact A4008 fallback major/minor/patch comparison now compiles in VersionDeviceHelpers.m.
 
 ## CURRENT TASK:
-- R-243 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-244 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-244 batch, inspect A7FE78 only if a pure/read-only decision can be separated from notify token/global state; otherwise switch subsystem. A8009C mutation/backup path remains excluded. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-245 batch, inspect another small Version/device helper only if pure/read-only and independent of global/system mutation; otherwise switch subsystem. A2720 sysctl telemetry is read-only but environment-coupled and may remain excluded unless it adds clear value. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

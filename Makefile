@@ -21,7 +21,8 @@ DuoDashReconstruction_FILES = \
 	re/RECONSTRUCTION/AppBridgeTuning.m \
 	re/RECONSTRUCTION/NavProviderHelpers.m \
 	re/RECONSTRUCTION/CameraRelayHelpers.m \
-	re/RECONSTRUCTION/PerfTuning.m
+	re/RECONSTRUCTION/PerfTuning.m \
+	re/RECONSTRUCTION/VersionDeviceHelpers.m
 DuoDashReconstruction_CFLAGS = -fobjc-arc -Wall -Wextra
 DuoDashReconstruction_FRAMEWORKS = Foundation CoreFoundation
 DuoDashReconstruction_LIBRARIES = proc
