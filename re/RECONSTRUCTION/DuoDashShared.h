@@ -68,6 +68,7 @@ FOUNDATION_EXPORT BOOL DDSimulatedSpeedOverrideValue(NSString * _Nullable value,
                                                       uint8_t * _Nullable outValue);
 FOUNDATION_EXPORT BOOL DDForceIOOverrideEnabled(NSString * _Nullable value);
 FOUNDATION_EXPORT double DDMatAlphaOverrideValue(NSString * _Nullable value);
+FOUNDATION_EXPORT NSInteger DDOrientationOverrideValue(NSString * _Nullable value);
 
 // Compile-safe recovery-routing integration seam (session-176+).
 // This consumes ReconstructionRuntime evidence contracts without executing

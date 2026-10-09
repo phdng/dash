@@ -12,6 +12,7 @@
 // Exact pure simulated-speed parser from 71780 promoted session-263.
 // Exact pure force-IO string decision from 42124 promoted session-264.
 // Exact pure mat-alpha parser from 33DB4 promoted session-265.
+// Exact pure orientation parser from 3DFC8 promoted session-266.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -142,5 +143,12 @@ double DDMatAlphaOverrideValue(NSString *value) {
     double parsed = value.doubleValue;
     if (parsed > 1.0 || parsed <= 0.0)
         return 0.996078431;
+    return parsed;
+}
+
+NSInteger DDOrientationOverrideValue(NSString *value) {
+    NSInteger parsed = value ? value.integerValue : 0;
+    if (parsed < 1 || parsed > 4)
+        return 1;
     return parsed;
 }
