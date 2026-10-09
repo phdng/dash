@@ -467,6 +467,11 @@ for license_contract in [
     "case 9: return @\"store_failed\"",
     "case 10: return @\"wrong_product\"",
     "default: return @\"unknown\"",
+    "DDLicenseStatusRequiresIntervention",
+    "isEqualToString:@\"Licence revoked\"",
+    "isEqualToString:@\"Check date and time\"",
+    "isEqualToString:@\"Update DuoDash\"",
+    "isEqualToString:@\"Cannot identify this device\"",
 ]:
     if license_contract not in license_helpers:
         raise SystemExit(f"LicenseHelpers executable helper missing contract: {license_contract}")

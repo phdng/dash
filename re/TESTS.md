@@ -153,5 +153,6 @@
 - [x] Session-239 executable license key-prefix classifier contract: non-NSString/no match -> -1; `duodash-key v1 ` -> 0; `truedash-key v1 ` -> 1; DuoDash checked first; no key/global/I/O/network side effects.
 - [x] Session-240 executable license terminal status-action contract: action 1 revoked, 2 clock, 3 update, 4 invalid, 5 no-device-id text; other actions fall back to exact A54A4 status/refusal mapping; no delete/reseal/backoff/random/I/O/global/network side effects.
 - [x] Session-241 executable license verdict-text contract: present nonce + refusal match -> `refused`; else nonzero status + missing device hash -> `no_device_id`; else verify code 0..10 -> exact evidenced verdict strings; >10 -> `unknown`; no blob/refusal/device state acquisition.
+- [x] Session-242 executable license intervention-status predicate contract: true exactly for revoked/clock/update/no-device-id UI texts; false for every other or nil input; no global/I/O/network side effects.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

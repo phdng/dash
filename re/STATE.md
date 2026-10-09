@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-172 (session-241): Promote exact decision-only license verdict-text mapping `A774C` vào executable `LicenseHelpers.m`: refused precedence, no-device-id override cho nonzero verify code, rồi exact code 0..10 table/unknown. Không blob/refusal/device acquisition, key/global/filesystem/network/private state.
+BUILDABLE RUNTIME PHASE-173 (session-242): Promote exact pure license intervention-status predicate `A7838` vào executable `LicenseHelpers.m`: true chỉ cho `Licence revoked`, `Check date and time`, `Update DuoDash`, `Cannot identify this device`; còn lại false. Không global/filesystem/network/private state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-241):
-- R-240 executable license verdict-text helper: exact A774C refused/no-device-id/code-table precedence now compiles in LicenseHelpers.m while all state acquisition remains excluded.
+## LAST COMPLETED TASK (session-242):
+- R-241 executable license intervention-status predicate: exact A7838 four-string match semantics now compile in LicenseHelpers.m.
 
 ## CURRENT TASK:
-- R-240 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-241 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-241 batch, inspect another pure/decision-only helper only if independent from key/global/filesystem/network state; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-242 batch, switch subsystem if remaining license candidates are stateful/networked; otherwise continue only with independent pure/decision helpers. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

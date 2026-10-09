@@ -6,6 +6,7 @@
 // Exact A4688 key-prefix classifier promoted session-239.
 // Exact A5F60 terminal status-action mapping promoted session-240.
 // Exact A774C verdict-text decision promoted session-241.
+// Exact A7838 blocking-status predicate promoted session-242.
 // Full A397C verification, key iteration, filesystem, network, retry/backoff, and verdict state acquisition remain excluded.
 
 #import "DuoDashShared.h"
@@ -131,4 +132,11 @@ NSString *DDLicenseVerdictText(NSUInteger verificationStatus,
         case 10: return @"wrong_product";
         default: return @"unknown";
     }
+}
+
+BOOL DDLicenseStatusRequiresIntervention(NSString *status) {
+    return [status isEqualToString:@"Licence revoked"]
+        || [status isEqualToString:@"Check date and time"]
+        || [status isEqualToString:@"Update DuoDash"]
+        || [status isEqualToString:@"Cannot identify this device"];
 }
