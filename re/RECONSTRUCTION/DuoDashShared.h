@@ -267,6 +267,7 @@ FOUNDATION_EXPORT BOOL DDCrashMachOLoadCommandIsUUID(uint32_t command, uint32_t 
 FOUNDATION_EXPORT BOOL DDCrashMachOLoadCommandFits(uint32_t commandSize,
                                                     uint64_t cumulativeSize,
                                                     uint64_t remainingSize);
+FOUNDATION_EXPORT BOOL DDCrashMachOFatHeaderFits(uint64_t fileLength, uint32_t architectureCount);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeBase64URL(NSString * _Nullable value);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeHex(NSString * _Nullable value);
 FOUNDATION_EXPORT NSString *DDLicenseStatusTextForVerification(NSInteger verificationStatus,

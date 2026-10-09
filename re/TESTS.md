@@ -198,5 +198,6 @@
 - [x] Session-284 executable 64-bit Mach-O magic contract: `0xFEEDFACF` -> true; thin 32-bit magic, swapped 64-bit magic, fat magics and every other value -> false; file/slice-bounds/load-command/UUID side effects excluded.
 - [x] Session-285 executable Mach-O UUID-command contract: command `27` with size `24` or larger -> true; command `27` with size below `24` -> false; any other command -> false regardless of size; iteration/bounds/UUID/artifact side effects excluded.
 - [x] Session-286 executable Mach-O load-command bounds contract: `commandSize < 8` -> false; otherwise cumulative size equal to remaining is valid, cumulative size greater than remaining is invalid; pointer/iteration/count/UUID side effects excluded.
+- [x] Session-287 executable fat-Mach-O header contract: file length below 8 -> false; architecture count 17+ -> false; count 0 requires only 8 bytes; equality at `8 + 20*count` is valid; one byte shorter is invalid; file/endian/table/iteration side effects excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

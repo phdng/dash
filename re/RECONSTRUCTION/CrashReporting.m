@@ -95,6 +95,12 @@ BOOL DDCrashMachOLoadCommandFits(uint32_t commandSize,
     return commandSize >= 8U && cumulativeSize <= remainingSize;
 }
 
+BOOL DDCrashMachOFatHeaderFits(uint64_t fileLength, uint32_t architectureCount) {
+    if (fileLength < 8U || architectureCount > 0x10U)
+        return NO;
+    return fileLength >= (uint64_t)(20U * architectureCount + 8U);
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,
