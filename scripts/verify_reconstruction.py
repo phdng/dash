@@ -622,21 +622,14 @@ for respring_contract in [
         raise SystemExit(f"Respring executable cooldown missing contract: {respring_contract}")
 for data_router_contract in [
     "DDDataRouterIsTrueDashNotification",
-    "com.sensetechlab.truedash.navUpdate",
-    "com.sensetechlab.truedash.speedLimit",
-    "com.sensetechlab.truedash.cameraAlert",
+    "return DDNavProviderIsLegacyTrueDashNotification(name)",
     "DDDataRouterSourceCode",
-    "isEqualToString:@\"waze\"",
-    "isEqualToString:@\"google_maps\"",
-    "isEqualToString:@\"provider\"",
+    "return DDCameraRelaySourceCode(source)",
     "DDDataRouterProviderPayloadMatches",
-    "payload[@\"v\"]",
-    "[version intValue] != 2",
-    "payload[@\"provider\"]",
-    "isEqualToString:provider",
+    "return DDNavProviderPayloadMatchesProvider(payload, provider)",
 ]:
     if data_router_contract not in data_router:
-        raise SystemExit(f"DataRouter executable classifier missing contract: {data_router_contract}")
+        raise SystemExit(f"DataRouter executable canonical-helper delegation missing contract: {data_router_contract}")
 for license_contract in [
     "DDLicenseDecodeBase64URL",
     "stringByReplacingOccurrencesOfString:@\"-\" withString:@\"+\"",

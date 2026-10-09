@@ -1,23 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
+_Last updated: 2026-10-09 session-299 (buildable reconstruction phase)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-229 (session-298): Promote exact pure 83EB4 DataRouter provider-payload matcher vào executable `DataRouter.m`: payload phải NSDictionary, `v` là NSNumber intValue==2, `provider` là NSString equal target. Không file/cache/timestamp/submit/publish/worker state.
+BUILDABLE RUNTIME PHASE-230 (session-299): Canonicalize DataRouter pure-helper ownership. Three DataRouter entry points from sessions 296-298 now delegate to the already-verified canonical NavProvider/CameraRelay helpers for exact 83FDC/84258/83EB4 semantics, eliminating duplicate implementations without changing behavior or side-effect boundaries.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-298):
-- R-297 executable DataRouter provider-payload matcher: exact 83EB4 typed v==2/provider equality gate now compile in DataRouter.m.
+## LAST COMPLETED TASK (session-299):
+- R-298 DataRouter canonical-helper delegation: `DDDataRouterIsTrueDashNotification`, `DDDataRouterSourceCode`, and `DDDataRouterProviderPayloadMatches` now delegate to the canonical helpers already compiled and verified in sessions 221-224.
 
 ## CURRENT TASK:
-- R-297 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-298 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Continue DataRouter only with another direct exact pure decision; otherwise switch subsystem. Candidate 83250 timestamp extractor remains available. Respring and A2800 remain largely exhausted. Jailbroken-device smoke tests remain unresolved.
+- Switch away from the saturated DataRouter/NavProvider seam unless a genuinely new direct exact helper is recovered. Do not re-promote 83250, 83FDC, 84258, or 83EB4: canonical executable helpers already exist. Respring and A2800 remain largely exhausted. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-166):
-- Sửa: `RECONSTRUCTION/ReconstructionRuntime.{h,m}`, `BUILD.md`, `COVERAGE.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
-- Mới: `LOG/session-166.md`.
+## FILES CHANGED (session-299):
+- Sửa: `RECONSTRUCTION/DataRouter.m`, `RECONSTRUCTION/BUILD.md`, `scripts/verify_reconstruction.py`, STATE/TODO/TESTS.
+- Mới: `LOG/session-299.md`.
 
 ## TEST STATUS:
-Session-165 GitHub Actions build GREEN (`723505f`, user-confirmed). Session-166 `python scripts/verify_reconstruction.py` + `python -m py_compile scripts/verify_reconstruction.py` PASS sau runtime edit; sẽ rerun final verifier + `git diff --check` trước commit. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.
+Session-299 PASS: `python scripts/verify_reconstruction.py`; PASS: `python -m py_compile scripts/verify_reconstruction.py`; PASS: `git diff --check` (LF/CRLF warnings only). CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo; established project override applies. Per user workflow, assistant chỉ commit local; không push. Dynamic device tests vẫn pending.

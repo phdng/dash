@@ -18,31 +18,15 @@
 // 715C0: navprovider.relayed → 71664 (Coalesce, guard !started).
 
 BOOL DDDataRouterIsTrueDashNotification(CFStringRef name) {
-    if (!name)
-        return NO;
-    return CFEqual(name, CFSTR("com.sensetechlab.truedash.navUpdate")) ||
-           CFEqual(name, CFSTR("com.sensetechlab.truedash.speedLimit")) ||
-           CFEqual(name, CFSTR("com.sensetechlab.truedash.cameraAlert"));
+    return DDNavProviderIsLegacyTrueDashNotification(name);
 }
 
 NSInteger DDDataRouterSourceCode(NSString *source) {
-    if ([source isEqualToString:@"waze"])
-        return 2;
-    if ([source isEqualToString:@"google_maps"])
-        return 1;
-    if ([source isEqualToString:@"provider"])
-        return 3;
-    return 0;
+    return DDCameraRelaySourceCode(source);
 }
 
 BOOL DDDataRouterProviderPayloadMatches(id payload, NSString *provider) {
-    if (![payload isKindOfClass:[NSDictionary class]])
-        return NO;
-    id version = payload[@"v"];
-    if (![version isKindOfClass:[NSNumber class]] || [version intValue] != 2)
-        return NO;
-    id payloadProvider = payload[@"provider"];
-    return [payloadProvider isKindOfClass:[NSString class]] && [payloadProvider isEqualToString:provider];
+    return DDNavProviderPayloadMatchesProvider(payload, provider);
 }
 
 // ---- Nav update race: GMaps vs Waze (duo + true variants) ----
