@@ -10,6 +10,7 @@
 // Exact pure dash-launch-seconds parser from 19A08 promoted session-261.
 // Exact pure keypane-hidegap parser from 38E14 promoted session-262.
 // Exact pure simulated-speed parser from 71780 promoted session-263.
+// Exact pure force-IO string decision from 42124 promoted session-264.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -126,4 +127,10 @@ BOOL DDSimulatedSpeedOverrideValue(NSString *value, uint8_t *outValue) {
     if (outValue)
         *outValue = (uint8_t)parsed;
     return YES;
+}
+
+BOOL DDForceIOOverrideEnabled(NSString *value) {
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString *trimmed = [value stringByTrimmingCharactersInSet:whitespace];
+    return [trimmed isEqualToString:@"1"];
 }

@@ -122,6 +122,8 @@ for toggle_value_contract in [
     "DDSimulatedSpeedOverrideValue",
     "c < '0' || c > '9'",
     "parsed > 255",
+    "DDForceIOOverrideEnabled",
+    "isEqualToString:@\"1\"",
 ]:
     if toggle_value_contract not in toggle_value_helpers:
         raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")

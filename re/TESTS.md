@@ -175,5 +175,6 @@
 - [x] Session-261 executable dash-launch seconds contract: nil/empty -> 1.5; direct doubleValue; `0.49` -> 1.5; `0.5` -> 0.5; `30` -> 30; `30.01` -> 1.5; no explicit trim; file/scheduling/callback side effects excluded.
 - [x] Session-262 executable keypane hide-gap contract: nil/empty/no-conversion -> 71; `0` -> 0; `200` -> 200; negative/`>200` -> 71; `12abc` -> 12 because trailing text is allowed; file/keypane-state side effects excluded.
 - [x] Session-263 executable simulated-speed contract: nil/empty/non-digit -> invalid; surrounding whitespace/newlines trimmed; `0` -> valid + byte 0; `255` -> valid + byte 255; `256` -> invalid; file/media-time/cache/global side effects excluded.
+- [x] Session-264 executable force-IO string contract: nil/empty/trim-empty -> false; `1` and surrounding-whitespace `1` -> true; `01`, `true`, `1x` -> false; file I/O excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
