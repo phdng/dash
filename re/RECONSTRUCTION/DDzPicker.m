@@ -48,7 +48,6 @@ DDPickerAdmissionDecision DDResolvePickerAdmission(BOOL hostPresent) {
 // Shell/hosting classes: DDzCore.m (DDz1 63 + DDz2 35 + division + cross-links).
 
 // ---- DDz3 = app-picker/overlay UI controller (153 methods, 0x524d4–0x69c4c, instance-only, không +shared) ----
-static void DDz3Map(void) {
     // Cụm (addr-range + vai trò; thân HYPOTHESIS):
     //   init host/slotBids (2) → handles/pills/gutter + drag (17: 52A18–5794C) →
     //   open/close/dismiss picker (57B28–59ABC) → scroll/grid/tile (59C54–5B950) →
@@ -62,12 +61,9 @@ static void DDz3Map(void) {
     //   swap/maximize/buildShellIfNeeded/installContent/resetHostingState/hostBundleId/
     //   spikeCreateSlot/spikeHostSlots...) — tầng UI trên cùng điều phối shell+hosting
     //   (HYPOTHESIS kiến trúc, data CONFIRMED).
-}
 
 // ---- buildKitLevel:pane: 0x63CE4 (asm-only, không decompile) ----
-static void DDBuildKitLevel(void) {
     // Head 40 dòng đầu asm: callers none, ~100 callees (63CE4.asm:1-7),
     //   prologue stack 0xB90 + objc_initWeak +
     //   bubblePaneSelectableForOpenSlot/bubblePaneIdForOpenSlot (63D3C-63D5C).
     // Nội dung đầy đủ UNKNOWN — không suy thân, không placeholder semantics.
-}

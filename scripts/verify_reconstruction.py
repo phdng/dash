@@ -79,6 +79,9 @@ runtime = (RECON / "ReconstructionRuntime.m").read_text(encoding="utf-8")
 recovery_routing = (RECON / "RecoveryRouting.m").read_text(encoding="utf-8")
 host_flow_adapter = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
 picker_adapter = (RECON / "DDzPicker.m").read_text(encoding="utf-8")
+for documentary_stub in ("static void DDz3Map(void)", "static void DDBuildKitLevel(void)"):
+    if documentary_stub in picker_adapter:
+        raise SystemExit(f"DDzPicker documentary-only stub compiled as unused function: {documentary_stub}")
 crash_reporting = (RECON / "CrashReporting.m").read_text(encoding="utf-8")
 respring = (RECON / "Respring.m").read_text(encoding="utf-8")
 data_router = (RECON / "DataRouter.m").read_text(encoding="utf-8")
