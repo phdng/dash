@@ -160,6 +160,11 @@ for toggle_value_contract in [
     "DDPanePaddingOverrideValue",
     "parsed > 40.0 || parsed <= 0.0",
     "return 4.0",
+    "DDPaneFractionsOverrideValue",
+    "if (value.length == 0)",
+    "componentsSeparatedByString:@\",\"",
+    "parts.count > 0 ? [parts[0] integerValue] : 0",
+    "parts.count >= 2 ? [parts[1] integerValue] : 0",
 ]:
     if toggle_value_contract not in toggle_value_helpers:
         raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")

@@ -24,6 +24,7 @@
 // Exact pure rotate quarter-turn canonicalizer from 2BF84 promoted session-274.
 // Exact pure content-inset parser from 3620C promoted session-275.
 // Exact pure pane-padding parser from 218D8 promoted session-276.
+// Exact pure panefracs parser from 218D8 promoted session-300.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -267,4 +268,23 @@ double DDPanePaddingOverrideValue(NSString *value) {
     if (parsed > 40.0 || parsed <= 0.0)
         return 4.0;
     return parsed;
+}
+
+BOOL DDPaneFractionsOverrideValue(NSString *value,
+                                  NSInteger *outFractionA,
+                                  NSInteger *outFractionB) {
+    if (value.length == 0)
+        return NO;
+
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString *trimmed = [value stringByTrimmingCharactersInSet:whitespace];
+    NSArray<NSString *> *parts = [trimmed componentsSeparatedByString:@","];
+    NSInteger fractionA = parts.count > 0 ? [parts[0] integerValue] : 0;
+    NSInteger fractionB = parts.count >= 2 ? [parts[1] integerValue] : 0;
+
+    if (outFractionA)
+        *outFractionA = fractionA;
+    if (outFractionB)
+        *outFractionB = fractionB;
+    return YES;
 }
