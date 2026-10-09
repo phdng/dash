@@ -11,6 +11,7 @@
 // Exact pure keypane-hidegap parser from 38E14 promoted session-262.
 // Exact pure simulated-speed parser from 71780 promoted session-263.
 // Exact pure force-IO string decision from 42124 promoted session-264.
+// Exact pure mat-alpha parser from 33DB4 promoted session-265.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -133,4 +134,13 @@ BOOL DDForceIOOverrideEnabled(NSString *value) {
     NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     NSString *trimmed = [value stringByTrimmingCharactersInSet:whitespace];
     return [trimmed isEqualToString:@"1"];
+}
+
+double DDMatAlphaOverrideValue(NSString *value) {
+    if (value.length == 0)
+        return 0.996078431;
+    double parsed = value.doubleValue;
+    if (parsed > 1.0 || parsed <= 0.0)
+        return 0.996078431;
+    return parsed;
 }

@@ -124,6 +124,9 @@ for toggle_value_contract in [
     "parsed > 255",
     "DDForceIOOverrideEnabled",
     "isEqualToString:@\"1\"",
+    "DDMatAlphaOverrideValue",
+    "parsed > 1.0 || parsed <= 0.0",
+    "return 0.996078431",
 ]:
     if toggle_value_contract not in toggle_value_helpers:
         raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")
