@@ -62,6 +62,7 @@ FOUNDATION_EXPORT double DDHoldSecondsOverrideValue(NSString * _Nullable value);
 FOUNDATION_EXPORT double DDDisconnectCloseSecondsOverrideValue(NSString * _Nullable value);
 FOUNDATION_EXPORT double DDSplashSecondsOverrideValue(NSString * _Nullable value);
 FOUNDATION_EXPORT double DDDashSettleSecondsOverrideValue(NSString * _Nullable value);
+FOUNDATION_EXPORT double DDDashLaunchSecondsOverrideValue(NSString * _Nullable value);
 
 // Compile-safe recovery-routing integration seam (session-176+).
 // This consumes ReconstructionRuntime evidence contracts without executing
