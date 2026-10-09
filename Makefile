@@ -24,7 +24,8 @@ DuoDashReconstruction_FILES = \
 	re/RECONSTRUCTION/PerfTuning.m \
 	re/RECONSTRUCTION/VersionDeviceHelpers.m \
 	re/RECONSTRUCTION/InitRoleHelpers.m \
-	re/RECONSTRUCTION/CarPlaySpoofHelpers.m
+	re/RECONSTRUCTION/CarPlaySpoofHelpers.m \
+	re/RECONSTRUCTION/ToggleValueHelpers.m
 DuoDashReconstruction_CFLAGS = -fobjc-arc -Wall -Wextra
 DuoDashReconstruction_FRAMEWORKS = Foundation CoreFoundation
 DuoDashReconstruction_LIBRARIES = proc

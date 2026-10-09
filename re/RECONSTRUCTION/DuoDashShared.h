@@ -56,6 +56,7 @@ FOUNDATION_EXPORT NSInteger DDAZCarPlaySpoofedResult(BOOL forceDisconnected,
 FOUNDATION_EXPORT BOOL DDKeepAwakeNavigationBundle(NSString * _Nullable bundleIdentifier);
 FOUNDATION_EXPORT BOOL DDKeepAwakeShouldCountSlowBlank(double elapsedMilliseconds,
                                                        uint32_t currentCount);
+FOUNDATION_EXPORT NSUInteger DDFontFloorOverrideValue(NSString * _Nullable value);
 
 // Compile-safe recovery-routing integration seam (session-176+).
 // This consumes ReconstructionRuntime evidence contracts without executing

@@ -46,13 +46,14 @@ for required in [
     RECON / "VersionDeviceHelpers.m",
     RECON / "InitRoleHelpers.m",
     RECON / "CarPlaySpoofHelpers.m",
+    RECON / "ToggleValueHelpers.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LicenseHelpers.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m", "PerfTuning.m", "VersionDeviceHelpers.m", "InitRoleHelpers.m", "CarPlaySpoofHelpers.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LicenseHelpers.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m", "PerfTuning.m", "VersionDeviceHelpers.m", "InitRoleHelpers.m", "CarPlaySpoofHelpers.m", "ToggleValueHelpers.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -91,7 +92,17 @@ perf_tuning = (RECON / "PerfTuning.m").read_text(encoding="utf-8")
 version_device_helpers = (RECON / "VersionDeviceHelpers.m").read_text(encoding="utf-8")
 init_role_helpers = (RECON / "InitRoleHelpers.m").read_text(encoding="utf-8")
 carplay_spoof_helpers = (RECON / "CarPlaySpoofHelpers.m").read_text(encoding="utf-8")
+toggle_value_helpers = (RECON / "ToggleValueHelpers.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
+for toggle_value_contract in [
+    "DDFontFloorOverrideValue",
+    "stringByTrimmingCharactersInSet",
+    "c < '0' || c > '9'",
+    "parsed < 8 || parsed > 96",
+]:
+    if toggle_value_contract not in toggle_value_helpers:
+        raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")
+
 for carplay_spoof_contract in [
     "DDAZCarPlaySpoofedResult",
     "return forceDisconnected ? 0 : originalResult",
