@@ -119,6 +119,9 @@ for toggle_value_contract in [
     "DDKeypaneHideGapOverrideValue",
     "strtod(start, &end)",
     "parsed > 200.0 || parsed < 0.0 || end == start",
+    "DDSimulatedSpeedOverrideValue",
+    "c < '0' || c > '9'",
+    "parsed > 255",
 ]:
     if toggle_value_contract not in toggle_value_helpers:
         raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")

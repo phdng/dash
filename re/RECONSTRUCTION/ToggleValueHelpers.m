@@ -9,6 +9,7 @@
 // Exact pure dash-settle parser from 1A18C promoted session-260.
 // Exact pure dash-launch-seconds parser from 19A08 promoted session-261.
 // Exact pure keypane-hidegap parser from 38E14 promoted session-262.
+// Exact pure simulated-speed parser from 71780 promoted session-263.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -105,4 +106,24 @@ double DDKeypaneHideGapOverrideValue(NSString *value) {
     if (parsed > 200.0 || parsed < 0.0 || end == start)
         return 71.0;
     return parsed;
+}
+
+BOOL DDSimulatedSpeedOverrideValue(NSString *value, uint8_t *outValue) {
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString *trimmed = [value stringByTrimmingCharactersInSet:whitespace];
+    if (trimmed.length == 0)
+        return NO;
+
+    for (NSUInteger i = 0; i < trimmed.length; i++) {
+        unichar c = [trimmed characterAtIndex:i];
+        if (c < '0' || c > '9')
+            return NO;
+    }
+
+    NSUInteger parsed = (NSUInteger)trimmed.integerValue;
+    if (parsed > 255)
+        return NO;
+    if (outValue)
+        *outValue = (uint8_t)parsed;
+    return YES;
 }
