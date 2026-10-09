@@ -35,6 +35,16 @@ NSInteger DDDataRouterSourceCode(NSString *source) {
     return 0;
 }
 
+BOOL DDDataRouterProviderPayloadMatches(id payload, NSString *provider) {
+    if (![payload isKindOfClass:[NSDictionary class]])
+        return NO;
+    id version = payload[@"v"];
+    if (![version isKindOfClass:[NSNumber class]] || [version intValue] != 2)
+        return NO;
+    id payloadProvider = payload[@"provider"];
+    return [payloadProvider isKindOfClass:[NSString class]] && [payloadProvider isEqualToString:provider];
+}
+
 // ---- Nav update race: GMaps vs Waze (duo + true variants) ----
 static void DDNavUpdate(BOOL isTrueDash) {
     // 7F5A4 (duodash.navUpdate + truedash.navUpdate chung):

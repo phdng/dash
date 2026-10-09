@@ -73,7 +73,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 ## H. Data / HUD / apps
 | Subsystem | Artifact | Status | Ghi chú |
 |---|---|---|---|
-| DataRouter/nav | DataRouter.m (F-022) | SYNTH + BUILDABLE PARTIAL | session-030 synthesis; s296 exact 83FDC TrueDash notify classifier; s297 exact 84258 source-code mapper `google_maps=1,waze=2,provider=3,other=0`; plist/cache/dictionary extraction/timestamp arbitration/submit/publish/worker state remains excluded |
+| DataRouter/nav | DataRouter.m (F-022) | SYNTH + BUILDABLE PARTIAL | session-030 synthesis; s296 exact 83FDC TrueDash notify classifier; s297 exact 84258 source-code mapper; s298 exact 83EB4 provider-payload matcher (NSDictionary + v NSNumber==2 + provider NSString exact match); file/cache/timestamp arbitration/submit/publish/worker state remains excluded |
 | HUD/BLE/speed | HudBle.m (F-024 + strings) | SYNTH | Scan/pairing bodies UNKNOWN |
 | DuoDash.app / DuoDashKey.app / Prefs.bundle | F-007/F-008 (essentials persisted) | EVIDENCE-only | Full KeyApp 255-func breakdown chỉ trong conversation session-001 (nguy cơ mất như sweep-002 — KHÔNG re-derive trừ khi cần) |
 | Version/device | F-030/B-20 + VersionDeviceHelpers.m | BUILDABLE PARTIAL | s245 exact A4008 fallback comparator; s246 A574C hw.machine sanitizer; s247 A574C client-version filter; s248 exact 9EE88 `%ld.%ld.%ld` OS-version formatter; weak-import availability path, global init, plist/sysctl acquisition, device telemetry remain excluded |

@@ -209,5 +209,6 @@
 - [x] Session-295 executable alternate planned-marker base-path contract: nil -> false; exact `/var/mobile/Library/DuoDash` -> false; any different non-null path -> true; base-path acquisition/path construction/file side effects excluded.
 - [x] Session-296 executable DataRouter TrueDash notification classifier contract: nil -> false; exact truedash navUpdate/speedLimit/cameraAlert names -> true; corresponding duodash names and arbitrary strings -> false; plist/cache/submit/notify side effects excluded.
 - [x] Session-297 executable DataRouter source-code mapper contract: nil/unknown -> 0; `google_maps` -> 1; `waze` -> 2; `provider` -> 3; dictionary extraction/packing/submit/notify side effects excluded.
+- [x] Session-298 executable DataRouter provider-payload matcher contract: non-dictionary -> false; dictionary with missing/wrong-type `v` -> false; `v.intValue != 2` -> false; missing/wrong-type provider -> false; exact NSString provider match -> true; file/cache/timestamp/submit/worker side effects excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

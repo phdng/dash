@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-228 (session-297): Promote exact pure 84258 DataRouter source-code mapper vào executable `DataRouter.m`: `google_maps=1`, `waze=2`, `provider=3`, nil/other=0. Không dictionary extraction, packing, submit/publish hay worker state.
+BUILDABLE RUNTIME PHASE-229 (session-298): Promote exact pure 83EB4 DataRouter provider-payload matcher vào executable `DataRouter.m`: payload phải NSDictionary, `v` là NSNumber intValue==2, `provider` là NSString equal target. Không file/cache/timestamp/submit/publish/worker state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-297):
-- R-296 executable DataRouter source-code mapper: exact 84258 string-to-code mapping now compile in DataRouter.m.
+## LAST COMPLETED TASK (session-298):
+- R-297 executable DataRouter provider-payload matcher: exact 83EB4 typed v==2/provider equality gate now compile in DataRouter.m.
 
 ## CURRENT TASK:
-- R-296 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-297 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Continue DataRouter only with another direct exact pure decision; otherwise switch subsystem. Respring and A2800 remain largely exhausted. Jailbroken-device smoke tests remain unresolved.
+- Continue DataRouter only with another direct exact pure decision; otherwise switch subsystem. Candidate 83250 timestamp extractor remains available. Respring and A2800 remain largely exhausted. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

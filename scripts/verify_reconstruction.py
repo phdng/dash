@@ -629,6 +629,11 @@ for data_router_contract in [
     "isEqualToString:@\"waze\"",
     "isEqualToString:@\"google_maps\"",
     "isEqualToString:@\"provider\"",
+    "DDDataRouterProviderPayloadMatches",
+    "payload[@\"v\"]",
+    "[version intValue] != 2",
+    "payload[@\"provider\"]",
+    "isEqualToString:provider",
 ]:
     if data_router_contract not in data_router:
         raise SystemExit(f"DataRouter executable classifier missing contract: {data_router_contract}")
