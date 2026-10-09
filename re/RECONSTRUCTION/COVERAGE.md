@@ -48,7 +48,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 |---|---|---|---|
 | Elig + dock/focus/statusbar/icon | CarPlayCloak.m (F-028) | SYNTH | Hook bodies từ subagent evidence |
 | Keyboard relay + focus + swizzle | KeyinputRelay.m + KeyboardHooks.m (F-027) | SYNTH | KeyApp HYPOTHESIS; hook-fn bodies UNKNOWN |
-| AZ spoof + BKS display | F-017/F-013 (cross-ref trong KeyboardHooks.m) | EVIDENCE-only | Bodies đã có ở evidence cũ |
+| AZ spoof + BKS display | CarPlaySpoofHelpers.m + F-017/F-013 | BUILDABLE PARTIAL | s252 exact decision core shared by seven AZ hooks: force-disconnected -> 0 else original result; hook installation/counters/global gate/original calls and BKS display behavior remain excluded |
 | SB scene hooks ×10 | F-018 BLOCKED | MISSING (blocked) | Cần raw asm 27E20 |
 
 ## E. Siri / voice

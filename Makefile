@@ -23,7 +23,8 @@ DuoDashReconstruction_FILES = \
 	re/RECONSTRUCTION/CameraRelayHelpers.m \
 	re/RECONSTRUCTION/PerfTuning.m \
 	re/RECONSTRUCTION/VersionDeviceHelpers.m \
-	re/RECONSTRUCTION/InitRoleHelpers.m
+	re/RECONSTRUCTION/InitRoleHelpers.m \
+	re/RECONSTRUCTION/CarPlaySpoofHelpers.m
 DuoDashReconstruction_CFLAGS = -fobjc-arc -Wall -Wextra
 DuoDashReconstruction_FRAMEWORKS = Foundation CoreFoundation
 DuoDashReconstruction_LIBRARIES = proc

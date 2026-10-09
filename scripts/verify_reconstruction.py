@@ -45,13 +45,14 @@ for required in [
     RECON / "PerfTuning.m",
     RECON / "VersionDeviceHelpers.m",
     RECON / "InitRoleHelpers.m",
+    RECON / "CarPlaySpoofHelpers.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LicenseHelpers.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m", "PerfTuning.m", "VersionDeviceHelpers.m", "InitRoleHelpers.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LicenseHelpers.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m", "PerfTuning.m", "VersionDeviceHelpers.m", "InitRoleHelpers.m", "CarPlaySpoofHelpers.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -89,7 +90,15 @@ camera_relay_helpers = (RECON / "CameraRelayHelpers.m").read_text(encoding="utf-
 perf_tuning = (RECON / "PerfTuning.m").read_text(encoding="utf-8")
 version_device_helpers = (RECON / "VersionDeviceHelpers.m").read_text(encoding="utf-8")
 init_role_helpers = (RECON / "InitRoleHelpers.m").read_text(encoding="utf-8")
+carplay_spoof_helpers = (RECON / "CarPlaySpoofHelpers.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
+for carplay_spoof_contract in [
+    "DDAZCarPlaySpoofedResult",
+    "return forceDisconnected ? 0 : originalResult",
+]:
+    if carplay_spoof_contract not in carplay_spoof_helpers:
+        raise SystemExit(f"CarPlaySpoofHelpers missing F-017 decision contract: {carplay_spoof_contract}")
+
 for init_role_contract in [
     "DDRoleName",
     "case DDRoleSpringBoard",

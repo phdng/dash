@@ -163,5 +163,6 @@
 - [x] Session-249 executable init role-name contract: role codes 1..6 map exactly to bridge/prefsrefresh/appbridge_cp/carplay/appbridge_uiapp/kbdpoc; every other value -> nil; no executable-path/cache/latch/filesystem/notify/arming side effects.
 - [x] Session-250 executable init suffix predicate contract: null-safe C strings; value shorter than suffix -> false; otherwise tail `strcmp == 0`; empty suffix therefore matches any non-null value exactly as AC738; no executable-path/cache/global state.
 - [x] Session-251 executable supplied-path role-classifier contract: F-012 suffix order maps SpringBoard/Preferences/CarPlay/mediaserverd/TextInput-kbd to roles 1/2/3/4/6 and every nonmatching supplied path to role 5; no `_NSGetExecutablePath` or cache-global side effects.
+- [x] Session-252 executable AZ CarPlay spoof decision contract: force-disconnected gate true -> 0; false -> supplied original result unchanged; shared across all seven F-017 hook bodies; no counters/hook installation/global read/original invocation side effects.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
