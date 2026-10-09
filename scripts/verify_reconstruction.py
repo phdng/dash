@@ -426,6 +426,13 @@ for license_contract in [
     "(unsigned int)(character - 'a') < 6",
     "(unsigned int)(character - 'A') < 6",
     "[data appendBytes:&decoded length:1]",
+    "DDLicenseStatusTextForVerification",
+    "verificationStatus == 6",
+    "Expired — connect to the internet",
+    "verificationStatus == 1",
+    "Not activated",
+    "verificationStatus != 0",
+    "return refusalMatches ? @\"Licence invalid\" : @\"Active\"",
 ]:
     if license_contract not in license_helpers:
         raise SystemExit(f"LicenseHelpers executable helper missing contract: {license_contract}")

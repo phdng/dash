@@ -278,3 +278,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-233] executable crash-report identifier sanitizer (session-234): exact A372C trim + lowercase + length 16..64 + `[0-9a-f-]` validation promoted; global/report I/O/network state remains excluded.
 - [x] [R-234] executable license base64url decoder (session-235): exact A4208 `-→+`, `_→/`, `=` padding-to-4 and strict NSData Base64 decode promoted; full verify/global/I/O/network state remains excluded.
 - [x] [R-235] executable license hex decoder (session-236): exact A4304 even-length/nonempty ASCII hex decode promoted; invalid character or odd/empty input returns nil; full verify/key/global/I/O/network state remains excluded.
+- [x] [R-236] executable license status decision helper (session-237): exact A54A4 mapping promoted as pure `verificationStatus + refusalMatches -> text`; blob/refusal acquisition and full verify/global/I/O/network state remain excluded.

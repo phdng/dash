@@ -1,7 +1,8 @@
 // RECONSTRUCTION/LicenseHelpers.m — executable evidence-safe license helpers
 // Exact A4208 base64url decoding promoted session-235.
 // Exact A4304 hexadecimal decoding promoted session-236.
-// Full A397C verification, key iteration, filesystem, network, and verdict state remain excluded.
+// Exact A54A4 decision-only status mapping promoted session-237.
+// Full A397C verification, key iteration, filesystem, network, and verdict state acquisition remain excluded.
 
 #import "DuoDashShared.h"
 
@@ -47,4 +48,14 @@ NSData *DDLicenseDecodeHex(NSString *value) {
         [data appendBytes:&decoded length:1];
     }
     return data;
+}
+
+NSString *DDLicenseStatusTextForVerification(NSInteger verificationStatus, BOOL refusalMatches) {
+    if (verificationStatus == 6)
+        return @"Expired — connect to the internet";
+    if (verificationStatus == 1)
+        return @"Not activated";
+    if (verificationStatus != 0)
+        return @"Licence invalid";
+    return refusalMatches ? @"Licence invalid" : @"Active";
 }

@@ -66,7 +66,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 ## G. License / crash / respring
 | Subsystem | Artifact | Status | Ghi chú |
 |---|---|---|---|
-| License verify/clients/validators/unrefuse | License.m + LicenseHelpers.m (F-006/B-09/F-016/F-030) | SYNTH + BUILDABLE PARTIAL | MITM/server-side UNKNOWN; s235 exact A4208 base64url decoder; s236 exact A4304 hex decoder promoted without full verify/key/I/O/network state |
+| License verify/clients/validators/unrefuse | License.m + LicenseHelpers.m (F-006/B-09/F-016/F-030) | SYNTH + BUILDABLE PARTIAL | MITM/server-side UNKNOWN; s235 exact A4208 base64url decoder; s236 exact A4304 hex decoder; s237 exact A54A4 decision-only status-text mapping promoted without blob/refusal acquisition or full verify/key/I/O/network state |
 | Crash reporting | CrashReporting.m (B-08/F-016) | SYNTH (APPROXIMATION) | session-034 từ evidence + strings |
 | Respring/latch pipeline | Respring.m (F-023) | SYNTH (APPROXIMATION) | session-036: 80574/8097C/96D60 từ notify/toggle rows |
 
