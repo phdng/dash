@@ -110,6 +110,9 @@ for toggle_value_contract in [
     "DDSplashSecondsOverrideValue",
     "parsed > 15.0 || parsed < 0.5",
     "return 3.0",
+    "DDDashSettleSecondsOverrideValue",
+    "parsed > 5.0 || parsed < 0.2",
+    "return 0.45",
 ]:
     if toggle_value_contract not in toggle_value_helpers:
         raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")

@@ -5,6 +5,7 @@
 // Exact pure holdsec parser from 163EC promoted session-257.
 // Exact pure discoclose-seconds parser from 7B9EC promoted session-258.
 // Exact pure splash-seconds parser from 358F0 promoted session-259.
+// Exact pure dash-settle parser from 1A18C promoted session-260.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -66,5 +67,14 @@ double DDSplashSecondsOverrideValue(NSString *value) {
     double parsed = trimmed.length ? trimmed.doubleValue : 0.0;
     if (parsed > 15.0 || parsed < 0.5)
         return 3.0;
+    return parsed;
+}
+
+double DDDashSettleSecondsOverrideValue(NSString *value) {
+    if (value.length == 0)
+        return 0.45;
+    double parsed = value.doubleValue;
+    if (parsed > 5.0 || parsed < 0.2)
+        return 0.45;
     return parsed;
 }
