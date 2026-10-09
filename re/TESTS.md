@@ -159,5 +159,6 @@
 - [x] Session-245 executable version tuple comparator contract: compare major first, then minor, then patch; greater earlier component wins, lesser loses, exact equality passes; no availability weak-import/global-init/plist side effects.
 - [x] Session-246 executable hw.machine sanitizer contract: NSString only; length <=32; allowed chars exactly ASCII letters/digits/comma/underscore/hyphen; no trim or normalization; empty string valid; no sysctl/network/global side effects.
 - [x] Session-247 executable client-version formatter contract: keep ASCII alnum plus `+.-`; skip invalid chars rather than reject; cap output at 32 chars; empty result -> `unknown`; no sysctl/device/network/global side effects.
+- [x] Session-248 executable OS-version formatter contract: supplied major/minor/patch tuple always formats exactly as `%ld.%ld.%ld`; no NSProcessInfo/sysctl/crash-packaging/filesystem side effects.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

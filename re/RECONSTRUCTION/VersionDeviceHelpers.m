@@ -3,6 +3,7 @@
 // Exact decision-only comparator from A4008 fallback promoted session-245.
 // Exact A574C hw.machine sanitizer promoted session-246.
 // Exact A574C client-version formatter promoted session-247.
+// Exact 9EE88 OS-version string formatter promoted session-248.
 // Weak-import availability checks, global initialization, SystemVersion.plist parsing, sysctl acquisition, and telemetry remain excluded.
 
 BOOL DDVersionTupleAtLeast(NSInteger installedMajor,
@@ -49,4 +50,11 @@ NSString *DDVersionDeviceFormatClientVersion(NSString *value) {
             [result appendFormat:@"%C", c];
     }
     return result.length ? result : @"unknown";
+}
+
+NSString *DDVersionDeviceFormatOSVersion(NSInteger major,
+                                         NSInteger minor,
+                                         NSInteger patch) {
+    return [NSString stringWithFormat:@"%ld.%ld.%ld",
+            (long)major, (long)minor, (long)patch];
 }

@@ -103,6 +103,8 @@ for version_device_contract in [
     "if (result.length > 31)",
     "c == '+' || c == '-' || c == '.'",
     "return result.length ? result : @\"unknown\"",
+    "DDVersionDeviceFormatOSVersion",
+    "@\"%ld.%ld.%ld\"",
 ]:
     if version_device_contract not in version_device_helpers:
         raise SystemExit(f"VersionDeviceHelpers missing A4008 fallback contract: {version_device_contract}")

@@ -244,6 +244,9 @@ FOUNDATION_EXPORT BOOL DDVersionTupleAtLeast(NSInteger installedMajor,
                                             NSInteger requiredPatch);
 FOUNDATION_EXPORT NSString * _Nullable DDVersionDeviceSanitizeMachineModel(NSString * _Nullable value);
 FOUNDATION_EXPORT NSString *DDVersionDeviceFormatClientVersion(NSString * _Nullable value);
+FOUNDATION_EXPORT NSString *DDVersionDeviceFormatOSVersion(NSInteger major,
+                                                          NSInteger minor,
+                                                          NSInteger patch);
 
 // License verify codes (F-006/B-09): 0 OK,1 empty,2 format,3 no-pubkey,
 // 4 kid,5 device-mismatch,6 expired,7 clock-skew,8 v!=1,10 product-mismatch (9 vắng).
