@@ -95,6 +95,9 @@ tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
 for carplay_spoof_contract in [
     "DDAZCarPlaySpoofedResult",
     "return forceDisconnected ? 0 : originalResult",
+    "DDKeepAwakeNavigationBundle",
+    "@\"com.google.Maps\"",
+    "@\"com.waze.iphone\"",
 ]:
     if carplay_spoof_contract not in carplay_spoof_helpers:
         raise SystemExit(f"CarPlaySpoofHelpers missing F-017 decision contract: {carplay_spoof_contract}")

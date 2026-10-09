@@ -53,6 +53,7 @@ FOUNDATION_EXPORT BOOL DDRoleCStringHasSuffix(const char * _Nullable value,
 FOUNDATION_EXPORT DDRole DDRoleForExecutablePathCString(const char * _Nullable path);
 FOUNDATION_EXPORT NSInteger DDAZCarPlaySpoofedResult(BOOL forceDisconnected,
                                                     NSInteger originalResult);
+FOUNDATION_EXPORT BOOL DDKeepAwakeNavigationBundle(NSString * _Nullable bundleIdentifier);
 
 // Compile-safe recovery-routing integration seam (session-176+).
 // This consumes ReconstructionRuntime evidence contracts without executing
