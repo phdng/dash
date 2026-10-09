@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-173 (session-242): Promote exact pure license intervention-status predicate `A7838` vào executable `LicenseHelpers.m`: true chỉ cho `Licence revoked`, `Check date and time`, `Update DuoDash`, `Cannot identify this device`; còn lại false. Không global/filesystem/network/private state.
+BUILDABLE RUNTIME PHASE-174 (session-243): Switch subsystem sang perf và promote exact read-only AirPlay integer preference helper `A81B14` vào executable `PerfTuning.m`: missing -> -1, wrong type/convert fail -> -2, valid CFNumber -> int. Không backup/write/restore/notify/global state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-242):
-- R-241 executable license intervention-status predicate: exact A7838 four-string match semantics now compile in LicenseHelpers.m.
+## LAST COMPLETED TASK (session-243):
+- R-242 executable perf helper: exact A81B14 CurrentUser/AnyHost `com.apple.airplay` integer preference reader now compiles in new PerfTuning.m.
 
 ## CURRENT TASK:
-- R-241 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-242 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-242 batch, switch subsystem if remaining license candidates are stateful/networked; otherwise continue only with independent pure/decision helpers. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-243 batch, inspect A7FE78/A8009C only for separable read-only/decision semantics; keep backup/write/restore/notify/global state excluded. Otherwise switch to another evidence-only subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

@@ -42,13 +42,14 @@ for required in [
     RECON / "AppBridgeTuning.m",
     RECON / "NavProviderHelpers.m",
     RECON / "CameraRelayHelpers.m",
+    RECON / "PerfTuning.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LicenseHelpers.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LicenseHelpers.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m", "PerfTuning.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -83,7 +84,21 @@ keyinput_gate = (RECON / "KeyinputGate.m").read_text(encoding="utf-8")
 appbridge_tuning = (RECON / "AppBridgeTuning.m").read_text(encoding="utf-8")
 navprovider_helpers = (RECON / "NavProviderHelpers.m").read_text(encoding="utf-8")
 camera_relay_helpers = (RECON / "CameraRelayHelpers.m").read_text(encoding="utf-8")
+perf_tuning = (RECON / "PerfTuning.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
+for perf_tuning_contract in [
+    "DDAirPlayIntegerPreference",
+    "CFPreferencesCopyValue",
+    "CFSTR(\"com.apple.airplay\")",
+    "kCFPreferencesCurrentUser",
+    "kCFPreferencesAnyHost",
+    "CFGetTypeID(copied) != CFNumberGetTypeID()",
+    "CFNumberGetValue((CFNumberRef)copied, kCFNumberIntType, &value)",
+    "value = -2",
+]:
+    if perf_tuning_contract not in perf_tuning:
+        raise SystemExit(f"PerfTuning missing A81B14 contract: {perf_tuning_contract}")
+
 for camera_relay_contract in [
     "DDCameraRelaySourceCode",
     "[source isEqualToString:@\"waze\"]",

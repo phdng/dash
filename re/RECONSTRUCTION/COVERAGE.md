@@ -61,7 +61,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 | Subsystem | Artifact | Status | Ghi chú |
 |---|---|---|---|
 | CarSleeper daemon + handlers | CarSleeper.m (F-021) | SYNTH | Handler bodies cross-ref notify_matrix |
-| Perf tweak (fps) | B-07 (HIGH CONFIDENCE) + prefs rows | EVIDENCE-only | Chưa synthesis riêng (nhỏ) |
+| Perf tweak (fps) | B-07 + PerfTuning.m | BUILDABLE PARTIAL | s243 exact A81B14 read-only AirPlay integer preference helper; A8009C backup/write/restore/notify/global-state path remains excluded |
 
 ## G. License / crash / respring
 | Subsystem | Artifact | Status | Ghi chú |
