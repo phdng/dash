@@ -89,6 +89,12 @@ BOOL DDCrashMachOLoadCommandIsUUID(uint32_t command, uint32_t commandSize) {
     return commandSize >= 0x18U && command == 27U;
 }
 
+BOOL DDCrashMachOLoadCommandFits(uint32_t commandSize,
+                                 uint64_t cumulativeSize,
+                                 uint64_t remainingSize) {
+    return commandSize >= 8U && cumulativeSize <= remainingSize;
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,

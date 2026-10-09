@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-216 (session-285): Promote exact pure A2800 Mach-O UUID load-command predicate vào executable `CrashReporting.m`: `commandSize >= 0x18` và `command == 27`. Không load-command iteration, offset/bounds arithmetic, UUID extraction hay artifact mutation.
+BUILDABLE RUNTIME PHASE-217 (session-286): Promote exact pure A2800 Mach-O load-command bounds gate vào executable `CrashReporting.m`: `commandSize >= 8` và cumulative bytes consumed `<= remainingSize`. Không pointer arithmetic, iteration counters, command-count termination hay UUID extraction.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-285):
-- R-284 executable Mach-O UUID load-command predicate: exact A2800 `cmdsize>=0x18 && cmd==27` semantics now compile in CrashReporting.m.
+## LAST COMPLETED TASK (session-286):
+- R-285 executable Mach-O load-command bounds gate: exact A2800 `cmdsize>=8 && cumulative<=remaining` semantics now compile in CrashReporting.m.
 
 ## CURRENT TASK:
-- R-284 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-285 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-285 batch, continue crash metadata only with exact pure evidence, otherwise reassess another subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-286 batch, reassess crash subsystem; switch subsystem if only stateful traversal remains. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

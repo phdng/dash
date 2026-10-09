@@ -553,6 +553,8 @@ for crash_contract in [
     "return magic == 0xFEEDFACFU",
     "DDCrashMachOLoadCommandIsUUID",
     "commandSize >= 0x18U && command == 27U",
+    "DDCrashMachOLoadCommandFits",
+    "commandSize >= 8U && cumulativeSize <= remainingSize",
     "DDCrashReportingAdapterStart",
     "DDCrashReportingAdapterReady",
     "DDCrashReportingMayCollect",
