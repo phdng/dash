@@ -537,6 +537,8 @@ for crash_contract in [
     "hasPrefix:@\"CarSleeperBT\"",
     "DDCrashJailbreakFamilyForPrefixCString",
     "prefix && prefix[0] ? @\"rootless\" : @\"rootful\"",
+    "DDCrashJailbreakPrefixString",
+    "stringWithUTF8String:prefix ? prefix : \"\"",
     "DDCrashReportingAdapterStart",
     "DDCrashReportingAdapterReady",
     "DDCrashReportingMayCollect",

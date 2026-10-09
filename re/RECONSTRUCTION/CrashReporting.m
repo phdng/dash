@@ -58,6 +58,10 @@ NSString *DDCrashJailbreakFamilyForPrefixCString(const char *prefix) {
     return prefix && prefix[0] ? @"rootless" : @"rootful";
 }
 
+NSString *DDCrashJailbreakPrefixString(const char *prefix) {
+    return [NSString stringWithUTF8String:prefix ? prefix : ""];
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,
