@@ -1,11 +1,11 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-09 session-301 (build repair)_
+_Last updated: 2026-10-09 session-302 (build repair)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-231 + CI HEADER REPAIR (session-301): GitHub/Theos build exposed `-Werror,-Wnullability-completeness` failures in `DuoDashShared.h`. Public declarations are now enclosed in `NS_ASSUME_NONNULL_BEGIN/END`; existing explicit `_Nullable` contracts remain authoritative and unannotated pointers default nonnull.
+BUILDABLE RUNTIME PHASE-231 + CI HEADER REPAIR (session-302): after the assume-nonnull repair, Theos exposed `-Werror,-Wnullability-completeness-on-arrays` on six sized C-array parameters. All six are now explicitly `_Nonnull`, matching implementations that dereference/index them without null guards.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
@@ -14,7 +14,7 @@ Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence
 - R-299 executable panefracs override parser: exact `218D8` nonempty-file parsing semantics now compile as `DDPaneFractionsOverrideValue`.
 
 ## CURRENT TASK:
-- Repair the reported Theos CI nullability-completeness failure, add a structural regression guard, verify, and commit locally. Assistant không push.
+- Repair the reported Theos CI sized-array nullability-completeness failure, add a regression guard, verify, and commit locally. Assistant không push.
 
 ## NEXT TASK:
 - Continue the `218D8` toggle slice only where constants are exact. `paneratio` still contains unresolved `&stru_20+18` fallback metadata, so do not promote it until that constant is recovered. HUD/BLE and A2720 remain insufficiently evidenced for exact promotion. Jailbroken-device smoke tests remain unresolved.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-301):
-- Sửa: `RECONSTRUCTION/DuoDashShared.h`, `scripts/verify_reconstruction.py`, `STATE.md`.
-- Mới: `LOG/session-301.md`.
+## FILES CHANGED (session-302):
+- Sửa: `RECONSTRUCTION/DuoDashShared.h`, `RECONSTRUCTION/Migration.m`, `RECONSTRUCTION/CrashReporting.m`, `scripts/verify_reconstruction.py`, `STATE.md`.
+- Mới: `LOG/session-302.md`.
 
 ## TEST STATUS:
-Session-301 local static gates PASS after header repair: `python scripts/verify_reconstruction.py`; `python -m py_compile scripts/verify_reconstruction.py`; `git diff --check` (LF/CRLF warnings only). The exact arm64 Theos compile cannot run on this Windows workspace; next CI build is the compiler confirmation. CatDesk standard verifier remains NOT_CONFIGURED for this Theos-only repo. Assistant không push.
+Session-302 local static gates PASS after sized-array nullability repair: no unannotated sized-array parameter remains in `DuoDashShared.h`; `python scripts/verify_reconstruction.py`; `python -m py_compile scripts/verify_reconstruction.py`; `git diff --check` (LF/CRLF warnings only). Exact arm64 Theos compile remains CI-only on this Windows workspace. CatDesk standard verifier remains NOT_CONFIGURED. Assistant không push.

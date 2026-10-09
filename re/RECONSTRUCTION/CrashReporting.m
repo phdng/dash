@@ -66,7 +66,7 @@ NSString *DDCrashArchitectureNameForCPUSubtype(uint32_t cpuSubtype) {
     return (cpuSubtype & 0xFFFFFFU) == 2U ? @"arm64e" : @"arm64";
 }
 
-NSString *DDCrashMachOUUIDHex(const uint8_t uuidBytes[16]) {
+NSString *DDCrashMachOUUIDHex(const uint8_t uuidBytes[16] _Nonnull) {
     NSMutableString *hex = [NSMutableString stringWithCapacity:36];
     for (NSUInteger index = 0; index < 16; index++)
         [hex appendFormat:@"%02X", uuidBytes[index]];

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import plistlib
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -2191,6 +2192,8 @@ for contract in [
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if "NS_ASSUME_NONNULL_BEGIN" not in shared or "NS_ASSUME_NONNULL_END" not in shared:
     raise SystemExit("DuoDashShared public declarations must remain in a nullability-audited region")
+if re.search(r"\[[0-9]+\]\s*[,)]", shared):
+    raise SystemExit("DuoDashShared sized array parameters must carry explicit nullability")
 if 'DD_N_AUTOSTART_CHANGED @"com.sensetechlab.autostart.changed"' not in shared:
     raise SystemExit("autostart Darwin notification constant drifted from decompile")
 if 'DD_N_FONTFLOOR_CHANGED @"com.sensetechlab.fontfloor.changed"' not in shared:
