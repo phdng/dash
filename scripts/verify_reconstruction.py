@@ -44,13 +44,14 @@ for required in [
     RECON / "CameraRelayHelpers.m",
     RECON / "PerfTuning.m",
     RECON / "VersionDeviceHelpers.m",
+    RECON / "InitRoleHelpers.m",
     RECON / "Tweak.x",
 ]:
     if not required.is_file():
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LicenseHelpers.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m", "PerfTuning.m", "VersionDeviceHelpers.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LicenseHelpers.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m", "PerfTuning.m", "VersionDeviceHelpers.m", "InitRoleHelpers.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -87,7 +88,22 @@ navprovider_helpers = (RECON / "NavProviderHelpers.m").read_text(encoding="utf-8
 camera_relay_helpers = (RECON / "CameraRelayHelpers.m").read_text(encoding="utf-8")
 perf_tuning = (RECON / "PerfTuning.m").read_text(encoding="utf-8")
 version_device_helpers = (RECON / "VersionDeviceHelpers.m").read_text(encoding="utf-8")
+init_role_helpers = (RECON / "InitRoleHelpers.m").read_text(encoding="utf-8")
 tweak = (RECON / "Tweak.x").read_text(encoding="utf-8")
+for init_role_contract in [
+    "DDRoleName",
+    "case DDRoleSpringBoard",
+    "return @\"bridge\"",
+    "return @\"prefsrefresh\"",
+    "return @\"appbridge_cp\"",
+    "return @\"carplay\"",
+    "return @\"appbridge_uiapp\"",
+    "return @\"kbdpoc\"",
+    "return nil",
+]:
+    if init_role_contract not in init_role_helpers:
+        raise SystemExit(f"InitRoleHelpers missing AC7A4 role-name contract: {init_role_contract}")
+
 for version_device_contract in [
     "DDVersionTupleAtLeast",
     "installedMajor > requiredMajor",

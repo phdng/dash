@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-179 (session-248): Promote exact pure OS-version formatter từ crash metadata `9EE88` vào executable `VersionDeviceHelpers.m`: format tuple supplied thành `%ld.%ld.%ld`. Không NSProcessInfo acquisition, sysctl, crash packaging/filesystem/network state.
+BUILDABLE RUNTIME PHASE-180 (session-249): Switch subsystem sang init role-detection và promote exact pure AC7A4 role-code -> canonical role-name mapping vào executable `InitRoleHelpers.m`: 1 bridge, 2 prefsrefresh, 3 appbridge_cp, 4 carplay, 5 appbridge_uiapp, 6 kbdpoc; unknown -> nil. Không executable-path/cache/latch/filesystem/notify/arming/global state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-248):
-- R-247 executable OS-version formatter: exact 9EE88 `%ld.%ld.%ld` tuple formatting now compiles in VersionDeviceHelpers.m.
+## LAST COMPLETED TASK (session-249):
+- R-248 executable init role-name mapping: exact AC7A4 role-code labels now compile in InitRoleHelpers.m.
 
 ## CURRENT TASK:
-- R-247 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-248 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-248 batch, Version/device pure formatting scope is nearly exhausted; inspect one more independent decision only if clearly evidenced, otherwise switch subsystem. A2720 environment-coupled sysctl reader remains excluded unless it adds clear value. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-249 batch, inspect AC5FC/AC738 only for another independent pure decision such as exact suffix matching or role classification if suffix constants can be resolved confidently; keep executable-path cache and AC7A4 latch/filesystem/notify/arming state excluded. Otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

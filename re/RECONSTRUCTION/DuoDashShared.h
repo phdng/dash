@@ -47,6 +47,7 @@ typedef NS_ENUM(NSInteger, DDRole) {
     DDRoleUIApp = 5,
     DDRoleKbd = 6,
 };
+FOUNDATION_EXPORT NSString * _Nullable DDRoleName(DDRole role);
 
 // Compile-safe recovery-routing integration seam (session-176+).
 // This consumes ReconstructionRuntime evidence contracts without executing
