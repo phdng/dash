@@ -18,6 +18,7 @@
 // Exact pure live-present target canonicalizer from 2A610 promoted session-269.
 // Exact pure live-present animation alpha-token validator from 2A610 promoted session-270.
 // Exact pure live-present animation easing classifier from 2A610 promoted session-271.
+// Exact pure canvas portrait classifier from 3B2D8 promoted session-272.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -196,4 +197,10 @@ BOOL DDLivePresentAnimationAlphaTokenValue(NSString *value, float *outValue) {
 BOOL DDLivePresentAnimationUsesLinearEasing(NSString *value) {
     NSString *lower = value.lowercaseString;
     return [lower hasPrefix:@"lin"];
+}
+
+BOOL DDCanvasPortraitOverrideEnabled(NSString *value) {
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString *trimmed = [value stringByTrimmingCharactersInSet:whitespace];
+    return [trimmed isEqualToString:@"portrait"];
 }
