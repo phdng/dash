@@ -98,6 +98,9 @@ for carplay_spoof_contract in [
     "DDKeepAwakeNavigationBundle",
     "@\"com.google.Maps\"",
     "@\"com.waze.iphone\"",
+    "DDKeepAwakeShouldCountSlowBlank",
+    "elapsedMilliseconds > 3.0",
+    "currentCount <= 14",
 ]:
     if carplay_spoof_contract not in carplay_spoof_helpers:
         raise SystemExit(f"CarPlaySpoofHelpers missing F-017 decision contract: {carplay_spoof_contract}")

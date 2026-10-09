@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-184 (session-253): Promote exact pure 4DE48 keep-awake nav-only bundle classifier vào executable `CarPlaySpoofHelpers.m`: chỉ `com.google.Maps` hoặc `com.waze.iphone` -> true; nil/rỗng/khác -> false. Không live file/notify/UI/backlight/display/global state.
+BUILDABLE RUNTIME PHASE-185 (session-254): Promote exact pure 4DC1C slow-blank counter threshold vào executable `CarPlaySpoofHelpers.m`: elapsedMilliseconds >3.0 và currentCount <=14 mới eligible. Không Mach timing acquisition, BackBoard call, dispatch_once hay global counter mutation.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-253):
-- R-252 executable keep-awake nav-only classifier: exact 4DE48 Maps/Waze bundle semantics now compile in CarPlaySpoofHelpers.m.
+## LAST COMPLETED TASK (session-254):
+- R-253 executable keep-awake slow-blank threshold: exact 4DC1C >3.0ms/count<=14 eligibility semantics now compile in CarPlaySpoofHelpers.m.
 
 ## CURRENT TASK:
-- R-252 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-253 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-253 batch, inspect F-013/BKS only for another pure threshold/decision if separable from live backlight and display calls; otherwise switch subsystem. Keep 4D158 orchestration excluded. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-254 batch, F-013 pure decision scope is nearly exhausted. Switch subsystem unless another independently evidenced BKS predicate is clearly separable from live timing/display/global state. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

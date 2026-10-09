@@ -48,7 +48,7 @@ _Không có gì VERIFIED (chưa runtime test) — coverage ở đây là static-
 |---|---|---|---|
 | Elig + dock/focus/statusbar/icon | CarPlayCloak.m (F-028) | SYNTH | Hook bodies từ subagent evidence |
 | Keyboard relay + focus + swizzle | KeyinputRelay.m + KeyboardHooks.m (F-027) | SYNTH | KeyApp HYPOTHESIS; hook-fn bodies UNKNOWN |
-| AZ spoof + BKS display | CarPlaySpoofHelpers.m + F-017/F-013 | BUILDABLE PARTIAL | s252 exact AZ force-disconnected decision; s253 exact 4DE48 nav-only bundle classifier (`com.google.Maps`/`com.waze.iphone`); hook installation/counters/global gate/original calls plus live BKS/backlight/file/notify/UI state remain excluded |
+| AZ spoof + BKS display | CarPlaySpoofHelpers.m + F-017/F-013 | BUILDABLE PARTIAL | s252 exact AZ force-disconnected decision; s253 exact 4DE48 nav-only bundle classifier; s254 exact 4DC1C slow-blank threshold (>3.0ms && count<=14); hook installation/counters/global gate/original calls plus live BKS/backlight/file/notify/UI/Mach timing state remain excluded |
 | SB scene hooks ×10 | F-018 BLOCKED | MISSING (blocked) | Cần raw asm 27E20 |
 
 ## E. Siri / voice

@@ -165,5 +165,6 @@
 - [x] Session-251 executable supplied-path role-classifier contract: F-012 suffix order maps SpringBoard/Preferences/CarPlay/mediaserverd/TextInput-kbd to roles 1/2/3/4/6 and every nonmatching supplied path to role 5; no `_NSGetExecutablePath` or cache-global side effects.
 - [x] Session-252 executable AZ CarPlay spoof decision contract: force-disconnected gate true -> 0; false -> supplied original result unchanged; shared across all seven F-017 hook bodies; no counters/hook installation/global read/original invocation side effects.
 - [x] Session-253 executable keep-awake nav-only bundle contract: true only for exact `com.google.Maps` or `com.waze.iphone`; nil/empty/other -> false; no file/notify/UI/backlight/display/global side effects.
+- [x] Session-254 executable keep-awake slow-blank threshold contract: elapsed 3.0 ms -> false; >3.0 with count 14 -> true; >3.0 with count 15 -> false; no Mach timing/BackBoard/global counter side effects.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
