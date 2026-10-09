@@ -259,6 +259,7 @@ FOUNDATION_EXPORT BOOL DDCrashShouldIncludeImageName(NSString * _Nullable name);
 FOUNDATION_EXPORT NSString *DDCrashJailbreakFamilyForPrefixCString(const char * _Nullable prefix);
 FOUNDATION_EXPORT NSString * _Nullable DDCrashJailbreakPrefixString(const char * _Nullable prefix);
 FOUNDATION_EXPORT NSString *DDCrashArchitectureNameForCPUSubtype(uint32_t cpuSubtype);
+FOUNDATION_EXPORT NSString *DDCrashMachOUUIDHex(const uint8_t uuidBytes[16]);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeBase64URL(NSString * _Nullable value);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeHex(NSString * _Nullable value);
 FOUNDATION_EXPORT NSString *DDLicenseStatusTextForVerification(NSInteger verificationStatus,

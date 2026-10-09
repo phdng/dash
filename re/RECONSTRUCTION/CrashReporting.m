@@ -66,6 +66,13 @@ NSString *DDCrashArchitectureNameForCPUSubtype(uint32_t cpuSubtype) {
     return (cpuSubtype & 0xFFFFFFU) == 2U ? @"arm64e" : @"arm64";
 }
 
+NSString *DDCrashMachOUUIDHex(const uint8_t uuidBytes[16]) {
+    NSMutableString *hex = [NSMutableString stringWithCapacity:36];
+    for (NSUInteger index = 0; index < 16; index++)
+        [hex appendFormat:@"%02X", uuidBytes[index]];
+    return hex;
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,
