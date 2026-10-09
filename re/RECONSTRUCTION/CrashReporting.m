@@ -81,6 +81,10 @@ uint32_t DDCrashMachOFatValueHostOrder(uint32_t magic, uint32_t value) {
     return magic == 0xBEBAFECAU ? __builtin_bswap32(value) : value;
 }
 
+BOOL DDCrashMachOIs64BitMagic(uint32_t magic) {
+    return magic == 0xFEEDFACFU;
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,

@@ -262,6 +262,7 @@ FOUNDATION_EXPORT NSString *DDCrashArchitectureNameForCPUSubtype(uint32_t cpuSub
 FOUNDATION_EXPORT NSString *DDCrashMachOUUIDHex(const uint8_t uuidBytes[16]);
 FOUNDATION_EXPORT BOOL DDCrashMachOIsFatMagic(uint32_t magic);
 FOUNDATION_EXPORT uint32_t DDCrashMachOFatValueHostOrder(uint32_t magic, uint32_t value);
+FOUNDATION_EXPORT BOOL DDCrashMachOIs64BitMagic(uint32_t magic);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeBase64URL(NSString * _Nullable value);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeHex(NSString * _Nullable value);
 FOUNDATION_EXPORT NSString *DDLicenseStatusTextForVerification(NSInteger verificationStatus,

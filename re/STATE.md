@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-214 (session-283): Promote exact pure A2800 fat Mach-O endian normalizer vào executable `CrashReporting.m`: magic `0xBEBAFECA` -> `bswap32(value)`, otherwise unchanged. Không file access, fat-table count/bounds/iteration hay load-command parsing.
+BUILDABLE RUNTIME PHASE-215 (session-284): Promote exact pure A2800 64-bit Mach-O magic gate vào executable `CrashReporting.m`: true only for exact `0xFEEDFACF`. Không file access, slice bounds arithmetic, command-count iteration hay UUID extraction.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-283):
-- R-282 executable fat Mach-O endian normalizer: exact A2800 swapped-magic byte-order semantics now compile in CrashReporting.m.
+## LAST COMPLETED TASK (session-284):
+- R-283 executable 64-bit Mach-O magic gate: exact A2800 `FEEDFACF` predicate now compile in CrashReporting.m.
 
 ## CURRENT TASK:
-- R-282 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-283 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-283 batch, continue crash metadata only with exact pure evidence, otherwise reassess another subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-284 batch, continue crash metadata only with exact pure evidence, otherwise reassess another subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

@@ -549,6 +549,8 @@ for crash_contract in [
     "magic == 0xCAFEBABEU || magic == 0xBEBAFECAU",
     "DDCrashMachOFatValueHostOrder",
     "magic == 0xBEBAFECAU ? __builtin_bswap32(value) : value",
+    "DDCrashMachOIs64BitMagic",
+    "return magic == 0xFEEDFACFU",
     "DDCrashReportingAdapterStart",
     "DDCrashReportingAdapterReady",
     "DDCrashReportingMayCollect",
