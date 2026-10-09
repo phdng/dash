@@ -13,6 +13,7 @@
 // Exact pure force-IO string decision from 42124 promoted session-264.
 // Exact pure mat-alpha parser from 33DB4 promoted session-265.
 // Exact pure orientation parser from 3DFC8 promoted session-266.
+// Exact pure render-scale parser from 3B2D8 promoted session-267.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -150,5 +151,12 @@ NSInteger DDOrientationOverrideValue(NSString *value) {
     NSInteger parsed = value ? value.integerValue : 0;
     if (parsed < 1 || parsed > 4)
         return 1;
+    return parsed;
+}
+
+double DDRenderScaleOverrideValue(NSString *value) {
+    double parsed = value ? value.doubleValue : 0.0;
+    if (parsed > 3.0 || parsed < 1.0)
+        return 2.0;
     return parsed;
 }
