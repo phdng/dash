@@ -547,6 +547,8 @@ for crash_contract in [
     "index < 16",
     "DDCrashMachOIsFatMagic",
     "magic == 0xCAFEBABEU || magic == 0xBEBAFECAU",
+    "DDCrashMachOFatValueHostOrder",
+    "magic == 0xBEBAFECAU ? __builtin_bswap32(value) : value",
     "DDCrashReportingAdapterStart",
     "DDCrashReportingAdapterReady",
     "DDCrashReportingMayCollect",

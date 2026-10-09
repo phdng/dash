@@ -77,6 +77,10 @@ BOOL DDCrashMachOIsFatMagic(uint32_t magic) {
     return magic == 0xCAFEBABEU || magic == 0xBEBAFECAU;
 }
 
+uint32_t DDCrashMachOFatValueHostOrder(uint32_t magic, uint32_t value) {
+    return magic == 0xBEBAFECAU ? __builtin_bswap32(value) : value;
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,

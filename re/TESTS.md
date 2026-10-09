@@ -194,5 +194,6 @@
 - [x] Session-280 executable crash architecture contract: `(subtype & 0xFFFFFF) == 2` -> `arm64e`; zero, `1`, `3`, and values with high capability bits but masked low 24 bits not equal to 2 -> `arm64`; Mach-O/file/UUID/artifact side effects excluded.
 - [x] Session-281 executable crash Mach-O UUID contract: exactly 16 input bytes; each rendered uppercase with `%02X`; leading zeroes preserved; output length 32 with no hyphens/separators; Mach-O/file/load-command/artifact side effects excluded.
 - [x] Session-282 executable fat-Mach-O magic contract: `0xCAFEBABE` -> true; `0xBEBAFECA` -> true; `0`, thin Mach-O magic values and all other 32-bit values -> false; file/fat-header/count/bounds/load-command side effects excluded.
+- [x] Session-283 executable fat-Mach-O endian contract: magic `0xBEBAFECA` byte-swaps the supplied 32-bit value; `0xCAFEBABE` and every other magic return it unchanged; same rule evidenced for architecture count and slice offset; file/table/bounds/iteration side effects excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
