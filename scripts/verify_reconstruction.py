@@ -601,6 +601,9 @@ for crash_contract in [
     if crash_contract not in crash_reporting:
         raise SystemExit(f"CrashReporting executable guard/config missing contract: {crash_contract}")
 for respring_contract in [
+    "DDRespringReenablePreferenceEnabled",
+    "CFGetTypeID(value) != CFBooleanGetTypeID()",
+    "CFBooleanGetValue((CFBooleanRef)value)",
     "DDRespringCooldownSecondsForJailbreakPrefixCString",
     "prefix && prefix[0] ? 60.0 : 8.0",
     "DDRespringCooldownAllowsElapsed",

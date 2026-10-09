@@ -16,8 +16,8 @@
 
 // ---- latch.reset → 80574 (7F14C.c:121-127) ----
 static void DDOnLatchReset(void) {
-    // Guard: chỉ chạy khi `duodash_reenable_tweaks` tồn tại/khác-false
-    //   (notify_matrix row; đọc flag exact UNKNOWN — cross-ref F-023).
+    // Guard (exact pure core promoted session-291): `duodash_reenable_tweaks` must exist,
+    //   be exact CFBoolean type, and evaluate true. Missing/wrong-type/false -> no-op.
     //   Guard fail → no-op (không wipe, không post).
     // Body khi guard pass:
     //   unlink /var/mobile/Library/DuoDash/*.plist (glob loạt — danh sách exact UNKNOWN);
@@ -26,6 +26,12 @@ static void DDOnLatchReset(void) {
     //     (/var/mobile/Library/DuoDash/crashreport_collecting — cross-ref CrashReporting.m);
     //   + 9DEEC("Idle") status;
     //   + Post Darwin "com.sensetechlab.respring.request" (notify_post — kích 8097C).
+}
+
+BOOL DDRespringReenablePreferenceEnabled(CFTypeRef value) {
+    if (!value || CFGetTypeID(value) != CFBooleanGetTypeID())
+        return NO;
+    return CFBooleanGetValue((CFBooleanRef)value);
 }
 
 double DDRespringCooldownSecondsForJailbreakPrefixCString(const char *prefix) {

@@ -5,16 +5,16 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-221 (session-290): Chuyển sang respring subsystem và promote exact pure 8097C cooldown core vào executable `Respring.m`: null/empty jailbreak prefix -> 8s, nonempty -> 60s; elapsed<0 pass, otherwise elapsed>=threshold. Không stat/notify/global/file/respring execution state.
+BUILDABLE RUNTIME PHASE-222 (session-291): Promote exact pure 80574 latch-reset reenable preference gate vào executable `Respring.m`: non-null exact CFBoolean true only; missing/wrong-type/false reject. Không CFPreferences ownership, cleanup unlink/status/notify side effects.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-290):
-- R-289 executable respring cooldown decision: exact 8097C 8s/60s prefix-dependent threshold + elapsed gate now compile in Respring.m.
+## LAST COMPLETED TASK (session-291):
+- R-290 executable latch-reset reenable preference predicate: exact 80574 CFBoolean type/value gate now compile in Respring.m.
 
 ## CURRENT TASK:
-- R-289 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-290 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
 - Continue respring only with another direct exact pure decision; otherwise switch subsystem. A2800 remains exhausted. Jailbroken-device smoke tests remain unresolved.
