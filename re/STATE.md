@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-218 (session-287): Promote exact pure A2800 fat Mach-O header-size predicate vào executable `CrashReporting.m`: `fileLength >= 8`, normalized architecture count `<=16`, và `fileLength >= 8 + 20*count`. Không file I/O, endian normalization, table iteration hay load-command parsing.
+BUILDABLE RUNTIME PHASE-219 (session-288): Promote exact pure A2800 fat Mach-O slice-offset predicate vào executable `CrashReporting.m`: giữ slice khi `(uint64_t)sliceOffset + 32 <= fileLength`. Không architecture-table iteration, NSNumber boxing, slice parsing hay load-command traversal.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-287):
-- R-286 executable fat Mach-O header-size predicate: exact A2800 length/count/table-size semantics now compile in CrashReporting.m.
+## LAST COMPLETED TASK (session-288):
+- R-287 executable fat Mach-O slice-offset predicate: exact A2800 `offset+32<=fileLength` semantics now compile in CrashReporting.m.
 
 ## CURRENT TASK:
-- R-286 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-287 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-287 batch, reassess crash subsystem; switch subsystem if only stateful traversal remains. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-288 batch, reassess crash subsystem; switch subsystem if only stateful traversal remains. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

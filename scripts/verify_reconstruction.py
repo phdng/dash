@@ -558,6 +558,8 @@ for crash_contract in [
     "DDCrashMachOFatHeaderFits",
     "architectureCount > 0x10U",
     "20U * architectureCount + 8U",
+    "DDCrashMachOSliceOffsetFits",
+    "(uint64_t)sliceOffset + 32U <= fileLength",
     "DDCrashReportingAdapterStart",
     "DDCrashReportingAdapterReady",
     "DDCrashReportingMayCollect",

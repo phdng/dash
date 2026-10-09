@@ -101,6 +101,10 @@ BOOL DDCrashMachOFatHeaderFits(uint64_t fileLength, uint32_t architectureCount) 
     return fileLength >= (uint64_t)(20U * architectureCount + 8U);
 }
 
+BOOL DDCrashMachOSliceOffsetFits(uint64_t fileLength, uint32_t sliceOffset) {
+    return (uint64_t)sliceOffset + 32U <= fileLength;
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,
