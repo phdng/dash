@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-165 (session-234): Promote exact pure crash-report identifier sanitizer `A372C` vào executable `CrashReporting.m`: trim whitespace/newline, lowercase, length 16..64, chỉ cho phép `0123456789abcdef-`. Không global/report I/O/archive/upload/private state.
+BUILDABLE RUNTIME PHASE-166 (session-235): Promote exact pure license base64url decoder `A4208` vào executable `LicenseHelpers.m`: `-→+`, `_→/`, pad `=` tới bội số 4, rồi strict NSData Base64 decode. Không full verify/global/filesystem/network/private state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-234):
-- R-233 executable crash-report identifier sanitizer: exact A372C trim/lowercase/length/allowed-character semantics now compile in CrashReporting.m.
+## LAST COMPLETED TASK (session-235):
+- R-234 executable license base64url decoder: exact A4208 normalization/padding/strict NSData decode semantics now compile in LicenseHelpers.m.
 
 ## CURRENT TASK:
-- R-233 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-234 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-234 batch, inspect another pure crash-report helper only if independent from global/filesystem/archive/upload state; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-235 batch, inspect another pure license helper only if independent from key/global/filesystem/network state; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

@@ -33,6 +33,7 @@ for required in [
     RECON / "HostFlowAdapter.m",
     RECON / "DDzPicker.m",
     RECON / "CrashReporting.m",
+    RECON / "LicenseHelpers.m",
     RECON / "LocaleFlow.m",
     RECON / "PrefsResolver.m",
     RECON / "Migration.m",
@@ -47,7 +48,7 @@ for required in [
         raise SystemExit(f"missing build input: {required.relative_to(ROOT)}")
 
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m"]:
+for source in ["Tweak.x", "ReconstructionRuntime.m", "RecoveryRouting.m", "HostFlowAdapter.m", "DDzPicker.m", "CrashReporting.m", "LicenseHelpers.m", "LocaleFlow.m", "PrefsResolver.m", "Migration.m", "SiriProbe.m", "KeyinputGate.m", "AppBridgeTuning.m", "NavProviderHelpers.m", "CameraRelayHelpers.m"]:
     if source not in makefile:
         raise SystemExit(f"Makefile does not include {source}")
 if "DuoDashReconstruction_LIBRARIES = proc" not in makefile:
@@ -73,6 +74,7 @@ recovery_routing = (RECON / "RecoveryRouting.m").read_text(encoding="utf-8")
 host_flow_adapter = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
 picker_adapter = (RECON / "DDzPicker.m").read_text(encoding="utf-8")
 crash_reporting = (RECON / "CrashReporting.m").read_text(encoding="utf-8")
+license_helpers = (RECON / "LicenseHelpers.m").read_text(encoding="utf-8")
 locale_flow = (RECON / "LocaleFlow.m").read_text(encoding="utf-8")
 prefs_resolver = (RECON / "PrefsResolver.m").read_text(encoding="utf-8")
 migration = (RECON / "Migration.m").read_text(encoding="utf-8")
@@ -408,6 +410,17 @@ for crash_contract in [
 ]:
     if crash_contract not in crash_reporting:
         raise SystemExit(f"CrashReporting executable guard/config missing contract: {crash_contract}")
+for license_contract in [
+    "DDLicenseDecodeBase64URL",
+    "stringByReplacingOccurrencesOfString:@\"-\" withString:@\"+\"",
+    "replaceOccurrencesOfString:@\"_\"",
+    "withString:@\"/\"",
+    "while ((base64.length & 3) != 0)",
+    "appendString:@\"=\"",
+    "initWithBase64EncodedString:base64 options:0",
+]:
+    if license_contract not in license_helpers:
+        raise SystemExit(f"LicenseHelpers executable helper missing contract: {license_contract}")
 if "DDCrashReportingAdapterStart();" not in tweak:
     raise SystemExit("Tweak.x does not bootstrap CrashReporting guard/config")
 for locale_contract in [

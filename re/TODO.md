@@ -276,3 +276,4 @@ _Priority: P0 > P1 > P2 > P3 > P4. Cập nhật mỗi checkpoint._
 - [x] [R-231] executable crash-report string comparator (session-232): exact A3214 length-descending then lexical-ascending comparator promoted; regex/global/report I/O state remains excluded.
 - [x] [R-232] executable crash-report dictionary-date comparator (session-233): exact A3138 `date` extraction and descending `[rightDate compare:leftDate]` ordering promoted; regex/global/report I/O state remains excluded.
 - [x] [R-233] executable crash-report identifier sanitizer (session-234): exact A372C trim + lowercase + length 16..64 + `[0-9a-f-]` validation promoted; global/report I/O/network state remains excluded.
+- [x] [R-234] executable license base64url decoder (session-235): exact A4208 `-→+`, `_→/`, `=` padding-to-4 and strict NSData Base64 decode promoted; full verify/global/I/O/network state remains excluded.

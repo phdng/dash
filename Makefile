@@ -12,6 +12,7 @@ DuoDashReconstruction_FILES = \
 	re/RECONSTRUCTION/HostFlowAdapter.m \
 	re/RECONSTRUCTION/DDzPicker.m \
 	re/RECONSTRUCTION/CrashReporting.m \
+	re/RECONSTRUCTION/LicenseHelpers.m \
 	re/RECONSTRUCTION/LocaleFlow.m \
 	re/RECONSTRUCTION/PrefsResolver.m \
 	re/RECONSTRUCTION/Migration.m \
