@@ -148,6 +148,9 @@ for toggle_value_contract in [
     "isEqualToString:@\"portrait\"",
     "DDGPSBundleOverrideValue",
     "return @\"com.sensetechlab.duodash\"",
+    "DDRotateQuarterTurnDegrees",
+    "llround(parsed / 90.0)",
+    "quarterTurns & 3LL",
 ]:
     if toggle_value_contract not in toggle_value_helpers:
         raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")

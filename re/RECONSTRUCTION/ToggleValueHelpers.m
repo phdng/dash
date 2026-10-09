@@ -1,5 +1,6 @@
 #import "DuoDashShared.h"
 #include <stdlib.h>
+#include <math.h>
 
 // Exact pure string-value branch from 7EA4 promoted session-255.
 // Exact pure reapdelay string parser from 202D0 promoted session-256.
@@ -20,6 +21,7 @@
 // Exact pure live-present animation easing classifier from 2A610 promoted session-271.
 // Exact pure canvas portrait classifier from 3B2D8 promoted session-272.
 // Exact pure GPS bundle canonicalizer from 706A0 promoted session-273.
+// Exact pure rotate quarter-turn canonicalizer from 2BF84 promoted session-274.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -212,4 +214,10 @@ NSString *DDGPSBundleOverrideValue(NSString *value) {
     if (trimmed.length > 0)
         return trimmed;
     return @"com.sensetechlab.duodash";
+}
+
+NSInteger DDRotateQuarterTurnDegrees(NSString *value) {
+    double parsed = value ? value.doubleValue : 0.0;
+    long long quarterTurns = llround(parsed / 90.0);
+    return 90 * (NSInteger)(quarterTurns & 3LL);
 }
