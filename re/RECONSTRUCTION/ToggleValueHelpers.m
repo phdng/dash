@@ -22,6 +22,7 @@
 // Exact pure canvas portrait classifier from 3B2D8 promoted session-272.
 // Exact pure GPS bundle canonicalizer from 706A0 promoted session-273.
 // Exact pure rotate quarter-turn canonicalizer from 2BF84 promoted session-274.
+// Exact pure content-inset parser from 3620C promoted session-275.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -220,4 +221,40 @@ NSInteger DDRotateQuarterTurnDegrees(NSString *value) {
     double parsed = value ? value.doubleValue : 0.0;
     long long quarterTurns = llround(parsed / 90.0);
     return 90 * (NSInteger)(quarterTurns & 3LL);
+}
+
+BOOL DDContentInsetOverrideValue(NSString *value,
+                                 double width,
+                                 double height,
+                                 double *outLeft,
+                                 double *outTop,
+                                 double *outRight,
+                                 double *outBottom) {
+    if (value.length == 0)
+        return NO;
+
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString *trimmed = [value stringByTrimmingCharactersInSet:whitespace];
+    NSArray<NSString *> *parts = [trimmed componentsSeparatedByString:@","];
+    if (parts.count != 4)
+        return NO;
+
+    double left = parts[0].doubleValue;
+    double top = parts[1].doubleValue;
+    double right = parts[2].doubleValue;
+    double bottom = parts[3].doubleValue;
+    if (left < 0.0 || top < 0.0 || right < 0.0 || bottom < 0.0)
+        return NO;
+    if (left + right >= width - 40.0 || top + bottom >= height - 40.0)
+        return NO;
+
+    if (outLeft)
+        *outLeft = left;
+    if (outTop)
+        *outTop = top;
+    if (outRight)
+        *outRight = right;
+    if (outBottom)
+        *outBottom = bottom;
+    return YES;
 }

@@ -78,6 +78,13 @@ FOUNDATION_EXPORT BOOL DDLivePresentAnimationUsesLinearEasing(NSString * _Nullab
 FOUNDATION_EXPORT BOOL DDCanvasPortraitOverrideEnabled(NSString * _Nullable value);
 FOUNDATION_EXPORT NSString *DDGPSBundleOverrideValue(NSString * _Nullable value);
 FOUNDATION_EXPORT NSInteger DDRotateQuarterTurnDegrees(NSString * _Nullable value);
+FOUNDATION_EXPORT BOOL DDContentInsetOverrideValue(NSString * _Nullable value,
+                                                    double width,
+                                                    double height,
+                                                    double * _Nullable outLeft,
+                                                    double * _Nullable outTop,
+                                                    double * _Nullable outRight,
+                                                    double * _Nullable outBottom);
 
 // Compile-safe recovery-routing integration seam (session-176+).
 // This consumes ReconstructionRuntime evidence contracts without executing

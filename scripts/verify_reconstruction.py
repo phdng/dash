@@ -151,6 +151,10 @@ for toggle_value_contract in [
     "DDRotateQuarterTurnDegrees",
     "llround(parsed / 90.0)",
     "quarterTurns & 3LL",
+    "DDContentInsetOverrideValue",
+    "parts.count != 4",
+    "left + right >= width - 40.0",
+    "top + bottom >= height - 40.0",
 ]:
     if toggle_value_contract not in toggle_value_helpers:
         raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")
