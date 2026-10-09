@@ -443,6 +443,13 @@ for license_contract in [
     "return 0",
     "return 1",
     "return -1",
+    "DDLicenseStatusTextForAction",
+    "return @\"Licence revoked\"",
+    "return @\"Check date and time\"",
+    "return @\"Update DuoDash\"",
+    "return @\"Licence invalid\"",
+    "return @\"Cannot identify this device\"",
+    "return DDLicenseStatusTextForVerification(verificationStatus, refusalMatches)",
 ]:
     if license_contract not in license_helpers:
         raise SystemExit(f"LicenseHelpers executable helper missing contract: {license_contract}")

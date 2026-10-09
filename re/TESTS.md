@@ -151,5 +151,6 @@
 - [x] Session-237 executable license status-decision contract: 6 -> `Expired — connect to the internet`; 1 -> `Not activated`; other nonzero -> `Licence invalid`; zero + refusal match -> `Licence invalid`; zero + no refusal match -> `Active`; state acquisition remains excluded.
 - [x] Session-238 executable license printable-ASCII validator contract: non-NSString/empty -> false; every character must be within codepoint 33..126 inclusive; whitespace/control/non-ASCII -> false; no key/global/I/O/network side effects.
 - [x] Session-239 executable license key-prefix classifier contract: non-NSString/no match -> -1; `duodash-key v1 ` -> 0; `truedash-key v1 ` -> 1; DuoDash checked first; no key/global/I/O/network side effects.
+- [x] Session-240 executable license terminal status-action contract: action 1 revoked, 2 clock, 3 update, 4 invalid, 5 no-device-id text; other actions fall back to exact A54A4 status/refusal mapping; no delete/reseal/backoff/random/I/O/global/network side effects.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

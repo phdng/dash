@@ -4,7 +4,8 @@
 // Exact A54A4 decision-only status mapping promoted session-237.
 // Exact A4744 printable-ASCII validator promoted session-238.
 // Exact A4688 key-prefix classifier promoted session-239.
-// Full A397C verification, key iteration, filesystem, network, and verdict state acquisition remain excluded.
+// Exact A5F60 terminal status-action mapping promoted session-240.
+// Full A397C verification, key iteration, filesystem, network, retry/backoff, and verdict state acquisition remain excluded.
 
 #import "DuoDashShared.h"
 
@@ -85,4 +86,23 @@ NSInteger DDLicenseKeyPrefixIndex(id value) {
     if ([string hasPrefix:@"truedash-key v1 "])
         return 1;
     return -1;
+}
+
+NSString *DDLicenseStatusTextForAction(NSUInteger action,
+                                       NSInteger verificationStatus,
+                                       BOOL refusalMatches) {
+    switch (action) {
+        case 1:
+            return @"Licence revoked";
+        case 2:
+            return @"Check date and time";
+        case 3:
+            return @"Update DuoDash";
+        case 4:
+            return @"Licence invalid";
+        case 5:
+            return @"Cannot identify this device";
+        default:
+            return DDLicenseStatusTextForVerification(verificationStatus, refusalMatches);
+    }
 }
