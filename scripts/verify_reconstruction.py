@@ -79,6 +79,7 @@ recovery_routing = (RECON / "RecoveryRouting.m").read_text(encoding="utf-8")
 host_flow_adapter = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
 picker_adapter = (RECON / "DDzPicker.m").read_text(encoding="utf-8")
 crash_reporting = (RECON / "CrashReporting.m").read_text(encoding="utf-8")
+respring = (RECON / "Respring.m").read_text(encoding="utf-8")
 license_helpers = (RECON / "LicenseHelpers.m").read_text(encoding="utf-8")
 locale_flow = (RECON / "LocaleFlow.m").read_text(encoding="utf-8")
 prefs_resolver = (RECON / "PrefsResolver.m").read_text(encoding="utf-8")
@@ -599,6 +600,14 @@ for crash_contract in [
 ]:
     if crash_contract not in crash_reporting:
         raise SystemExit(f"CrashReporting executable guard/config missing contract: {crash_contract}")
+for respring_contract in [
+    "DDRespringCooldownSecondsForJailbreakPrefixCString",
+    "prefix && prefix[0] ? 60.0 : 8.0",
+    "DDRespringCooldownAllowsElapsed",
+    "elapsedSeconds < 0.0 || elapsedSeconds >= threshold",
+]:
+    if respring_contract not in respring:
+        raise SystemExit(f"Respring executable cooldown missing contract: {respring_contract}")
 for license_contract in [
     "DDLicenseDecodeBase64URL",
     "stringByReplacingOccurrencesOfString:@\"-\" withString:@\"+\"",

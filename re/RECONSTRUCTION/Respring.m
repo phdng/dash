@@ -28,13 +28,23 @@ static void DDOnLatchReset(void) {
     //   + Post Darwin "com.sensetechlab.respring.request" (notify_post — kích 8097C).
 }
 
+double DDRespringCooldownSecondsForJailbreakPrefixCString(const char *prefix) {
+    return prefix && prefix[0] ? 60.0 : 8.0;
+}
+
+BOOL DDRespringCooldownAllowsElapsed(double elapsedSeconds, const char *prefix) {
+    double threshold = DDRespringCooldownSecondsForJailbreakPrefixCString(prefix);
+    return elapsedSeconds < 0.0 || elapsedSeconds >= threshold;
+}
+
 // ---- respring.request → 8097C (7F14C.c:129-135) ----
 static void DDOnRespringRequest(void) {
     // Guard 1 — kill-switch file: `duodash_norespring` tồn tại (stat!=0) → return,
     //   không respring (toggle_matrix 8097C:28; còn `duodash_ab_norespring` prefix-variant
     //   cùng call-site 8097C:28 — cả hai đều gate).
-    // Guard 2 — throttle: `respring_last` mtime: <8s → return silent; <60s → return
-    //   throttled (exact branch/thông báo UNKNOWN; "throttle 8/60s" theo F-023).
+    // Guard 2 — throttle (exact pure core promoted in session-290): rootful/null-or-empty
+    //   jailbreak prefix uses 8s; nonempty/rootless prefix uses 60s. Missing timestamp is
+    //   represented by elapsed<0 and passes; otherwise require elapsed>=threshold.
     //   Pass → touch `respring_last` (đường dẫn dir exact UNKNOWN — API_MAP chỉ liệt
     //   kê `respring_*` dưới Library/DuoDash).
     // Guard 3 — carsleep: latch "carsleep" on (9C530-path — cross-ref CarSleeper.m) → return.

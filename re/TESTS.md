@@ -201,5 +201,6 @@
 - [x] Session-287 executable fat-Mach-O header contract: file length below 8 -> false; architecture count 17+ -> false; count 0 requires only 8 bytes; equality at `8 + 20*count` is valid; one byte shorter is invalid; file/endian/table/iteration side effects excluded.
 - [x] Session-288 executable fat-Mach-O slice-offset contract: `sliceOffset + 32 == fileLength` -> valid; one byte beyond -> invalid; zero offset requires at least 32 bytes; table iteration/boxing/slice parsing side effects excluded.
 - [x] Session-289 executable Mach-O minimum-file-size contract: file length `31` -> false; `32` -> true; any larger length -> true; NSData/path/magic/parser side effects excluded.
+- [x] Session-290 executable respring cooldown contract: null/empty prefix -> threshold 8s; nonempty prefix -> 60s; elapsed -1 -> allowed for either threshold; elapsed exactly threshold -> allowed; one epsilon below threshold -> blocked; stat/notify/global/respring side effects excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
