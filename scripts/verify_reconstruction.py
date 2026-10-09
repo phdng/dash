@@ -95,6 +95,10 @@ for version_device_contract in [
     "installedMinor > requiredMinor",
     "installedMinor < requiredMinor",
     "return installedPatch >= requiredPatch",
+    "DDVersionDeviceSanitizeMachineModel",
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,_-",
+    "rangeOfCharacterFromSet:[allowed invertedSet]",
+    "value.length > 32",
 ]:
     if version_device_contract not in version_device_helpers:
         raise SystemExit(f"VersionDeviceHelpers missing A4008 fallback contract: {version_device_contract}")

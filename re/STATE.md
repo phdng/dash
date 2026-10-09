@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-176 (session-245): Switch subsystem sang Version/device và promote exact pure fallback comparator từ `A4008` vào executable `VersionDeviceHelpers.m`: so major/minor/patch theo thứ tự và trả `installed >= required`. Không weak-import availability check, global init, SystemVersion.plist parsing hay device telemetry.
+BUILDABLE RUNTIME PHASE-177 (session-246): Promote exact pure `hw.machine` sanitizer embedded in `A574C` vào executable `VersionDeviceHelpers.m`: NSString only, length <=32, allowed chars `[A-Za-z0-9,_-]`, no trim/normalize; empty string valid. Không sysctl acquisition, network/license/global mutation.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-245):
-- R-244 executable version tuple comparator: exact A4008 fallback major/minor/patch comparison now compiles in VersionDeviceHelpers.m.
+## LAST COMPLETED TASK (session-246):
+- R-245 executable hw.machine sanitizer: exact A574C allowlist/length semantics now compile in VersionDeviceHelpers.m without sysctl acquisition.
 
 ## CURRENT TASK:
-- R-244 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-245 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-245 batch, inspect another small Version/device helper only if pure/read-only and independent of global/system mutation; otherwise switch subsystem. A2720 sysctl telemetry is read-only but environment-coupled and may remain excluded unless it adds clear value. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-246 batch, inspect another Version/device pure formatting/sanitization helper only if independent of sysctl/global/network state; otherwise switch subsystem. A2720 environment-coupled sysctl reader remains excluded unless it adds clear value. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

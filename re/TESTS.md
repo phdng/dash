@@ -157,5 +157,6 @@
 - [x] Session-243 executable AirPlay perf integer-reader contract: CurrentUser/AnyHost `com.apple.airplay` lookup; missing -> -1; non-CFNumber or int conversion failure -> -2; valid CFNumber -> int; no backup/write/restore/notify/global-state side effects.
 - [x] Session-244 executable perf decision contract: only CFBoolean true enables perf; target FPS 15 when enabled else -1; settings match only when both AirPlay FPS keys equal target; no backup/write/restore/notify/global-state side effects.
 - [x] Session-245 executable version tuple comparator contract: compare major first, then minor, then patch; greater earlier component wins, lesser loses, exact equality passes; no availability weak-import/global-init/plist side effects.
+- [x] Session-246 executable hw.machine sanitizer contract: NSString only; length <=32; allowed chars exactly ASCII letters/digits/comma/underscore/hyphen; no trim or normalization; empty string valid; no sysctl/network/global side effects.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
