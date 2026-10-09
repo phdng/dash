@@ -205,5 +205,6 @@
 - [x] Session-291 executable latch-reset reenable contract: null -> false; kCFBooleanFalse -> false; kCFBooleanTrue -> true; non-Boolean CFTypeRef -> false without coercion; CFPreferences/ownership/cleanup/status/notify side effects excluded.
 - [x] Session-292 executable carsleep admission contract: nonzero notify-register result -> true regardless of state argument; zero register result + sleeping state 0 -> true; zero register result + nonzero sleeping state -> false; notify/token/state acquisition and respring side effects excluded.
 - [x] Session-293 executable respring execution-selector contract: worker count -1/0 -> direct path; worker count 1+ -> async path; sub_811B0 acquisition, dispatch/block construction and execution bodies excluded.
+- [x] Session-294 executable planned-respring marker freshness contract: elapsed <0 -> false; elapsed 0 -> true; elapsed just below 120 -> true; elapsed 120 or greater -> false; file/stat/time-acquisition side effects excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

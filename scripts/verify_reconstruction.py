@@ -612,6 +612,8 @@ for respring_contract in [
     "notifyRegisterResult != 0 || sleepingState == 0",
     "DDRespringUsesDirectExecutionForWorkerCount",
     "return workerCount < 1",
+    "DDRespringPlannedMarkerFresh",
+    "elapsedSeconds >= 0.0 && elapsedSeconds < 120.0",
 ]:
     if respring_contract not in respring:
         raise SystemExit(f"Respring executable cooldown missing contract: {respring_contract}")

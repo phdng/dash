@@ -51,6 +51,10 @@ BOOL DDRespringUsesDirectExecutionForWorkerCount(int workerCount) {
     return workerCount < 1;
 }
 
+BOOL DDRespringPlannedMarkerFresh(double elapsedSeconds) {
+    return elapsedSeconds >= 0.0 && elapsedSeconds < 120.0;
+}
+
 // ---- respring.request → 8097C (7F14C.c:129-135) ----
 static void DDOnRespringRequest(void) {
     // Guard 1 — kill-switch file: `duodash_norespring` tồn tại (stat!=0) → return,
