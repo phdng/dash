@@ -167,5 +167,6 @@
 - [x] Session-253 executable keep-awake nav-only bundle contract: true only for exact `com.google.Maps` or `com.waze.iphone`; nil/empty/other -> false; no file/notify/UI/backlight/display/global side effects.
 - [x] Session-254 executable keep-awake slow-blank threshold contract: elapsed 3.0 ms -> false; >3.0 with count 14 -> true; >3.0 with count 15 -> false; no Mach timing/BackBoard/global counter side effects.
 - [x] Session-255 executable font-floor override contract: surrounding whitespace/newlines trimmed; empty/non-digit -> 0; `7` -> 0; `8` -> 8; `96` -> 96; `97` -> 0; file/preferences/cache side effects excluded.
+- [x] Session-256 executable reap-delay contract: surrounding whitespace/newlines trimmed; empty -> 0.0; parsed `0`/negative -> 0.0; `0.1` -> 0.1; `60` -> 60; `>60` -> 0.0; file/host/scheduling/global side effects excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.
