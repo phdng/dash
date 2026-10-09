@@ -25,6 +25,16 @@ BOOL DDDataRouterIsTrueDashNotification(CFStringRef name) {
            CFEqual(name, CFSTR("com.sensetechlab.truedash.cameraAlert"));
 }
 
+NSInteger DDDataRouterSourceCode(NSString *source) {
+    if ([source isEqualToString:@"waze"])
+        return 2;
+    if ([source isEqualToString:@"google_maps"])
+        return 1;
+    if ([source isEqualToString:@"provider"])
+        return 3;
+    return 0;
+}
+
 // ---- Nav update race: GMaps vs Waze (duo + true variants) ----
 static void DDNavUpdate(BOOL isTrueDash) {
     // 7F5A4 (duodash.navUpdate + truedash.navUpdate chung):

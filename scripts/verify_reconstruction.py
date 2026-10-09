@@ -625,6 +625,10 @@ for data_router_contract in [
     "com.sensetechlab.truedash.navUpdate",
     "com.sensetechlab.truedash.speedLimit",
     "com.sensetechlab.truedash.cameraAlert",
+    "DDDataRouterSourceCode",
+    "isEqualToString:@\"waze\"",
+    "isEqualToString:@\"google_maps\"",
+    "isEqualToString:@\"provider\"",
 ]:
     if data_router_contract not in data_router:
         raise SystemExit(f"DataRouter executable classifier missing contract: {data_router_contract}")

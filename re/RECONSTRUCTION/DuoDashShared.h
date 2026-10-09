@@ -280,6 +280,7 @@ FOUNDATION_EXPORT BOOL DDRespringUsesDirectExecutionForWorkerCount(int workerCou
 FOUNDATION_EXPORT BOOL DDRespringPlannedMarkerFresh(double elapsedSeconds);
 FOUNDATION_EXPORT BOOL DDRespringUsesAlternatePlannedMarkerBasePath(NSString * _Nullable basePath);
 FOUNDATION_EXPORT BOOL DDDataRouterIsTrueDashNotification(CFStringRef _Nullable name);
+FOUNDATION_EXPORT NSInteger DDDataRouterSourceCode(NSString * _Nullable source);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeBase64URL(NSString * _Nullable value);
 FOUNDATION_EXPORT NSData * _Nullable DDLicenseDecodeHex(NSString * _Nullable value);
 FOUNDATION_EXPORT NSString *DDLicenseStatusTextForVerification(NSInteger verificationStatus,
