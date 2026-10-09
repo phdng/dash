@@ -5,6 +5,7 @@
 // Exact A4744 printable-ASCII validator promoted session-238.
 // Exact A4688 key-prefix classifier promoted session-239.
 // Exact A5F60 terminal status-action mapping promoted session-240.
+// Exact A774C verdict-text decision promoted session-241.
 // Full A397C verification, key iteration, filesystem, network, retry/backoff, and verdict state acquisition remain excluded.
 
 #import "DuoDashShared.h"
@@ -104,5 +105,30 @@ NSString *DDLicenseStatusTextForAction(NSUInteger action,
             return @"Cannot identify this device";
         default:
             return DDLicenseStatusTextForVerification(verificationStatus, refusalMatches);
+    }
+}
+
+NSString *DDLicenseVerdictText(NSUInteger verificationStatus,
+                               BOOL licenseNoncePresent,
+                               BOOL refusalMatches,
+                               BOOL deviceHashPresent) {
+    if (licenseNoncePresent && refusalMatches)
+        return @"refused";
+    if (verificationStatus != 0 && !deviceHashPresent)
+        return @"no_device_id";
+
+    switch (verificationStatus) {
+        case 0: return @"valid";
+        case 1: return @"absent";
+        case 2: return @"malformed";
+        case 3: return @"unknown_key";
+        case 4: return @"bad_signature";
+        case 5: return @"wrong_device";
+        case 6: return @"expired";
+        case 7: return @"future_dated";
+        case 8: return @"unsupported";
+        case 9: return @"store_failed";
+        case 10: return @"wrong_product";
+        default: return @"unknown";
     }
 }

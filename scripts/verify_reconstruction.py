@@ -450,6 +450,23 @@ for license_contract in [
     "return @\"Licence invalid\"",
     "return @\"Cannot identify this device\"",
     "return DDLicenseStatusTextForVerification(verificationStatus, refusalMatches)",
+    "DDLicenseVerdictText",
+    "licenseNoncePresent && refusalMatches",
+    "return @\"refused\"",
+    "verificationStatus != 0 && !deviceHashPresent",
+    "return @\"no_device_id\"",
+    "case 0: return @\"valid\"",
+    "case 1: return @\"absent\"",
+    "case 2: return @\"malformed\"",
+    "case 3: return @\"unknown_key\"",
+    "case 4: return @\"bad_signature\"",
+    "case 5: return @\"wrong_device\"",
+    "case 6: return @\"expired\"",
+    "case 7: return @\"future_dated\"",
+    "case 8: return @\"unsupported\"",
+    "case 9: return @\"store_failed\"",
+    "case 10: return @\"wrong_product\"",
+    "default: return @\"unknown\"",
 ]:
     if license_contract not in license_helpers:
         raise SystemExit(f"LicenseHelpers executable helper missing contract: {license_contract}")
