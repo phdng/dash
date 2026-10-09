@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-201 (session-270): Promote exact pure 2A610 live-present animation alpha-token validator vào executable `ToggleValueHelpers.m`: token nonempty, direct `floatValue`, valid `[0.5,1.0]` inclusive với optional float output. Không file read, full-list splitting, duration/easing fallback hay presenter/UI state.
+BUILDABLE RUNTIME PHASE-202 (session-271): Promote exact pure 2A610 live-present animation easing classifier vào executable `ToggleValueHelpers.m`: lowercase supplied token rồi true iff prefix `lin`; nil/missing/other false. Không file read, full animation parsing, duration fallback hay presenter/UI state.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-270):
-- R-269 executable live-present animation alpha-token validator: exact 2A610 nonempty/float/range semantics now compile in ToggleValueHelpers.m.
+## LAST COMPLETED TASK (session-271):
+- R-270 executable live-present animation easing classifier: exact 2A610 lowercase + prefix-`lin` semantics now compile in ToggleValueHelpers.m.
 
 ## CURRENT TASK:
-- R-269 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-270 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-270 batch, reassess remaining toggle VALUE candidates. Promote only with direct exact pure evidence; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-271 batch, reassess remaining toggle VALUE candidates. Promote only with direct exact pure evidence; otherwise switch subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

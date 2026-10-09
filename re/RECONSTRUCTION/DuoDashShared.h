@@ -74,6 +74,7 @@ FOUNDATION_EXPORT float DDLivePresentAlphaOverrideValue(NSString * _Nullable val
 FOUNDATION_EXPORT NSString *DDLivePresentTargetOverrideValue(NSString * _Nullable value);
 FOUNDATION_EXPORT BOOL DDLivePresentAnimationAlphaTokenValue(NSString * _Nullable value,
                                                               float * _Nullable outValue);
+FOUNDATION_EXPORT BOOL DDLivePresentAnimationUsesLinearEasing(NSString * _Nullable value);
 
 // Compile-safe recovery-routing integration seam (session-176+).
 // This consumes ReconstructionRuntime evidence contracts without executing

@@ -142,6 +142,8 @@ for toggle_value_contract in [
     "return @\"root\"",
     "DDLivePresentAnimationAlphaTokenValue",
     "parsed < 0.5f || parsed > 1.0f",
+    "DDLivePresentAnimationUsesLinearEasing",
+    "hasPrefix:@\"lin\"",
 ]:
     if toggle_value_contract not in toggle_value_helpers:
         raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")
