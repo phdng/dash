@@ -179,5 +179,6 @@
 - [x] Session-265 executable mat-alpha contract: nil/empty/non-numeric -> 0.996078431 via range fallback; `0` -> default; tiny positive values are preserved; `1` -> 1; `>1` -> default; no explicit trim; file/render-state side effects excluded.
 - [x] Session-266 executable orientation contract: nil/empty/non-numeric/0/negative/>4 -> 1; `1` -> 1; `4` -> 4; direct `integerValue` with no explicit trim; file/layout/orientation side effects excluded.
 - [x] Session-267 executable render-scale contract: nil/empty/non-numeric -> 2.0 via range fallback; `0.99` -> 2.0; `1` -> 1; `3` -> 3; `3.01` -> 2.0; no explicit trim; file/canvas/screen/layout side effects excluded.
+- [x] Session-268 executable live-present alpha contract: nil/empty/non-numeric -> 0.995f via range fallback; `0.899` -> default; `0.9` -> 0.9; `0.99999` -> preserved; `1.0` -> default; no explicit trim; file/presenter/UI side effects excluded.
 - [ ] Jailbroken-device runtime smoke test cho cache + `appbridge.resolved`, layout setter, CarPlay UI normalize/evict, autostart toggle.
 - Tiêu chí DONE toàn dự án vẫn là behavior fidelity + unknowns minh bạch + dynamic verify; compiler xanh chỉ là một gate, không thay thế evidence.

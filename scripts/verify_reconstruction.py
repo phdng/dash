@@ -133,6 +133,9 @@ for toggle_value_contract in [
     "DDRenderScaleOverrideValue",
     "parsed > 3.0 || parsed < 1.0",
     "return 2.0",
+    "DDLivePresentAlphaOverrideValue",
+    "parsed > 0.99999f || parsed < 0.9f",
+    "return 0.995f",
 ]:
     if toggle_value_contract not in toggle_value_helpers:
         raise SystemExit(f"ToggleValueHelpers missing 7EA4 font-floor contract: {toggle_value_contract}")

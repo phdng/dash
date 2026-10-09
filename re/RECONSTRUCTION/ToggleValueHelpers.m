@@ -14,6 +14,7 @@
 // Exact pure mat-alpha parser from 33DB4 promoted session-265.
 // Exact pure orientation parser from 3DFC8 promoted session-266.
 // Exact pure render-scale parser from 3B2D8 promoted session-267.
+// Exact pure live-present alpha parser from 2A610 promoted session-268.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -158,5 +159,14 @@ double DDRenderScaleOverrideValue(NSString *value) {
     double parsed = value ? value.doubleValue : 0.0;
     if (parsed > 3.0 || parsed < 1.0)
         return 2.0;
+    return parsed;
+}
+
+float DDLivePresentAlphaOverrideValue(NSString *value) {
+    if (value.length == 0)
+        return 0.995f;
+    float parsed = value.floatValue;
+    if (parsed > 0.99999f || parsed < 0.9f)
+        return 0.995f;
     return parsed;
 }
