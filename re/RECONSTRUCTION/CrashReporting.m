@@ -73,6 +73,10 @@ NSString *DDCrashMachOUUIDHex(const uint8_t uuidBytes[16]) {
     return hex;
 }
 
+BOOL DDCrashMachOIsFatMagic(uint32_t magic) {
+    return magic == 0xCAFEBABEU || magic == 0xBEBAFECAU;
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,

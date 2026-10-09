@@ -5,19 +5,19 @@ _Last updated: 2026-10-08 session-232 (buildable reconstruction phase)_
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-BUILDABLE RUNTIME PHASE-212 (session-281): Promote exact pure A2800 crash Mach-O UUID formatter vào executable `CrashReporting.m`: iterate exactly 16 bytes and append uppercase `%02X`, yielding 32 hex characters without separators. Không Mach-O file I/O/load-command scan, arch mapping hay artifact-array mutation.
+BUILDABLE RUNTIME PHASE-213 (session-282): Promote exact pure A2800 fat Mach-O magic classifier vào executable `CrashReporting.m`: true only for `0xCAFEBABE` or `0xBEBAFECA`. Không NSData/file access, fat-arch count/endianness handling, bounds checks hay load-command parsing.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-281):
-- R-280 executable crash Mach-O UUID formatter: exact A2800 16-byte uppercase `%02X` semantics now compile in CrashReporting.m.
+## LAST COMPLETED TASK (session-282):
+- R-281 executable fat Mach-O magic classifier: exact A2800 `CAFEBABE`/`BEBAFECA` predicate now compile in CrashReporting.m.
 
 ## CURRENT TASK:
-- R-280 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
+- R-281 implementation + docs complete locally; verify/commit-only handoff in progress. Assistant không push.
 
 ## NEXT TASK:
-- Sau compiler xanh cho session-281 batch, continue crash metadata only with exact pure evidence, otherwise reassess another subsystem. Jailbroken-device smoke tests remain unresolved.
+- Sau compiler xanh cho session-282 batch, continue crash metadata only with exact pure evidence, otherwise reassess another subsystem. Jailbroken-device smoke tests remain unresolved.
 
 ## BLOCKERS:
 - Workspace hiện tại Windows không có Xcode/iOS SDK nên chưa compiler-build local. P0-3 vẫn blocked (raw asm 27E20); không device jailbroken; các private-hook contracts chưa đủ evidence vẫn chưa đưa vào executable target.

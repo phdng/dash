@@ -545,6 +545,8 @@ for crash_contract in [
     "stringWithCapacity:36",
     "appendFormat:@\"%02X\"",
     "index < 16",
+    "DDCrashMachOIsFatMagic",
+    "magic == 0xCAFEBABEU || magic == 0xBEBAFECAU",
     "DDCrashReportingAdapterStart",
     "DDCrashReportingAdapterReady",
     "DDCrashReportingMayCollect",
