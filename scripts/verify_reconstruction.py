@@ -551,6 +551,8 @@ for crash_contract in [
     "magic == 0xBEBAFECAU ? __builtin_bswap32(value) : value",
     "DDCrashMachOIs64BitMagic",
     "return magic == 0xFEEDFACFU",
+    "DDCrashMachOLoadCommandIsUUID",
+    "commandSize >= 0x18U && command == 27U",
     "DDCrashReportingAdapterStart",
     "DDCrashReportingAdapterReady",
     "DDCrashReportingMayCollect",

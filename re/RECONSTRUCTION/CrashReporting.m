@@ -85,6 +85,10 @@ BOOL DDCrashMachOIs64BitMagic(uint32_t magic) {
     return magic == 0xFEEDFACFU;
 }
 
+BOOL DDCrashMachOLoadCommandIsUUID(uint32_t command, uint32_t commandSize) {
+    return commandSize >= 0x18U && command == 27U;
+}
+
 static NSString *DDCrashPreferenceString(NSString *key) {
     CFPreferencesSynchronize((__bridge CFStringRef)DD_SETTINGS_DOMAIN,
                              kCFPreferencesCurrentUser,
