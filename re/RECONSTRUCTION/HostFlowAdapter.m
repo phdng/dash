@@ -78,6 +78,51 @@ BOOL DDHostSwitchInteractionStateAllows(BOOL active,
            maximizedPosition >= 0 && !maximizeInFlight;
 }
 
+// 208F4:170-206: generation, geometry, and preference-layout consistency.
+// These supplied-state checks are necessary but not sufficient for switching.
+BOOL DDHostSwitchConsistencyAllows(uint64_t pendingGeneration,
+                                   NSInteger requestedGeometryVersion,
+                                   NSInteger appliedGeometryVersion,
+                                   NSInteger activeLayout,
+                                   NSInteger preferredLayout) {
+    return pendingGeneration == 0 &&
+           requestedGeometryVersion == appliedGeometryVersion &&
+           activeLayout == preferredLayout;
+}
+
+// 26FE4:81-260: post-switch continuation requires a live, visible split host
+// and an active CarPlay connection. Remaining private checks are excluded.
+BOOL DDHostSwitchContinuationStateAllows(BOOL active,
+                                         BOOL splitHosting,
+                                         BOOL visible,
+                                         BOOL carPlayConnected) {
+    return active && splitHosting && visible && carPlayConnected;
+}
+
+// 208F4:238-242: reject in-place switch when 22D64 reports shell-bounds mismatch.
+// The bounds check itself remains private and is not called here.
+BOOL DDHostSwitchShellBoundsAllow(BOOL shellBoundsMismatch) {
+    return !shellBoundsMismatch;
+}
+
+// 208F4:574-584: nonempty pending BID set uses the delayed continuation path;
+// an empty set calls the continuation directly. Does not schedule either path.
+BOOL DDHostSwitchNeedsDelayedContinuation(NSUInteger pendingBidCount) {
+    return pendingBidCount != 0;
+}
+
+// 217EC:26-37: two-pane wrapper coalesces absent L/R bundle IDs to empty strings.
+// Does not construct the host request or invoke hostSlots:skipEvict:onHosted:.
+NSString *DDHostSplitBidOrEmpty(NSString * _Nullable bid) {
+    return bid ?: @"";
+}
+
+// 208F4:207-237: hosted slot size must reach 1.0 for BID comparison.
+// Caller supplies the size; no private slot inspection is performed here.
+BOOL DDHostSwitchHostedSlotSizeValid(double hostedSlotSize) {
+    return hostedSlotSize >= 1.0;
+}
+
 static BOOL gDDHostFlowAdapterReady;
 
 void DDHostFlowAdapterStart(void) {

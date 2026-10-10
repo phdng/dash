@@ -158,6 +158,19 @@ FOUNDATION_EXPORT BOOL DDHostSwitchInteractionStateAllows(BOOL active,
                                                           BOOL swapInFlight,
                                                           NSInteger maximizedPosition,
                                                           BOOL maximizeInFlight);
+FOUNDATION_EXPORT BOOL DDHostSwitchConsistencyAllows(uint64_t pendingGeneration,
+                                                     NSInteger requestedGeometryVersion,
+                                                     NSInteger appliedGeometryVersion,
+                                                     NSInteger activeLayout,
+                                                     NSInteger preferredLayout);
+FOUNDATION_EXPORT BOOL DDHostSwitchContinuationStateAllows(BOOL active,
+                                                           BOOL splitHosting,
+                                                           BOOL visible,
+                                                           BOOL carPlayConnected);
+FOUNDATION_EXPORT BOOL DDHostSwitchShellBoundsAllow(BOOL shellBoundsMismatch);
+FOUNDATION_EXPORT BOOL DDHostSwitchNeedsDelayedContinuation(NSUInteger pendingBidCount);
+FOUNDATION_EXPORT NSString * _Nonnull DDHostSplitBidOrEmpty(NSString * _Nullable bid);
+FOUNDATION_EXPORT BOOL DDHostSwitchHostedSlotSizeValid(double hostedSlotSize);
 FOUNDATION_EXPORT void DDHostFlowAdapterStart(void);
 FOUNDATION_EXPORT BOOL DDHostFlowAdapterReady(void);
 FOUNDATION_EXPORT DDPostPresentHostFlowDecision DDPostPresentHostFlowDecisionForSite(DDPostPresentHostFlowExceptionSite site);
