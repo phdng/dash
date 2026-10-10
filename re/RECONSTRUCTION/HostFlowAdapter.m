@@ -238,6 +238,31 @@ DDHostSwitchPreflightResult DDHostSwitchPreflight(
     return result;
 }
 
+// Staged per-slot version: the private caller supplies all measured slot sizes.
+DDHostSwitchPreflightResult DDHostSwitchPreflightForSlots(
+    DDHostSwitchEarlyGuardSnapshot snapshot,
+    NSArray<NSString *> * _Nullable requestedBids,
+    NSArray<NSString *> * _Nullable hostedBids,
+    NSArray<NSNumber *> * _Nullable hostedSlotSizes,
+    BOOL shellBoundsMismatch) {
+    DDHostSwitchPreflightResult result = {0};
+    result.earlyFailures = DDHostSwitchEarlyGuardFailures(snapshot);
+    if (result.earlyFailures != 0)
+        return result;
+
+    result.bidsMatch = DDHostSwitchBidsMatch(requestedBids, hostedBids,
+                                             snapshot.hostedSlotCount);
+    if (!result.bidsMatch)
+        return result;
+
+    if (!DDHostSwitchAllSlotSizesValid(hostedSlotSizes, snapshot.hostedSlotCount))
+        result.postEarlyFailures |= DDHostSwitchPostEarlyFailureHostedSlotSize;
+    if (!DDHostSwitchShellBoundsAllow(shellBoundsMismatch))
+        result.postEarlyFailures |= DDHostSwitchPostEarlyFailureShellBounds;
+    result.canProceedToPrivateSwitchChecks = result.postEarlyFailures == 0;
+    return result;
+}
+
 // Can be invoked explicitly in a device test to exercise the compiled
 // implementation; never run implicitly during SpringBoard/CarPlay startup.
 BOOL DDHostSwitchPreflightSelfTest(void) {
@@ -295,6 +320,24 @@ BOOL DDHostSwitchPreflightSelfTest(void) {
         DDHostSwitchAllSlotSizesValid(@[@1.0], 2) ||
         DDHostSwitchAllSlotSizesValid(nil, 2) ||
         DDHostSwitchAllSlotSizesValid(@[@1.0, @2.0], 3))
+        return NO;
+
+    DDHostSwitchPreflightResult slotsResult = DDHostSwitchPreflightForSlots(
+        snapshot, bids, bids, @[@1.0, @2.0], NO);
+    if (!slotsResult.canProceedToPrivateSwitchChecks || !slotsResult.bidsMatch ||
+        slotsResult.postEarlyFailures != 0)
+        return NO;
+    slotsResult = DDHostSwitchPreflightForSlots(snapshot, bids, bids,
+                                                 @[@1.0, @0.5], NO);
+    if (!slotsResult.bidsMatch ||
+        slotsResult.postEarlyFailures != DDHostSwitchPostEarlyFailureHostedSlotSize ||
+        slotsResult.canProceedToPrivateSwitchChecks)
+        return NO;
+    slotsResult = DDHostSwitchPreflightForSlots(snapshot, bids, bids,
+                                                 @[@1.0, @0.5], YES);
+    if (slotsResult.postEarlyFailures != (DDHostSwitchPostEarlyFailureHostedSlotSize |
+                                           DDHostSwitchPostEarlyFailureShellBounds) ||
+        slotsResult.canProceedToPrivateSwitchChecks)
         return NO;
 
     result = DDHostSwitchPreflight(snapshot, bids, bids, 0.5, YES);

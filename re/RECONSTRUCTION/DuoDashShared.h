@@ -238,6 +238,13 @@ FOUNDATION_EXPORT DDHostSwitchPreflightResult DDHostSwitchPreflight(
     NSArray<NSString *> * _Nullable hostedBids,
     double hostedSlotSize,
     BOOL shellBoundsMismatch);
+// Complete per-slot size preflight; the legacy scalar overload remains available.
+FOUNDATION_EXPORT DDHostSwitchPreflightResult DDHostSwitchPreflightForSlots(
+    DDHostSwitchEarlyGuardSnapshot snapshot,
+    NSArray<NSString *> * _Nullable requestedBids,
+    NSArray<NSString *> * _Nullable hostedBids,
+    NSArray<NSNumber *> * _Nullable hostedSlotSizes,
+    BOOL shellBoundsMismatch);
 // Optional, side-effect-free Objective-C smoke test of preflight semantics.
 // Never invoked automatically from tweak startup.
 FOUNDATION_EXPORT BOOL DDHostSwitchPreflightSelfTest(void);
