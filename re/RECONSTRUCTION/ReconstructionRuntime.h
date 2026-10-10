@@ -2180,7 +2180,6 @@ typedef struct {
 } DDHostFrameMetrics;
 
 FOUNDATION_EXPORT DDRole DDDetectRole(void);
-FOUNDATION_EXPORT NSString *DDRoleName(DDRole role);
 FOUNDATION_EXPORT NSDictionary *DDBuildKnownAppBridgeSnapshot(void);
 FOUNDATION_EXPORT BOOL DDRepublishKnownAppBridgeSnapshot(NSError * _Nullable * _Nullable error);
 FOUNDATION_EXPORT NSString * _Nullable DDCachedStringValue(NSString *key);

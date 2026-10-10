@@ -2211,6 +2211,11 @@ if "enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {\n       
 if "#if 0\n// ---- Installer (EVIDENCE §0" not in siri_probe or "#endif // Documentary Siri hook synthesis (not executable)" not in siri_probe:
     raise SystemExit("SiriProbe documentary hook synthesis must remain compile-excluded")
 
+if len(re.findall(r"(?m)^NSString\s*\*\s*DDRoleName\s*\(", (RECON / "InitRoleHelpers.m").read_text(encoding="utf-8"))) != 1:
+    raise SystemExit("DDRoleName must have one canonical definition in InitRoleHelpers.m")
+if re.search(r"(?m)^NSString\s*\*\s*DDRoleName\s*\(", runtime):
+    raise SystemExit("ReconstructionRuntime must not redefine DDRoleName")
+
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if "NS_ASSUME_NONNULL_BEGIN" not in shared or "NS_ASSUME_NONNULL_END" not in shared:
     raise SystemExit("DuoDashShared public declarations must remain in a nullability-audited region")

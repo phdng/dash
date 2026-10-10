@@ -343,17 +343,6 @@ DDRole DDDetectRole(void) {
     return DDRoleUIApp;
 }
 
-NSString *DDRoleName(DDRole role) {
-    switch (role) {
-        case DDRoleSpringBoard: return @"SpringBoard";
-        case DDRolePreferences: return @"Preferences";
-        case DDRoleCarPlayApp: return @"CarPlay";
-        case DDRoleMediaServerd: return @"mediaserverd";
-        case DDRoleKbd: return @"kbd";
-        case DDRoleUIApp: default: return @"UIApp";
-    }
-}
-
 NSDictionary *DDBuildKnownAppBridgeSnapshot(void) {
     CFPreferencesAppSynchronize(kDDSettingsDomain);
     DDRefreshCachedBridgeUISettings();
