@@ -204,6 +204,14 @@ typedef NS_OPTIONS(NSUInteger, DDHostSwitchEarlyGuardFailure) {
 };
 FOUNDATION_EXPORT NSUInteger DDHostSwitchEarlyGuardFailures(DDHostSwitchEarlyGuardSnapshot snapshot);
 FOUNDATION_EXPORT BOOL DDHostSwitchEarlyGuardsAllow(DDHostSwitchEarlyGuardSnapshot snapshot);
+// Additional 208F4:207-242 gates checked only after the early predicates.
+// Inputs are observations from the caller; BID identity comparison stays external.
+typedef NS_OPTIONS(NSUInteger, DDHostSwitchPostEarlyFailure) {
+    DDHostSwitchPostEarlyFailureHostedSlotSize = 1u << 0,
+    DDHostSwitchPostEarlyFailureShellBounds = 1u << 1,
+};
+FOUNDATION_EXPORT NSUInteger DDHostSwitchPostEarlyFailures(double hostedSlotSize,
+                                                           BOOL shellBoundsMismatch);
 FOUNDATION_EXPORT void DDHostFlowAdapterStart(void);
 FOUNDATION_EXPORT BOOL DDHostFlowAdapterReady(void);
 FOUNDATION_EXPORT DDPostPresentHostFlowDecision DDPostPresentHostFlowDecisionForSite(DDPostPresentHostFlowExceptionSite site);

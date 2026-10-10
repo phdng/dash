@@ -157,6 +157,19 @@ BOOL DDHostSwitchEarlyGuardsAllow(DDHostSwitchEarlyGuardSnapshot snapshot) {
     return DDHostSwitchEarlyGuardFailures(snapshot) == 0;
 }
 
+// 208F4:207-242: preserve later rejection gates independently of the
+// 170-206 snapshot. The caller must first check BID identity and obtain the
+// observed shell-bounds comparison; this function performs neither operation.
+NSUInteger DDHostSwitchPostEarlyFailures(double hostedSlotSize,
+                                         BOOL shellBoundsMismatch) {
+    NSUInteger failures = 0;
+    if (!DDHostSwitchHostedSlotSizeValid(hostedSlotSize))
+        failures |= DDHostSwitchPostEarlyFailureHostedSlotSize;
+    if (!DDHostSwitchShellBoundsAllow(shellBoundsMismatch))
+        failures |= DDHostSwitchPostEarlyFailureShellBounds;
+    return failures;
+}
+
 static BOOL gDDHostFlowAdapterReady;
 
 void DDHostFlowAdapterStart(void) {
