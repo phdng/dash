@@ -2229,6 +2229,8 @@ if "BOOL DDHostHasDegenerateContent(" not in host_flow_source or "return width <
     raise SystemExit("218D8 degenerate-content predicate missing or drifted")
 if "BOOL DDHostDelayedGenerationIsCurrent(" not in host_flow_source or "return capturedGeneration == currentGeneration;" not in host_flow_source:
     raise SystemExit("27AE4 delayed host generation guard missing or drifted")
+if "BOOL DDHostSwitchSlotCountIsValid(" not in host_flow_source or "return hostedSlotCount >= 1 && hostedSlotCount <= 3;" not in host_flow_source:
+    raise SystemExit("208F4 slot count guard missing or drifted")
 
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if "NS_ASSUME_NONNULL_BEGIN" not in shared or "NS_ASSUME_NONNULL_END" not in shared:

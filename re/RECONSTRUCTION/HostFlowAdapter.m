@@ -40,6 +40,12 @@ BOOL DDHostDelayedGenerationIsCurrent(uint64_t capturedGeneration,
     return capturedGeneration == currentGeneration;
 }
 
+// 208F4:170-206: one early guard requires hosted slot count in [1,3].
+// This predicate alone does not authorize an in-place CarPlay UI switch.
+BOOL DDHostSwitchSlotCountIsValid(NSInteger hostedSlotCount) {
+    return hostedSlotCount >= 1 && hostedSlotCount <= 3;
+}
+
 static BOOL gDDHostFlowAdapterReady;
 
 void DDHostFlowAdapterStart(void) {
