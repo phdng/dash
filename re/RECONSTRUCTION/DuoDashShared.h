@@ -194,6 +194,15 @@ typedef struct {
     NSUInteger hostPhase;
     NSUInteger stateFlags;
 } DDHostSwitchEarlyGuardSnapshot;
+// Diagnostic-only bitmask of failed early gates; zero means these gates pass,
+// not that a complete switch is authorized.
+typedef NS_OPTIONS(NSUInteger, DDHostSwitchEarlyGuardFailure) {
+    DDHostSwitchEarlyGuardFailureInteraction = 1u << 0,
+    DDHostSwitchEarlyGuardFailureConsistency = 1u << 1,
+    DDHostSwitchEarlyGuardFailureSlotCounts = 1u << 2,
+    DDHostSwitchEarlyGuardFailureModeFlags = 1u << 3,
+};
+FOUNDATION_EXPORT NSUInteger DDHostSwitchEarlyGuardFailures(DDHostSwitchEarlyGuardSnapshot snapshot);
 FOUNDATION_EXPORT BOOL DDHostSwitchEarlyGuardsAllow(DDHostSwitchEarlyGuardSnapshot snapshot);
 FOUNDATION_EXPORT void DDHostFlowAdapterStart(void);
 FOUNDATION_EXPORT BOOL DDHostFlowAdapterReady(void);

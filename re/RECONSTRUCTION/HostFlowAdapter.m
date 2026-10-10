@@ -126,25 +126,35 @@ BOOL DDHostSwitchHostedSlotSizeValid(double hostedSlotSize) {
 // Composes only the independently evidenced 208F4:170-206 early guards.
 // All private state acquisition, BID comparison, geometry and UI mutations
 // remain the responsibility of a separately evidenced caller.
+NSUInteger DDHostSwitchEarlyGuardFailures(DDHostSwitchEarlyGuardSnapshot snapshot) {
+    NSUInteger failures = 0;
+    if (!DDHostSwitchInteractionStateAllows(snapshot.active,
+                                             snapshot.splitHosting,
+                                             snapshot.visible,
+                                             snapshot.swapInFlight,
+                                             snapshot.maximizedPosition,
+                                             snapshot.maximizeInFlight))
+        failures |= DDHostSwitchEarlyGuardFailureInteraction;
+    if (!DDHostSwitchConsistencyAllows(snapshot.pendingGeneration,
+                                        snapshot.requestedGeometryVersion,
+                                        snapshot.appliedGeometryVersion,
+                                        snapshot.activeLayout,
+                                        snapshot.preferredLayout))
+        failures |= DDHostSwitchEarlyGuardFailureConsistency;
+    if (!DDHostSwitchSlotCountsMatch(snapshot.hostedSlotCount,
+                                      snapshot.runtimeSlotCount,
+                                      snapshot.layoutSlotCount,
+                                      snapshot.preparedSlotCapacity))
+        failures |= DDHostSwitchEarlyGuardFailureSlotCounts;
+    if (!DDHostSwitchModeFlagsAllow(snapshot.hostMode,
+                                     snapshot.hostPhase,
+                                     snapshot.stateFlags))
+        failures |= DDHostSwitchEarlyGuardFailureModeFlags;
+    return failures;
+}
+
 BOOL DDHostSwitchEarlyGuardsAllow(DDHostSwitchEarlyGuardSnapshot snapshot) {
-    return DDHostSwitchInteractionStateAllows(snapshot.active,
-                                              snapshot.splitHosting,
-                                              snapshot.visible,
-                                              snapshot.swapInFlight,
-                                              snapshot.maximizedPosition,
-                                              snapshot.maximizeInFlight) &&
-           DDHostSwitchConsistencyAllows(snapshot.pendingGeneration,
-                                         snapshot.requestedGeometryVersion,
-                                         snapshot.appliedGeometryVersion,
-                                         snapshot.activeLayout,
-                                         snapshot.preferredLayout) &&
-           DDHostSwitchSlotCountsMatch(snapshot.hostedSlotCount,
-                                       snapshot.runtimeSlotCount,
-                                       snapshot.layoutSlotCount,
-                                       snapshot.preparedSlotCapacity) &&
-           DDHostSwitchModeFlagsAllow(snapshot.hostMode,
-                                      snapshot.hostPhase,
-                                      snapshot.stateFlags);
+    return DDHostSwitchEarlyGuardFailures(snapshot) == 0;
 }
 
 static BOOL gDDHostFlowAdapterReady;
