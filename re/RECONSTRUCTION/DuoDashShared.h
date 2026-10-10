@@ -142,6 +142,8 @@ FOUNDATION_EXPORT BOOL DDHostRequiresFullHost(BOOL deactivateDismissPresent,
 FOUNDATION_EXPORT BOOL DDHostShouldRefuseNoDisplay(BOOL usableBoundsEmpty,
                                                    BOOL prepareShellSucceeded);
 FOUNDATION_EXPORT BOOL DDHostHasDegenerateContent(double width, double height);
+FOUNDATION_EXPORT BOOL DDHostDelayedGenerationIsCurrent(uint64_t capturedGeneration,
+                                                       uint64_t currentGeneration);
 FOUNDATION_EXPORT void DDHostFlowAdapterStart(void);
 FOUNDATION_EXPORT BOOL DDHostFlowAdapterReady(void);
 FOUNDATION_EXPORT DDPostPresentHostFlowDecision DDPostPresentHostFlowDecisionForSite(DDPostPresentHostFlowExceptionSite site);

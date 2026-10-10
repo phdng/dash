@@ -2227,6 +2227,8 @@ if "BOOL DDHostShouldRefuseNoDisplay(" not in host_flow_source or "return usable
     raise SystemExit("218D8 no-display refusal predicate missing or drifted")
 if "BOOL DDHostHasDegenerateContent(" not in host_flow_source or "return width < 1.0 || height < 1.0;" not in host_flow_source:
     raise SystemExit("218D8 degenerate-content predicate missing or drifted")
+if "BOOL DDHostDelayedGenerationIsCurrent(" not in host_flow_source or "return capturedGeneration == currentGeneration;" not in host_flow_source:
+    raise SystemExit("27AE4 delayed host generation guard missing or drifted")
 
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if "NS_ASSUME_NONNULL_BEGIN" not in shared or "NS_ASSUME_NONNULL_END" not in shared:

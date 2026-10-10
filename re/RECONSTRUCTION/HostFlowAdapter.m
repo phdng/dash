@@ -33,6 +33,13 @@ BOOL DDHostHasDegenerateContent(double width, double height) {
     return width < 1.0 || height < 1.0;
 }
 
+// 27AE4:11-13: the delayed onHosted callback proceeds only for its captured generation.
+// Does not schedule work or invoke the downstream reap/kill path.
+BOOL DDHostDelayedGenerationIsCurrent(uint64_t capturedGeneration,
+                                      uint64_t currentGeneration) {
+    return capturedGeneration == currentGeneration;
+}
+
 static BOOL gDDHostFlowAdapterReady;
 
 void DDHostFlowAdapterStart(void) {
