@@ -117,10 +117,38 @@ NSString *DDHostSplitBidOrEmpty(NSString * _Nullable bid) {
     return bid ?: @"";
 }
 
+// 217EC:26-37: nil-coalesce each ordered pane ID, then construct the
+// exact two-element host input array. No hostSlots: invocation is performed.
+NSArray<NSString *> *DDHostSplitBids(NSString * _Nullable leftBid,
+                                     NSString * _Nullable rightBid) {
+    return @[DDHostSplitBidOrEmpty(leftBid), DDHostSplitBidOrEmpty(rightBid)];
+}
+
 // 208F4:207-237: hosted slot size must reach 1.0 for BID comparison.
 // Caller supplies the size; no private slot inspection is performed here.
 BOOL DDHostSwitchHostedSlotSizeValid(double hostedSlotSize) {
     return hostedSlotSize >= 1.0;
+}
+
+// 208F4:207-237: caller must supply the already-normalized BID arrays.
+// Preserve strict slot-index order; normalization via private 3DD4C is excluded.
+BOOL DDHostSwitchBidsMatch(NSArray<NSString *> * _Nullable requestedBids,
+                           NSArray<NSString *> * _Nullable hostedBids,
+                           NSInteger expectedSlotCount) {
+    if (!DDHostSwitchSlotCountIsValid(expectedSlotCount) ||
+        requestedBids.count != (NSUInteger)expectedSlotCount ||
+        hostedBids.count != (NSUInteger)expectedSlotCount)
+        return NO;
+
+    for (NSUInteger index = 0; index < (NSUInteger)expectedSlotCount; ++index) {
+        NSString *requested = requestedBids[index];
+        NSString *hosted = hostedBids[index];
+        if (![requested isKindOfClass:[NSString class]] ||
+            ![hosted isKindOfClass:[NSString class]] ||
+            ![requested isEqualToString:hosted])
+            return NO;
+    }
+    return YES;
 }
 
 // Composes only the independently evidenced 208F4:170-206 early guards.
@@ -168,6 +196,89 @@ NSUInteger DDHostSwitchPostEarlyFailures(double hostedSlotSize,
     if (!DDHostSwitchShellBoundsAllow(shellBoundsMismatch))
         failures |= DDHostSwitchPostEarlyFailureShellBounds;
     return failures;
+}
+
+// Combine the independently established 208F4 refusal stages without
+// fetching private state or attempting any UI mutation. The caller must
+// provide normalized BIDs and an already-observed shell bounds comparison.
+DDHostSwitchPreflightResult DDHostSwitchPreflight(
+    DDHostSwitchEarlyGuardSnapshot snapshot,
+    NSArray<NSString *> * _Nullable requestedBids,
+    NSArray<NSString *> * _Nullable hostedBids,
+    double hostedSlotSize,
+    BOOL shellBoundsMismatch) {
+    DDHostSwitchPreflightResult result = {0};
+    result.earlyFailures = DDHostSwitchEarlyGuardFailures(snapshot);
+    if (result.earlyFailures != 0)
+        return result;
+
+    result.bidsMatch = DDHostSwitchBidsMatch(requestedBids,
+                                             hostedBids,
+                                             snapshot.hostedSlotCount);
+    if (!result.bidsMatch)
+        return result;
+
+    result.postEarlyFailures = DDHostSwitchPostEarlyFailures(hostedSlotSize,
+                                                              shellBoundsMismatch);
+    result.canProceedToPrivateSwitchChecks = result.postEarlyFailures == 0;
+    return result;
+}
+
+// Can be invoked explicitly in a device test to exercise the compiled
+// implementation; never run implicitly during SpringBoard/CarPlay startup.
+BOOL DDHostSwitchPreflightSelfTest(void) {
+    DDHostSwitchEarlyGuardSnapshot snapshot = {0};
+    snapshot.active = YES;
+    snapshot.splitHosting = YES;
+    snapshot.visible = YES;
+    snapshot.maximizedPosition = 0;
+    snapshot.requestedGeometryVersion = 7;
+    snapshot.appliedGeometryVersion = 7;
+    snapshot.activeLayout = 2;
+    snapshot.preferredLayout = 2;
+    snapshot.hostedSlotCount = 2;
+    snapshot.runtimeSlotCount = 2;
+    snapshot.layoutSlotCount = 2;
+    snapshot.preparedSlotCapacity = 2;
+    snapshot.hostMode = 0x0100;
+    snapshot.hostPhase = 2;
+
+    NSArray<NSString *> *bids = @[@"com.example.left", @"com.example.right"];
+    DDHostSwitchPreflightResult result = DDHostSwitchPreflight(snapshot, bids, bids, 1.0, NO);
+    if (result.earlyFailures != 0 || !result.bidsMatch ||
+        result.postEarlyFailures != 0 || !result.canProceedToPrivateSwitchChecks)
+        return NO;
+
+    result = DDHostSwitchPreflight(snapshot, bids,
+                                   @[@"com.example.right", @"com.example.left"], 1.0, NO);
+    if (result.earlyFailures != 0 || result.bidsMatch ||
+        result.canProceedToPrivateSwitchChecks)
+        return NO;
+
+    snapshot.pendingGeneration = 1;
+    result = DDHostSwitchPreflight(snapshot, bids, bids, 1.0, NO);
+    if ((result.earlyFailures & DDHostSwitchEarlyGuardFailureConsistency) == 0 ||
+        result.bidsMatch || result.canProceedToPrivateSwitchChecks)
+        return NO;
+    snapshot.pendingGeneration = 0;
+
+    result = DDHostSwitchPreflight(snapshot, bids, bids, 0.5, NO);
+    if (!result.bidsMatch ||
+        result.postEarlyFailures != DDHostSwitchPostEarlyFailureHostedSlotSize ||
+        result.canProceedToPrivateSwitchChecks)
+        return NO;
+
+    result = DDHostSwitchPreflight(snapshot, bids, bids, 1.0, YES);
+    if (!result.bidsMatch ||
+        result.postEarlyFailures != DDHostSwitchPostEarlyFailureShellBounds ||
+        result.canProceedToPrivateSwitchChecks)
+        return NO;
+
+    result = DDHostSwitchPreflight(snapshot, bids, bids, 0.5, YES);
+    return result.bidsMatch &&
+           result.postEarlyFailures == (DDHostSwitchPostEarlyFailureHostedSlotSize |
+                                        DDHostSwitchPostEarlyFailureShellBounds) &&
+           !result.canProceedToPrivateSwitchChecks;
 }
 
 static BOOL gDDHostFlowAdapterReady;

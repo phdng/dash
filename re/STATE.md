@@ -1,17 +1,17 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-10 session-345 (Objective-C post-early switch failure gates)_
+_Last updated: 2026-10-10 session-349 (compiled Objective-C preflight smoke-test harness)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-345 extends compiled Objective-C HostFlowAdapter with DDHostSwitchPostEarlyFailures to report invalid hosted slot size and shell-bounds mismatch, separately from the early snapshot guard. No private BID matching, shell inspection or UI switch execution; arm64 CI unconfirmed.
+Session-349 adds an explicit, not auto-invoked Objective-C DDHostSwitchPreflightSelfTest covering valid preflight, reversed BID order, stale generation, invalid hosted size, shell mismatch, and combined post-early failures. Structural local checks pass; smoke-test has not run on iOS and arm64 CI is unconfirmed.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-345):
-- Added Objective-C post-early guard failure bitmask with two evidenced rejection conditions.
+## LAST COMPLETED TASK (session-349):
+- Added compiled Objective-C self-test harness for six switch preflight scenarios, intentionally not invoked from tweak startup.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.
@@ -36,10 +36,10 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-345, uncommitted):
+## FILES CHANGED (sessions 346–349, uncommitted):
 - Sửa: `re/RECONSTRUCTION/DuoDashShared.h`, `re/RECONSTRUCTION/HostFlowAdapter.m`, `re/STATE.md`.
-- Mới: `re/LOG/session-345.md`.
+- Mới: `re/LOG/session-346.md`, `re/LOG/session-347.md`, `re/LOG/session-348.md`, `re/LOG/session-349.md`.
 - Prior sessions 335–342 are in the current clean HEAD observed at session start.
 
 ## TEST STATUS:
-Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-345 local checks PASS: reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.
+Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-349 structural local checks PASS (Objective-C self-test not executed): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.

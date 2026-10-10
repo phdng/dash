@@ -170,7 +170,15 @@ FOUNDATION_EXPORT BOOL DDHostSwitchContinuationStateAllows(BOOL active,
 FOUNDATION_EXPORT BOOL DDHostSwitchShellBoundsAllow(BOOL shellBoundsMismatch);
 FOUNDATION_EXPORT BOOL DDHostSwitchNeedsDelayedContinuation(NSUInteger pendingBidCount);
 FOUNDATION_EXPORT NSString * _Nonnull DDHostSplitBidOrEmpty(NSString * _Nullable bid);
+// 217EC:26-37: construct the two-element ordered BID array without private host calls.
+FOUNDATION_EXPORT NSArray<NSString *> * _Nonnull DDHostSplitBids(NSString * _Nullable leftBid,
+                                                                 NSString * _Nullable rightBid);
 FOUNDATION_EXPORT BOOL DDHostSwitchHostedSlotSizeValid(double hostedSlotSize);
+// 208F4:207-237: compare caller-normalized BIDs in slot order only.
+// Does not implement private 3DD4C normalization or inspect slot geometry.
+FOUNDATION_EXPORT BOOL DDHostSwitchBidsMatch(NSArray<NSString *> * _Nullable requestedBids,
+                                             NSArray<NSString *> * _Nullable hostedBids,
+                                             NSInteger expectedSlotCount);
 
 // Caller-supplied snapshot for the evidenced 208F4 early switch guards.
 // This does not inspect private host state or authorize a complete UI switch.
@@ -212,6 +220,23 @@ typedef NS_OPTIONS(NSUInteger, DDHostSwitchPostEarlyFailure) {
 };
 FOUNDATION_EXPORT NSUInteger DDHostSwitchPostEarlyFailures(double hostedSlotSize,
                                                            BOOL shellBoundsMismatch);
+// Result for a caller-supplied, already-normalized 208F4 switch preflight.
+// Passing this preflight is necessary, never sufficient to mutate CarPlay UI.
+typedef struct {
+    NSUInteger earlyFailures;
+    BOOL bidsMatch;
+    NSUInteger postEarlyFailures;
+    BOOL canProceedToPrivateSwitchChecks;
+} DDHostSwitchPreflightResult;
+FOUNDATION_EXPORT DDHostSwitchPreflightResult DDHostSwitchPreflight(
+    DDHostSwitchEarlyGuardSnapshot snapshot,
+    NSArray<NSString *> * _Nullable requestedBids,
+    NSArray<NSString *> * _Nullable hostedBids,
+    double hostedSlotSize,
+    BOOL shellBoundsMismatch);
+// Optional, side-effect-free Objective-C smoke test of preflight semantics.
+// Never invoked automatically from tweak startup.
+FOUNDATION_EXPORT BOOL DDHostSwitchPreflightSelfTest(void);
 FOUNDATION_EXPORT void DDHostFlowAdapterStart(void);
 FOUNDATION_EXPORT BOOL DDHostFlowAdapterReady(void);
 FOUNDATION_EXPORT DDPostPresentHostFlowDecision DDPostPresentHostFlowDecisionForSite(DDPostPresentHostFlowExceptionSite site);
