@@ -171,6 +171,30 @@ FOUNDATION_EXPORT BOOL DDHostSwitchShellBoundsAllow(BOOL shellBoundsMismatch);
 FOUNDATION_EXPORT BOOL DDHostSwitchNeedsDelayedContinuation(NSUInteger pendingBidCount);
 FOUNDATION_EXPORT NSString * _Nonnull DDHostSplitBidOrEmpty(NSString * _Nullable bid);
 FOUNDATION_EXPORT BOOL DDHostSwitchHostedSlotSizeValid(double hostedSlotSize);
+
+// Caller-supplied snapshot for the evidenced 208F4 early switch guards.
+// This does not inspect private host state or authorize a complete UI switch.
+typedef struct {
+    BOOL active;
+    BOOL splitHosting;
+    BOOL visible;
+    BOOL swapInFlight;
+    NSInteger maximizedPosition;
+    BOOL maximizeInFlight;
+    uint64_t pendingGeneration;
+    NSInteger requestedGeometryVersion;
+    NSInteger appliedGeometryVersion;
+    NSInteger activeLayout;
+    NSInteger preferredLayout;
+    NSInteger hostedSlotCount;
+    NSInteger runtimeSlotCount;
+    NSInteger layoutSlotCount;
+    NSInteger preparedSlotCapacity;
+    NSUInteger hostMode;
+    NSUInteger hostPhase;
+    NSUInteger stateFlags;
+} DDHostSwitchEarlyGuardSnapshot;
+FOUNDATION_EXPORT BOOL DDHostSwitchEarlyGuardsAllow(DDHostSwitchEarlyGuardSnapshot snapshot);
 FOUNDATION_EXPORT void DDHostFlowAdapterStart(void);
 FOUNDATION_EXPORT BOOL DDHostFlowAdapterReady(void);
 FOUNDATION_EXPORT DDPostPresentHostFlowDecision DDPostPresentHostFlowDecisionForSite(DDPostPresentHostFlowExceptionSite site);

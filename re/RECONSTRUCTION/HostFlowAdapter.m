@@ -123,6 +123,30 @@ BOOL DDHostSwitchHostedSlotSizeValid(double hostedSlotSize) {
     return hostedSlotSize >= 1.0;
 }
 
+// Composes only the independently evidenced 208F4:170-206 early guards.
+// All private state acquisition, BID comparison, geometry and UI mutations
+// remain the responsibility of a separately evidenced caller.
+BOOL DDHostSwitchEarlyGuardsAllow(DDHostSwitchEarlyGuardSnapshot snapshot) {
+    return DDHostSwitchInteractionStateAllows(snapshot.active,
+                                              snapshot.splitHosting,
+                                              snapshot.visible,
+                                              snapshot.swapInFlight,
+                                              snapshot.maximizedPosition,
+                                              snapshot.maximizeInFlight) &&
+           DDHostSwitchConsistencyAllows(snapshot.pendingGeneration,
+                                         snapshot.requestedGeometryVersion,
+                                         snapshot.appliedGeometryVersion,
+                                         snapshot.activeLayout,
+                                         snapshot.preferredLayout) &&
+           DDHostSwitchSlotCountsMatch(snapshot.hostedSlotCount,
+                                       snapshot.runtimeSlotCount,
+                                       snapshot.layoutSlotCount,
+                                       snapshot.preparedSlotCapacity) &&
+           DDHostSwitchModeFlagsAllow(snapshot.hostMode,
+                                      snapshot.hostPhase,
+                                      snapshot.stateFlags);
+}
+
 static BOOL gDDHostFlowAdapterReady;
 
 void DDHostFlowAdapterStart(void) {
