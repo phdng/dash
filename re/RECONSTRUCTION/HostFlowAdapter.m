@@ -20,6 +20,13 @@ BOOL DDHostRequiresFullHost(BOOL deactivateDismissPresent,
            geometryMismatch || dirty || !canPresent;
 }
 
+// 218D8:315-327: empty usable display and failed prepareShell -> no-display refusal.
+// Neither display acquisition nor refusal notification is executed here.
+BOOL DDHostShouldRefuseNoDisplay(BOOL usableBoundsEmpty,
+                                 BOOL prepareShellSucceeded) {
+    return usableBoundsEmpty && !prepareShellSucceeded;
+}
+
 static BOOL gDDHostFlowAdapterReady;
 
 void DDHostFlowAdapterStart(void) {

@@ -2223,6 +2223,8 @@ if re.search(r"(?m)^NSString\s*\*\s*DDRoleName\s*\(", runtime):
 host_flow_source = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
 if "BOOL DDHostRequiresFullHost(" not in host_flow_source or "geometryMismatch || dirty || !canPresent" not in host_flow_source:
     raise SystemExit("218D8 full-host decision helper missing or drifted")
+if "BOOL DDHostShouldRefuseNoDisplay(" not in host_flow_source or "return usableBoundsEmpty && !prepareShellSucceeded;" not in host_flow_source:
+    raise SystemExit("218D8 no-display refusal predicate missing or drifted")
 
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if "NS_ASSUME_NONNULL_BEGIN" not in shared or "NS_ASSUME_NONNULL_END" not in shared:

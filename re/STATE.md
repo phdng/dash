@@ -1,17 +1,17 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-10 session-312 (CI green; host route decision helper)_
+_Last updated: 2026-10-10 session-313 (CI green; no-display refusal predicate)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-User confirms Theos arm64 CI GREEN through session-311. Session-312 promotes the pure full-host-vs-reshow route predicate from 218D8:307-313; it is not connected to live hosting.
+User confirms Theos arm64 CI GREEN through session-312. Session-313 promotes the pure no-display refusal predicate from 218D8:315-327; it is not connected to live hosting or notifications.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-312):
-- Added pure `DDHostRequiresFullHost` to compiled `HostFlowAdapter.m` and `DuoDashShared.h`, and a structural verifier guard.
+## LAST COMPLETED TASK (session-313):
+- Added pure `DDHostShouldRefuseNoDisplay` to compiled `HostFlowAdapter.m` and `DuoDashShared.h`, and a structural verifier guard.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-312):
+## FILES CHANGED (session-313):
 - Sửa: `RECONSTRUCTION/DuoDashShared.h`, `RECONSTRUCTION/HostFlowAdapter.m`, `scripts/verify_reconstruction.py`, `STATE.md`.
-- Mới: `LOG/session-312.md`.
+- Mới: `LOG/session-313.md`.
 
 ## TEST STATUS:
-User confirms Theos arm64 CI GREEN through session-311. Session-312 local static checks PASS: reconstruction verifier, Python py_compile, git diff --check (LF/CRLF warnings only). Exact arm64 Theos compilation of the new helper remains CI-only on Windows. Assistant không push.
+User confirms Theos arm64 CI GREEN through session-312. Session-313 local static checks PASS: reconstruction verifier, Python py_compile, git diff --check (LF/CRLF warnings only). Exact arm64 Theos compilation of the new helper remains CI-only on Windows. Assistant không push.
