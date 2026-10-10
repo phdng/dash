@@ -27,6 +27,12 @@ BOOL DDHostShouldRefuseNoDisplay(BOOL usableBoundsEmpty,
     return usableBoundsEmpty && !prepareShellSucceeded;
 }
 
+// 218D8:338-352: calculated content geometry below one point on either axis
+// produces the degenerate-content refusal. This does not publish host.state.
+BOOL DDHostHasDegenerateContent(double width, double height) {
+    return width < 1.0 || height < 1.0;
+}
+
 static BOOL gDDHostFlowAdapterReady;
 
 void DDHostFlowAdapterStart(void) {

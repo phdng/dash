@@ -141,6 +141,7 @@ FOUNDATION_EXPORT BOOL DDHostRequiresFullHost(BOOL deactivateDismissPresent,
 // Pure 218D8:315-327 no-display refusal predicate, without posting host.state.
 FOUNDATION_EXPORT BOOL DDHostShouldRefuseNoDisplay(BOOL usableBoundsEmpty,
                                                    BOOL prepareShellSucceeded);
+FOUNDATION_EXPORT BOOL DDHostHasDegenerateContent(double width, double height);
 FOUNDATION_EXPORT void DDHostFlowAdapterStart(void);
 FOUNDATION_EXPORT BOOL DDHostFlowAdapterReady(void);
 FOUNDATION_EXPORT DDPostPresentHostFlowDecision DDPostPresentHostFlowDecisionForSite(DDPostPresentHostFlowExceptionSite site);

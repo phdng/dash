@@ -2225,6 +2225,8 @@ if "BOOL DDHostRequiresFullHost(" not in host_flow_source or "geometryMismatch |
     raise SystemExit("218D8 full-host decision helper missing or drifted")
 if "BOOL DDHostShouldRefuseNoDisplay(" not in host_flow_source or "return usableBoundsEmpty && !prepareShellSucceeded;" not in host_flow_source:
     raise SystemExit("218D8 no-display refusal predicate missing or drifted")
+if "BOOL DDHostHasDegenerateContent(" not in host_flow_source or "return width < 1.0 || height < 1.0;" not in host_flow_source:
+    raise SystemExit("218D8 degenerate-content predicate missing or drifted")
 
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if "NS_ASSUME_NONNULL_BEGIN" not in shared or "NS_ASSUME_NONNULL_END" not in shared:
