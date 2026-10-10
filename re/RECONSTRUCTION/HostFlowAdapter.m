@@ -46,6 +46,14 @@ BOOL DDHostSwitchSlotCountIsValid(NSInteger hostedSlotCount) {
     return hostedSlotCount >= 1 && hostedSlotCount <= 3;
 }
 
+// 208F4:170-206: three required in-place switch mode guards.
+// Values are supplied by the caller; this is not sufficient to authorize switching.
+BOOL DDHostSwitchModeFlagsAllow(NSUInteger hostMode,
+                                NSUInteger hostPhase,
+                                NSUInteger stateFlags) {
+    return hostMode == 0x0100 && hostPhase == 2 && (stateFlags & 0x101) == 0;
+}
+
 static BOOL gDDHostFlowAdapterReady;
 
 void DDHostFlowAdapterStart(void) {

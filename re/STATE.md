@@ -1,17 +1,17 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-10 session-316 (switch slot-count predicate)_
+_Last updated: 2026-10-10 session-317 (switch mode-flag predicate)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-316 adds a pure hosted slot-count range predicate from 208F4:170-206 (valid only 1..3). This guard alone does not authorize switching; last explicitly confirmed arm64 CI GREEN through session-312, later changes pending.
+Session-317 adds a pure in-place-switch mode-flag guard from 208F4:170-206. Its exact required values are mode 0x0100, phase 2 and no stateFlag bits in mask 0x101; it cannot authorize switch by itself. Later arm64 CI is not confirmed in conversation.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-316):
-- Added `DDHostSwitchSlotCountIsValid` to compiled `HostFlowAdapter.m` and `DuoDashShared.h` with verifier guard; preserving uncommitted session-315 modifications.
+## LAST COMPLETED TASK (session-317):
+- Added pure `DDHostSwitchModeFlagsAllow` to compiled `HostFlowAdapter.m` and `DuoDashShared.h`, plus structural verifier guard.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (sessions 315–316, uncommitted):
+## FILES CHANGED (session-317):
 - Sửa: `RECONSTRUCTION/DuoDashShared.h`, `RECONSTRUCTION/HostFlowAdapter.m`, `scripts/verify_reconstruction.py`, `STATE.md`.
-- Mới: `LOG/session-315.md`, `LOG/session-316.md`.
+- Mới: `LOG/session-317.md`.
 
 ## TEST STATUS:
-Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-316 local checks PASS: reconstruction verifier, Python py_compile and git diff --check (LF/CRLF warnings only). Session-315/316 arm64 CI pending. Assistant không push.
+Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-317 local checks PASS: reconstruction verifier, Python py_compile and git diff --check (LF/CRLF warnings only). Session-317 arm64 CI pending. Assistant không push.
