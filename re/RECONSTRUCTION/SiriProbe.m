@@ -205,6 +205,8 @@ int DDPostVoiceCommandPress(void) {
     return notify_post(name);
 }
 
+// Documentary synthesis only: no speculative Siri hooks are compiled.
+#if 0
 // ---- Installer (EVIDENCE §0; 4C34.c:1279-1390) ----
 static void DDInstallSiriProbe(void) {
     // Gate: latch siriprobe off (9C530==0) + master enable (byte_168D19==1).
@@ -309,3 +311,4 @@ static void DDVoiceCmdRescan(void) {
 }
 // Posters voicecmd.changed: 9332C (prefs-UI set+sync+post) + 81CE4:530 (purge-selected).
 // Handlers: block opaque; thunks →88FD0 (mapping HYPOTHESIS, effect reload-cache CONFIRMED nếu gọi).
+#endif // Documentary Siri hook synthesis (not executable)

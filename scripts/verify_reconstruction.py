@@ -2208,6 +2208,9 @@ for documentary_stub in (
 if "enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {\n        (void)stop;" not in prefs_resolver:
     raise SystemExit("PrefsResolver enumeration block must acknowledge unused stop parameter")
 
+if "#if 0\n// ---- Installer (EVIDENCE §0" not in siri_probe or "#endif // Documentary Siri hook synthesis (not executable)" not in siri_probe:
+    raise SystemExit("SiriProbe documentary hook synthesis must remain compile-excluded")
+
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if "NS_ASSUME_NONNULL_BEGIN" not in shared or "NS_ASSUME_NONNULL_END" not in shared:
     raise SystemExit("DuoDashShared public declarations must remain in a nullability-audited region")
