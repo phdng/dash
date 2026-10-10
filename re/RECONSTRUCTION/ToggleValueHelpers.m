@@ -25,6 +25,7 @@
 // Exact pure content-inset parser from 3620C promoted session-275.
 // Exact pure pane-padding parser from 218D8 promoted session-276.
 // Exact pure panefracs parser from 218D8 promoted session-300.
+// Exact nopaneround pane-radius decision from 218D8:416-420 promoted session-310.
 // File reads, CFPreferences fallback, scheduling/UI state, and cache/global mutation remain excluded.
 
 NSUInteger DDFontFloorOverrideValue(NSString *value) {
@@ -268,6 +269,10 @@ double DDPanePaddingOverrideValue(NSString *value) {
     if (parsed > 40.0 || parsed <= 0.0)
         return 4.0;
     return parsed;
+}
+
+double DDPaneCornerRadiusForNoRoundMarker(BOOL markerPresent) {
+    return markerPresent ? 0.0 : 13.0;
 }
 
 BOOL DDPaneFractionsOverrideValue(NSString *value,
