@@ -8,6 +8,7 @@ on:
       - "DuoDashReconstruction.plist"
       - "re/RECONSTRUCTION/**"
       - "scripts/verify_reconstruction.py"
+      - "scripts/hostflow_preflight_smoke.m"
       - ".github/workflows/build.yml"
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - "DuoDashReconstruction.plist"
       - "re/RECONSTRUCTION/**"
       - "scripts/verify_reconstruction.py"
+      - "scripts/hostflow_preflight_smoke.m"
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
@@ -31,6 +33,15 @@ jobs:
 
       - name: Verify reconstruction structure
         run: python3 scripts/verify_reconstruction.py
+
+      - name: Execute compiled host switch preflight smoke test
+        run: |
+          xcrun clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -framework Foundation -framework CoreFoundation \
+            -I re/RECONSTRUCTION \
+            re/RECONSTRUCTION/HostFlowAdapter.m scripts/hostflow_preflight_smoke.m \
+            -o "$RUNNER_TEMP/hostflow_preflight_smoke"
+          "$RUNNER_TEMP/hostflow_preflight_smoke"
 
       - name: Install Theos prerequisites
         run: brew install ldid xz
