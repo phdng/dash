@@ -130,6 +130,14 @@ typedef struct {
     BOOL retainedHostDefinitelyReleasedOnContinuation;
 } DDPostPresentHostFlowDecision;
 
+// Pure 218D8:307-313 route predicate; callers supply the observed gate states.
+FOUNDATION_EXPORT BOOL DDHostRequiresFullHost(BOOL deactivateDismissPresent,
+                                               BOOL active,
+                                               BOOL splitHosting,
+                                               BOOL visible,
+                                               BOOL geometryMismatch,
+                                               BOOL dirty,
+                                               BOOL canPresent);
 FOUNDATION_EXPORT void DDHostFlowAdapterStart(void);
 FOUNDATION_EXPORT BOOL DDHostFlowAdapterReady(void);
 FOUNDATION_EXPORT DDPostPresentHostFlowDecision DDPostPresentHostFlowDecisionForSite(DDPostPresentHostFlowExceptionSite site);

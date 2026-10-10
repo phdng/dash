@@ -2220,6 +2220,10 @@ if len(re.findall(r"(?m)^NSString\s*\*\s*DDRoleName\s*\(", (RECON / "InitRoleHel
 if re.search(r"(?m)^NSString\s*\*\s*DDRoleName\s*\(", runtime):
     raise SystemExit("ReconstructionRuntime must not redefine DDRoleName")
 
+host_flow_source = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
+if "BOOL DDHostRequiresFullHost(" not in host_flow_source or "geometryMismatch || dirty || !canPresent" not in host_flow_source:
+    raise SystemExit("218D8 full-host decision helper missing or drifted")
+
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if "NS_ASSUME_NONNULL_BEGIN" not in shared or "NS_ASSUME_NONNULL_END" not in shared:
     raise SystemExit("DuoDashShared public declarations must remain in a nullability-audited region")

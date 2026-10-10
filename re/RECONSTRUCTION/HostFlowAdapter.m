@@ -7,6 +7,19 @@
 
 #import "DuoDashShared.h"
 
+// Exact full-host vs reshow selection at 218D8:307-313 (evidence/hosting_engine.md).
+// Does not acquire any gate, call DDz controllers, or mutate host state.
+BOOL DDHostRequiresFullHost(BOOL deactivateDismissPresent,
+                            BOOL active,
+                            BOOL splitHosting,
+                            BOOL visible,
+                            BOOL geometryMismatch,
+                            BOOL dirty,
+                            BOOL canPresent) {
+    return deactivateDismissPresent || !active || !splitHosting || visible ||
+           geometryMismatch || dirty || !canPresent;
+}
+
 static BOOL gDDHostFlowAdapterReady;
 
 void DDHostFlowAdapterStart(void) {
