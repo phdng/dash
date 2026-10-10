@@ -2233,6 +2233,10 @@ if "BOOL DDHostSwitchSlotCountIsValid(" not in host_flow_source or "return hoste
     raise SystemExit("208F4 slot count guard missing or drifted")
 if "BOOL DDHostSwitchModeFlagsAllow(" not in host_flow_source or "return hostMode == 0x0100 && hostPhase == 2 && (stateFlags & 0x101) == 0;" not in host_flow_source:
     raise SystemExit("208F4 mode flag guard missing or drifted")
+if "BOOL DDHostSwitchSlotCountsMatch(" not in host_flow_source or "preparedSlotCapacity >= hostedSlotCount;" not in host_flow_source:
+    raise SystemExit("208F4 slot count consistency guard missing or drifted")
+if "BOOL DDHostSwitchInteractionStateAllows(" not in host_flow_source or "maximizedPosition >= 0 && !maximizeInFlight;" not in host_flow_source:
+    raise SystemExit("208F4 interaction state guard missing or drifted")
 
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if "NS_ASSUME_NONNULL_BEGIN" not in shared or "NS_ASSUME_NONNULL_END" not in shared:

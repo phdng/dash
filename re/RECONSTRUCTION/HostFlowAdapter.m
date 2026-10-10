@@ -54,6 +54,30 @@ BOOL DDHostSwitchModeFlagsAllow(NSUInteger hostMode,
     return hostMode == 0x0100 && hostPhase == 2 && (stateFlags & 0x101) == 0;
 }
 
+// 208F4:170-206: the switch requires consistent hosted, layout and runtime
+// slot counts, with enough prepared slot capacity. This is one gate only.
+BOOL DDHostSwitchSlotCountsMatch(NSInteger hostedSlotCount,
+                                 NSInteger runtimeSlotCount,
+                                 NSInteger layoutSlotCount,
+                                 NSInteger preparedSlotCapacity) {
+    return DDHostSwitchSlotCountIsValid(hostedSlotCount) &&
+           hostedSlotCount == runtimeSlotCount &&
+           hostedSlotCount == layoutSlotCount &&
+           preparedSlotCapacity >= hostedSlotCount;
+}
+
+// 208F4:170-206: required host visibility / interaction state for in-place switch.
+// This is only one early guard, not sufficient to authorize switching.
+BOOL DDHostSwitchInteractionStateAllows(BOOL active,
+                                        BOOL splitHosting,
+                                        BOOL visible,
+                                        BOOL swapInFlight,
+                                        NSInteger maximizedPosition,
+                                        BOOL maximizeInFlight) {
+    return active && splitHosting && visible && !swapInFlight &&
+           maximizedPosition >= 0 && !maximizeInFlight;
+}
+
 static BOOL gDDHostFlowAdapterReady;
 
 void DDHostFlowAdapterStart(void) {

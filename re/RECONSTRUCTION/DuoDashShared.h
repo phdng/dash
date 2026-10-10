@@ -148,6 +148,16 @@ FOUNDATION_EXPORT BOOL DDHostSwitchSlotCountIsValid(NSInteger hostedSlotCount);
 FOUNDATION_EXPORT BOOL DDHostSwitchModeFlagsAllow(NSUInteger hostMode,
                                                  NSUInteger hostPhase,
                                                  NSUInteger stateFlags);
+FOUNDATION_EXPORT BOOL DDHostSwitchSlotCountsMatch(NSInteger hostedSlotCount,
+                                                  NSInteger runtimeSlotCount,
+                                                  NSInteger layoutSlotCount,
+                                                  NSInteger preparedSlotCapacity);
+FOUNDATION_EXPORT BOOL DDHostSwitchInteractionStateAllows(BOOL active,
+                                                          BOOL splitHosting,
+                                                          BOOL visible,
+                                                          BOOL swapInFlight,
+                                                          NSInteger maximizedPosition,
+                                                          BOOL maximizeInFlight);
 FOUNDATION_EXPORT void DDHostFlowAdapterStart(void);
 FOUNDATION_EXPORT BOOL DDHostFlowAdapterReady(void);
 FOUNDATION_EXPORT DDPostPresentHostFlowDecision DDPostPresentHostFlowDecisionForSite(DDPostPresentHostFlowExceptionSite site);
