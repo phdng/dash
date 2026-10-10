@@ -134,6 +134,7 @@ NSDictionary<NSString *, NSString *> *DDCopyAppBridgeSectionOverrides(void) {
 
     NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
     [(NSDictionary *)raw enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
+        (void)stop;
         if (![key isKindOfClass:[NSString class]] || ![(NSString *)key length])
             return;
         if (![value isKindOfClass:[NSString class]])

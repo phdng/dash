@@ -2205,6 +2205,9 @@ for documentary_stub in (
     if re.search(r"\bstatic\s+\w+(?:\s*\*)?\s*" + documentary_stub + r"\s*\(", locale_flow):
         raise SystemExit(f"LocaleFlow documentary stub must not compile: {documentary_stub}")
 
+if "enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {\n        (void)stop;" not in prefs_resolver:
+    raise SystemExit("PrefsResolver enumeration block must acknowledge unused stop parameter")
+
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if "NS_ASSUME_NONNULL_BEGIN" not in shared or "NS_ASSUME_NONNULL_END" not in shared:
     raise SystemExit("DuoDashShared public declarations must remain in a nullability-audited region")
