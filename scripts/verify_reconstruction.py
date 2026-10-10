@@ -2192,6 +2192,13 @@ for contract in [
     if contract not in runtime:
         raise SystemExit(f"runtime contract missing: {contract}")
 
+for documentary_stub in (
+    "DDCrashReportSend", "DDCrashMayCollect", "DDCollectCrashReport",
+    "DDCrashEndpoint", "DDUploadCrashReport",
+):
+    if re.search(r"\bstatic\s+\w+(?:\s*\*)?\s*" + documentary_stub + r"\s*\(", crash_reporting):
+        raise SystemExit(f"CrashReporting documentary stub must not compile: {documentary_stub}")
+
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 if "NS_ASSUME_NONNULL_BEGIN" not in shared or "NS_ASSUME_NONNULL_END" not in shared:
     raise SystemExit("DuoDashShared public declarations must remain in a nullability-audited region")
