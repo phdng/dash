@@ -1,17 +1,17 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-10 session-350 (macOS CI executable Objective-C self-test)_
+_Last updated: 2026-10-10 session-351 (per-slot hosted size validation)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-350 wires an isolated macOS Foundation executable to compile and run DDHostSwitchPreflightSelfTest in GitHub Actions before the arm64 Theos build. Standalone test uses aborting recovery-routing stubs, remains outside tweak target and startup. Local structural checks pass; CI runtime results and arm64 build are unconfirmed.
+Session-351 adds compiled Objective-C DDHostSwitchAllSlotSizesValid to validate each caller-supplied hosted slot size and slot count from 208F4:207-237; extends the existing smoke-test scenarios to catch an undersized second pane, missing sizes and count mismatch. The existing scalar preflight remains backward-compatible and does not yet consume this per-slot API. macOS CI runtime and arm64 build remain unconfirmed.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-350):
-- Added macOS smoke-test runner and GitHub Actions compile/execute step for six Objective-C preflight scenarios.
+## LAST COMPLETED TASK (session-351):
+- Implemented per-slot hosted-size validation and expanded explicit Objective-C self-tests.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.
@@ -36,10 +36,10 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (sessions 346–350, uncommitted):
-- Sửa: `re/RECONSTRUCTION/DuoDashShared.h`, `re/RECONSTRUCTION/HostFlowAdapter.m`, `.github/workflows/build.yml`, `re/STATE.md`.
-- Mới: `re/LOG/session-346.md`, `re/LOG/session-347.md`, `re/LOG/session-348.md`, `re/LOG/session-349.md`, `re/LOG/session-350.md`, `scripts/hostflow_preflight_smoke.m`.
+## FILES CHANGED (session-351, uncommitted):
+- Sửa: `re/RECONSTRUCTION/DuoDashShared.h`, `re/RECONSTRUCTION/HostFlowAdapter.m`, `re/STATE.md`.
+- Mới: `re/LOG/session-351.md`. Earlier sessions 346–350 already in HEAD at this session start.
 - Prior sessions 335–342 are in the current clean HEAD observed at session start.
 
 ## TEST STATUS:
-Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-350 structural local checks PASS (macOS Objective-C runner not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.
+Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-351 structural local checks PASS (new Objective-C tests not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.

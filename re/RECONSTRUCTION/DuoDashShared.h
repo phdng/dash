@@ -174,6 +174,10 @@ FOUNDATION_EXPORT NSString * _Nonnull DDHostSplitBidOrEmpty(NSString * _Nullable
 FOUNDATION_EXPORT NSArray<NSString *> * _Nonnull DDHostSplitBids(NSString * _Nullable leftBid,
                                                                  NSString * _Nullable rightBid);
 FOUNDATION_EXPORT BOOL DDHostSwitchHostedSlotSizeValid(double hostedSlotSize);
+// 208F4:207-237 validates every hosted slot, not only slot zero.
+// All measurements are caller-supplied; no private slot state is accessed.
+FOUNDATION_EXPORT BOOL DDHostSwitchAllSlotSizesValid(NSArray<NSNumber *> * _Nullable sizes,
+                                                    NSInteger expectedSlotCount);
 // 208F4:207-237: compare caller-normalized BIDs in slot order only.
 // Does not implement private 3DD4C normalization or inspect slot geometry.
 FOUNDATION_EXPORT BOOL DDHostSwitchBidsMatch(NSArray<NSString *> * _Nullable requestedBids,

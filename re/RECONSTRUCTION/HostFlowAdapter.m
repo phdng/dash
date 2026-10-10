@@ -130,6 +130,20 @@ BOOL DDHostSwitchHostedSlotSizeValid(double hostedSlotSize) {
     return hostedSlotSize >= 1.0;
 }
 
+BOOL DDHostSwitchAllSlotSizesValid(NSArray<NSNumber *> * _Nullable sizes,
+                                   NSInteger expectedSlotCount) {
+    if (!DDHostSwitchSlotCountIsValid(expectedSlotCount) ||
+        ![sizes isKindOfClass:[NSArray class]] ||
+        sizes.count != (NSUInteger)expectedSlotCount)
+        return NO;
+    for (id size in sizes) {
+        if (![size isKindOfClass:[NSNumber class]] ||
+            !DDHostSwitchHostedSlotSizeValid([size doubleValue]))
+            return NO;
+    }
+    return YES;
+}
+
 // 208F4:207-237: caller must supply the already-normalized BID arrays.
 // Preserve strict slot-index order; normalization via private 3DD4C is excluded.
 BOOL DDHostSwitchBidsMatch(NSArray<NSString *> * _Nullable requestedBids,
@@ -272,6 +286,15 @@ BOOL DDHostSwitchPreflightSelfTest(void) {
     if (!result.bidsMatch ||
         result.postEarlyFailures != DDHostSwitchPostEarlyFailureShellBounds ||
         result.canProceedToPrivateSwitchChecks)
+        return NO;
+
+    // Per-slot 208F4:207-237 check must reject a bad second pane even
+    // when the first pane's measured size is valid.
+    if (!DDHostSwitchAllSlotSizesValid(@[@1.0, @2.0], 2) ||
+        DDHostSwitchAllSlotSizesValid(@[@1.0, @0.5], 2) ||
+        DDHostSwitchAllSlotSizesValid(@[@1.0], 2) ||
+        DDHostSwitchAllSlotSizesValid(nil, 2) ||
+        DDHostSwitchAllSlotSizesValid(@[@1.0, @2.0], 3))
         return NO;
 
     result = DDHostSwitchPreflight(snapshot, bids, bids, 0.5, YES);
