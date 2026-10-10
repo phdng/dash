@@ -89,6 +89,8 @@ FOUNDATION_EXPORT BOOL DDContentInsetOverrideValue(NSString * _Nullable value,
                                                     double * _Nullable outBottom);
 FOUNDATION_EXPORT double DDPanePaddingOverrideValue(NSString * _Nullable value);
 FOUNDATION_EXPORT double DDPaneCornerRadiusForNoRoundMarker(BOOL markerPresent);
+// Call only when a layout override value is present; absent values use 73E8() fallback.
+FOUNDATION_EXPORT NSInteger DDHostLayoutProvidedOverrideValue(NSString * _Nonnull value);
 FOUNDATION_EXPORT BOOL DDPaneFractionsOverrideValue(NSString * _Nullable value,
                                                     NSInteger * _Nullable outFractionA,
                                                     NSInteger * _Nullable outFractionB);

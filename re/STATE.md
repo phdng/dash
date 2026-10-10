@@ -1,17 +1,17 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-10 session-310 (CI green; pane-corner-radius decision)_
+_Last updated: 2026-10-10 session-311 (CI green; supplied layout override clamp)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-User reports Theos arm64 CI build GREEN after linker repair session-309. Session-310 promotes the evidence-backed pure `nopaneround` -> pane corner-radius decision (0.0 when marker present, 13.0 otherwise) without hooking UI or filesystem.
+User confirms Theos arm64 CI build GREEN through session-310. Session-311 adds a pure supplied-layout override clamp (1..8 else 2) from 218D8:421-444 without replacing the absent-override preference fallback.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-310):
-- Added `DDPaneCornerRadiusForNoRoundMarker` from 218D8:416-420 to compiled `ToggleValueHelpers.m` and exported it in `DuoDashShared.h`.
+## LAST COMPLETED TASK (session-311):
+- Added `DDHostLayoutProvidedOverrideValue` to compiled `ToggleValueHelpers.m` and `DuoDashShared.h`, with verifier guard; only for supplied layout override values.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.
@@ -36,9 +36,9 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-310):
+## FILES CHANGED (session-311):
 - Sửa: `RECONSTRUCTION/DuoDashShared.h`, `RECONSTRUCTION/ToggleValueHelpers.m`, `scripts/verify_reconstruction.py`, `STATE.md`.
-- Mới: `LOG/session-310.md`.
+- Mới: `LOG/session-311.md`.
 
 ## TEST STATUS:
-User confirms preceding Theos arm64 build GREEN (session-309 changes). Session-310 local static checks PASS: `python scripts/verify_reconstruction.py`, `python -m py_compile scripts/verify_reconstruction.py`, `git diff --check` (LF/CRLF warnings only). Exact arm64 Theos compilation of the new helper remains CI-only on Windows. Assistant không push.
+User confirms Theos arm64 CI GREEN through session-310. Session-311 local static checks PASS: reconstruction verifier, Python py_compile, git diff --check (LF/CRLF warnings only). Exact arm64 Theos compilation of the new helper remains CI-only on Windows. Assistant không push.

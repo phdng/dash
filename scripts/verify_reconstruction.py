@@ -166,6 +166,8 @@ for toggle_value_contract in [
     "return 4.0",
     "DDPaneCornerRadiusForNoRoundMarker",
     "return markerPresent ? 0.0 : 13.0",
+    "DDHostLayoutProvidedOverrideValue",
+    "return (parsed >= 1 && parsed <= 8) ? parsed : 2",
     "DDPaneFractionsOverrideValue",
     "if (value.length == 0)",
     "componentsSeparatedByString:@\",\"",
