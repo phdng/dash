@@ -2221,38 +2221,40 @@ if re.search(r"(?m)^NSString\s*\*\s*DDRoleName\s*\(", runtime):
     raise SystemExit("ReconstructionRuntime must not redefine DDRoleName")
 
 host_flow_source = (RECON / "HostFlowAdapter.m").read_text(encoding="utf-8")
-if not re.search(r"BOOL\s+DDHostRequiresFullHost\s*\([^)]*\)\s*\{\s*return\s+deactivateDismissPresent\s*\|\|\s*!active\s*\|\|\s*!splitHosting\s*\|\|\s*visible\s*\|\|\s*geometryMismatch\s*\|\|\s*dirty\s*\|\|\s*!canPresent\s*;", host_flow_source):
+if not re.search(r"BOOL\s+DDHostRequiresFullHost\s*\([^)]*\)\s*\{\s*return\s+deactivateDismissPresent\s*\|\|\s*!active\s*\|\|\s*!splitHosting\s*\|\|\s*visible\s*\|\|\s*geometryMismatch\s*\|\|\s*dirty\s*\|\|\s*!canPresent\s*;\s*\}", host_flow_source):
     raise SystemExit("218D8 complete full-host decision predicate missing or drifted")
-if not re.search(r"BOOL\s+DDHostShouldRefuseNoDisplay\s*\([^)]*\)\s*\{\s*return\s+usableBoundsEmpty\s*&&\s*!prepareShellSucceeded\s*;", host_flow_source):
+if not re.search(r"BOOL\s+DDHostShouldRefuseNoDisplay\s*\([^)]*\)\s*\{\s*return\s+usableBoundsEmpty\s*&&\s*!prepareShellSucceeded\s*;\s*\}", host_flow_source):
     raise SystemExit("218D8 complete no-display refusal predicate missing or drifted")
-if not re.search(r"BOOL\s+DDHostHasDegenerateContent\s*\([^)]*\)\s*\{\s*return\s+width\s*<\s*1\.0\s*\|\|\s*height\s*<\s*1\.0\s*;", host_flow_source):
+if not re.search(r"BOOL\s+DDHostHasDegenerateContent\s*\([^)]*\)\s*\{\s*return\s+width\s*<\s*1\.0\s*\|\|\s*height\s*<\s*1\.0\s*;\s*\}", host_flow_source):
     raise SystemExit("218D8 complete degenerate-content predicate missing or drifted")
-if "BOOL DDHostDelayedGenerationIsCurrent(" not in host_flow_source or "return capturedGeneration == currentGeneration;" not in host_flow_source:
-    raise SystemExit("27AE4 delayed host generation guard missing or drifted")
-if "BOOL DDHostSwitchSlotCountIsValid(" not in host_flow_source or "return hostedSlotCount >= 1 && hostedSlotCount <= 3;" not in host_flow_source:
-    raise SystemExit("208F4 slot count guard missing or drifted")
-if not re.search(r"BOOL\s+DDHostSwitchModeFlagsAllow\s*\([^)]*\)\s*\{\s*return\s+hostMode\s*==\s*0x0100\s*&&\s*hostPhase\s*==\s*2\s*&&\s*\(\s*stateFlags\s*&\s*0x101\s*\)\s*==\s*0\s*;", host_flow_source):
+if not re.search(r"BOOL\s+DDHostDelayedGenerationIsCurrent\s*\([^)]*\)\s*\{\s*return\s+capturedGeneration\s*==\s*currentGeneration\s*;\s*\}", host_flow_source):
+    raise SystemExit("27AE4 complete delayed generation guard missing or drifted")
+if not re.search(r"BOOL\s+DDHostSwitchSlotCountIsValid\s*\([^)]*\)\s*\{\s*return\s+hostedSlotCount\s*>=\s*1\s*&&\s*hostedSlotCount\s*<=\s*3\s*;\s*\}", host_flow_source):
+    raise SystemExit("208F4 complete slot count range guard missing or drifted")
+if not re.search(r"BOOL\s+DDHostSwitchModeFlagsAllow\s*\([^)]*\)\s*\{\s*return\s+hostMode\s*==\s*0x0100\s*&&\s*hostPhase\s*==\s*2\s*&&\s*\(\s*stateFlags\s*&\s*0x101\s*\)\s*==\s*0\s*;\s*\}", host_flow_source):
     raise SystemExit("208F4 complete mode flag guard missing or drifted")
-if not re.search(r"BOOL\s+DDHostSwitchSlotCountsMatch\s*\([^)]*\)\s*\{\s*return\s+DDHostSwitchSlotCountIsValid\(hostedSlotCount\)\s*&&\s*hostedSlotCount\s*==\s*runtimeSlotCount\s*&&\s*hostedSlotCount\s*==\s*layoutSlotCount\s*&&\s*preparedSlotCapacity\s*>=\s*hostedSlotCount\s*;", host_flow_source):
+if not re.search(r"BOOL\s+DDHostSwitchSlotCountsMatch\s*\([^)]*\)\s*\{\s*return\s+DDHostSwitchSlotCountIsValid\(hostedSlotCount\)\s*&&\s*hostedSlotCount\s*==\s*runtimeSlotCount\s*&&\s*hostedSlotCount\s*==\s*layoutSlotCount\s*&&\s*preparedSlotCapacity\s*>=\s*hostedSlotCount\s*;\s*\}", host_flow_source):
     raise SystemExit("208F4 complete slot count consistency predicate missing or drifted")
-if not re.search(r"BOOL\s+DDHostSwitchInteractionStateAllows\s*\([^)]*\)\s*\{\s*return\s+active\s*&&\s*splitHosting\s*&&\s*visible\s*&&\s*!swapInFlight\s*&&\s*maximizedPosition\s*>=\s*0\s*&&\s*!maximizeInFlight\s*;", host_flow_source):
+if not re.search(r"BOOL\s+DDHostSwitchInteractionStateAllows\s*\([^)]*\)\s*\{\s*return\s+active\s*&&\s*splitHosting\s*&&\s*visible\s*&&\s*!swapInFlight\s*&&\s*maximizedPosition\s*>=\s*0\s*&&\s*!maximizeInFlight\s*;\s*\}", host_flow_source):
     raise SystemExit("208F4 complete interaction state predicate missing or drifted")
-if not re.search(r"BOOL\s+DDHostSwitchConsistencyAllows\s*\([^)]*\)\s*\{\s*return\s+pendingGeneration\s*==\s*0\s*&&\s*requestedGeometryVersion\s*==\s*appliedGeometryVersion\s*&&\s*activeLayout\s*==\s*preferredLayout\s*;", host_flow_source):
+if not re.search(r"BOOL\s+DDHostSwitchConsistencyAllows\s*\([^)]*\)\s*\{\s*return\s+pendingGeneration\s*==\s*0\s*&&\s*requestedGeometryVersion\s*==\s*appliedGeometryVersion\s*&&\s*activeLayout\s*==\s*preferredLayout\s*;\s*\}", host_flow_source):
     raise SystemExit("208F4 complete generation/geometry/layout consistency predicate missing or drifted")
-if not re.search(r"BOOL\s+DDHostSwitchContinuationStateAllows\s*\([^)]*\)\s*\{\s*return\s+active\s*&&\s*splitHosting\s*&&\s*visible\s*&&\s*carPlayConnected\s*;", host_flow_source):
+if not re.search(r"BOOL\s+DDHostSwitchContinuationStateAllows\s*\([^)]*\)\s*\{\s*return\s+active\s*&&\s*splitHosting\s*&&\s*visible\s*&&\s*carPlayConnected\s*;\s*\}", host_flow_source):
     raise SystemExit("26FE4 complete continuation state guard missing or drifted")
-if "BOOL DDHostSwitchShellBoundsAllow(" not in host_flow_source or "return !shellBoundsMismatch;" not in host_flow_source:
-    raise SystemExit("208F4 shell-bounds guard missing or drifted")
-if "BOOL DDHostSwitchNeedsDelayedContinuation(" not in host_flow_source or "return pendingBidCount != 0;" not in host_flow_source:
-    raise SystemExit("208F4 delayed-continuation branch missing or drifted")
-if "NSString *DDHostSplitBidOrEmpty(" not in host_flow_source or 'return bid ?: @"";' not in host_flow_source:
-    raise SystemExit("217EC two-pane nil BID coalescing missing or drifted")
-if not re.search(r"BOOL\s+DDHostSwitchHostedSlotSizeValid\s*\([^)]*\)\s*\{\s*return\s+hostedSlotSize\s*>=\s*1\.0\s*;", host_flow_source):
+if not re.search(r"BOOL\s+DDHostSwitchShellBoundsAllow\s*\([^)]*\)\s*\{\s*return\s*!shellBoundsMismatch\s*;\s*\}", host_flow_source):
+    raise SystemExit("208F4 complete shell-bounds guard missing or drifted")
+if not re.search(r"BOOL\s+DDHostSwitchNeedsDelayedContinuation\s*\([^)]*\)\s*\{\s*return\s+pendingBidCount\s*!=\s*0\s*;\s*\}", host_flow_source):
+    raise SystemExit("208F4 complete delayed-continuation guard missing or drifted")
+if not re.search(r'NSString\s*\*\s*DDHostSplitBidOrEmpty\s*\(\s*NSString\s*\*\s*_Nullable\s+bid\s*\)\s*\{\s*return\s+bid\s*\?:\s*@""\s*;\s*\}', host_flow_source):
+    raise SystemExit("217EC complete two-pane nil BID coalescing missing or drifted")
+if not re.search(r"BOOL\s+DDHostSwitchHostedSlotSizeValid\s*\([^)]*\)\s*\{\s*return\s+hostedSlotSize\s*>=\s*1\.0\s*;\s*\}", host_flow_source):
     raise SystemExit("208F4 hosted slot size threshold guard missing or drifted")
 
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
 # Sessions 312-325: every promoted compiled host-flow helper must remain public.
 # The source-side guards above check bodies; these also catch header drift.
+# Function-scoped matches also require each checked return expression to end the body;
+# otherwise appended side effects could evade the structural checks.
 for host_export in (
     "DDHostRequiresFullHost",
     "DDHostShouldRefuseNoDisplay",

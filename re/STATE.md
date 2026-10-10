@@ -1,17 +1,17 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-10 session-334 (no-display and geometry verifier guards)_
+_Last updated: 2026-10-10 session-342 (switch predicate body-termination checks)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-334 strengthens structural checks for DDHostShouldRefuseNoDisplay and DDHostHasDegenerateContent with whitespace-tolerant, function-scoped predicate checks. No runtime behavior changed. Sessions 320–334 arm64 CI unconfirmed.
+Session-342 strengthens structural verification of DDHostSwitchSlotCountsMatch, DDHostSwitchInteractionStateAllows, DDHostSwitchConsistencyAllows and DDHostSwitchContinuationStateAllows by requiring closing braces directly after their return expressions. Preserves uncommitted Sessions 335–341. No runtime behavior changed; arm64 CI unconfirmed.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-334):
-- Hardened no-display refusal and degenerate-content verifier checks to match their full predicates with whitespace tolerance.
+## LAST COMPLETED TASK (session-342):
+- Hardened four switch count/interaction/consistency/continuation predicate checks to reject trailing statements after return.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.
@@ -36,9 +36,10 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (sessions 320–334, uncommitted):
-- Sửa: `RECONSTRUCTION/DuoDashShared.h`, `RECONSTRUCTION/HostFlowAdapter.m`, `scripts/verify_reconstruction.py`, `STATE.md`.
-- Mới: `LOG/session-320.md`, `LOG/session-321.md`, `LOG/session-322.md`, `LOG/session-323.md`, `LOG/session-324.md`, `LOG/session-325.md`, `LOG/session-326.md`, `LOG/session-327.md`, `LOG/session-328.md`, `LOG/session-329.md`, `LOG/session-330.md`, `LOG/session-331.md`, `LOG/session-332.md`, `LOG/session-333.md`, `LOG/session-334.md`.
+## FILES CHANGED (sessions 335–342, uncommitted):
+- Sửa: `scripts/verify_reconstruction.py`, `re/STATE.md`.
+- Mới: `re/LOG/session-335.md`, `re/LOG/session-336.md`, `re/LOG/session-337.md`, `re/LOG/session-338.md`, `re/LOG/session-339.md`, `re/LOG/session-340.md`, `re/LOG/session-341.md`, `re/LOG/session-342.md`.
+- Sessions 320–334 already appear in HEAD `750902c` (external commit detected at session start).
 
 ## TEST STATUS:
-Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-334 local checks PASS: reconstruction verifier, Python py_compile and git diff --check (LF/CRLF warnings only). Sessions 320–334 arm64 CI pending. Assistant không push.
+Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-342 local checks PASS: reconstruction verifier, Python py_compile and git diff --check (LF/CRLF warnings only). Current arm64 CI status unconfirmed. Assistant không push.
