@@ -58,6 +58,46 @@ int main(void) {
             NSLog(@"FAIL: guarded SBApplicationController mock normalization: %@", normalized);
             return 1;
         }
+        // The caller-fed pure-data 3DD4C model must agree with the private
+        // selector adapter for the same availability and CarPlay slot flags.
+        NSArray<NSString *> *modeled = DDHostNormalizeBidsWithAvailability(
+            @[@"com.example.missing", @"com.example.missing",
+              @"com.example.exists", @"com.example.exists"], 4,
+            @[@NO, @YES, @NO, @NO],
+            [NSSet setWithObject:@"com.example.exists"]);
+        if (![normalized isEqualToArray:modeled]) {
+            NSLog(@"FAIL: private vs caller-fed 3DD4C mismatch: %@ / %@",
+                  normalized, modeled);
+            return 1;
+        }
+        // Reject malformed caller input before any private controller lookup.
+        DDMockApplicationLookupCount = 0;
+        if (DDHostPreparedRequestReadyUsingSpringBoard(
+                (id)@"not-an-array", 2, nil,
+                @[@"", @""], @[@1.0, @1.0]) ||
+            DDHostPreparedRequestReadyUsingSpringBoard(
+                @[@"com.example.exists"], 2, (id)@"not-an-array",
+                @[@"com.example.exists", @""], @[@1.0, @1.0]) ||
+            DDHostPreparedRequestReadyUsingSpringBoard(
+                @[@"com.example.exists"], 0, nil, nil, nil) ||
+            DDMockApplicationLookupCount != 0) {
+            NSLog(@"FAIL: malformed prepared-host input reached private API");
+            return 1;
+        }
+        // All CarPlay UI slots and empty/duplicate BIDs must avoid the
+        // application selector even when the controller is available.
+        DDMockApplicationLookupCount = 0;
+        NSArray<NSString *> *carPlayOnly = DDHostNormalizeBidsUsingSpringBoard(
+            @[@"com.example.missing", @"com.example.missing", @""], 3,
+            @[@YES, @YES, @NO]);
+        if (DDMockApplicationLookupCount != 0 ||
+            ![carPlayOnly isEqualToArray:@[@"com.example.missing", @"", @""]] ||
+            ![carPlayOnly isEqualToArray:DDHostNormalizeBidsWithAvailability(
+                @[@"com.example.missing", @"com.example.missing", @""], 3,
+                @[@YES, @YES, @NO], [NSSet set])]) {
+            NSLog(@"FAIL: CarPlay UI-only BIDs performed private lookup: %@", carPlayOnly);
+            return 1;
+        }
         // Integrated private resolution + 218D8 prepared comparison.
         if (!DDHostPreparedRequestReadyUsingSpringBoard(
                 @[@"com.example.exists", @"com.example.missing"], 2,
@@ -79,7 +119,10 @@ int main(void) {
             @[@"com.example.missing", @"com.example.missing", [NSNull null]],
             3, @[@NO, @NO, @NO]);
         if (DDMockApplicationLookupCount != 0 ||
-            ![fallback isEqualToArray:@[@"com.example.missing", @"", @""]]) {
+            ![fallback isEqualToArray:@[@"com.example.missing", @"", @""]] ||
+            ![fallback isEqualToArray:DDHostNormalizeBidsWithAvailability(
+                @[@"com.example.missing", @"com.example.missing", [NSNull null]],
+                3, @[@NO, @NO, @NO], nil)]) {
             NSLog(@"FAIL: nil-controller fallback normalization: %@", fallback);
             return 1;
         }
@@ -101,6 +144,8 @@ int main(void) {
             @[@NO, @NO]);
         if (DDMockApplicationLookupCount != 0 ||
             ![selectorFallback isEqualToArray:@[@"com.example.missing", @""]] ||
+            ![selectorFallback isEqualToArray:DDHostNormalizeBidsWithoutLookup(
+                @[@"com.example.missing", @"com.example.missing"], 2)] ||
             !DDHostPreparedRequestReadyUsingSpringBoard(
                 @[@"com.example.missing"], 2, nil,
                 @[@"com.example.missing", @""], @[@1.0, @1.0])) {
