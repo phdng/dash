@@ -150,6 +150,8 @@ BOOL DDHostSwitchBidsMatch(NSArray<NSString *> * _Nullable requestedBids,
                            NSArray<NSString *> * _Nullable hostedBids,
                            NSInteger expectedSlotCount) {
     if (!DDHostSwitchSlotCountIsValid(expectedSlotCount) ||
+        ![requestedBids isKindOfClass:[NSArray class]] ||
+        ![hostedBids isKindOfClass:[NSArray class]] ||
         requestedBids.count != (NSUInteger)expectedSlotCount ||
         hostedBids.count != (NSUInteger)expectedSlotCount)
         return NO;
@@ -320,6 +322,13 @@ BOOL DDHostSwitchPreflightSelfTest(void) {
         DDHostSwitchAllSlotSizesValid(@[@1.0], 2) ||
         DDHostSwitchAllSlotSizesValid(nil, 2) ||
         DDHostSwitchAllSlotSizesValid(@[@1.0, @2.0], 3))
+        return NO;
+
+    // Malformed caller input must fail closed before indexed access.
+    if (DDHostSwitchBidsMatch((id)@"not-an-array", bids, 2) ||
+        DDHostSwitchBidsMatch(bids, (id)@"not-an-array", 2) ||
+        DDHostSwitchBidsMatch((id)@[@"com.example.left", [NSNull null]], bids, 2) ||
+        DDHostSwitchAllSlotSizesValid((id)@[@1.0, [NSNull null]], 2))
         return NO;
 
     DDHostSwitchPreflightResult slotsResult = DDHostSwitchPreflightForSlots(

@@ -1,17 +1,17 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-10 session-352 (per-slot switch preflight integration)_
+_Last updated: 2026-10-11 session-353 (fail-closed malformed BID inputs)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-352 adds compiled Objective-C DDHostSwitchPreflightForSlots to consume all caller-supplied hosted slot sizes in the staged early/BID/size/bounds preflight. Keeps legacy scalar API for compatibility and expands the explicit Objective-C self-test. macOS CI and arm64 build remain unconfirmed.
+Session-353 hardens compiled DDHostSwitchBidsMatch against malformed non-array inputs (previously risked unrecognized count/index access), and extends explicit Objective-C self-tests for malformed BID arrays and NSNull slot values. Structural verifier passes; macOS runtime and arm64 CI remain unconfirmed.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-352):
-- Integrated per-slot hosted size validation into a new staged Objective-C preflight API and added regression assertions.
+## LAST COMPLETED TASK (session-353):
+- Hardened BID matching to fail closed on malformed array types and added Objective-C regression assertions.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.
@@ -36,10 +36,10 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (session-352, uncommitted):
+## FILES CHANGED (session-353, uncommitted):
 - Sửa: `re/RECONSTRUCTION/DuoDashShared.h`, `re/RECONSTRUCTION/HostFlowAdapter.m`, `re/STATE.md`.
-- Mới: `re/LOG/session-352.md`. Earlier sessions 346–350 already in HEAD at this session start.
+- Mới: `re/LOG/session-353.md`. Earlier sessions 346–350 already in HEAD at this session start.
 - Prior sessions 335–342 are in the current clean HEAD observed at session start.
 
 ## TEST STATUS:
-Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-352 structural local checks PASS (Objective-C tests not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.
+Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-353 structural local checks PASS (Objective-C tests not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.
