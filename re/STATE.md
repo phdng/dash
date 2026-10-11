@@ -1,17 +1,17 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-11 session-377 (CarPlay UI lookup bypass regression)_
+_Last updated: 2026-10-11 session-378 (macOS arm64 Objective-C syntax CI)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-377 extends the compiled macOS private-selector mock harness to ensure CarPlay UI-only nonempty BIDs, duplicates and empty BIDs never invoke SBApplicationController applicationWithBundleIdentifier:, even with a usable controller; also checks equivalence with the caller-fed 3DD4C model. Local verifier/diff PASS, macOS Objective-C runtime and arm64 CI unconfirmed.
+Session-378 extends .github/workflows/build.yml with a separate -arch arm64 -fsyntax-only Objective-C macOS target pass for HostFlowAdapter.m and its private-selector mock harness. The existing native-host smoke execution and Theos arm64 build remain unchanged. Local verifier/diff PASS; new CI step not executed here. macOS arm64 syntax check is not equivalent to an iOS arm64 link/runtime build.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-377):
-- Added CarPlay UI-only mock smoke assertion enforcing zero private application lookups.
+## LAST COMPLETED TASK (session-378):
+- Added macOS arm64 Objective-C syntax check to existing macOS CI workflow.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.
@@ -42,4 +42,4 @@ Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11
 - Prior sessions 335–342 are in the current clean HEAD observed at session start.
 
 ## TEST STATUS:
-Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-377 structural local checks PASS (Objective-C tests not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.
+Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-378 structural local checks PASS (Objective-C tests not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.

@@ -43,6 +43,14 @@ jobs:
             -o "$RUNNER_TEMP/hostflow_preflight_smoke"
           "$RUNNER_TEMP/hostflow_preflight_smoke"
 
+      - name: Check host adapter Objective-C syntax for macOS arm64
+        run: |
+          xcrun clang -arch arm64 -fsyntax-only -fobjc-arc -fblocks \
+            -Wall -Wextra -Werror \
+            -I re/RECONSTRUCTION \
+            re/RECONSTRUCTION/HostFlowAdapter.m \
+            scripts/hostflow_preflight_smoke.m
+
       - name: Install Theos prerequisites
         run: brew install ldid xz
 
