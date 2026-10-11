@@ -6,6 +6,7 @@
 // RecoveryRouting capability state, but does not call DDz4/private selectors itself.
 
 #import "DuoDashShared.h"
+#include <math.h>
 
 // Exact full-host vs reshow selection at 218D8:307-313 (evidence/hosting_engine.md).
 // Does not acquire any gate, call DDz controllers, or mutate host state.
@@ -127,7 +128,7 @@ NSArray<NSString *> *DDHostSplitBids(NSString * _Nullable leftBid,
 // 208F4:207-237: hosted slot size must reach 1.0 for BID comparison.
 // Caller supplies the size; no private slot inspection is performed here.
 BOOL DDHostSwitchHostedSlotSizeValid(double hostedSlotSize) {
-    return hostedSlotSize >= 1.0;
+    return isfinite(hostedSlotSize) && hostedSlotSize >= 1.0;
 }
 
 BOOL DDHostSwitchAllSlotSizesValid(NSArray<NSNumber *> * _Nullable sizes,
@@ -315,6 +316,14 @@ BOOL DDHostSwitchPreflightSelfTest(void) {
         result.canProceedToPrivateSwitchChecks)
         return NO;
 
+    // Fail closed on non-finite slot sizes without changing the documented
+    // 218D8 finite-geometry comparison semantics.
+    if (DDHostSwitchHostedSlotSizeValid(INFINITY) ||
+        DDHostSwitchHostedSlotSizeValid(NAN) ||
+        DDHostSwitchAllSlotSizesValid(@[@1.0, @(INFINITY)], 2) ||
+        DDHostSwitchAllSlotSizesValid(@[@1.0, @(NAN)], 2))
+        return NO;
+
     // Per-slot 208F4:207-237 check must reject a bad second pane even
     // when the first pane's measured size is valid.
     if (!DDHostSwitchAllSlotSizesValid(@[@1.0, @2.0], 2) ||
@@ -348,6 +357,23 @@ BOOL DDHostSwitchPreflightSelfTest(void) {
                                            DDHostSwitchPostEarlyFailureShellBounds) ||
         slotsResult.canProceedToPrivateSwitchChecks)
         return NO;
+
+    // Reject malformed slot measurements and preserve the stage ordering:
+    // an early refusal must not report a later BID/geometry acceptance.
+    slotsResult = DDHostSwitchPreflightForSlots(snapshot, bids, bids,
+                                                 (id)@"invalid-array", NO);
+    if (!slotsResult.bidsMatch ||
+        slotsResult.postEarlyFailures != DDHostSwitchPostEarlyFailureHostedSlotSize ||
+        slotsResult.canProceedToPrivateSwitchChecks)
+        return NO;
+    snapshot.swapInFlight = YES;
+    slotsResult = DDHostSwitchPreflightForSlots(snapshot, bids, bids,
+                                                 @[@1.0, @2.0], NO);
+    if ((slotsResult.earlyFailures & DDHostSwitchEarlyGuardFailureInteraction) == 0 ||
+        slotsResult.bidsMatch || slotsResult.postEarlyFailures != 0 ||
+        slotsResult.canProceedToPrivateSwitchChecks)
+        return NO;
+    snapshot.swapInFlight = NO;
 
     result = DDHostSwitchPreflight(snapshot, bids, bids, 0.5, YES);
     return result.bidsMatch &&

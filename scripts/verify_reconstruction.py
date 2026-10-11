@@ -2247,7 +2247,7 @@ if not re.search(r"BOOL\s+DDHostSwitchNeedsDelayedContinuation\s*\([^)]*\)\s*\{\
     raise SystemExit("208F4 complete delayed-continuation guard missing or drifted")
 if not re.search(r'NSString\s*\*\s*DDHostSplitBidOrEmpty\s*\(\s*NSString\s*\*\s*_Nullable\s+bid\s*\)\s*\{\s*return\s+bid\s*\?:\s*@""\s*;\s*\}', host_flow_source):
     raise SystemExit("217EC complete two-pane nil BID coalescing missing or drifted")
-if not re.search(r"BOOL\s+DDHostSwitchHostedSlotSizeValid\s*\([^)]*\)\s*\{\s*return\s+hostedSlotSize\s*>=\s*1\.0\s*;\s*\}", host_flow_source):
+if not re.search(r"BOOL\s+DDHostSwitchHostedSlotSizeValid\s*\([^)]*\)\s*\{\s*return\s+isfinite\(hostedSlotSize\)\s*&&\s*hostedSlotSize\s*>=\s*1\.0\s*;\s*\}", host_flow_source):
     raise SystemExit("208F4 hosted slot size threshold guard missing or drifted")
 
 shared = (RECON / "DuoDashShared.h").read_text(encoding="utf-8")
