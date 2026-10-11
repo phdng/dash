@@ -7,6 +7,7 @@
 
 #import "DuoDashShared.h"
 #include <math.h>
+#import <objc/message.h>
 
 // Exact full-host vs reshow selection at 218D8:307-313 (evidence/hosting_engine.md).
 // Does not acquire any gate, call DDz controllers, or mutate host state.
@@ -191,6 +192,89 @@ BOOL DDHostSwitchBidsMatch(NSArray<NSString *> * _Nullable requestedBids,
     return YES;
 }
 
+// 3DD4C: when a3=0, skip SBApplicationController lookup entirely.
+// Preserve ordered slots, non-string/absent to empty and first nonempty BID.
+NSArray<NSString *> *DDHostNormalizeBidsWithoutLookup(NSArray * _Nullable requestedBids,
+                                                       NSInteger slotCount) {
+    if (slotCount < 0 ||
+        (requestedBids && ![requestedBids isKindOfClass:[NSArray class]]))
+        return @[];
+    NSMutableArray<NSString *> *normalized = [NSMutableArray arrayWithCapacity:(NSUInteger)slotCount];
+    for (NSUInteger slot = 0; slot < (NSUInteger)slotCount; ++slot) {
+        id bid = slot < requestedBids.count ? requestedBids[slot] : nil;
+        NSString *value = [bid isKindOfClass:[NSString class]] ? bid : @"";
+        if (value.length && [normalized containsObject:value])
+            value = @"";
+        [normalized addObject:value];
+    }
+    return normalized;
+}
+
+// 3DD4C (a3=1): caller resolves application availability externally.
+// A nil set models unavailable SBApplicationController/respondsToSelector;
+// CarPlay UI slots bypass application existence checking.
+NSArray<NSString *> *DDHostNormalizeBidsWithAvailability(
+    NSArray * _Nullable requestedBids, NSInteger slotCount,
+    NSArray * _Nullable carPlayUIFlags, NSSet<NSString *> * _Nullable availableBids) {
+    if (slotCount < 0 ||
+        (requestedBids && ![requestedBids isKindOfClass:[NSArray class]]) ||
+        (carPlayUIFlags && ![carPlayUIFlags isKindOfClass:[NSArray class]]) ||
+        (availableBids && ![availableBids isKindOfClass:[NSSet class]]))
+        return @[];
+    NSMutableArray<NSString *> *normalized = [NSMutableArray arrayWithCapacity:(NSUInteger)slotCount];
+    for (NSUInteger slot = 0; slot < (NSUInteger)slotCount; ++slot) {
+        id input = slot < requestedBids.count ? requestedBids[slot] : nil;
+        NSString *bid = [input isKindOfClass:[NSString class]] ? input : @"";
+        if (bid.length && [normalized containsObject:bid])
+            bid = @"";
+        id flag = slot < carPlayUIFlags.count ? carPlayUIFlags[slot] : nil;
+        BOOL isCarPlayUI = [flag respondsToSelector:@selector(boolValue)] && [flag boolValue];
+        if (bid.length && availableBids != nil && !isCarPlayUI &&
+            ![availableBids containsObject:bid])
+            bid = @"";
+        [normalized addObject:bid];
+    }
+    return normalized;
+}
+
+// 3DD4C (a3=1): exact class and selectors from decoded source.
+// Fail open to lookup-free normalization when private APIs are unavailable,
+// matching the original v10=nil branch. No SpringBoard class dependency.
+NSArray<NSString *> *DDHostNormalizeBidsUsingSpringBoard(
+    NSArray * _Nullable requestedBids, NSInteger slotCount,
+    NSArray * _Nullable carPlayUIFlags) {
+    if (slotCount < 0 ||
+        (requestedBids && ![requestedBids isKindOfClass:[NSArray class]]) ||
+        (carPlayUIFlags && ![carPlayUIFlags isKindOfClass:[NSArray class]]))
+        return @[];
+    Class controllerClass = NSClassFromString(@"SBApplicationController");
+    SEL sharedSelector = NSSelectorFromString(@"sharedInstance");
+    SEL applicationSelector = NSSelectorFromString(@"applicationWithBundleIdentifier:");
+    id controller = nil;
+    if (controllerClass && [controllerClass respondsToSelector:sharedSelector]) {
+        id (*getShared)(id, SEL) = (id (*)(id, SEL))objc_msgSend;
+        controller = getShared(controllerClass, sharedSelector);
+        if (![controller respondsToSelector:applicationSelector])
+            controller = nil;
+    }
+    NSMutableArray<NSString *> *normalized = [NSMutableArray arrayWithCapacity:(NSUInteger)slotCount];
+    for (NSUInteger slot = 0; slot < (NSUInteger)slotCount; ++slot) {
+        id input = slot < requestedBids.count ? requestedBids[slot] : nil;
+        NSString *bid = [input isKindOfClass:[NSString class]] ? input : @"";
+        if (bid.length && [normalized containsObject:bid])
+            bid = @"";
+        id flag = slot < carPlayUIFlags.count ? carPlayUIFlags[slot] : nil;
+        BOOL isCarPlayUI = [flag respondsToSelector:@selector(boolValue)] && [flag boolValue];
+        if (bid.length && controller && !isCarPlayUI) {
+            id (*findApplication)(id, SEL, id) = (id (*)(id, SEL, id))objc_msgSend;
+            if (!findApplication(controller, applicationSelector, bid))
+                bid = @"";
+        }
+        [normalized addObject:bid];
+    }
+    return normalized;
+}
+
 // 218D8:213-235 contrasts with 208F4: it permits missing hosted entries,
 // comparing both absent requested and hosted slots as empty strings. Inputs
 // are supplied after private 3DD4C normalization by an external caller.
@@ -210,6 +294,63 @@ BOOL DDHostPreparedBidsMatch(NSArray<NSString *> * _Nullable normalizedBids,
             return NO;
     }
     return YES;
+}
+
+// 218D8:213-236 compares normalized and hosted BIDs, and one scalar
+// dimension per slot (v20 += 2). This is deliberately distinct from the
+// two-dimension switch gate of 208F4. Never accesses private geometry.
+BOOL DDHostPreparedSlotsReady(NSArray<NSString *> * _Nullable normalizedBids,
+                              NSArray<NSString *> * _Nullable hostedBids,
+                              NSArray<NSNumber *> * _Nullable firstDimensions,
+                              NSInteger expectedSlotCount) {
+    if (!DDHostPreparedBidsMatch(normalizedBids, hostedBids, expectedSlotCount) ||
+        ![firstDimensions isKindOfClass:[NSArray class]] ||
+        firstDimensions.count < (NSUInteger)expectedSlotCount)
+        return NO;
+    // 218D8:229-236 reads exactly expectedSlotCount dimensions; trailing
+    // measurements are not visited by its loop.
+    for (NSUInteger slot = 0; slot < (NSUInteger)expectedSlotCount; ++slot) {
+        id value = firstDimensions[slot];
+        if (![value isKindOfClass:[NSNumber class]] ||
+            !DDHostSwitchHostedSlotSizeValid([value doubleValue]))
+            return NO;
+    }
+    return YES;
+}
+
+// Compose the two recovered 3DD4C -> 218D8 pure-data stages.
+// The caller must supply SBApplication availability and measured geometry.
+BOOL DDHostPreparedRequestReady(
+    NSArray * _Nullable requestedBids, NSInteger expectedSlotCount,
+    NSArray * _Nullable carPlayUIFlags, NSSet<NSString *> * _Nullable availableBids,
+    NSArray<NSString *> * _Nullable hostedBids,
+    NSArray<NSNumber *> * _Nullable firstDimensions) {
+    if (!DDHostSwitchSlotCountIsValid(expectedSlotCount) ||
+        (requestedBids && ![requestedBids isKindOfClass:[NSArray class]]) ||
+        (carPlayUIFlags && ![carPlayUIFlags isKindOfClass:[NSArray class]]) ||
+        (availableBids && ![availableBids isKindOfClass:[NSSet class]]))
+        return NO;
+    NSArray<NSString *> *normalized = DDHostNormalizeBidsWithAvailability(
+        requestedBids, expectedSlotCount, carPlayUIFlags, availableBids);
+    return DDHostPreparedSlotsReady(normalized, hostedBids,
+                                    firstDimensions, expectedSlotCount);
+}
+
+// Live opt-in counterpart to DDHostPreparedRequestReady; the decoded
+// SpringBoard resolver is invoked only here, then 218D8's prepared gates run.
+BOOL DDHostPreparedRequestReadyUsingSpringBoard(
+    NSArray * _Nullable requestedBids, NSInteger expectedSlotCount,
+    NSArray * _Nullable carPlayUIFlags,
+    NSArray<NSString *> * _Nullable hostedBids,
+    NSArray<NSNumber *> * _Nullable firstDimensions) {
+    if (!DDHostSwitchSlotCountIsValid(expectedSlotCount) ||
+        (requestedBids && ![requestedBids isKindOfClass:[NSArray class]]) ||
+        (carPlayUIFlags && ![carPlayUIFlags isKindOfClass:[NSArray class]]))
+        return NO;
+    NSArray<NSString *> *normalized = DDHostNormalizeBidsUsingSpringBoard(
+        requestedBids, expectedSlotCount, carPlayUIFlags);
+    return DDHostPreparedSlotsReady(normalized, hostedBids,
+                                    firstDimensions, expectedSlotCount);
 }
 
 // Composes only the independently evidenced 208F4:170-206 early guards.
@@ -378,6 +519,70 @@ BOOL DDHostSwitchPreflightSelfTest(void) {
         DDHostSwitchBidsMatch(bids, @[@"com.example.left"], 2))
         return NO;
 
+    // 3DD4C is count-driven independently of 208F4's 1..3 switch limit.
+    if (![DDHostNormalizeBidsWithoutLookup(@[@"a", @"b", @"c", @"d"], 4)
+          isEqualToArray:@[@"a", @"b", @"c", @"d"]] ||
+        ![DDHostNormalizeBidsWithAvailability(@[@"a", @"b", @"c", @"d"], 4,
+                                               nil, nil)
+          isEqualToArray:@[@"a", @"b", @"c", @"d"]])
+        return NO;
+
+    // 3DD4C: application rejection precedes insertion into the output,
+    // so a later duplicate can survive when the first occurrence was erased.
+    if (![DDHostNormalizeBidsWithAvailability(@[@"a", @"a"], 2,
+                                               @[@NO, @YES],
+                                               [NSSet set])
+          isEqualToArray:@[@"", @"a"]] ||
+        ![DDHostNormalizeBidsWithAvailability(@[@"a", @"a"], 2,
+                                               @[@YES, @YES],
+                                               [NSSet set])
+          isEqualToArray:@[@"a", @""]] ||
+        ![DDHostNormalizeBidsWithAvailability(@[@"a", @"a"], 2,
+                                               @[@NO, @NO],
+                                               [NSSet set])
+          isEqualToArray:@[@"", @""]])
+        return NO;
+
+    // 3DD4C without SBApplication lookup: normalize strings and dedupe
+    // nonempty repeated IDs, preserving exact position with empty entries.
+    if (![DDHostNormalizeBidsWithoutLookup(@[@"a", @"a", @"b"], 3)
+          isEqualToArray:@[@"a", @"", @"b"]] ||
+        ![DDHostNormalizeBidsWithoutLookup((id)@[@"a", [NSNull null]], 3)
+          isEqualToArray:@[@"a", @"", @""]] ||
+        ![DDHostNormalizeBidsWithoutLookup(nil, 2) isEqualToArray:@[@"", @""]] ||
+        ![DDHostNormalizeBidsWithoutLookup(@[@"a", @"b", @"c"], 2)
+          isEqualToArray:@[@"a", @"b"]])
+        return NO;
+
+    // 3DD4C (a3=1) application lookup is caller-resolved: UI slots
+    // bypass lookup, unavailable apps empty out, duplicates remain empty.
+    if (![DDHostNormalizeBidsWithAvailability(@[@"a", @"b", @"a"], 3,
+                                               @[@NO, @YES, @NO],
+                                               [NSSet setWithObject:@"a"])
+          isEqualToArray:@[@"a", @"b", @""]] ||
+        ![DDHostNormalizeBidsWithAvailability(@[@"missing", @"a"], 2,
+                                               @[@NO, @NO],
+                                               [NSSet setWithObject:@"a"])
+          isEqualToArray:@[@"", @"a"]] ||
+        ![DDHostNormalizeBidsWithAvailability(@[@"missing"], 1, nil, nil)
+          isEqualToArray:@[@"missing"]])
+        return NO;
+
+    // Integration contract from decompiled 3DD4C -> 218D8. Availability
+    // filtering occurs before prepared BID/geometry comparison.
+    if (!DDHostPreparedRequestReady(@[@"a", @"unknown"], 2,
+                                     @[@NO, @NO], [NSSet setWithObject:@"a"],
+                                     @[@"a", @""], @[@1.0, @2.0]) ||
+        DDHostPreparedRequestReady(@[@"a", @"unknown"], 2,
+                                    @[@NO, @YES], [NSSet setWithObject:@"a"],
+                                    @[@"a", @""], @[@1.0, @2.0]) ||
+        DDHostPreparedRequestReady(@[@"a"], 2,
+                                    nil, [NSSet setWithObject:@"a"],
+                                    @[@"a", @""], @[@1.0, @0.5]) ||
+        DDHostPreparedRequestReady((id)@"invalid-array", 2,
+                                    nil, nil, @[@"", @""], @[@1.0, @2.0]))
+        return NO;
+
     // Decompiled 218D8:213-235 permits missing hosted BIDs, unlike 208F4.
     if (!DDHostPreparedBidsMatch(@[@"com.example.left"],
                                   @[@"com.example.left"], 2) ||
@@ -386,6 +591,16 @@ BOOL DDHostSwitchPreflightSelfTest(void) {
         DDHostPreparedBidsMatch((id)@"bad", nil, 2) ||
         DDHostPreparedBidsMatch(@[@"com.example.left"],
                                 @[@"com.example.right"], 2))
+        return NO;
+
+    // 218D8 validates one measured dimension per prepared hosted slot.
+    if (!DDHostPreparedSlotsReady(@[@"com.example.left"],
+                                   @[@"com.example.left"], @[@1.0, @2.0], 2) ||
+        !DDHostPreparedSlotsReady(nil, nil, @[@1.0, @2.0, @0.0], 2) ||
+        DDHostPreparedSlotsReady(@[@"com.example.left"],
+                                 @[@"com.example.left"], @[@1.0, @0.5], 2) ||
+        DDHostPreparedSlotsReady(nil, nil, @[@1.0], 2) ||
+        DDHostPreparedSlotsReady(@[@"com.example.left"], nil, @[@1.0, @2.0], 2))
         return NO;
 
     // Independently exercise all four diagnostic failure categories.

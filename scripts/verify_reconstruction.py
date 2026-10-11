@@ -2301,6 +2301,46 @@ if 'DD_N_FONTFLOOR_CHANGED @"com.sensetechlab.fontfloor.changed"' not in shared:
 if 'DD_N_KEYPANE_CHANGED @"com.sensetechlab.keypane.changed"' not in shared:
     raise SystemExit("keypane Darwin notification constant drifted from decompile")
 
+# Sessions 363-373: keep newly promoted private-host preparation helpers
+# and their compiled macOS mock smoke coverage connected to the CI workflow.
+for host_export in (
+    "DDHostNormalizeBidsWithoutLookup",
+    "DDHostNormalizeBidsWithAvailability",
+    "DDHostNormalizeBidsUsingSpringBoard",
+    "DDHostPreparedBidsMatch",
+    "DDHostPreparedSlotsReady",
+    "DDHostPreparedRequestReady",
+    "DDHostPreparedRequestReadyUsingSpringBoard",
+    "DDHostSwitchSlotDimensionsValid",
+    "DDHostSwitchPreflightForDimensions",
+):
+    declaration_count = len(re.findall(
+        r"FOUNDATION_EXPORT\s+[^;]*\b" + re.escape(host_export) + r"\s*\(", shared
+    ))
+    definition_count = len(re.findall(
+        r"(?m)^\s*(?:BOOL|NSArray<NSString\s*\*>\s*\*|DDHostSwitchPreflightResult)\s*"
+        + re.escape(host_export) + r"\s*\(", host_flow_source
+    ))
+    if declaration_count != 1 or definition_count != 1:
+        raise SystemExit(
+            f"new hosting helper export/definition drift: {host_export} "
+            f"(header={declaration_count}, source={definition_count})"
+        )
+smoke_source = (ROOT / "scripts" / "hostflow_preflight_smoke.m").read_text(encoding="utf-8")
+workflow_source = (ROOT / ".github" / "workflows" / "build.yml").read_text(encoding="utf-8")
+for smoke_guard in (
+    "DDHostSwitchPreflightSelfTest()",
+    "DDHostNormalizeBidsUsingSpringBoard(",
+    "DDHostPreparedRequestReadyUsingSpringBoard(",
+    "DDMockApplicationLookupCount != 2",
+    "DDMockApplicationLookupCount != 0",
+):
+    if smoke_guard not in smoke_source:
+        raise SystemExit(f"compiled private-host mock smoke coverage missing: {smoke_guard}")
+if ("scripts/hostflow_preflight_smoke.m" not in workflow_source or
+        '"$RUNNER_TEMP/hostflow_preflight_smoke"' not in workflow_source):
+    raise SystemExit("macOS CI must compile and execute private-host smoke harness")
+
 print(
     f"OK: {len(REQUIRED_SYNTHESIS)} synthesis modules present; "
     "build scaffold and Substrate filter verified"

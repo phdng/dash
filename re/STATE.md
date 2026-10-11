@@ -1,17 +1,17 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-11 session-360 (218D8 prepared BID comparison)_
+_Last updated: 2026-10-11 session-374 (missing private-selector fallback smoke)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-360 directly compared decoded 218D8.c:213-235 with 208F4.c and added a distinct compiled DDHostPreparedBidsMatch. Unlike 208F4, 218D8 pads both normalized requested and hosted BID arrays with empty strings when an index is missing. Added explicit Objective-C regression assertions. No private 3DD4C normalization or host UI mutation implemented. Local verifier passes; macOS and arm64 CI remain unconfirmed.
+Session-374 extends the test-only SBApplicationController mock with a missing-application-selector scenario, verifying the decoded 3DD4C respondsToSelector fallback even when sharedInstance returns a nonnil object. The macOS smoke harness asserts no private application lookup and lookup-free prepared-host success. Local reconstruction verifier/diff PASS; no clang/xcrun/make in Windows workspace; macOS Objective-C and arm64 CI unconfirmed.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-360):
-- Reconciled 218D8 prepared-host BID comparisons separately from 208F4 switch comparisons.
+## LAST COMPLETED TASK (session-374):
+- Added Objective-C mock test covering missing applicationWithBundleIdentifier: selector on nonnil controller.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.
@@ -36,10 +36,10 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (sessions 357–360, uncommitted):
+## FILES CHANGED (sessions 361–374, uncommitted):
 - Sửa: `re/RECONSTRUCTION/HostFlowAdapter.m`, `re/RECONSTRUCTION/DuoDashShared.h`, `re/STATE.md`.
-- Mới: `re/LOG/session-357.md`, `re/LOG/session-358.md`, `re/LOG/session-359.md`, `re/LOG/session-360.md`. Earlier sessions 346–350 already in HEAD at this session start.
+- Mới: `re/LOG/session-361.md`, `re/LOG/session-362.md`, `re/LOG/session-363.md`, `re/LOG/session-364.md`, `re/LOG/session-365.md`, `re/LOG/session-366.md`, `re/LOG/session-367.md`, `re/LOG/session-368.md`, `re/LOG/session-369.md`, `re/LOG/session-370.md`, `re/LOG/session-371.md`, `re/LOG/session-372.md`, `re/LOG/session-373.md`, `re/LOG/session-374.md`. Earlier sessions 346–350 already in HEAD at this session start.
 - Prior sessions 335–342 are in the current clean HEAD observed at session start.
 
 ## TEST STATUS:
-Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-360 structural local checks PASS (Objective-C tests not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.
+Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-374 structural local checks PASS (Objective-C tests not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.

@@ -189,12 +189,50 @@ FOUNDATION_EXPORT BOOL DDHostSwitchBidsMatch(NSArray<NSString *> * _Nullable req
                                              NSArray<NSString *> * _Nullable hostedBids,
                                              NSInteger expectedSlotCount);
 
+// 3DD4C (a3=0): normalize BIDs without private SBApplication lookup.
+// Invalid, missing and duplicate nonempty BIDs become empty; first occurrence wins.
+FOUNDATION_EXPORT NSArray<NSString *> * _Nonnull DDHostNormalizeBidsWithoutLookup(
+    NSArray * _Nullable requestedBids, NSInteger slotCount);
+// 3DD4C (a3=1): caller-supplied available BID set stands in for the
+// SBApplicationController lookup. Nil set means lookup is unavailable.
+FOUNDATION_EXPORT NSArray<NSString *> * _Nonnull DDHostNormalizeBidsWithAvailability(
+    NSArray * _Nullable requestedBids, NSInteger slotCount,
+    NSArray * _Nullable carPlayUIFlags, NSSet<NSString *> * _Nullable availableBids);
+
+// 3DD4C (a3=1): guarded live SBApplicationController lookup, only when
+// explicitly invoked in a process exposing the decoded private selectors.
+FOUNDATION_EXPORT NSArray<NSString *> * _Nonnull DDHostNormalizeBidsUsingSpringBoard(
+    NSArray * _Nullable requestedBids, NSInteger slotCount,
+    NSArray * _Nullable carPlayUIFlags);
+
 // 218D8:213-235: compare already-normalized requested BIDs with hosted
 // BIDs, treating missing entries on EITHER side as empty strings.
 // Private 3DD4C normalization is external; this helper never performs it.
 FOUNDATION_EXPORT BOOL DDHostPreparedBidsMatch(NSArray<NSString *> * _Nullable normalizedBids,
                                                 NSArray<NSString *> * _Nullable hostedBids,
                                                 NSInteger expectedSlotCount);
+// 218D8:213-236 checks one scalar (v20, stride two) per slot alongside
+// prepared BID equality; values are supplied by caller, not private globals.
+FOUNDATION_EXPORT BOOL DDHostPreparedSlotsReady(NSArray<NSString *> * _Nullable normalizedBids,
+                                                 NSArray<NSString *> * _Nullable hostedBids,
+                                                 NSArray<NSNumber *> * _Nullable firstDimensions,
+                                                 NSInteger expectedSlotCount);
+
+// 218D8 + 3DD4C: compose caller-resolved application availability,
+// BID normalization and prepared-slot size checks; no private selectors.
+FOUNDATION_EXPORT BOOL DDHostPreparedRequestReady(
+    NSArray * _Nullable requestedBids, NSInteger expectedSlotCount,
+    NSArray * _Nullable carPlayUIFlags, NSSet<NSString *> * _Nullable availableBids,
+    NSArray<NSString *> * _Nullable hostedBids,
+    NSArray<NSNumber *> * _Nullable firstDimensions);
+
+// 3DD4C -> 218D8 guarded live prepared-host check: resolves application
+// existence only when SpringBoard exposes the decoded selectors; no UI writes.
+FOUNDATION_EXPORT BOOL DDHostPreparedRequestReadyUsingSpringBoard(
+    NSArray * _Nullable requestedBids, NSInteger expectedSlotCount,
+    NSArray * _Nullable carPlayUIFlags,
+    NSArray<NSString *> * _Nullable hostedBids,
+    NSArray<NSNumber *> * _Nullable firstDimensions);
 
 // Caller-supplied snapshot for the evidenced 208F4 early switch guards.
 // This does not inspect private host state or authorize a complete UI switch.
