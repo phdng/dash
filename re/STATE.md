@@ -1,17 +1,23 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-11 session-378 (macOS arm64 Objective-C syntax CI)_
+_Last updated: 2026-10-11 session-384 (22D64 display geometry mismatch gate)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-378 extends .github/workflows/build.yml with a separate -arch arm64 -fsyntax-only Objective-C macOS target pass for HostFlowAdapter.m and its private-selector mock harness. The existing native-host smoke execution and Theos arm64 build remain unchanged. Local verifier/diff PASS; new CI step not executed here. macOS arm64 syntax check is not equivalent to an iOS arm64 link/runtime build.
+Session-384 directly ports the pure-data geometry mismatch predicate of original `DuoDash.dylib_export_for_ai/decompile/22D64.c`, used by 218D8 and 208F4, as DDHostDisplayGeometryMismatch. Caller supplies actual shell bounds, saved shell dimensions, CarPlay display size and calculated dimensions from private sub_23D94. The 40-point saved-shell threshold and 1-point comparisons are preserved. Test smoke cases and structural verifier were updated; local checks PASS. Private acquisition/23D94, CI arm64 and device tests are outstanding.
+
+Session-383 adds DDHostPreparedSlotsAndFlagsMatch combining only directly evidenced 218D8:213–295 conditions: normalized vs hosted BIDs, active first slot dimensions, and prepared-vs-hosted CarPlay UI flags. Mac smoke regression cases ensure each independent gate can reject. Structural verifier registers new public helper. Local reconstruction verifier/diff PASS. Additional private guards sub_22D64 and controller state not incorporated; Objective-C macOS CI, Theos arm64 and CarPlay device tests unconfirmed.
+
+Session-382 directly ported the prepared-vs-hosted CarPlay UI flag comparison from original DuoDash dylib decompile/218D8.c:264–295 into DDHostPreparedCarPlayFlagsMatch (DuoDashShared.h/HostFlowAdapter.m), without speculating about private sub_22E40. Test-only macOS smoke now covers exact matches, missing flags, ignored trailing entries, mismatch, and malformed/zero-count inputs. Structural verifier updated; local verifier and git diff PASS. This helper remains opt-in and does not perform UI hosting. macOS Objective-C and Theos arm64 CI unconfirmed.
+
+Session-381 hardens scripts/verify_reconstruction.py with explicit guards for both macOS arm64 Objective-C object compilation steps, the arm64 link target, lipo architecture validation, Foundation/CoreFoundation and Theos build invocation. Local verifier and diff PASS; macOS Objective-C executable/link and iOS arm64 CI outcomes remain unconfirmed.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-378):
-- Added macOS arm64 Objective-C syntax check to existing macOS CI workflow.
+## LAST COMPLETED TASK (session-384):
+- Ported 22D64 geometry mismatch decision and added boundary/undersized regression tests.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.
@@ -42,4 +48,4 @@ Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11
 - Prior sessions 335–342 are in the current clean HEAD observed at session start.
 
 ## TEST STATUS:
-Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-378 structural local checks PASS (Objective-C tests not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.
+Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-381 structural local checks PASS (Objective-C tests not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.

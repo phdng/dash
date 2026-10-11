@@ -218,6 +218,30 @@ FOUNDATION_EXPORT BOOL DDHostPreparedSlotsReady(NSArray<NSString *> * _Nullable 
                                                  NSArray<NSNumber *> * _Nullable firstDimensions,
                                                  NSInteger expectedSlotCount);
 
+// 218D8:264-295: compare per-slot prepared vs currently hosted CarPlay UI
+// flags, treating absent flags as false. Does not call private sub_22E40.
+FOUNDATION_EXPORT BOOL DDHostPreparedCarPlayFlagsMatch(
+    NSArray * _Nullable preparedFlags, NSArray * _Nullable hostedFlags,
+    NSInteger expectedSlotCount);
+
+// 22D64: geometry mismatch gate shared by 208F4 and 218D8.
+// Values are caller-supplied shell bounds, saved shell dimensions,
+// CarPlay display dimensions and calculated display dimensions from 23D94.
+FOUNDATION_EXPORT BOOL DDHostDisplayGeometryMismatch(
+    double shellWidth, double shellHeight,
+    double savedShellWidth, double savedShellHeight,
+    double displayWidth, double displayHeight,
+    double calculatedWidth, double calculatedHeight);
+
+// 218D8:213-295: compose only the evidenced prepared BID, first-dimension
+// and CarPlay UI flag gates. Additional private state guards are external.
+FOUNDATION_EXPORT BOOL DDHostPreparedSlotsAndFlagsMatch(
+    NSArray<NSString *> * _Nullable normalizedBids,
+    NSArray<NSString *> * _Nullable hostedBids,
+    NSArray<NSNumber *> * _Nullable firstDimensions,
+    NSArray * _Nullable preparedFlags, NSArray * _Nullable hostedFlags,
+    NSInteger expectedSlotCount);
+
 // 218D8 + 3DD4C: compose caller-resolved application availability,
 // BID normalization and prepared-slot size checks; no private selectors.
 FOUNDATION_EXPORT BOOL DDHostPreparedRequestReady(

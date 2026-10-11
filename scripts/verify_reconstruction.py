@@ -2309,6 +2309,9 @@ for host_export in (
     "DDHostNormalizeBidsUsingSpringBoard",
     "DDHostPreparedBidsMatch",
     "DDHostPreparedSlotsReady",
+    "DDHostPreparedCarPlayFlagsMatch",
+    "DDHostPreparedSlotsAndFlagsMatch",
+    "DDHostDisplayGeometryMismatch",
     "DDHostPreparedRequestReady",
     "DDHostPreparedRequestReadyUsingSpringBoard",
     "DDHostSwitchSlotDimensionsValid",
@@ -2340,6 +2343,21 @@ for smoke_guard in (
 if ("scripts/hostflow_preflight_smoke.m" not in workflow_source or
         '"$RUNNER_TEMP/hostflow_preflight_smoke"' not in workflow_source):
     raise SystemExit("macOS CI must compile and execute private-host smoke harness")
+# Sessions 379-381: arm64 must reach object code generation and linking,
+# not silently regress to a syntax-only check that misses linker failures.
+for arm64_contract in (
+    "xcrun clang -arch arm64 -c -fobjc-arc -fblocks",
+    '"$RUNNER_TEMP/HostFlowAdapter_arm64.o"',
+    '"$RUNNER_TEMP/hostflow_preflight_smoke_arm64.o"',
+    '"$RUNNER_TEMP/hostflow_preflight_smoke_arm64"',
+    'xcrun lipo -verify_arch arm64 "$RUNNER_TEMP/hostflow_preflight_smoke_arm64"',
+    "-framework Foundation -framework CoreFoundation",
+    "make clean all",
+):
+    if arm64_contract not in workflow_source:
+        raise SystemExit(f"macOS arm64 compile/link CI contract missing: {arm64_contract}")
+if workflow_source.count("xcrun clang -arch arm64 -c") != 2:
+    raise SystemExit("macOS arm64 CI must compile both HostFlowAdapter and smoke mock")
 
 print(
     f"OK: {len(REQUIRED_SYNTHESIS)} synthesis modules present; "

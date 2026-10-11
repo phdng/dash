@@ -318,6 +318,59 @@ BOOL DDHostPreparedSlotsReady(NSArray<NSString *> * _Nullable normalizedBids,
     return YES;
 }
 
+// 218D8:264-295: sub_22E40 supplies prepared flags; both arrays are read
+// within the active count, with missing entries interpreted as false.
+BOOL DDHostPreparedCarPlayFlagsMatch(NSArray * _Nullable preparedFlags,
+                                    NSArray * _Nullable hostedFlags,
+                                    NSInteger expectedSlotCount) {
+    if (!DDHostSwitchSlotCountIsValid(expectedSlotCount) ||
+        (preparedFlags && ![preparedFlags isKindOfClass:[NSArray class]]) ||
+        (hostedFlags && ![hostedFlags isKindOfClass:[NSArray class]]))
+        return NO;
+    for (NSUInteger slot = 0; slot < (NSUInteger)expectedSlotCount; ++slot) {
+        id prepared = slot < preparedFlags.count ? preparedFlags[slot] : nil;
+        id hosted = slot < hostedFlags.count ? hostedFlags[slot] : nil;
+        BOOL preparedValue = [prepared respondsToSelector:@selector(boolValue)] && [prepared boolValue];
+        BOOL hostedValue = [hosted respondsToSelector:@selector(boolValue)] && [hosted boolValue];
+        if (preparedValue != hostedValue)
+            return NO;
+    }
+    return YES;
+}
+
+// 22D64: reject if saved shell dimensions are >=40 and current shell
+// differs by >1 point on either axis; otherwise, reject if the CarPlay
+// display differs by >1 point from the layout calculated by sub_23D94.
+// Private geometry acquisition and sub_23D94 invocation remain external.
+BOOL DDHostDisplayGeometryMismatch(
+    double shellWidth, double shellHeight,
+    double savedShellWidth, double savedShellHeight,
+    double displayWidth, double displayHeight,
+    double calculatedWidth, double calculatedHeight) {
+    BOOL shellNeedsDisplayCheck = savedShellWidth < 40.0 ||
+        savedShellHeight < 40.0 ||
+        (fabs(shellWidth - savedShellWidth) <= 1.0 &&
+         fabs(shellHeight - savedShellHeight) <= 1.0);
+    if (!shellNeedsDisplayCheck)
+        return YES;
+    return !(fabs(displayWidth - calculatedWidth) <= 1.0 &&
+             fabs(displayHeight - calculatedHeight) <= 1.0);
+}
+
+// 218D8:213-295: the prepared path requires both normalized BID/size
+// agreement and CarPlay UI flag agreement; other private guards are external.
+BOOL DDHostPreparedSlotsAndFlagsMatch(
+    NSArray<NSString *> * _Nullable normalizedBids,
+    NSArray<NSString *> * _Nullable hostedBids,
+    NSArray<NSNumber *> * _Nullable firstDimensions,
+    NSArray * _Nullable preparedFlags, NSArray * _Nullable hostedFlags,
+    NSInteger expectedSlotCount) {
+    return DDHostPreparedSlotsReady(normalizedBids, hostedBids,
+                                    firstDimensions, expectedSlotCount) &&
+           DDHostPreparedCarPlayFlagsMatch(preparedFlags, hostedFlags,
+                                           expectedSlotCount);
+}
+
 // Compose the two recovered 3DD4C -> 218D8 pure-data stages.
 // The caller must supply SBApplication availability and measured geometry.
 BOOL DDHostPreparedRequestReady(

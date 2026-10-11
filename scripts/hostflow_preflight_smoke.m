@@ -98,6 +98,44 @@ int main(void) {
             NSLog(@"FAIL: CarPlay UI-only BIDs performed private lookup: %@", carPlayOnly);
             return 1;
         }
+        // 218D8:264-295 also compares prepared vs hosted CarPlay UI flags.
+        if (!DDHostPreparedCarPlayFlagsMatch(@[@YES, @NO], @[@YES, @NO], 2) ||
+            !DDHostPreparedCarPlayFlagsMatch(@[@NO], @[], 2) ||
+            !DDHostPreparedCarPlayFlagsMatch(@[@NO, @YES, @YES], @[@NO, @YES, @NO], 2) ||
+            DDHostPreparedCarPlayFlagsMatch(@[@YES, @NO], @[@YES, @YES], 2) ||
+            DDHostPreparedCarPlayFlagsMatch((id)@"invalid", @[], 2) ||
+            DDHostPreparedCarPlayFlagsMatch(@[], @[], 0)) {
+            NSLog(@"FAIL: 218D8 prepared CarPlay UI flag comparison");
+            return 1;
+        }
+        // 22D64 rejects shell mismatch first, except when saved shell is
+        // undersized (<40); it then compares calculated CarPlay display size.
+        if (DDHostDisplayGeometryMismatch(100, 80, 100, 80, 200, 150, 200, 150) ||
+            DDHostDisplayGeometryMismatch(101, 79, 100, 80, 201, 149, 200, 150) ||
+            !DDHostDisplayGeometryMismatch(102, 80, 100, 80, 200, 150, 200, 150) ||
+            !DDHostDisplayGeometryMismatch(100, 80, 100, 80, 202, 150, 200, 150) ||
+            DDHostDisplayGeometryMismatch(999, 80, 39, 80, 200, 150, 200, 150) ||
+            !DDHostDisplayGeometryMismatch(999, 80, 39, 80, 200, 152, 200, 150)) {
+            NSLog(@"FAIL: recovered 22D64 display geometry mismatch gate");
+            return 1;
+        }
+        // Combined 218D8 prepared path: valid BIDs and first-dimensions
+        // must not override a prepared-vs-hosted CarPlay UI flag mismatch.
+        if (!DDHostPreparedSlotsAndFlagsMatch(
+                @[@"com.example.exists", @""], @[@"com.example.exists", @""],
+                @[@1.0, @1.0], @[@NO, @YES], @[@NO, @YES], 2) ||
+            DDHostPreparedSlotsAndFlagsMatch(
+                @[@"com.example.exists", @""], @[@"com.example.exists", @""],
+                @[@1.0, @1.0], @[@NO, @YES], @[@NO, @NO], 2) ||
+            DDHostPreparedSlotsAndFlagsMatch(
+                @[@"com.example.exists", @""], @[@"wrong", @""],
+                @[@1.0, @1.0], @[@NO, @YES], @[@NO, @YES], 2) ||
+            DDHostPreparedSlotsAndFlagsMatch(
+                @[@"com.example.exists", @""], @[@"com.example.exists", @""],
+                @[@1.0, @0.5], @[@NO, @YES], @[@NO, @YES], 2)) {
+            NSLog(@"FAIL: combined 218D8 prepared BID/size/flag gate");
+            return 1;
+        }
         // Integrated private resolution + 218D8 prepared comparison.
         if (!DDHostPreparedRequestReadyUsingSpringBoard(
                 @[@"com.example.exists", @"com.example.missing"], 2,
