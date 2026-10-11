@@ -286,6 +286,32 @@ BOOL DDHostSwitchPreflightSelfTest(void) {
     snapshot.hostPhase = 2;
 
     NSArray<NSString *> *bids = @[@"com.example.left", @"com.example.right"];
+    // Verify the wrapper preserves both pane positions, including nil input.
+    if (![DDHostSplitBids(nil, @"com.example.right")
+          isEqualToArray:@[@"", @"com.example.right"]] ||
+        ![DDHostSplitBids(@"com.example.left", nil)
+          isEqualToArray:@[@"com.example.left", @""]] ||
+        ![DDHostSplitBids(nil, nil) isEqualToArray:@[@"", @""]])
+        return NO;
+
+    // Independently exercise all four diagnostic failure categories.
+    snapshot.swapInFlight = YES;
+    if (DDHostSwitchEarlyGuardFailures(snapshot) != DDHostSwitchEarlyGuardFailureInteraction)
+        return NO;
+    snapshot.swapInFlight = NO;
+    snapshot.requestedGeometryVersion = 8;
+    if (DDHostSwitchEarlyGuardFailures(snapshot) != DDHostSwitchEarlyGuardFailureConsistency)
+        return NO;
+    snapshot.requestedGeometryVersion = 7;
+    snapshot.preparedSlotCapacity = 1;
+    if (DDHostSwitchEarlyGuardFailures(snapshot) != DDHostSwitchEarlyGuardFailureSlotCounts)
+        return NO;
+    snapshot.preparedSlotCapacity = 2;
+    snapshot.hostPhase = 1;
+    if (DDHostSwitchEarlyGuardFailures(snapshot) != DDHostSwitchEarlyGuardFailureModeFlags)
+        return NO;
+    snapshot.hostPhase = 2;
+
     DDHostSwitchPreflightResult result = DDHostSwitchPreflight(snapshot, bids, bids, 1.0, NO);
     if (result.earlyFailures != 0 || !result.bidsMatch ||
         result.postEarlyFailures != 0 || !result.canProceedToPrivateSwitchChecks)

@@ -1,17 +1,17 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-11 session-355 (finite hosted-slot size validation)_
+_Last updated: 2026-10-11 session-356 (switch guard and two-pane wrapper regression assertions)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
-Session-355 adds fail-closed finite-number validation to compiled Objective-C hosted-slot size checks, rejecting NaN/Infinity. The evidenced 218D8 degenerate-content predicate remains unchanged. Local structural checks pass; macOS Objective-C runtime and arm64 CI remain unconfirmed.
+Session-356 expands executable Objective-C preflight self-test assertions for all four independent switch-guard failure bits and two-pane BID wrapper nil/position handling. Local structural verification passes; macOS executable and arm64 Theos CI remain unconfirmed.
 
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-355):
-- Added finite-size guard and NaN/Infinity regression assertions in Objective-C.
+## LAST COMPLETED TASK (session-356):
+- Added Objective-C regression assertions for all four early switch gate categories and two-pane BID normalization.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.
@@ -36,10 +36,10 @@ Xem FINDINGS.md + HOOKS.md + API_MAP.md. Tóm tắt: process-gated multi-ctor in
 ## UNRESOLVED QUESTIONS:
 Xem OPEN_QUESTIONS.md (Q-03 blocked, Q-09 entitlements, Q-10 server schema, Q-11 ObjC bodies, Q-12 opaque blocks; Q-01/Q-02/Q-04..Q-08 closed).
 
-## FILES CHANGED (sessions 354–355, uncommitted):
-- Sửa: `re/RECONSTRUCTION/HostFlowAdapter.m`, `scripts/verify_reconstruction.py`, `re/STATE.md`.
-- Mới: `re/LOG/session-354.md`, `re/LOG/session-355.md`. Earlier sessions 346–350 already in HEAD at this session start.
+## FILES CHANGED (session-356, uncommitted):
+- Sửa: `re/RECONSTRUCTION/HostFlowAdapter.m`, `re/STATE.md`.
+- Mới: `re/LOG/session-356.md`. Earlier sessions 346–350 already in HEAD at this session start.
 - Prior sessions 335–342 are in the current clean HEAD observed at session start.
 
 ## TEST STATUS:
-Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-355 structural local checks PASS (Objective-C tests not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.
+Theos arm64 CI GREEN was last explicitly confirmed through session-312. Session-356 structural local checks PASS (Objective-C tests not executed locally): reconstruction verifier and git diff --check (LF/CRLF warnings only). New Objective-C code is not locally compiled; arm64 CI unconfirmed. Assistant không push.
