@@ -145,21 +145,65 @@ BOOL DDHostSwitchAllSlotSizesValid(NSArray<NSNumber *> * _Nullable sizes,
     return YES;
 }
 
+// The decompiled 208F4 loop rejects a slot if either adjacent dimension
+// is below 1.0 (v14[-1] or v14[0]). Validate both, for every active slot.
+BOOL DDHostSwitchSlotDimensionsValid(NSArray<NSArray<NSNumber *> *> * _Nullable dimensions,
+                                     NSInteger expectedSlotCount) {
+    if (!DDHostSwitchSlotCountIsValid(expectedSlotCount) ||
+        ![dimensions isKindOfClass:[NSArray class]] ||
+        dimensions.count < (NSUInteger)expectedSlotCount)
+        return NO;
+    for (NSUInteger slot = 0; slot < (NSUInteger)expectedSlotCount; ++slot) {
+        id pair = dimensions[slot];
+        if (![pair isKindOfClass:[NSArray class]] || [pair count] != 2)
+            return NO;
+        for (id coordinate in pair) {
+            if (![coordinate isKindOfClass:[NSNumber class]] ||
+                !DDHostSwitchHostedSlotSizeValid([coordinate doubleValue]))
+                return NO;
+        }
+    }
+    return YES;
+}
+
 // 208F4:207-237: caller must supply the already-normalized BID arrays.
 // Preserve strict slot-index order; normalization via private 3DD4C is excluded.
 BOOL DDHostSwitchBidsMatch(NSArray<NSString *> * _Nullable requestedBids,
                            NSArray<NSString *> * _Nullable hostedBids,
                            NSInteger expectedSlotCount) {
     if (!DDHostSwitchSlotCountIsValid(expectedSlotCount) ||
-        ![requestedBids isKindOfClass:[NSArray class]] ||
+        (requestedBids != nil && ![requestedBids isKindOfClass:[NSArray class]]) ||
         ![hostedBids isKindOfClass:[NSArray class]] ||
-        requestedBids.count != (NSUInteger)expectedSlotCount ||
-        hostedBids.count != (NSUInteger)expectedSlotCount)
+        hostedBids.count < (NSUInteger)expectedSlotCount)
         return NO;
 
     for (NSUInteger index = 0; index < (NSUInteger)expectedSlotCount; ++index) {
-        NSString *requested = requestedBids[index];
-        NSString *hosted = hostedBids[index];
+        // 208F4:214-226: missing requested indexes and nil slot BIDs
+        // are compared as empty strings, while excess BIDs are ignored.
+        id requested = index < requestedBids.count ? requestedBids[index] : @"";
+        id hosted = hostedBids[index];
+        if (requested == [NSNull null] || hosted == [NSNull null] ||
+            ![requested isKindOfClass:[NSString class]] ||
+            ![hosted isKindOfClass:[NSString class]] ||
+            ![requested isEqualToString:hosted])
+            return NO;
+    }
+    return YES;
+}
+
+// 218D8:213-235 contrasts with 208F4: it permits missing hosted entries,
+// comparing both absent requested and hosted slots as empty strings. Inputs
+// are supplied after private 3DD4C normalization by an external caller.
+BOOL DDHostPreparedBidsMatch(NSArray<NSString *> * _Nullable normalizedBids,
+                             NSArray<NSString *> * _Nullable hostedBids,
+                             NSInteger expectedSlotCount) {
+    if (!DDHostSwitchSlotCountIsValid(expectedSlotCount) ||
+        (normalizedBids && ![normalizedBids isKindOfClass:[NSArray class]]) ||
+        (hostedBids && ![hostedBids isKindOfClass:[NSArray class]]))
+        return NO;
+    for (NSUInteger slot = 0; slot < (NSUInteger)expectedSlotCount; ++slot) {
+        id requested = slot < normalizedBids.count ? normalizedBids[slot] : @"";
+        id hosted = slot < hostedBids.count ? hostedBids[slot] : @"";
         if (![requested isKindOfClass:[NSString class]] ||
             ![hosted isKindOfClass:[NSString class]] ||
             ![requested isEqualToString:hosted])
@@ -266,6 +310,28 @@ DDHostSwitchPreflightResult DDHostSwitchPreflightForSlots(
     return result;
 }
 
+DDHostSwitchPreflightResult DDHostSwitchPreflightForDimensions(
+    DDHostSwitchEarlyGuardSnapshot snapshot,
+    NSArray<NSString *> * _Nullable requestedBids,
+    NSArray<NSString *> * _Nullable hostedBids,
+    NSArray<NSArray<NSNumber *> *> * _Nullable hostedSlotDimensions,
+    BOOL shellBoundsMismatch) {
+    DDHostSwitchPreflightResult result = {0};
+    result.earlyFailures = DDHostSwitchEarlyGuardFailures(snapshot);
+    if (result.earlyFailures != 0)
+        return result;
+    result.bidsMatch = DDHostSwitchBidsMatch(requestedBids, hostedBids,
+                                             snapshot.hostedSlotCount);
+    if (!result.bidsMatch)
+        return result;
+    if (!DDHostSwitchSlotDimensionsValid(hostedSlotDimensions, snapshot.hostedSlotCount))
+        result.postEarlyFailures |= DDHostSwitchPostEarlyFailureHostedSlotSize;
+    if (!DDHostSwitchShellBoundsAllow(shellBoundsMismatch))
+        result.postEarlyFailures |= DDHostSwitchPostEarlyFailureShellBounds;
+    result.canProceedToPrivateSwitchChecks = result.postEarlyFailures == 0;
+    return result;
+}
+
 // Can be invoked explicitly in a device test to exercise the compiled
 // implementation; never run implicitly during SpringBoard/CarPlay startup.
 BOOL DDHostSwitchPreflightSelfTest(void) {
@@ -294,6 +360,34 @@ BOOL DDHostSwitchPreflightSelfTest(void) {
         ![DDHostSplitBids(nil, nil) isEqualToArray:@[@"", @""]])
         return NO;
 
+    // Decompiled 208F4:215: nil requested array has count 0, so each
+    // position compares against an empty BID. Wrong-type input still fails.
+    if (!DDHostSwitchBidsMatch(nil, @[@"", @""], 2) ||
+        DDHostSwitchBidsMatch(nil, bids, 2) ||
+        DDHostSwitchBidsMatch((id)@"invalid-array", @[@"", @""], 2))
+        return NO;
+
+    // Decompiled 208F4:207-237: missing requested slots coalesce to @"";
+    // hosted arrays may contain more slots than the current layout.
+    if (!DDHostSwitchBidsMatch(@[@"com.example.left"],
+                               @[@"com.example.left", @""], 2) ||
+        !DDHostSwitchBidsMatch(@[@"com.example.left"],
+                               @[@"com.example.left", @"", @"extra"], 2) ||
+        !DDHostSwitchBidsMatch(bids, @[@"com.example.left", @"com.example.right", @"extra"], 2) ||
+        DDHostSwitchBidsMatch(@[@"com.example.left"], bids, 2) ||
+        DDHostSwitchBidsMatch(bids, @[@"com.example.left"], 2))
+        return NO;
+
+    // Decompiled 218D8:213-235 permits missing hosted BIDs, unlike 208F4.
+    if (!DDHostPreparedBidsMatch(@[@"com.example.left"],
+                                  @[@"com.example.left"], 2) ||
+        !DDHostPreparedBidsMatch(nil, nil, 2) ||
+        DDHostPreparedBidsMatch(@[@"com.example.left"], nil, 2) ||
+        DDHostPreparedBidsMatch((id)@"bad", nil, 2) ||
+        DDHostPreparedBidsMatch(@[@"com.example.left"],
+                                @[@"com.example.right"], 2))
+        return NO;
+
     // Independently exercise all four diagnostic failure categories.
     snapshot.swapInFlight = YES;
     if (DDHostSwitchEarlyGuardFailures(snapshot) != DDHostSwitchEarlyGuardFailureInteraction)
@@ -311,6 +405,24 @@ BOOL DDHostSwitchPreflightSelfTest(void) {
     if (DDHostSwitchEarlyGuardFailures(snapshot) != DDHostSwitchEarlyGuardFailureModeFlags)
         return NO;
     snapshot.hostPhase = 2;
+
+    // Direct 208F4:228 evidence: both width AND height must reach 1.0.
+    NSArray<NSArray<NSNumber *> *> *validDimensions = @[@[@1.0, @2.0], @[@3.0, @4.0]];
+    if (!DDHostSwitchSlotDimensionsValid(validDimensions, 2) ||
+        DDHostSwitchSlotDimensionsValid(@[@[@1.0, @2.0], @[@3.0, @0.5]], 2) ||
+        DDHostSwitchSlotDimensionsValid(@[@[@1.0, @2.0], @[@0.5, @3.0]], 2) ||
+        DDHostSwitchSlotDimensionsValid(@[@[@1.0, @2.0]], 2) ||
+        DDHostSwitchSlotDimensionsValid((id)@[@[@1.0, @2.0], @"wrong"], 2))
+        return NO;
+    DDHostSwitchPreflightResult dimensionResult = DDHostSwitchPreflightForDimensions(
+        snapshot, bids, bids, validDimensions, NO);
+    if (!dimensionResult.canProceedToPrivateSwitchChecks || !dimensionResult.bidsMatch)
+        return NO;
+    dimensionResult = DDHostSwitchPreflightForDimensions(
+        snapshot, bids, bids, @[@[@1.0, @2.0], @[@3.0, @0.5]], NO);
+    if (dimensionResult.postEarlyFailures != DDHostSwitchPostEarlyFailureHostedSlotSize ||
+        dimensionResult.canProceedToPrivateSwitchChecks)
+        return NO;
 
     DDHostSwitchPreflightResult result = DDHostSwitchPreflight(snapshot, bids, bids, 1.0, NO);
     if (result.earlyFailures != 0 || !result.bidsMatch ||

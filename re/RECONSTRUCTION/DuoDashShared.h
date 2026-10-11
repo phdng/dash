@@ -178,11 +178,23 @@ FOUNDATION_EXPORT BOOL DDHostSwitchHostedSlotSizeValid(double hostedSlotSize);
 // All measurements are caller-supplied; no private slot state is accessed.
 FOUNDATION_EXPORT BOOL DDHostSwitchAllSlotSizesValid(NSArray<NSNumber *> * _Nullable sizes,
                                                     NSInteger expectedSlotCount);
+// 208F4:228 checks BOTH adjacent scalar dimensions of every hosted slot.
+// Each caller-supplied slot is @[width, height]; no private geometry access.
+FOUNDATION_EXPORT BOOL DDHostSwitchSlotDimensionsValid(NSArray<NSArray<NSNumber *> *> * _Nullable dimensions,
+                                                       NSInteger expectedSlotCount);
 // 208F4:207-237: compare caller-normalized BIDs in slot order only.
+// Nil/missing requested slots compare as empty; hosted count must cover all slots.
 // Does not implement private 3DD4C normalization or inspect slot geometry.
 FOUNDATION_EXPORT BOOL DDHostSwitchBidsMatch(NSArray<NSString *> * _Nullable requestedBids,
                                              NSArray<NSString *> * _Nullable hostedBids,
                                              NSInteger expectedSlotCount);
+
+// 218D8:213-235: compare already-normalized requested BIDs with hosted
+// BIDs, treating missing entries on EITHER side as empty strings.
+// Private 3DD4C normalization is external; this helper never performs it.
+FOUNDATION_EXPORT BOOL DDHostPreparedBidsMatch(NSArray<NSString *> * _Nullable normalizedBids,
+                                                NSArray<NSString *> * _Nullable hostedBids,
+                                                NSInteger expectedSlotCount);
 
 // Caller-supplied snapshot for the evidenced 208F4 early switch guards.
 // This does not inspect private host state or authorize a complete UI switch.
@@ -244,6 +256,13 @@ FOUNDATION_EXPORT DDHostSwitchPreflightResult DDHostSwitchPreflightForSlots(
     NSArray<NSString *> * _Nullable requestedBids,
     NSArray<NSString *> * _Nullable hostedBids,
     NSArray<NSNumber *> * _Nullable hostedSlotSizes,
+    BOOL shellBoundsMismatch);
+// Exact two-dimension-per-slot counterpart to 208F4:207-238.
+FOUNDATION_EXPORT DDHostSwitchPreflightResult DDHostSwitchPreflightForDimensions(
+    DDHostSwitchEarlyGuardSnapshot snapshot,
+    NSArray<NSString *> * _Nullable requestedBids,
+    NSArray<NSString *> * _Nullable hostedBids,
+    NSArray<NSArray<NSNumber *> *> * _Nullable hostedSlotDimensions,
     BOOL shellBoundsMismatch);
 // Optional, side-effect-free Objective-C smoke test of preflight semantics.
 // Never invoked automatically from tweak startup.
