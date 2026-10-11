@@ -1,10 +1,20 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-11 session-384 (22D64 display geometry mismatch gate)_
+_Last updated: 2026-10-11 session-389 (26654 trimmed usable bounds)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
+Session-389 adds DDHostTrimUsableBoundsForDock to reconstruct the remaining CGRect after subtracting a valid dock edge strip, using the evidenced 26654 edge classification and CGRectIntersection. It rejects non-edge, outside and degenerate dock areas without modifying output. Test-only smoke covers left/right/top/bottom and rejected cases. Structural verifier, Python syntax and git diff PASS; macOS Objective-C, Theos arm64 and device CarPlay tests remain unconfirmed. This helper is decision-only and does not mutate live host UI.
+
+Session-388 ports the documented edge-strip classification logic from `DuoDash.dylib_export_for_ai/decompile/26654.c` into DDHostDockEdgeLabel on compiled HostFlowAdapter.m. It intersects caller-fed dock and usable CGRects, checks 2pt edge tolerances and 40pt remaining width/height thresholds, and returns left/right/top/bottom/not-an-edge-strip/strip-outside-area/degenerate labels. Added macOS smoke cases and adjusted verifier return-type matching to include NSString *. Local verifier, py_compile and diff PASS; no runtime dock geometry mutations. macOS Objective-C, Theos arm64 and CarPlay device unverified.
+
+Session-387 ports the pure-data 64-bit dock-rect notification decoder from original `DuoDash.dylib_export_for_ai/decompile/83FC.c` into `DDHostDecodeDockRectState`. Fields are four unsigned 16-bit values (x/y/width/height) in units of one-tenth point, from high to low bits. Rejects empty/invalid width or height; output pointer optional and unchanged on failure. Smoke regression and verifier export contract added; local structural verifier/diff PASS. Does not register or read system notifications yet; macOS compiled smoke, Theos arm64 and CarPlay device remain unverified.
+
+Session-386 ports the 23D94 CGRect containment calculation (CGRectInset usable CarPlay bounds by -1pt and CGRectContainsRect shell bounds) as `DDHostGeometryIsCarPlaySubrectForRects` using caller-fed CGRects, composing with Session-385 threshold logic. Adds smoke tests for valid/invalid positions, inclusive 1pt boundary, undersized shell, and rejects nonfinite/empty rectangles. Local structural verifier/diff PASS; macOS Objective-C execution, Theos arm64 and real device hosting unverified.
+
+Session-385 inspects original `DuoDash.dylib_export_for_ai/decompile/23D94.c` and ports only the evidence-safe `carplay-subrect` branch condition: nonempty >=40pt shell, caller-verified containment in usable CarPlay bounds expanded 1pt, and shell smaller than usable dimensions by over 1pt on either axis. Added `DDHostGeometryIsCarPlaySubrect` to compiled header/source with smoke boundary checks; verifier/diff PASS. Private dock measurement, sub_26654, sub_269FC and entire host geometry calculation remain unimplemented.
+
 Session-384 directly ports the pure-data geometry mismatch predicate of original `DuoDash.dylib_export_for_ai/decompile/22D64.c`, used by 218D8 and 208F4, as DDHostDisplayGeometryMismatch. Caller supplies actual shell bounds, saved shell dimensions, CarPlay display size and calculated dimensions from private sub_23D94. The 40-point saved-shell threshold and 1-point comparisons are preserved. Test smoke cases and structural verifier were updated; local checks PASS. Private acquisition/23D94, CI arm64 and device tests are outstanding.
 
 Session-383 adds DDHostPreparedSlotsAndFlagsMatch combining only directly evidenced 218D8:213–295 conditions: normalized vs hosted BIDs, active first slot dimensions, and prepared-vs-hosted CarPlay UI flags. Mac smoke regression cases ensure each independent gate can reject. Structural verifier registers new public helper. Local reconstruction verifier/diff PASS. Additional private guards sub_22D64 and controller state not incorporated; Objective-C macOS CI, Theos arm64 and CarPlay device tests unconfirmed.
@@ -16,8 +26,8 @@ Session-381 hardens scripts/verify_reconstruction.py with explicit guards for bo
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-384):
-- Ported 22D64 geometry mismatch decision and added boundary/undersized regression tests.
+## LAST COMPLETED TASK (session-389):
+- Reconstructed and tested remaining usable CGRect after valid edge dock clipping.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.

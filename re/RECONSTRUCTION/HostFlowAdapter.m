@@ -338,6 +338,119 @@ BOOL DDHostPreparedCarPlayFlagsMatch(NSArray * _Nullable preparedFlags,
     return YES;
 }
 
+// 23D94: the usable bounds are inflated by one point before checking
+// containment; if contained, a shell smaller by >1 point on either axis
+// is labeled carplay-subrect (even if a measured dock is available).
+BOOL DDHostGeometryIsCarPlaySubrect(
+    double shellWidth, double shellHeight,
+    double usableWidth, double usableHeight,
+    BOOL withinExpandedUsableBounds) {
+    return isfinite(shellWidth) && isfinite(shellHeight) &&
+           isfinite(usableWidth) && isfinite(usableHeight) &&
+           shellWidth >= 40.0 && shellHeight >= 40.0 &&
+           withinExpandedUsableBounds &&
+           (shellWidth < usableWidth - 1.0 ||
+            shellHeight < usableHeight - 1.0);
+}
+
+// 26654: classify the intersecting strip along one outer edge, with
+// 2pt proximity/coverage tolerance and 40pt residual-size minimum.
+NSString *DDHostDockEdgeLabel(CGRect usableBounds, CGRect dockBounds) {
+    if (CGRectIsEmpty(usableBounds) || CGRectIsEmpty(dockBounds))
+        return @"not-an-edge-strip";
+    CGRect overlap = CGRectIntersection(usableBounds, dockBounds);
+    if (CGRectIsNull(overlap) || CGRectIsEmpty(overlap))
+        return @"strip-outside-area";
+    double width = CGRectGetWidth(usableBounds);
+    double height = CGRectGetHeight(usableBounds);
+    double remainWidth = width;
+    double remainHeight = height;
+    NSString *label = @"not-an-edge-strip";
+    if (CGRectGetHeight(overlap) >= height - 2.0 &&
+        CGRectGetWidth(overlap) < width - 2.0) {
+        if (CGRectGetMinX(overlap) <= CGRectGetMinX(usableBounds) + 2.0) {
+            remainWidth = width - (CGRectGetMaxX(overlap) - CGRectGetMinX(usableBounds));
+            label = @"left";
+        } else if (CGRectGetMaxX(overlap) >= CGRectGetMaxX(usableBounds) - 2.0) {
+            remainWidth = CGRectGetMinX(overlap) - CGRectGetMinX(usableBounds);
+            label = @"right";
+        }
+    } else if (CGRectGetWidth(overlap) >= width - 2.0 &&
+               CGRectGetHeight(overlap) < height - 2.0) {
+        if (CGRectGetMinY(overlap) <= CGRectGetMinY(usableBounds) + 2.0) {
+            remainHeight = height - (CGRectGetMaxY(overlap) - CGRectGetMinY(usableBounds));
+            label = @"top";
+        } else if (CGRectGetMaxY(overlap) >= CGRectGetMaxY(usableBounds) - 2.0) {
+            remainHeight = CGRectGetMinY(overlap) - CGRectGetMinY(usableBounds);
+            label = @"bottom";
+        }
+    }
+    if (![label isEqualToString:@"not-an-edge-strip"] &&
+        (remainWidth < 40.0 || remainHeight < 40.0))
+        return @"degenerate";
+    return label;
+}
+
+// 26654: reconstruct the CGRect remaining after clipping an edge strip.
+// The original sends its classification and CGRect through separate output
+// channels; fail closed if the edge guard does not accept the strip.
+BOOL DDHostTrimUsableBoundsForDock(CGRect usableBounds, CGRect dockBounds,
+                                   CGRect * _Nullable outRect) {
+    NSString *edge = DDHostDockEdgeLabel(usableBounds, dockBounds);
+    CGRect overlap = CGRectIntersection(usableBounds, dockBounds);
+    CGRect result = usableBounds;
+    if ([edge isEqualToString:@"left"]) {
+        CGFloat right = CGRectGetMaxX(usableBounds);
+        result.origin.x = CGRectGetMaxX(overlap);
+        result.size.width = right - result.origin.x;
+    } else if ([edge isEqualToString:@"right"]) {
+        result.size.width = CGRectGetMinX(overlap) - CGRectGetMinX(usableBounds);
+    } else if ([edge isEqualToString:@"top"]) {
+        CGFloat bottom = CGRectGetMaxY(usableBounds);
+        result.origin.y = CGRectGetMaxY(overlap);
+        result.size.height = bottom - result.origin.y;
+    } else if ([edge isEqualToString:@"bottom"]) {
+        result.size.height = CGRectGetMinY(overlap) - CGRectGetMinY(usableBounds);
+    } else {
+        return NO;
+    }
+    if (outRect)
+        *outRect = result;
+    return YES;
+}
+
+// 83FC: notify_get_state packs x/y/width/height as tenths of a point,
+// high-to-low 16-bit words. Caller owns notification registration/reading.
+BOOL DDHostDecodeDockRectState(uint64_t state, CGRect * _Nullable outRect) {
+    if (!state)
+        return NO;
+    double width = (double)((state >> 16) & UINT64_C(0xFFFF)) / 10.0;
+    double height = (double)(state & UINT64_C(0xFFFF)) / 10.0;
+    if (fmin(width, height) <= 0.0)
+        return NO;
+    if (outRect) {
+        double x = (double)((state >> 48) & UINT64_C(0xFFFF)) / 10.0;
+        double y = (double)((state >> 32) & UINT64_C(0xFFFF)) / 10.0;
+        *outRect = CGRectMake(x, y, width, height);
+    }
+    return YES;
+}
+
+// 23D94: retain CGRect containment semantics, including both origins.
+BOOL DDHostGeometryIsCarPlaySubrectForRects(CGRect shellBounds,
+                                           CGRect usableBounds) {
+    if (!isfinite(shellBounds.origin.x) || !isfinite(shellBounds.origin.y) ||
+        !isfinite(shellBounds.size.width) || !isfinite(shellBounds.size.height) ||
+        !isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
+        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
+        CGRectIsEmpty(shellBounds) || CGRectIsEmpty(usableBounds))
+        return NO;
+    return DDHostGeometryIsCarPlaySubrect(
+        shellBounds.size.width, shellBounds.size.height,
+        usableBounds.size.width, usableBounds.size.height,
+        CGRectContainsRect(CGRectInset(usableBounds, -1.0, -1.0), shellBounds));
+}
+
 // 22D64: reject if saved shell dimensions are >=40 and current shell
 // differs by >1 point on either axis; otherwise, reject if the CarPlay
 // display differs by >1 point from the layout calculated by sub_23D94.

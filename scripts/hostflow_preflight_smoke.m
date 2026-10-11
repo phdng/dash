@@ -108,6 +108,74 @@ int main(void) {
             NSLog(@"FAIL: 218D8 prepared CarPlay UI flag comparison");
             return 1;
         }
+        // 23D94 subrect threshold follows containment within usable bounds
+        // expanded one point, and an axis smaller by more than one point.
+        if (!DDHostGeometryIsCarPlaySubrect(100, 80, 120, 80, YES) ||
+            !DDHostGeometryIsCarPlaySubrect(120, 60, 120, 80, YES) ||
+            DDHostGeometryIsCarPlaySubrect(119, 79, 120, 80, YES) ||
+            DDHostGeometryIsCarPlaySubrect(100, 80, 120, 80, NO) ||
+            DDHostGeometryIsCarPlaySubrect(39, 80, 120, 80, YES)) {
+            NSLog(@"FAIL: recovered 23D94 carplay-subrect threshold");
+            return 1;
+        }
+        // 26654: clipped dock intersection classifies four edge strips,
+        // rejects centered/empty/outside strips, and guards 40pt remainder.
+        CGRect area = CGRectMake(10, 20, 200, 120);
+        if (![DDHostDockEdgeLabel(area, CGRectMake(10, 20, 30, 120)) isEqualToString:@"left"] ||
+            ![DDHostDockEdgeLabel(area, CGRectMake(180, 20, 30, 120)) isEqualToString:@"right"] ||
+            ![DDHostDockEdgeLabel(area, CGRectMake(10, 20, 200, 20)) isEqualToString:@"top"] ||
+            ![DDHostDockEdgeLabel(area, CGRectMake(10, 120, 200, 20)) isEqualToString:@"bottom"] ||
+            ![DDHostDockEdgeLabel(area, CGRectMake(250, 20, 30, 120)) isEqualToString:@"strip-outside-area"] ||
+            ![DDHostDockEdgeLabel(area, CGRectMake(90, 20, 30, 120)) isEqualToString:@"not-an-edge-strip"] ||
+            ![DDHostDockEdgeLabel(area, CGRectMake(10, 20, 170, 120)) isEqualToString:@"degenerate"] ||
+            ![DDHostDockEdgeLabel(area, CGRectZero) isEqualToString:@"not-an-edge-strip"]) {
+            NSLog(@"FAIL: recovered 26654 dock edge classification");
+            return 1;
+        }
+        // 26654: reconstruct surviving area for each accepted edge strip.
+        CGRect trimmed = CGRectZero;
+        if (!DDHostTrimUsableBoundsForDock(area, CGRectMake(10, 20, 30, 120), &trimmed) ||
+            !CGRectEqualToRect(trimmed, CGRectMake(40, 20, 170, 120)) ||
+            !DDHostTrimUsableBoundsForDock(area, CGRectMake(180, 20, 30, 120), &trimmed) ||
+            !CGRectEqualToRect(trimmed, CGRectMake(10, 20, 170, 120)) ||
+            !DDHostTrimUsableBoundsForDock(area, CGRectMake(10, 20, 200, 20), &trimmed) ||
+            !CGRectEqualToRect(trimmed, CGRectMake(10, 40, 200, 100)) ||
+            !DDHostTrimUsableBoundsForDock(area, CGRectMake(10, 120, 200, 20), &trimmed) ||
+            !CGRectEqualToRect(trimmed, CGRectMake(10, 20, 200, 100)) ||
+            DDHostTrimUsableBoundsForDock(area, CGRectMake(90, 20, 30, 120), &trimmed) ||
+            DDHostTrimUsableBoundsForDock(area, CGRectMake(10, 20, 170, 120), &trimmed) ||
+            !CGRectEqualToRect(trimmed, CGRectMake(10, 20, 200, 100))) {
+            NSLog(@"FAIL: recovered 26654 trimmed usable bounds");
+            return 1;
+        }
+        // 83FC: 64-bit notify dock state: x,y,width,height are four
+        // unsigned 16-bit fields, each in tenths of a point.
+        CGRect dock = CGRectZero;
+        uint64_t dockState = (UINT64_C(123) << 48) |
+                             (UINT64_C(456) << 32) |
+                             (UINT64_C(800) << 16) | UINT64_C(400);
+        if (!DDHostDecodeDockRectState(dockState, &dock) ||
+            !CGRectEqualToRect(dock, CGRectMake(12.3, 45.6, 80.0, 40.0)) ||
+            !DDHostDecodeDockRectState(dockState, NULL) ||
+            DDHostDecodeDockRectState(0, &dock) ||
+            DDHostDecodeDockRectState(UINT64_C(500) << 48, &dock) ||
+            !CGRectEqualToRect(dock, CGRectMake(12.3, 45.6, 80.0, 40.0))) {
+            NSLog(@"FAIL: recovered 83FC packed dock rectangle");
+            return 1;
+        }
+        // 23D94 also checks shell origin within usable bounds inset -1pt.
+        CGRect usable = CGRectMake(10, 20, 120, 100);
+        if (!DDHostGeometryIsCarPlaySubrectForRects(
+                CGRectMake(11, 21, 100, 80), usable) ||
+            DDHostGeometryIsCarPlaySubrectForRects(
+                CGRectMake(9 - 0.1, 21, 100, 80), usable) ||
+            !DDHostGeometryIsCarPlaySubrectForRects(
+                CGRectMake(9, 21, 100, 80), usable) ||
+            DDHostGeometryIsCarPlaySubrectForRects(
+                CGRectMake(11, 21, 39, 80), usable)) {
+            NSLog(@"FAIL: recovered 23D94 CGRect containment");
+            return 1;
+        }
         // 22D64 rejects shell mismatch first, except when saved shell is
         // undersized (<40); it then compares calculated CarPlay display size.
         if (DDHostDisplayGeometryMismatch(100, 80, 100, 80, 200, 150, 200, 150) ||

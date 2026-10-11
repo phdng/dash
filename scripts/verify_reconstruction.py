@@ -2312,6 +2312,11 @@ for host_export in (
     "DDHostPreparedCarPlayFlagsMatch",
     "DDHostPreparedSlotsAndFlagsMatch",
     "DDHostDisplayGeometryMismatch",
+    "DDHostGeometryIsCarPlaySubrect",
+    "DDHostGeometryIsCarPlaySubrectForRects",
+    "DDHostDecodeDockRectState",
+    "DDHostDockEdgeLabel",
+    "DDHostTrimUsableBoundsForDock",
     "DDHostPreparedRequestReady",
     "DDHostPreparedRequestReadyUsingSpringBoard",
     "DDHostSwitchSlotDimensionsValid",
@@ -2321,7 +2326,7 @@ for host_export in (
         r"FOUNDATION_EXPORT\s+[^;]*\b" + re.escape(host_export) + r"\s*\(", shared
     ))
     definition_count = len(re.findall(
-        r"(?m)^\s*(?:BOOL|NSArray<NSString\s*\*>\s*\*|DDHostSwitchPreflightResult)\s*"
+        r"(?m)^\s*(?:BOOL|NSString\s*\*|NSArray<NSString\s*\*>\s*\*|DDHostSwitchPreflightResult)\s*"
         + re.escape(host_export) + r"\s*\(", host_flow_source
     ))
     if declaration_count != 1 or definition_count != 1:

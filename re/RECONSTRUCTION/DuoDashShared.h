@@ -224,6 +224,32 @@ FOUNDATION_EXPORT BOOL DDHostPreparedCarPlayFlagsMatch(
     NSArray * _Nullable preparedFlags, NSArray * _Nullable hostedFlags,
     NSInteger expectedSlotCount);
 
+// 23D94: choose the carplay-subrect path after the caller has checked
+// nonempty/40pt shell, one-point-inset containment and dock measurement.
+FOUNDATION_EXPORT BOOL DDHostGeometryIsCarPlaySubrect(
+    double shellWidth, double shellHeight,
+    double usableWidth, double usableHeight,
+    BOOL withinExpandedUsableBounds);
+// 26654: label a dock strip by its intersection with the usable area.
+// Returns one of not-an-edge-strip, strip-outside-area, left, right,
+// top, bottom or degenerate; no private geometry/state access.
+FOUNDATION_EXPORT NSString * _Nonnull DDHostDockEdgeLabel(
+    CGRect usableBounds, CGRect dockBounds);
+
+// 26654: trim the usable rectangle for a valid edge dock. Returns NO
+// and leaves outRect unchanged for non-edge/degenerate classifications.
+FOUNDATION_EXPORT BOOL DDHostTrimUsableBoundsForDock(
+    CGRect usableBounds, CGRect dockBounds, CGRect * _Nullable outRect);
+
+// 83FC: decode the 64-bit notify state for appbridge/dockrect.
+// Returns NO for zero/invalid size; leaves outRect unchanged on failure.
+FOUNDATION_EXPORT BOOL DDHostDecodeDockRectState(uint64_t state, CGRect * _Nullable outRect);
+
+// 23D94 wrapper: compute the original CGRectInset/CGRectContainsRect
+// condition from caller-fed CGRect values instead of trusting a flag.
+FOUNDATION_EXPORT BOOL DDHostGeometryIsCarPlaySubrectForRects(
+    CGRect shellBounds, CGRect usableBounds);
+
 // 22D64: geometry mismatch gate shared by 208F4 and 218D8.
 // Values are caller-supplied shell bounds, saved shell dimensions,
 // CarPlay display dimensions and calculated display dimensions from 23D94.
