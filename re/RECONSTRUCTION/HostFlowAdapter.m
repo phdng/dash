@@ -9,6 +9,15 @@
 #include <math.h>
 #import <objc/message.h>
 
+// CGRectIsEmpty can behave differently for unstandardized negative-size
+// rectangles across CoreGraphics environments. Reject these at ingress
+// before any intersection, clipping or covered-geometry calculation.
+static BOOL DDHostRectHasFinitePositiveSize(CGRect rect) {
+    return isfinite(rect.origin.x) && isfinite(rect.origin.y) &&
+        isfinite(rect.size.width) && isfinite(rect.size.height) &&
+        rect.size.width > 0.0 && rect.size.height > 0.0;
+}
+
 // Exact full-host vs reshow selection at 218D8:307-313 (evidence/hosting_engine.md).
 // Does not acquire any gate, call DDz controllers, or mutate host state.
 BOOL DDHostRequiresFullHost(BOOL deactivateDismissPresent,
@@ -357,11 +366,8 @@ BOOL DDHostGeometryIsCarPlaySubrect(
 // 2pt proximity/coverage tolerance and 40pt residual-size minimum.
 NSString *DDHostDockEdgeLabel(CGRect usableBounds, CGRect dockBounds) {
     // Reject malformed caller snapshots before CoreGraphics intersection.
-    if (!isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
-        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
-        !isfinite(dockBounds.origin.x) || !isfinite(dockBounds.origin.y) ||
-        !isfinite(dockBounds.size.width) || !isfinite(dockBounds.size.height) ||
-        CGRectIsEmpty(usableBounds) || CGRectIsEmpty(dockBounds))
+    if (!DDHostRectHasFinitePositiveSize(usableBounds) ||
+        !DDHostRectHasFinitePositiveSize(dockBounds))
         return @"not-an-edge-strip";
     CGRect overlap = CGRectIntersection(usableBounds, dockBounds);
     if (CGRectIsNull(overlap) || CGRectIsEmpty(overlap))
@@ -402,6 +408,11 @@ NSString *DDHostDockEdgeLabel(CGRect usableBounds, CGRect dockBounds) {
 BOOL DDHostTrimUsableBoundsForDock(CGRect usableBounds, CGRect dockBounds,
                                    CGRect * _Nullable outRect) {
     NSString *edge = DDHostDockEdgeLabel(usableBounds, dockBounds);
+    if (![edge isEqualToString:@"left"] &&
+        ![edge isEqualToString:@"right"] &&
+        ![edge isEqualToString:@"top"] &&
+        ![edge isEqualToString:@"bottom"])
+        return NO;
     CGRect overlap = CGRectIntersection(usableBounds, dockBounds);
     CGRect result = usableBounds;
     if ([edge isEqualToString:@"left"]) {
@@ -457,11 +468,8 @@ BOOL DDHostTrimUsableBoundsForDockState(CGRect usableBounds,
 // The original later checks expanded CGRect against usable bounds; this
 // label alone is not permission to expand hosting geometry.
 NSString *DDHostDockAdjacentEdge(CGRect candidateBounds, CGRect dockBounds) {
-    if (!isfinite(candidateBounds.origin.x) || !isfinite(candidateBounds.origin.y) ||
-        !isfinite(candidateBounds.size.width) || !isfinite(candidateBounds.size.height) ||
-        !isfinite(dockBounds.origin.x) || !isfinite(dockBounds.origin.y) ||
-        !isfinite(dockBounds.size.width) || !isfinite(dockBounds.size.height) ||
-        CGRectIsEmpty(candidateBounds) || CGRectIsEmpty(dockBounds) ||
+    if (!DDHostRectHasFinitePositiveSize(candidateBounds) ||
+        !DDHostRectHasFinitePositiveSize(dockBounds) ||
         CGRectContainsRect(CGRectInset(candidateBounds, -2.0, -2.0), dockBounds))
         return nil;
     BOOL spansHeight = CGRectGetMinY(dockBounds) <= CGRectGetMinY(candidateBounds) + 2.0 &&
@@ -488,9 +496,7 @@ NSString *DDHostDockAdjacentEdge(CGRect candidateBounds, CGRect dockBounds) {
 BOOL DDHostDockCoveredExpandedBounds(CGRect usableBounds, CGRect candidateBounds,
                                      CGRect dockBounds, CGRect * _Nullable outRect) {
     NSString *edge = DDHostDockAdjacentEdge(candidateBounds, dockBounds);
-    if (!edge || !isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
-        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
-        CGRectIsEmpty(usableBounds))
+    if (!edge || !DDHostRectHasFinitePositiveSize(usableBounds))
         return NO;
     CGRect result = candidateBounds;
     if ([edge isEqualToString:@"left"]) {
@@ -540,13 +546,10 @@ NSString *DDHostDockCoverageEarlyReason(
         return @"no-exit";
     if (!dockPublished)
         return @"no-strip-published";
-    if (!isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
-        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
-        !isfinite(candidateBounds.origin.x) || !isfinite(candidateBounds.origin.y) ||
-        !isfinite(candidateBounds.size.width) || !isfinite(candidateBounds.size.height) ||
+    if (!DDHostRectHasFinitePositiveSize(usableBounds) ||
+        !DDHostRectHasFinitePositiveSize(candidateBounds) ||
         !isfinite(dockBounds.origin.x) || !isfinite(dockBounds.origin.y) ||
-        !isfinite(dockBounds.size.width) || !isfinite(dockBounds.size.height) ||
-        CGRectIsEmpty(usableBounds) || CGRectIsEmpty(candidateBounds))
+        !isfinite(dockBounds.size.width) || !isfinite(dockBounds.size.height))
         return @"no-window";
     if (!CGRectIsEmpty(dockBounds) &&
         CGRectContainsRect(CGRectInset(candidateBounds, -2.0, -2.0), dockBounds))
@@ -558,16 +561,9 @@ NSString *DDHostDockCoverageEarlyReason(
 // In particular a contained subrect wins even when a dock was measured.
 NSString *DDHostInitialGeometryReason(CGRect shellBounds, CGRect usableBounds,
                                       BOOL dockMeasured) {
-    BOOL invalidShell = !isfinite(shellBounds.origin.x) ||
-        !isfinite(shellBounds.origin.y) ||
-        !isfinite(shellBounds.size.width) ||
-        !isfinite(shellBounds.size.height) ||
-        CGRectIsEmpty(shellBounds) || shellBounds.size.width < 40.0 ||
-        shellBounds.size.height < 40.0;
-    BOOL validUsable = isfinite(usableBounds.origin.x) &&
-        isfinite(usableBounds.origin.y) &&
-        isfinite(usableBounds.size.width) &&
-        isfinite(usableBounds.size.height) && !CGRectIsEmpty(usableBounds);
+    BOOL invalidShell = !DDHostRectHasFinitePositiveSize(shellBounds) ||
+        shellBounds.size.width < 40.0 || shellBounds.size.height < 40.0;
+    BOOL validUsable = DDHostRectHasFinitePositiveSize(usableBounds);
     BOOL outside = !invalidShell &&
         (!validUsable || !CGRectContainsRect(
             CGRectInset(usableBounds, -1.0, -1.0), shellBounds));
@@ -583,9 +579,7 @@ NSString *DDHostInitialGeometryReason(CGRect shellBounds, CGRect usableBounds,
 // dock routes; 26654 returns its input unchanged for non-edge strips.
 BOOL DDHostInitialGeometryBounds(CGRect shellBounds, CGRect usableBounds,
     BOOL dockMeasured, CGRect dockBounds, CGRect * _Nullable outRect) {
-    if (!isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
-        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
-        CGRectIsEmpty(usableBounds))
+    if (!DDHostRectHasFinitePositiveSize(usableBounds))
         return NO;
     NSString *reason = DDHostInitialGeometryReason(shellBounds, usableBounds, dockMeasured);
     CGRect result = usableBounds;
@@ -595,9 +589,7 @@ BOOL DDHostInitialGeometryBounds(CGRect shellBounds, CGRect usableBounds,
         result = shellBounds;
     if ([reason isEqualToString:@"measured-dock"] ||
         [reason isEqualToString:@"measured-dock-nofrome"]) {
-        if (!isfinite(dockBounds.origin.x) || !isfinite(dockBounds.origin.y) ||
-            !isfinite(dockBounds.size.width) || !isfinite(dockBounds.size.height) ||
-            CGRectIsEmpty(dockBounds))
+        if (!DDHostRectHasFinitePositiveSize(dockBounds))
             return NO;
         CGRect trimmed = CGRectZero;
         if (DDHostTrimUsableBoundsForDock(result, dockBounds, &trimmed))
@@ -748,9 +740,7 @@ NSString *DDHostFinalGeometryReason(NSString * _Nullable initialReason,
 BOOL DDHostTrimFallbackCarPlayBoundsForDockState(
     CGRect shellBounds, CGRect usableBounds, uint64_t dockState,
     CGRect * _Nullable outRect) {
-    if (!isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
-        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
-        CGRectIsEmpty(usableBounds))
+    if (!DDHostRectHasFinitePositiveSize(usableBounds))
         return NO;
     BOOL invalidShell = !isfinite(shellBounds.origin.x) ||
         !isfinite(shellBounds.origin.y) ||
@@ -768,11 +758,8 @@ BOOL DDHostTrimFallbackCarPlayBoundsForDockState(
 // 23D94: retain CGRect containment semantics, including both origins.
 BOOL DDHostGeometryIsCarPlaySubrectForRects(CGRect shellBounds,
                                            CGRect usableBounds) {
-    if (!isfinite(shellBounds.origin.x) || !isfinite(shellBounds.origin.y) ||
-        !isfinite(shellBounds.size.width) || !isfinite(shellBounds.size.height) ||
-        !isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
-        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
-        CGRectIsEmpty(shellBounds) || CGRectIsEmpty(usableBounds))
+    if (!DDHostRectHasFinitePositiveSize(shellBounds) ||
+        !DDHostRectHasFinitePositiveSize(usableBounds))
         return NO;
     return DDHostGeometryIsCarPlaySubrect(
         shellBounds.size.width, shellBounds.size.height,

@@ -563,9 +563,12 @@ int main(void) {
             CGRectMake(NAN, 10, 180, 180),
             CGRectMake(10, INFINITY, 180, 180),
             CGRectMake(10, 10, -1, 180),
+            CGRectMake(10, 10, 180, -1),
             CGRectMake(10, 10, 180, 0),
         };
-        for (NSUInteger index = 0; index < 4; ++index) {
+        for (NSUInteger index = 0;
+             index < sizeof(rejectedUsable) / sizeof(rejectedUsable[0]);
+             ++index) {
             invalidOutputInitial = CGRectMake(1, 2, 3, 4);
             invalidOutputResolved = CGRectMake(5, 6, 7, 8);
             invalidOutputCoverage = @"untouched";
@@ -573,11 +576,35 @@ int main(void) {
                 combinedShell, rejectedUsable[index], adjacentLeftState,
                 YES, &invalidOutputInitial, &invalidOutputResolved,
                 &invalidOutputCoverage);
+            CGRect rejectedInitial = CGRectMake(1, 2, 3, 4);
+            CGRect rejectedTrim = CGRectMake(5, 6, 7, 8);
+            BOOL initialAccepted = DDHostInitialGeometryBounds(
+                combinedShell, rejectedUsable[index], YES,
+                CGRectMake(20, 40, 20, 80), &rejectedInitial);
+            BOOL trimAccepted = DDHostTrimUsableBoundsForDock(
+                rejectedUsable[index], CGRectMake(20, 40, 20, 80),
+                &rejectedTrim);
+            NSString *edgeLabel = DDHostDockEdgeLabel(
+                rejectedUsable[index], CGRectMake(20, 40, 20, 80));
+            CGRect rejectedCovered = CGRectMake(9, 10, 11, 12);
+            NSString *coverageLabel = DDHostDockCoverageReason(
+                YES, YES, rejectedUsable[index], combinedShell,
+                CGRectMake(20, 40, 20, 80), &rejectedCovered);
             if (![invalidLabel isEqualToString:@"invalid-geometry"] ||
                 !CGRectEqualToRect(invalidOutputInitial, CGRectMake(1, 2, 3, 4)) ||
                 !CGRectEqualToRect(invalidOutputResolved, CGRectMake(5, 6, 7, 8)) ||
-                ![invalidOutputCoverage isEqualToString:@"untouched"]) {
-                NSLog(@"FAIL: invalid usable geometry vector %lu", (unsigned long)index);
+                ![invalidOutputCoverage isEqualToString:@"untouched"] ||
+                initialAccepted || trimAccepted ||
+                !CGRectEqualToRect(rejectedInitial, CGRectMake(1, 2, 3, 4)) ||
+                !CGRectEqualToRect(rejectedTrim, CGRectMake(5, 6, 7, 8)) ||
+                !CGRectEqualToRect(rejectedCovered, CGRectMake(9, 10, 11, 12)) ||
+                ![coverageLabel isEqualToString:@"no-window"] ||
+                ![edgeLabel isEqualToString:@"not-an-edge-strip"]) {
+                NSLog(@"FAIL: invalid usable geometry vector %lu (size=%g,%g reason=%@ initialAccepted=%d trimAccepted=%d edge=%@)",
+                    (unsigned long)index, (double)rejectedUsable[index].size.width,
+                    (double)rejectedUsable[index].size.height, invalidLabel,
+                    (int)initialAccepted, (int)trimAccepted, edgeLabel);
+                NSLog(@"Coverage reason for rejected bounds: %@", coverageLabel);
                 return 1;
             }
         }

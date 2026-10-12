@@ -251,10 +251,14 @@ class DockGeometryVectors(unittest.TestCase):
         dock = (20, 40, 20, 80)
         for bad in [(float('nan'), 10, 180, 180),
                     (10, float('inf'), 180, 180),
-                    (10, 10, -1, 180), (10, 10, 180, 0)]:
+                    (10, 10, -1, 180), (10, 10, 180, -1),
+                    (10, 10, 180, 0)]:
             with self.subTest(bad=bad):
                 self.assertIsNone(resolve_state(shell, bad, 0, True))
                 self.assertIsNone(covered(bad, shell, dock))
+                self.assertEqual(trim_edge(bad, dock), bad)
+                self.assertEqual(coverage_decision(bad, shell, dock, True)[0],
+                                 'no-window')
         malformed_shell = (float('nan'), 40, 100, 80)
         measured = (200 << 48) | (400 << 32) | (200 << 16) | 800
         base, result, _, label = resolve_state(malformed_shell, usable, measured, False)
