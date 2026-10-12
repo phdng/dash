@@ -42,7 +42,7 @@ jobs:
       - name: Execute compiled host switch preflight smoke test
         run: |
           xcrun clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
-            -framework Foundation -framework CoreFoundation \
+            -framework Foundation -framework CoreFoundation -framework CoreGraphics \
             -I re/RECONSTRUCTION \
             re/RECONSTRUCTION/HostFlowAdapter.m scripts/hostflow_preflight_smoke.m \
             -o "$RUNNER_TEMP/hostflow_preflight_smoke"
@@ -62,7 +62,7 @@ jobs:
             -o "$RUNNER_TEMP/hostflow_preflight_smoke_arm64.o"
           xcrun clang -arch arm64 -fobjc-arc -fblocks \
             -Wall -Wextra -Werror \
-            -framework Foundation -framework CoreFoundation \
+            -framework Foundation -framework CoreFoundation -framework CoreGraphics \
             "$RUNNER_TEMP/HostFlowAdapter_arm64.o" \
             "$RUNNER_TEMP/hostflow_preflight_smoke_arm64.o" \
             -o "$RUNNER_TEMP/hostflow_preflight_smoke_arm64"
