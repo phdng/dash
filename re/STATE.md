@@ -1,10 +1,34 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-11 session-389 (26654 trimmed usable bounds)_
+_Last updated: 2026-10-11 session-401 (portable 269FC dock geometry oracle CI tests)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
+Session-401 adds executable portable Python geometry-vector oracle for 269FC dock-covered expansion, covering four edges and exact adjacency/usable containment tolerance boundaries. The `build.yml` workflow now runs these Python tests before the compiled macOS Objective-C smoke and watches the new script for push/PR triggers. Executed Python tests PASS (2 test methods), structural verifier PASS (30 modules), git diff --check PASS on Windows local workspace. Objective-C macOS smoke, Theos arm64 and physical CarPlay remain unverified.
+
+Session-400 adds a pure-data `DDHostDockCoverageReason` adapter combining original 269FC early exit reasons with adjacent strip matching and expanded usable-rect containment. It distinguishes no-exit, no-strip-published, no-window, already-inside, strip-not-adjacent, outside-usable and covered; output CGRect changes only on covered. Extended Objective-C smoke to test each branch and unchanged output on rejected decisions; verifier export registry updated. Local reconstruction verifier (30 modules) and git diff PASS; native macOS smoke, Theos arm64 and CarPlay hardware remain unverified.
+
+Session-399 corrected an invalid regression fixture introduced in Session-398: the purported accepted left-side dock occupied x=20 while the provided usable bounds inset(-1) only reached x=38. Updated the valid fixture to usable x=21 (expanded minimum x=20), and added rejected x=21.1 (expanded minimum x=20.1) with unchanged output. Local structural verifier (30 modules) and diff PASS. Compiled macOS Objective-C smoke, Theos arm64 and CarPlay hardware unverified.
+
+Session-398 adds macOS Objective-C smoke assertions for 269FC covered dock geometry tolerance boundaries: exactly 2pt adjacency, >2pt rejection, containment within usable rectangle expanded by 1pt and unchanged output on rejection. Structural verifier (30 modules) and git diff --check PASS locally; compiled macOS Objective-C smoke, Theos arm64 and CarPlay device remain unverified.
+
+Session-397 ports the source-evidenced 269FC final `covered` geometry gate: extend candidate CGRect toward an adjacent dock on left/right/top/bottom, then require containment within `CGRectInset(carPlayUsableBounds,-1,-1)`. Added `DDHostDockCoveredExpandedBounds` to compiled HostFlowAdapter.m and public header. Smoke covers four orientations, rejected usable-bounds overflow and unchanged output. Local verifier (30 modules), py_compile and git diff PASS. No private UI operation; macOS Objective-C executable, Theos arm64 and device tests unconfirmed.
+
+Session-396 ports a bounded pure-data classification from original `269FC.c`: dock spanning candidate window with <=2pt edge adjacency is marked left/right/top/bottom by `DDHostDockAdjacentEdge`. The helper refuses nonfinite, empty and already-inside rectangles. It does not perform the final extended-rectangle check against CarPlay usable bounds and does not authorize live UI hosting. Smoke tests and structural verifier updated; local verifier, py_compile and diff PASS. macOS Objective-C runtime, Theos arm64 and device tests unconfirmed.
+
+Session-395 directly ports the early reason gates from original `DuoDash.dylib_export_for_ai/decompile/269FC.c` into `DDHostDockCoverageEarlyReason`. The helper orders no-exit, no-strip-published, no-window, and already-inside (candidate CGRect expanded 2pt), returning nil when further adjacency/covered checks are required. Test-only macOS smoke and structural verifier extended. Local verifier (30 modules), Python py_compile and diff PASS. Private dock notification acquisition, later coverage geometry, compiled macOS smoke, Theos arm64 and live CarPlay are unverified.
+
+Session-394 adds `DDHostTrimFallbackCarPlayBoundsForDockState`, the source-evidenced 23D94 fallback measured-dock branch: shell empty/under 40pt or outside the expanded usable bounds causes dock clipping to start from carPlayUsableBounds. The helper composes 83FC packed dock decoding with 26654 edge stripping, with no private notification or UI mutation. Smoke covers missing, undersized and outside shell, valid shell rejection and invalid state; local verifier, Python compile and diff PASS. macOS Objective-C smoke, Theos arm64 CI and real CarPlay still unconfirmed.
+
+Session-393 expands Objective-C smoke assertions for `DDHostTrimUsableBoundsForDock` with direct clipped CGRect cases: dock overhang outside usable area, inclusive 2pt near-edge tolerance, exact 40pt residual success and sub-40pt residual rejection preserving output. Local structural verifier (30 modules) and diff PASS; macOS compiled smoke, Theos arm64 and CarPlay device remain unverified.
+
+Session-392 expands Objective-C smoke coverage of source-derived 83FC -> 26654 integration: packed right/top/bottom dock state must produce exactly the same trimmed CGRect as the direct dock CGRect path, and packed non-edge dock must reject without changing caller output. Uses portable C CGRect arrays in Foundation-only macOS harness. Local reconstruction verifier (30 modules), py_compile and diff PASS; compiled smoke, Theos arm64 and physical CarPlay device still unverified.
+
+Session-391 composes the source-derived packed dock notification decoder (83FC) with edge strip classification/clipping (26654) through `DDHostTrimUsableBoundsForDockState`, a pure-data adapter accepting caller-fed 64-bit dock state and usable CGRect. Atomic fail-closed output semantics and macOS smoke assertions added, structural verifier updated. Local reconstruction verifier (30 modules), py_compile, and diff PASS. No private notification subscription or live host UI mutations; compiled macOS, Theos arm64, and CarPlay device still unverified.
+
+Session-390 hardens the compiled 26654 dock edge classifier against nonfinite CGRect origins and dimensions before CoreGraphics intersection. It adds Objective-C smoke regressions for dock overhang, inclusive 2pt edge tolerance, >=40pt surviving width threshold, and NaN/infinity input. Local reconstruction verifier (30 modules), Python syntax and git diff PASS; compiled macOS Objective-C smoke, iOS arm64 Theos and device testing remain unconfirmed.
+
 Session-389 adds DDHostTrimUsableBoundsForDock to reconstruct the remaining CGRect after subtracting a valid dock edge strip, using the evidenced 26654 edge classification and CGRectIntersection. It rejects non-edge, outside and degenerate dock areas without modifying output. Test-only smoke covers left/right/top/bottom and rejected cases. Structural verifier, Python syntax and git diff PASS; macOS Objective-C, Theos arm64 and device CarPlay tests remain unconfirmed. This helper is decision-only and does not mutate live host UI.
 
 Session-388 ports the documented edge-strip classification logic from `DuoDash.dylib_export_for_ai/decompile/26654.c` into DDHostDockEdgeLabel on compiled HostFlowAdapter.m. It intersects caller-fed dock and usable CGRects, checks 2pt edge tolerances and 40pt remaining width/height thresholds, and returns left/right/top/bottom/not-an-edge-strip/strip-outside-area/degenerate labels. Added macOS smoke cases and adjusted verifier return-type matching to include NSString *. Local verifier, py_compile and diff PASS; no runtime dock geometry mutations. macOS Objective-C, Theos arm64 and CarPlay device unverified.
@@ -26,8 +50,8 @@ Session-381 hardens scripts/verify_reconstruction.py with explicit guards for bo
 ## CURRENT PHASE:
 Phase 1-4 static HOÀN TẤT; Phase 5 buildability đang promote từng evidence-safe subsystem vào runtime mà không bịa private contracts.
 
-## LAST COMPLETED TASK (session-389):
-- Reconstructed and tested remaining usable CGRect after valid edge dock clipping.
+## LAST COMPLETED TASK (session-398):
+- Added exact adjacency and expanded usable-bounds tolerance tests for 269FC covered geometry.
 
 ## CURRENT TASK:
 - Continue bounded Phase-5 evidence-safe helper promotions after user-confirmed green CI. No speculative private-hook wiring. Assistant không push.

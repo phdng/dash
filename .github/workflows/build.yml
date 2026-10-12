@@ -9,6 +9,7 @@ on:
       - "re/RECONSTRUCTION/**"
       - "scripts/verify_reconstruction.py"
       - "scripts/hostflow_preflight_smoke.m"
+      - "scripts/test_dock_geometry_vectors.py"
       - ".github/workflows/build.yml"
   pull_request:
     paths:
@@ -18,6 +19,7 @@ on:
       - "re/RECONSTRUCTION/**"
       - "scripts/verify_reconstruction.py"
       - "scripts/hostflow_preflight_smoke.m"
+      - "scripts/test_dock_geometry_vectors.py"
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
@@ -33,6 +35,9 @@ jobs:
 
       - name: Verify reconstruction structure
         run: python3 scripts/verify_reconstruction.py
+
+      - name: Verify dock geometry vectors
+        run: python3 scripts/test_dock_geometry_vectors.py
 
       - name: Execute compiled host switch preflight smoke test
         run: |

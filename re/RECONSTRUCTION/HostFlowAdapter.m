@@ -356,7 +356,12 @@ BOOL DDHostGeometryIsCarPlaySubrect(
 // 26654: classify the intersecting strip along one outer edge, with
 // 2pt proximity/coverage tolerance and 40pt residual-size minimum.
 NSString *DDHostDockEdgeLabel(CGRect usableBounds, CGRect dockBounds) {
-    if (CGRectIsEmpty(usableBounds) || CGRectIsEmpty(dockBounds))
+    // Reject malformed caller snapshots before CoreGraphics intersection.
+    if (!isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
+        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
+        !isfinite(dockBounds.origin.x) || !isfinite(dockBounds.origin.y) ||
+        !isfinite(dockBounds.size.width) || !isfinite(dockBounds.size.height) ||
+        CGRectIsEmpty(usableBounds) || CGRectIsEmpty(dockBounds))
         return @"not-an-edge-strip";
     CGRect overlap = CGRectIntersection(usableBounds, dockBounds);
     if (CGRectIsNull(overlap) || CGRectIsEmpty(overlap))
@@ -434,6 +439,143 @@ BOOL DDHostDecodeDockRectState(uint64_t state, CGRect * _Nullable outRect) {
         *outRect = CGRectMake(x, y, width, height);
     }
     return YES;
+}
+
+// 83FC -> 26654: only update output if both state decoding and dock
+// edge clipping succeed. No notifications are registered or read here.
+BOOL DDHostTrimUsableBoundsForDockState(CGRect usableBounds,
+                                        uint64_t dockState,
+                                        CGRect * _Nullable outRect) {
+    CGRect dockBounds = CGRectZero;
+    if (!DDHostDecodeDockRectState(dockState, &dockBounds))
+        return NO;
+    return DDHostTrimUsableBoundsForDock(usableBounds, dockBounds, outRect);
+}
+
+// 269FC: an adjacent dock spans the candidate's height or width within
+// 2pt and touches exactly one outside edge within the same tolerance.
+// The original later checks expanded CGRect against usable bounds; this
+// label alone is not permission to expand hosting geometry.
+NSString *DDHostDockAdjacentEdge(CGRect candidateBounds, CGRect dockBounds) {
+    if (!isfinite(candidateBounds.origin.x) || !isfinite(candidateBounds.origin.y) ||
+        !isfinite(candidateBounds.size.width) || !isfinite(candidateBounds.size.height) ||
+        !isfinite(dockBounds.origin.x) || !isfinite(dockBounds.origin.y) ||
+        !isfinite(dockBounds.size.width) || !isfinite(dockBounds.size.height) ||
+        CGRectIsEmpty(candidateBounds) || CGRectIsEmpty(dockBounds) ||
+        CGRectContainsRect(CGRectInset(candidateBounds, -2.0, -2.0), dockBounds))
+        return nil;
+    BOOL spansHeight = CGRectGetMinY(dockBounds) <= CGRectGetMinY(candidateBounds) + 2.0 &&
+        CGRectGetMaxY(dockBounds) >= CGRectGetMaxY(candidateBounds) - 2.0;
+    if (spansHeight) {
+        if (fabs(CGRectGetMaxX(dockBounds) - CGRectGetMinX(candidateBounds)) <= 2.0)
+            return @"left";
+        if (fabs(CGRectGetMinX(dockBounds) - CGRectGetMaxX(candidateBounds)) <= 2.0)
+            return @"right";
+    }
+    BOOL spansWidth = CGRectGetMinX(dockBounds) <= CGRectGetMinX(candidateBounds) + 2.0 &&
+        CGRectGetMaxX(dockBounds) >= CGRectGetMaxX(candidateBounds) - 2.0;
+    if (spansWidth) {
+        if (fabs(CGRectGetMaxY(dockBounds) - CGRectGetMinY(candidateBounds)) <= 2.0)
+            return @"top";
+        if (fabs(CGRectGetMinY(dockBounds) - CGRectGetMaxY(candidateBounds)) <= 2.0)
+            return @"bottom";
+    }
+    return nil;
+}
+
+// 269FC: extend candidate to adjacent dock, then require the new rectangle
+// to be inside CGRectInset(carPlayUsableBounds, -1, -1).
+BOOL DDHostDockCoveredExpandedBounds(CGRect usableBounds, CGRect candidateBounds,
+                                     CGRect dockBounds, CGRect * _Nullable outRect) {
+    NSString *edge = DDHostDockAdjacentEdge(candidateBounds, dockBounds);
+    if (!edge || !isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
+        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
+        CGRectIsEmpty(usableBounds))
+        return NO;
+    CGRect result = candidateBounds;
+    if ([edge isEqualToString:@"left"]) {
+        CGFloat end = CGRectGetMaxX(candidateBounds);
+        result.origin.x = CGRectGetMinX(dockBounds);
+        result.size.width = end - result.origin.x;
+    } else if ([edge isEqualToString:@"right"]) {
+        result.size.width = CGRectGetMaxX(dockBounds) - CGRectGetMinX(candidateBounds);
+    } else if ([edge isEqualToString:@"top"]) {
+        CGFloat end = CGRectGetMaxY(candidateBounds);
+        result.origin.y = CGRectGetMinY(dockBounds);
+        result.size.height = end - result.origin.y;
+    } else if ([edge isEqualToString:@"bottom"]) {
+        result.size.height = CGRectGetMaxY(dockBounds) - CGRectGetMinY(candidateBounds);
+    } else {
+        return NO;
+    }
+    if (!CGRectContainsRect(CGRectInset(usableBounds, -1.0, -1.0), result))
+        return NO;
+    if (outRect)
+        *outRect = result;
+    return YES;
+}
+
+// 269FC pure-data coverage decision, preserving the decompiled branch order.
+NSString *DDHostDockCoverageReason(BOOL exitEnabled, BOOL dockPublished,
+    CGRect usableBounds, CGRect candidateBounds, CGRect dockBounds,
+    CGRect * _Nullable outRect) {
+    NSString *early = DDHostDockCoverageEarlyReason(
+        exitEnabled, dockPublished, usableBounds, candidateBounds, dockBounds);
+    if (early)
+        return early;
+    if (!DDHostDockAdjacentEdge(candidateBounds, dockBounds))
+        return @"strip-not-adjacent";
+    if (!DDHostDockCoveredExpandedBounds(
+            usableBounds, candidateBounds, dockBounds, outRect))
+        return @"outside-usable";
+    return @"covered";
+}
+
+// 269FC: match the decompiled early-return order before attempting dock
+// adjacency and coverage geometry. Nil means later guards must be checked.
+NSString *DDHostDockCoverageEarlyReason(
+    BOOL exitEnabled, BOOL dockPublished,
+    CGRect usableBounds, CGRect candidateBounds, CGRect dockBounds) {
+    if (!exitEnabled)
+        return @"no-exit";
+    if (!dockPublished)
+        return @"no-strip-published";
+    if (!isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
+        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
+        !isfinite(candidateBounds.origin.x) || !isfinite(candidateBounds.origin.y) ||
+        !isfinite(candidateBounds.size.width) || !isfinite(candidateBounds.size.height) ||
+        !isfinite(dockBounds.origin.x) || !isfinite(dockBounds.origin.y) ||
+        !isfinite(dockBounds.size.width) || !isfinite(dockBounds.size.height) ||
+        CGRectIsEmpty(usableBounds) || CGRectIsEmpty(candidateBounds))
+        return @"no-window";
+    if (!CGRectIsEmpty(dockBounds) &&
+        CGRectContainsRect(CGRectInset(candidateBounds, -2.0, -2.0), dockBounds))
+        return @"already-inside";
+    return nil;
+}
+
+// 23D94: when shell is empty/under 40pt or outside the one-point
+// expanded usable bounds, its dock path starts from carPlayUsableBounds.
+// This port only handles measured edge-dock clipping; the original
+// non-dock fallback is separate and not represented by a YES return.
+BOOL DDHostTrimFallbackCarPlayBoundsForDockState(
+    CGRect shellBounds, CGRect usableBounds, uint64_t dockState,
+    CGRect * _Nullable outRect) {
+    if (!isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
+        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
+        CGRectIsEmpty(usableBounds))
+        return NO;
+    BOOL invalidShell = !isfinite(shellBounds.origin.x) ||
+        !isfinite(shellBounds.origin.y) ||
+        !isfinite(shellBounds.size.width) ||
+        !isfinite(shellBounds.size.height) ||
+        CGRectIsEmpty(shellBounds) ||
+        shellBounds.size.width < 40.0 || shellBounds.size.height < 40.0;
+    BOOL outside = !invalidShell &&
+        !CGRectContainsRect(CGRectInset(usableBounds, -1.0, -1.0), shellBounds);
+    if (!invalidShell && !outside)
+        return NO;
+    return DDHostTrimUsableBoundsForDockState(usableBounds, dockState, outRect);
 }
 
 // 23D94: retain CGRect containment semantics, including both origins.

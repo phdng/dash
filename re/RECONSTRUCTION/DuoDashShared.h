@@ -241,6 +241,41 @@ FOUNDATION_EXPORT NSString * _Nonnull DDHostDockEdgeLabel(
 FOUNDATION_EXPORT BOOL DDHostTrimUsableBoundsForDock(
     CGRect usableBounds, CGRect dockBounds, CGRect * _Nullable outRect);
 
+// 269FC: classify an adjacent published dock outside a candidate window.
+// Caller supplies the two CGRects; nil means no evidenced adjacent edge.
+FOUNDATION_EXPORT NSString * _Nullable DDHostDockAdjacentEdge(
+    CGRect candidateBounds, CGRect dockBounds);
+
+// 269FC: expand candidate bounds toward an adjacent dock and require
+// containment in usable CarPlay bounds inset by -1pt; no UI mutation.
+FOUNDATION_EXPORT BOOL DDHostDockCoveredExpandedBounds(
+    CGRect usableBounds, CGRect candidateBounds, CGRect dockBounds,
+    CGRect * _Nullable outRect);
+
+// 269FC: compose early exit, adjacency and covered-usable checks.
+// outRect changes only on an accepted covered expansion.
+FOUNDATION_EXPORT NSString * _Nonnull DDHostDockCoverageReason(
+    BOOL exitEnabled, BOOL dockPublished,
+    CGRect usableBounds, CGRect candidateBounds, CGRect dockBounds,
+    CGRect * _Nullable outRect);
+
+// 269FC: early exit classification before the covered-strip geometry path.
+// Returns nil when later adjacency/coverage checks are required.
+FOUNDATION_EXPORT NSString * _Nullable DDHostDockCoverageEarlyReason(
+    BOOL exitEnabled, BOOL dockPublished,
+    CGRect usableBounds, CGRect candidateBounds, CGRect dockBounds);
+
+// 23D94 fallback: invalid/uncontained shell selects the usable CarPlay
+// rectangle as dock-clipping base; caller supplies packed dock state.
+FOUNDATION_EXPORT BOOL DDHostTrimFallbackCarPlayBoundsForDockState(
+    CGRect shellBounds, CGRect usableBounds, uint64_t dockState,
+    CGRect * _Nullable outRect);
+
+// 83FC -> 26654: decode a caller-provided notify state and trim a valid
+// edge dock; no notify_register_check/get_state or live UI writes.
+FOUNDATION_EXPORT BOOL DDHostTrimUsableBoundsForDockState(
+    CGRect usableBounds, uint64_t dockState, CGRect * _Nullable outRect);
+
 // 83FC: decode the 64-bit notify state for appbridge/dockrect.
 // Returns NO for zero/invalid size; leaves outRect unchanged on failure.
 FOUNDATION_EXPORT BOOL DDHostDecodeDockRectState(uint64_t state, CGRect * _Nullable outRect);
