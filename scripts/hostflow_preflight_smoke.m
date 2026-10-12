@@ -343,6 +343,48 @@ int main(void) {
             NSLog(@"FAIL: recovered 269FC early coverage guards");
             return 1;
         }
+        // 23D94 initial branch precedence: subrect wins over a measured
+        // dock; invalid/outside shell falls back to display or dock.
+        if (![DDHostInitialGeometryReason(CGRectZero, area, NO)
+                isEqualToString:@"display-unmeasured-dock"] ||
+            ![DDHostInitialGeometryReason(CGRectZero, area, YES)
+                isEqualToString:@"measured-dock-nofrome"] ||
+            ![DDHostInitialGeometryReason(CGRectMake(11, 21, 100, 80), area, YES)
+                isEqualToString:@"carplay-subrect"] ||
+            ![DDHostInitialGeometryReason(area, area, NO)
+                isEqualToString:@"carplay-fullscreen"] ||
+            ![DDHostInitialGeometryReason(area, area, YES)
+                isEqualToString:@"measured-dock"] ||
+            ![DDHostInitialGeometryReason(CGRectMake(500, 20, 100, 80), area, YES)
+                isEqualToString:@"measured-dock-nofrome"] ||
+            ![DDHostInitialGeometryReason(CGRectMake(10, 20, 39, 80), area, NO)
+                isEqualToString:@"display-unmeasured-dock"]) {
+            NSLog(@"FAIL: 23D94 initial geometry branch selection");
+            return 1;
+        }
+        // 23D94: initial CGRect output, before 269FC covered-dock handling.
+        CGRect initialBounds = CGRectMake(1, 2, 3, 4);
+        if (!DDHostInitialGeometryBounds(CGRectZero, area, NO,
+                CGRectZero, &initialBounds) ||
+            !CGRectEqualToRect(initialBounds, area) ||
+            !DDHostInitialGeometryBounds(CGRectZero, area, YES,
+                CGRectMake(10, 20, 30, 120), &initialBounds) ||
+            !CGRectEqualToRect(initialBounds, CGRectMake(40, 20, 170, 120)) ||
+            !DDHostInitialGeometryBounds(CGRectMake(11, 21, 100, 80), area, YES,
+                CGRectMake(10, 20, 30, 120), &initialBounds) ||
+            !CGRectEqualToRect(initialBounds, CGRectMake(11, 21, 100, 80)) ||
+            !DDHostInitialGeometryBounds(area, area, YES,
+                CGRectMake(10, 20, 30, 120), &initialBounds) ||
+            !CGRectEqualToRect(initialBounds, CGRectMake(40, 20, 170, 120)) ||
+            !DDHostInitialGeometryBounds(area, area, YES,
+                CGRectMake(100, 40, 20, 20), &initialBounds) ||
+            !CGRectEqualToRect(initialBounds, area) ||
+            DDHostInitialGeometryBounds(CGRectZero, CGRectZero, NO,
+                CGRectZero, &initialBounds) ||
+            !CGRectEqualToRect(initialBounds, area)) {
+            NSLog(@"FAIL: 23D94 initial geometry bounds composition");
+            return 1;
+        }
         // 23D94: missing/undersized/outside shell falls back to the usable
         // CarPlay rectangle before clipping a measured edge dock.
         CGRect fallbackBounds = CGRectMake(1, 2, 3, 4);

@@ -1,10 +1,14 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-11 session-401 (portable 269FC dock geometry oracle CI tests)_
+_Last updated: 2026-10-12 session-407 (23D94 initial rectangle composition)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
+Session-407 adds `DDHostInitialGeometryBounds`, composing source-derived `23D94` route precedence with `26654` dock clipping. It preserves contained subrect, defaults to usable CarPlay bounds for invalid shell, trims measured dock for full/fallback routes, retains the base rectangle for non-edge dock and rejects invalid usable geometry. Caller-fed pure-data input; does not apply 269FC later covered rectangle, read private state or mutate UI. Objective-C smoke extended and verifier updated. Local verifier (30 modules), Python geometry and diff PASS; macOS compiled smoke, Theos arm64 and CarPlay device unverified.
+
+Session-406 ports initial branch precedence from original `sub_23D94` through `DDHostInitialGeometryReason` in HostFlowAdapter.m: missing/undersized/outside shell selects display-unmeasured-dock or measured-dock-nofrome according to dock measurement; contained subrect selects carplay-subrect even when dock is measured; fullscreen uses measured-dock or carplay-fullscreen. Uses caller-fed CGRect/measurement flag; does not read private state or mutate UI. Objective-C smoke tests cover all routes. Local verifier (30 modules), Python dock vectors and git diff PASS; compiled macOS smoke, Theos arm64 and real CarPlay remain unverified in this workspace.
+
 Session-401 adds executable portable Python geometry-vector oracle for 269FC dock-covered expansion, covering four edges and exact adjacency/usable containment tolerance boundaries. The `build.yml` workflow now runs these Python tests before the compiled macOS Objective-C smoke and watches the new script for push/PR triggers. Executed Python tests PASS (2 test methods), structural verifier PASS (30 modules), git diff --check PASS on Windows local workspace. Objective-C macOS smoke, Theos arm64 and physical CarPlay remain unverified.
 
 Session-400 adds a pure-data `DDHostDockCoverageReason` adapter combining original 269FC early exit reasons with adjacent strip matching and expanded usable-rect containment. It distinguishes no-exit, no-strip-published, no-window, already-inside, strip-not-adjacent, outside-usable and covered; output CGRect changes only on covered. Extended Objective-C smoke to test each branch and unchanged output on rejected decisions; verifier export registry updated. Local reconstruction verifier (30 modules) and git diff PASS; native macOS smoke, Theos arm64 and CarPlay hardware remain unverified.

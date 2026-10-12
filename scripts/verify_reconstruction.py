@@ -2319,6 +2319,8 @@ for host_export in (
     "DDHostTrimUsableBoundsForDock",
     "DDHostTrimUsableBoundsForDockState",
     "DDHostTrimFallbackCarPlayBoundsForDockState",
+    "DDHostInitialGeometryReason",
+    "DDHostInitialGeometryBounds",
     "DDHostDockCoverageEarlyReason",
     "DDHostDockAdjacentEdge",
     "DDHostDockCoveredExpandedBounds",

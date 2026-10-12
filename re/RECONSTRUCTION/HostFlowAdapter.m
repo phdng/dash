@@ -554,6 +554,60 @@ NSString *DDHostDockCoverageEarlyReason(
     return nil;
 }
 
+// 23D94: the first geometry decision is independent of dock clipping.
+// In particular a contained subrect wins even when a dock was measured.
+NSString *DDHostInitialGeometryReason(CGRect shellBounds, CGRect usableBounds,
+                                      BOOL dockMeasured) {
+    BOOL invalidShell = !isfinite(shellBounds.origin.x) ||
+        !isfinite(shellBounds.origin.y) ||
+        !isfinite(shellBounds.size.width) ||
+        !isfinite(shellBounds.size.height) ||
+        CGRectIsEmpty(shellBounds) || shellBounds.size.width < 40.0 ||
+        shellBounds.size.height < 40.0;
+    BOOL validUsable = isfinite(usableBounds.origin.x) &&
+        isfinite(usableBounds.origin.y) &&
+        isfinite(usableBounds.size.width) &&
+        isfinite(usableBounds.size.height) && !CGRectIsEmpty(usableBounds);
+    BOOL outside = !invalidShell &&
+        (!validUsable || !CGRectContainsRect(
+            CGRectInset(usableBounds, -1.0, -1.0), shellBounds));
+    if (invalidShell || outside)
+        return dockMeasured ? @"measured-dock-nofrome" : @"display-unmeasured-dock";
+    if (shellBounds.size.width < usableBounds.size.width - 1.0 ||
+        shellBounds.size.height < usableBounds.size.height - 1.0)
+        return @"carplay-subrect";
+    return dockMeasured ? @"measured-dock" : @"carplay-fullscreen";
+}
+
+// 23D94: select the base rectangle and apply 26654 only on measured
+// dock routes; 26654 returns its input unchanged for non-edge strips.
+BOOL DDHostInitialGeometryBounds(CGRect shellBounds, CGRect usableBounds,
+    BOOL dockMeasured, CGRect dockBounds, CGRect * _Nullable outRect) {
+    if (!isfinite(usableBounds.origin.x) || !isfinite(usableBounds.origin.y) ||
+        !isfinite(usableBounds.size.width) || !isfinite(usableBounds.size.height) ||
+        CGRectIsEmpty(usableBounds))
+        return NO;
+    NSString *reason = DDHostInitialGeometryReason(shellBounds, usableBounds, dockMeasured);
+    CGRect result = usableBounds;
+    if ([reason isEqualToString:@"carplay-subrect"] ||
+        [reason isEqualToString:@"carplay-fullscreen"] ||
+        [reason isEqualToString:@"measured-dock"])
+        result = shellBounds;
+    if ([reason isEqualToString:@"measured-dock"] ||
+        [reason isEqualToString:@"measured-dock-nofrome"]) {
+        if (!isfinite(dockBounds.origin.x) || !isfinite(dockBounds.origin.y) ||
+            !isfinite(dockBounds.size.width) || !isfinite(dockBounds.size.height) ||
+            CGRectIsEmpty(dockBounds))
+            return NO;
+        CGRect trimmed = CGRectZero;
+        if (DDHostTrimUsableBoundsForDock(result, dockBounds, &trimmed))
+            result = trimmed;
+    }
+    if (outRect)
+        *outRect = result;
+    return YES;
+}
+
 // 23D94: when shell is empty/under 40pt or outside the one-point
 // expanded usable bounds, its dock path starts from carPlayUsableBounds.
 // This port only handles measured edge-dock clipping; the original

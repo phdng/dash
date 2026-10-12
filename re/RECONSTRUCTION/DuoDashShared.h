@@ -266,6 +266,17 @@ FOUNDATION_EXPORT NSString * _Nullable DDHostDockCoverageEarlyReason(
     BOOL exitEnabled, BOOL dockPublished,
     CGRect usableBounds, CGRect candidateBounds, CGRect dockBounds);
 
+// 23D94: source-order selection of the initial geometry branch.
+// Caller provides whether a valid dock rectangle was measured by 83FC.
+FOUNDATION_EXPORT NSString * _Nonnull DDHostInitialGeometryReason(
+    CGRect shellBounds, CGRect usableBounds, BOOL dockMeasured);
+
+// 23D94: calculate the initial rectangle before 269FC coverage handling.
+// A measured non-edge dock leaves the selected base rectangle unchanged.
+FOUNDATION_EXPORT BOOL DDHostInitialGeometryBounds(
+    CGRect shellBounds, CGRect usableBounds, BOOL dockMeasured,
+    CGRect dockBounds, CGRect * _Nullable outRect);
+
 // 23D94 fallback: invalid/uncontained shell selects the usable CarPlay
 // rectangle as dock-clipping base; caller supplies packed dock state.
 FOUNDATION_EXPORT BOOL DDHostTrimFallbackCarPlayBoundsForDockState(
