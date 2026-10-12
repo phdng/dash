@@ -27,7 +27,7 @@ DuoDashReconstruction_FILES = \
 	re/RECONSTRUCTION/CarPlaySpoofHelpers.m \
 	re/RECONSTRUCTION/ToggleValueHelpers.m
 DuoDashReconstruction_CFLAGS = -fobjc-arc -Wall -Wextra
-DuoDashReconstruction_FRAMEWORKS = Foundation CoreFoundation
+DuoDashReconstruction_FRAMEWORKS = Foundation CoreFoundation CoreGraphics
 DuoDashReconstruction_LIBRARIES = proc
 
 include $(THEOS_MAKE_PATH)/tweak.mk
