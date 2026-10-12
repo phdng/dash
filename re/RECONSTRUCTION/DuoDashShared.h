@@ -292,6 +292,27 @@ FOUNDATION_EXPORT NSString * _Nonnull DDHostResolvedGeometryFinalReason(
     CGRect * _Nullable initialRect, CGRect * _Nullable resolvedRect,
     NSString * _Nullable * _Nullable coverageReason);
 
+// 83FC -> 23D94 -> 26654 -> 269FC: packed dock-state geometry flow.
+// A malformed/unpublished packed state is treated as an unmeasured dock.
+// On invalid usable geometry, caller outputs are left unchanged.
+FOUNDATION_EXPORT NSString * _Nonnull DDHostResolvedGeometryForDockState(
+    CGRect shellBounds, CGRect usableBounds, uint64_t dockState,
+    BOOL exitEnabled, CGRect * _Nullable initialRect,
+    CGRect * _Nullable resolvedRect,
+    NSString * _Nullable * _Nullable coverageReason);
+
+// Pure-data dock layout transition gate for hosting callers. Evaluates
+// both packed snapshots through 83FC/23D94/26654/269FC. Results:
+// invalid-geometry (outputs untouched), unchanged, reason-only, restored,
+// or updated. Does not mutate UI or read live notification state.
+FOUNDATION_EXPORT NSString * _Nonnull DDHostDockLayoutTransition(
+    CGRect shellBounds, CGRect usableBounds,
+    uint64_t previousDockState, BOOL previousExitEnabled,
+    uint64_t nextDockState, BOOL nextExitEnabled,
+    CGRect * _Nullable previousRect, CGRect * _Nullable nextRect,
+    NSString * _Nullable * _Nullable previousReason,
+    NSString * _Nullable * _Nullable nextReason);
+
 // 23D94: recover final diagnostic label after 269FC coverage.
 // Non-covered paths preserve the initial label; unknown covered labels
 // use the original generic covered+dock fallback.

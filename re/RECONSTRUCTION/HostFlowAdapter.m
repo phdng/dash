@@ -653,6 +653,61 @@ NSString *DDHostResolvedGeometryFinalReason(CGRect shellBounds,
     return finalReason;
 }
 
+// Packed dock-state ingress: keep the measured/published flags coupled to
+// successful 83FC decoding, not independent caller booleans.
+NSString *DDHostResolvedGeometryForDockState(CGRect shellBounds,
+    CGRect usableBounds, uint64_t dockState, BOOL exitEnabled,
+    CGRect * _Nullable initialRect, CGRect * _Nullable resolvedRect,
+    NSString * _Nullable * _Nullable coverageReason) {
+    CGRect dock = CGRectZero;
+    BOOL measured = DDHostDecodeDockRectState(dockState, &dock);
+    return DDHostResolvedGeometryFinalReason(shellBounds, usableBounds,
+        measured, dock, exitEnabled, measured, initialRect,
+        resolvedRect, coverageReason);
+}
+
+// Hosting-facing transition gate: compare fully resolved geometry across
+// snapshots without updating UI. Geometry changes require a relayout;
+// diagnostic-only changes should not invalidate an unchanged CGRect.
+NSString *DDHostDockLayoutTransition(CGRect shellBounds, CGRect usableBounds,
+    uint64_t previousDockState, BOOL previousExitEnabled,
+    uint64_t nextDockState, BOOL nextExitEnabled,
+    CGRect * _Nullable previousRect, CGRect * _Nullable nextRect,
+    NSString * _Nullable * _Nullable previousReason,
+    NSString * _Nullable * _Nullable nextReason) {
+    CGRect before = CGRectZero;
+    CGRect after = CGRectZero;
+    NSString *beforeLabel = DDHostResolvedGeometryForDockState(shellBounds,
+        usableBounds, previousDockState, previousExitEnabled, NULL,
+        &before, NULL);
+    if ([beforeLabel isEqualToString:@"invalid-geometry"])
+        return @"invalid-geometry";
+    NSString *afterLabel = DDHostResolvedGeometryForDockState(shellBounds,
+        usableBounds, nextDockState, nextExitEnabled, NULL, &after, NULL);
+    if ([afterLabel isEqualToString:@"invalid-geometry"])
+        return @"invalid-geometry";
+    NSString *decision = @"unchanged";
+    if (!CGRectEqualToRect(before, after)) {
+        CGRect previousDock = CGRectZero;
+        CGRect nextDock = CGRectZero;
+        BOOL hadDock = DDHostDecodeDockRectState(previousDockState,
+            &previousDock);
+        BOOL hasDock = DDHostDecodeDockRectState(nextDockState, &nextDock);
+        decision = hadDock && !hasDock ? @"restored" : @"updated";
+    } else if (![beforeLabel isEqualToString:afterLabel]) {
+        decision = @"reason-only";
+    }
+    if (previousRect)
+        *previousRect = before;
+    if (nextRect)
+        *nextRect = after;
+    if (previousReason)
+        *previousReason = beforeLabel;
+    if (nextReason)
+        *nextReason = afterLabel;
+    return decision;
+}
+
 // 23D94: only the 269FC `covered` label changes the diagnostic reason.
 NSString *DDHostFinalGeometryReason(NSString * _Nullable initialReason,
                                     NSString * _Nullable coverageReason) {

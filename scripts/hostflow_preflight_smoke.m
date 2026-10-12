@@ -437,6 +437,237 @@ int main(void) {
             NSLog(@"FAIL: 23D94 combined final diagnostic geometry");
             return 1;
         }
+        // Full 83FC -> 23D94 -> 26654 -> 269FC packed-state path.
+        CGRect stateInitial = CGRectMake(1, 2, 3, 4);
+        CGRect stateResolved = CGRectMake(5, 6, 7, 8);
+        NSString *stateCoverage = @"untouched";
+        if (![DDHostResolvedGeometryForDockState(CGRectZero, area,
+                leftDockState, NO, &stateInitial, &stateResolved,
+                &stateCoverage) isEqualToString:@"measured-dock-nofrome"] ||
+            ![stateCoverage isEqualToString:@"no-exit"] ||
+            !CGRectEqualToRect(stateInitial, CGRectMake(40, 20, 170, 120)) ||
+            !CGRectEqualToRect(stateResolved, stateInitial) ||
+            ![DDHostResolvedGeometryForDockState(CGRectZero, area,
+                0, YES, &stateInitial, &stateResolved,
+                &stateCoverage) isEqualToString:@"display-unmeasured-dock"] ||
+            ![stateCoverage isEqualToString:@"no-strip-published"] ||
+            !CGRectEqualToRect(stateInitial, area) ||
+            !CGRectEqualToRect(stateResolved, area) ||
+            ![DDHostResolvedGeometryForDockState(CGRectZero, area,
+                UINT64_C(100) << 48, YES, &stateInitial,
+                &stateResolved, &stateCoverage)
+                isEqualToString:@"display-unmeasured-dock"] ||
+            !CGRectEqualToRect(stateInitial, area) ||
+            ![DDHostResolvedGeometryForDockState(CGRectZero, CGRectZero,
+                leftDockState, YES, &stateInitial, &stateResolved,
+                &stateCoverage) isEqualToString:@"invalid-geometry"] ||
+            !CGRectEqualToRect(stateInitial, area) ||
+            !CGRectEqualToRect(stateResolved, area) ||
+            ![stateCoverage isEqualToString:@"no-strip-published"]) {
+            NSLog(@"FAIL: 83FC-to-269FC packed dock-state geometry flow");
+            return 1;
+        }
+        // Repeated packed-state updates: right/top/bottom dock must trim
+        // distinct axes; disappearance must restore the original usable bounds.
+        uint64_t rightState = (UINT64_C(1900) << 48) |
+            (UINT64_C(200) << 32) | (UINT64_C(200) << 16) | UINT64_C(1200);
+        uint64_t topState = (UINT64_C(100) << 48) |
+            (UINT64_C(200) << 32) | (UINT64_C(2000) << 16) | UINT64_C(200);
+        uint64_t bottomState = (UINT64_C(100) << 48) |
+            (UINT64_C(1200) << 32) | (UINT64_C(2000) << 16) | UINT64_C(200);
+        if (![DDHostResolvedGeometryForDockState(CGRectZero, area,
+                rightState, NO, &stateInitial, &stateResolved,
+                &stateCoverage) isEqualToString:@"measured-dock-nofrome"] ||
+            !CGRectEqualToRect(stateInitial, CGRectMake(10, 20, 180, 120)) ||
+            !CGRectEqualToRect(stateResolved, stateInitial) ||
+            ![DDHostResolvedGeometryForDockState(CGRectZero, area,
+                topState, NO, &stateInitial, &stateResolved,
+                &stateCoverage) isEqualToString:@"measured-dock-nofrome"] ||
+            !CGRectEqualToRect(stateInitial, CGRectMake(10, 40, 200, 100)) ||
+            ![DDHostResolvedGeometryForDockState(CGRectZero, area,
+                bottomState, NO, &stateInitial, &stateResolved,
+                &stateCoverage) isEqualToString:@"measured-dock-nofrome"] ||
+            !CGRectEqualToRect(stateInitial, CGRectMake(10, 20, 200, 100)) ||
+            ![DDHostResolvedGeometryForDockState(CGRectZero, area,
+                0, NO, &stateInitial, &stateResolved,
+                &stateCoverage) isEqualToString:@"display-unmeasured-dock"] ||
+            !CGRectEqualToRect(stateInitial, area) ||
+            !CGRectEqualToRect(stateResolved, area) ||
+            ![DDHostResolvedGeometryForDockState(CGRectZero, area,
+                leftDockState, NO, &stateInitial, &stateResolved,
+                &stateCoverage) isEqualToString:@"measured-dock-nofrome"] ||
+            !CGRectEqualToRect(stateInitial, CGRectMake(40, 20, 170, 120))) {
+            NSLog(@"FAIL: packed dock-state directional and recovery transitions");
+            return 1;
+        }
+        // Complete packed-state covered branch: measured dock beside a
+        // subrect must expand resolved geometry while preserving initial.
+        uint64_t adjacentLeftState = (UINT64_C(200) << 48) |
+            (UINT64_C(400) << 32) | (UINT64_C(200) << 16) | UINT64_C(800);
+        CGRect packedInitial = CGRectZero;
+        CGRect packedResolved = CGRectZero;
+        NSString *packedCoverage = nil;
+        if (![DDHostResolvedGeometryForDockState(combinedShell,
+                combinedUsable, adjacentLeftState, YES, &packedInitial,
+                &packedResolved, &packedCoverage)
+                isEqualToString:@"carplay-subrect+dock"] ||
+            ![packedCoverage isEqualToString:@"covered"] ||
+            !CGRectEqualToRect(packedInitial, combinedShell) ||
+            !CGRectEqualToRect(packedResolved, CGRectMake(20, 40, 120, 80)) ||
+            ![DDHostResolvedGeometryForDockState(combinedShell,
+                combinedUsable, adjacentLeftState, NO, &packedInitial,
+                &packedResolved, &packedCoverage)
+                isEqualToString:@"carplay-subrect"] ||
+            ![packedCoverage isEqualToString:@"no-exit"] ||
+            !CGRectEqualToRect(packedResolved, combinedShell) ||
+            ![DDHostResolvedGeometryForDockState(combinedShell,
+                combinedUsable, 0, YES, &packedInitial,
+                &packedResolved, &packedCoverage)
+                isEqualToString:@"carplay-subrect"] ||
+            ![packedCoverage isEqualToString:@"no-strip-published"] ||
+            !CGRectEqualToRect(packedResolved, combinedShell) ||
+            ![DDHostResolvedGeometryForDockState(combinedShell,
+                combinedUsable, adjacentLeftState, YES, &packedInitial,
+                &packedResolved, &packedCoverage)
+                isEqualToString:@"carplay-subrect+dock"] ||
+            !CGRectEqualToRect(packedResolved, CGRectMake(20, 40, 120, 80))) {
+            NSLog(@"FAIL: packed dock covered, exit-toggle and restore transitions");
+            return 1;
+        }
+        // Malformed CarPlay snapshots must not leak NaN/Inf into layout;
+        // finite shell fallback remains deterministic for measured dock.
+        CGRect invalidOutputInitial = CGRectMake(1, 2, 3, 4);
+        CGRect invalidOutputResolved = CGRectMake(5, 6, 7, 8);
+        NSString *invalidOutputCoverage = @"untouched";
+        if (![DDHostResolvedGeometryForDockState(
+                combinedShell, CGRectMake(NAN, 10, 180, 180),
+                adjacentLeftState, YES, &invalidOutputInitial,
+                &invalidOutputResolved, &invalidOutputCoverage)
+                isEqualToString:@"invalid-geometry"] ||
+            !CGRectEqualToRect(invalidOutputInitial, CGRectMake(1, 2, 3, 4)) ||
+            !CGRectEqualToRect(invalidOutputResolved, CGRectMake(5, 6, 7, 8)) ||
+            ![invalidOutputCoverage isEqualToString:@"untouched"] ||
+            ![DDHostResolvedGeometryForDockState(
+                CGRectMake(NAN, 40, 100, 80), combinedUsable,
+                adjacentLeftState, NO, &invalidOutputInitial,
+                &invalidOutputResolved, &invalidOutputCoverage)
+                isEqualToString:@"measured-dock-nofrome"] ||
+            !CGRectEqualToRect(invalidOutputInitial, combinedUsable) ||
+            !CGRectEqualToRect(invalidOutputResolved, combinedUsable)) {
+            NSLog(@"FAIL: nonfinite CarPlay geometry recovery");
+            return 1;
+        }
+        // Match portable invalid-usable matrix across NaN, Inf, negative
+        // width and zero height; no rejected call may mutate any output.
+        CGRect rejectedUsable[] = {
+            CGRectMake(NAN, 10, 180, 180),
+            CGRectMake(10, INFINITY, 180, 180),
+            CGRectMake(10, 10, -1, 180),
+            CGRectMake(10, 10, 180, 0),
+        };
+        for (NSUInteger index = 0; index < 4; ++index) {
+            invalidOutputInitial = CGRectMake(1, 2, 3, 4);
+            invalidOutputResolved = CGRectMake(5, 6, 7, 8);
+            invalidOutputCoverage = @"untouched";
+            NSString *invalidLabel = DDHostResolvedGeometryForDockState(
+                combinedShell, rejectedUsable[index], adjacentLeftState,
+                YES, &invalidOutputInitial, &invalidOutputResolved,
+                &invalidOutputCoverage);
+            if (![invalidLabel isEqualToString:@"invalid-geometry"] ||
+                !CGRectEqualToRect(invalidOutputInitial, CGRectMake(1, 2, 3, 4)) ||
+                !CGRectEqualToRect(invalidOutputResolved, CGRectMake(5, 6, 7, 8)) ||
+                ![invalidOutputCoverage isEqualToString:@"untouched"]) {
+                NSLog(@"FAIL: invalid usable geometry vector %lu", (unsigned long)index);
+                return 1;
+            }
+        }
+        // Absent state and invalid zero-width/height packed states all
+        // select the same measured-dock fallback and publication guards.
+        uint64_t rejectedStates[] = {
+            0, UINT64_C(100) << 48,
+            (UINT64_C(100) << 48) | (UINT64_C(200) << 32) |
+                (UINT64_C(300) << 16),
+        };
+        for (NSUInteger index = 0; index < 3; ++index) {
+            NSString *missingCoverage = @"untouched";
+            CGRect missingInitial = CGRectZero;
+            CGRect missingResolved = CGRectZero;
+            NSString *missingLabel = DDHostResolvedGeometryForDockState(
+                CGRectZero, area, rejectedStates[index], YES,
+                &missingInitial, &missingResolved, &missingCoverage);
+            if (![missingLabel isEqualToString:@"display-unmeasured-dock"] ||
+                ![missingCoverage isEqualToString:@"no-strip-published"] ||
+                !CGRectEqualToRect(missingInitial, area) ||
+                !CGRectEqualToRect(missingResolved, area)) {
+                NSLog(@"FAIL: invalid packed dock state vector %lu", (unsigned long)index);
+                return 1;
+            }
+        }
+        // Full hosting transition gate: no-op, relayout, restoration,
+        // reason-only update, and atomic rejection of invalid geometry.
+        CGRect transitionBefore = CGRectMake(1, 2, 3, 4);
+        CGRect transitionAfter = CGRectMake(5, 6, 7, 8);
+        NSString *transitionBeforeReason = @"before-sentinel";
+        NSString *transitionAfterReason = @"after-sentinel";
+        if (![DDHostDockLayoutTransition(CGRectZero, area,
+                leftDockState, NO, leftDockState, NO,
+                &transitionBefore, &transitionAfter,
+                &transitionBeforeReason, &transitionAfterReason)
+                isEqualToString:@"unchanged"] ||
+            !CGRectEqualToRect(transitionBefore, CGRectMake(40, 20, 170, 120)) ||
+            !CGRectEqualToRect(transitionAfter, transitionBefore) ||
+            ![transitionBeforeReason isEqualToString:@"measured-dock-nofrome"] ||
+            ![transitionAfterReason isEqualToString:transitionBeforeReason] ||
+            ![DDHostDockLayoutTransition(CGRectZero, area,
+                leftDockState, NO, 0, NO,
+                &transitionBefore, &transitionAfter,
+                &transitionBeforeReason, &transitionAfterReason)
+                isEqualToString:@"restored"] ||
+            !CGRectEqualToRect(transitionBefore, CGRectMake(40, 20, 170, 120)) ||
+            !CGRectEqualToRect(transitionAfter, area) ||
+            ![DDHostDockLayoutTransition(CGRectZero, area,
+                0, NO, leftDockState, NO,
+                &transitionBefore, &transitionAfter,
+                &transitionBeforeReason, &transitionAfterReason)
+                isEqualToString:@"updated"] ||
+            !CGRectEqualToRect(transitionBefore, area) ||
+            !CGRectEqualToRect(transitionAfter, CGRectMake(40, 20, 170, 120)) ||
+            ![DDHostDockLayoutTransition(combinedShell, combinedUsable,
+                adjacentLeftState, NO, adjacentLeftState, YES,
+                &transitionBefore, &transitionAfter,
+                &transitionBeforeReason, &transitionAfterReason)
+                isEqualToString:@"updated"] ||
+            !CGRectEqualToRect(transitionBefore, combinedShell) ||
+            !CGRectEqualToRect(transitionAfter, CGRectMake(20, 40, 120, 80)) ||
+            ![transitionAfterReason isEqualToString:@"carplay-subrect+dock"] ||
+            ![DDHostDockLayoutTransition(CGRectZero, combinedUsable,
+                0, YES, adjacentLeftState, YES,
+                &transitionBefore, &transitionAfter,
+                &transitionBeforeReason, &transitionAfterReason)
+                isEqualToString:@"reason-only"] ||
+            !CGRectEqualToRect(transitionBefore, combinedUsable) ||
+            !CGRectEqualToRect(transitionAfter, combinedUsable) ||
+            ![transitionBeforeReason isEqualToString:@"display-unmeasured-dock"] ||
+            ![transitionAfterReason isEqualToString:@"measured-dock-nofrome"]) {
+            NSLog(@"FAIL: dock layout transition decision matrix");
+            return 1;
+        }
+        transitionBefore = CGRectMake(1, 2, 3, 4);
+        transitionAfter = CGRectMake(5, 6, 7, 8);
+        transitionBeforeReason = @"before-sentinel";
+        transitionAfterReason = @"after-sentinel";
+        if (![DDHostDockLayoutTransition(combinedShell, CGRectZero,
+                leftDockState, NO, 0, YES,
+                &transitionBefore, &transitionAfter,
+                &transitionBeforeReason, &transitionAfterReason)
+                isEqualToString:@"invalid-geometry"] ||
+            !CGRectEqualToRect(transitionBefore, CGRectMake(1, 2, 3, 4)) ||
+            !CGRectEqualToRect(transitionAfter, CGRectMake(5, 6, 7, 8)) ||
+            ![transitionBeforeReason isEqualToString:@"before-sentinel"] ||
+            ![transitionAfterReason isEqualToString:@"after-sentinel"]) {
+            NSLog(@"FAIL: dock transition must preserve rejected outputs");
+            return 1;
+        }
         // 23D94: source-derived diagnostic label is suffixed only for covered.
         if (![DDHostFinalGeometryReason(@"carplay-subrect", @"covered")
                 isEqualToString:@"carplay-subrect+dock"] ||
