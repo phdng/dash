@@ -780,6 +780,127 @@ int main(void) {
                 return 1;
             }
         }
+        // Planning layer: combine geometry transitions with the existing
+        // full-host lifecycle guard. These labels never execute hosting.
+        {
+            DDHostCarPlayLayoutSnapshot planBefore =
+                { CGRectZero, area, leftDockState, NO };
+            DDHostCarPlayLayoutSnapshot planNext =
+                { CGRectZero, area, 0, NO };
+            DDHostHostingLifecycleSnapshot planLifecycle =
+                { NO, YES, YES, NO, NO, NO, YES };
+            CGRect planPreviousRect = CGRectMake(1, 2, 3, 4);
+            CGRect planNextRect = CGRectMake(5, 6, 7, 8);
+            NSString *planPreviousReason = @"previous-sentinel";
+            NSString *planNextReason = @"next-sentinel";
+            if (![DDHostDockHostingPlanForSnapshots(
+                    planBefore, planBefore, planLifecycle,
+                    &planPreviousRect, &planNextRect, &planPreviousReason,
+                    &planNextReason) isEqualToString:@"no-change"] ||
+                !CGRectEqualToRect(planPreviousRect,
+                    CGRectMake(40, 20, 170, 120)) ||
+                !CGRectEqualToRect(planNextRect, planPreviousRect) ||
+                ![DDHostDockHostingPlanForSnapshots(
+                    planBefore, planNext, planLifecycle,
+                    &planPreviousRect, &planNextRect, &planPreviousReason,
+                    &planNextReason) isEqualToString:@"restore-layout"] ||
+                !CGRectEqualToRect(planPreviousRect,
+                    CGRectMake(40, 20, 170, 120)) ||
+                !CGRectEqualToRect(planNextRect, area) ||
+                ![planPreviousReason isEqualToString:@"measured-dock-nofrome"] ||
+                ![planNextReason isEqualToString:@"display-unmeasured-dock"] ||
+                ![DDHostDockHostingPlanForSnapshots(
+                    planNext, planBefore, planLifecycle,
+                    &planPreviousRect, &planNextRect, &planPreviousReason,
+                    &planNextReason) isEqualToString:@"update-layout"] ||
+                !CGRectEqualToRect(planPreviousRect, area) ||
+                !CGRectEqualToRect(planNextRect,
+                    CGRectMake(40, 20, 170, 120))) {
+                NSLog(@"FAIL: host plan no-op, dock restore and update");
+                return 1;
+            }
+            // An unchanged CGRect never relayouts, even if diagnostics
+            // or unrelated lifecycle flags have changed.
+            planBefore.dockState = 0;
+            planNext.dockState = adjacentLeftState;
+            planBefore.usableBounds = combinedUsable;
+            planNext.usableBounds = combinedUsable;
+            planLifecycle.dirty = YES;
+            if (![DDHostDockHostingPlanForSnapshots(
+                    planBefore, planNext, planLifecycle,
+                    &planPreviousRect, &planNextRect, &planPreviousReason,
+                    &planNextReason) isEqualToString:@"diagnostic-only"] ||
+                !CGRectEqualToRect(planPreviousRect, combinedUsable) ||
+                !CGRectEqualToRect(planNextRect, combinedUsable) ||
+                ![planNextReason isEqualToString:@"measured-dock-nofrome"]) {
+                NSLog(@"FAIL: host plan diagnostic-only must avoid relayout");
+                return 1;
+            }
+            // Only geometry-changing transitions consult the existing
+            // full-host guard, and a flag can force conservative fallback.
+            planBefore.usableBounds = area;
+            planNext.usableBounds = area;
+            planBefore.dockState = 0;
+            planNext.dockState = leftDockState;
+            if (![DDHostDockHostingPlanForSnapshots(
+                    planBefore, planNext, planLifecycle,
+                    &planPreviousRect, &planNextRect, NULL, NULL)
+                    isEqualToString:@"full-host-required"]) {
+                NSLog(@"FAIL: dirty lifecycle must require full-host fallback");
+                return 1;
+            }
+            planLifecycle.dirty = NO;
+            planLifecycle.active = NO;
+            if (![DDHostDockHostingPlanForSnapshots(
+                    planBefore, planNext, planLifecycle,
+                    NULL, NULL, NULL, NULL)
+                    isEqualToString:@"full-host-required"]) {
+                NSLog(@"FAIL: inactive lifecycle must require full-host fallback");
+                return 1;
+            }
+            planLifecycle.active = YES;
+            // Shell movement requires an update even with identical dock.
+            // A caller-reported geometry mismatch upgrades it to full host.
+            DDHostCarPlayLayoutSnapshot movingBefore =
+                { combinedShell, combinedUsable, 0, YES };
+            DDHostCarPlayLayoutSnapshot movingAfter =
+                { CGRectMake(50, 40, 100, 80), combinedUsable, 0, YES };
+            if (![DDHostDockHostingPlanForSnapshots(
+                    movingBefore, movingAfter, planLifecycle,
+                    &planPreviousRect, &planNextRect, NULL, NULL)
+                    isEqualToString:@"update-layout"] ||
+                !CGRectEqualToRect(planPreviousRect, combinedShell) ||
+                !CGRectEqualToRect(planNextRect,
+                    CGRectMake(50, 40, 100, 80))) {
+                NSLog(@"FAIL: shell movement should update hosting layout");
+                return 1;
+            }
+            planLifecycle.geometryMismatch = YES;
+            if (![DDHostDockHostingPlanForSnapshots(
+                    movingBefore, movingAfter, planLifecycle,
+                    NULL, NULL, NULL, NULL)
+                    isEqualToString:@"full-host-required"]) {
+                NSLog(@"FAIL: shell mismatch should demand full host");
+                return 1;
+            }
+            planLifecycle.geometryMismatch = NO;
+            planNext.usableBounds = CGRectZero;
+            planPreviousRect = CGRectMake(1, 2, 3, 4);
+            planNextRect = CGRectMake(5, 6, 7, 8);
+            planPreviousReason = @"previous-sentinel";
+            planNextReason = @"next-sentinel";
+            if (![DDHostDockHostingPlanForSnapshots(
+                    planBefore, planNext, planLifecycle,
+                    &planPreviousRect, &planNextRect, &planPreviousReason,
+                    &planNextReason) isEqualToString:@"invalid-geometry"] ||
+                !CGRectEqualToRect(planPreviousRect, CGRectMake(1, 2, 3, 4)) ||
+                !CGRectEqualToRect(planNextRect, CGRectMake(5, 6, 7, 8)) ||
+                ![planPreviousReason isEqualToString:@"previous-sentinel"] ||
+                ![planNextReason isEqualToString:@"next-sentinel"]) {
+                NSLog(@"FAIL: host plan rejected geometry modified outputs");
+                return 1;
+            }
+        }
         // 23D94: source-derived diagnostic label is suffixed only for covered.
         if (![DDHostFinalGeometryReason(@"carplay-subrect", @"covered")
                 isEqualToString:@"carplay-subrect+dock"] ||

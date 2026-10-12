@@ -326,6 +326,39 @@ FOUNDATION_EXPORT NSString * _Nonnull DDHostDockLayoutTransitionForSnapshots(
     NSString * _Nullable * _Nullable previousReason,
     NSString * _Nullable * _Nullable nextReason);
 
+// Pure-data geometry snapshots for planning a hosting update. These values
+// are supplied by the caller: no notification, controller or UI access.
+typedef struct {
+    CGRect shellBounds;
+    CGRect usableBounds;
+    uint64_t dockState;
+    BOOL exitEnabled;
+} DDHostCarPlayLayoutSnapshot;
+
+// Existing 218D8 full-host guard inputs, retained separately from geometry.
+// An action string is advisory: it never authorizes private UI mutations.
+typedef struct {
+    BOOL deactivateDismissPresent;
+    BOOL active;
+    BOOL splitHosting;
+    BOOL visible;
+    BOOL geometryMismatch;
+    BOOL dirty;
+    BOOL canPresent;
+} DDHostHostingLifecycleSnapshot;
+
+// Compose complete before/after geometry selection and the 218D8 full-host
+// guard. Possible results: invalid-geometry, no-change, diagnostic-only,
+// full-host-required, update-layout, restore-layout.
+// Invalid inputs preserve all caller outputs.
+FOUNDATION_EXPORT NSString * _Nonnull DDHostDockHostingPlanForSnapshots(
+    DDHostCarPlayLayoutSnapshot previous,
+    DDHostCarPlayLayoutSnapshot next,
+    DDHostHostingLifecycleSnapshot lifecycle,
+    CGRect * _Nullable previousRect, CGRect * _Nullable nextRect,
+    NSString * _Nullable * _Nullable previousReason,
+    NSString * _Nullable * _Nullable nextReason);
+
 // 23D94: recover final diagnostic label after 269FC coverage.
 // Non-covered paths preserve the initial label; unknown covered labels
 // use the original generic covered+dock fallback.

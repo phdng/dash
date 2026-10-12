@@ -2327,6 +2327,7 @@ for host_export in (
     "DDHostResolvedGeometryForDockState",
     "DDHostDockLayoutTransition",
     "DDHostDockLayoutTransitionForSnapshots",
+    "DDHostDockHostingPlanForSnapshots",
     "DDHostDockCoverageEarlyReason",
     "DDHostDockAdjacentEdge",
     "DDHostDockCoveredExpandedBounds",

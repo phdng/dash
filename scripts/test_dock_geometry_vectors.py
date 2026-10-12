@@ -153,6 +153,25 @@ def layout_transition(shell, usable, previous_state, previous_exit,
                                            next_state, next_exit)
 
 
+def hosting_plan_for_snapshots(previous, next, lifecycle):
+    """Reference advisory planner; invalid geometry is never published."""
+    transition = layout_transition_for_snapshots(*previous, *next)
+    if transition is None:
+        return 'invalid-geometry', None
+    status, before, after, before_label, after_label = transition
+    if status == 'unchanged':
+        plan = 'no-change'
+    elif status == 'reason-only':
+        plan = 'diagnostic-only'
+    else:
+        dismiss, active, split, visible, mismatch, dirty, can_present = lifecycle
+        requires_full = (dismiss or not active or not split or visible or
+                         mismatch or dirty or not can_present)
+        plan = ('full-host-required' if requires_full else
+                'restore-layout' if status == 'restored' else 'update-layout')
+    return plan, (before, after, before_label, after_label)
+
+
 class DockGeometryVectors(unittest.TestCase):
     def test_all_edges(self):
         usable = (10, 10, 180, 180)
@@ -329,6 +348,55 @@ class DockGeometryVectors(unittest.TestCase):
         self.assertIsNone(layout_transition_for_snapshots(
             shell, (0, 0, 0, 0), 0, True,
             moved, usable, left, False))
+
+    def test_hosting_plan_guard_and_geometry_lifecycle(self):
+        area = (10, 20, 200, 120)
+        shell = (0, 0, 0, 0)
+        left = (100 << 48) | (200 << 32) | (300 << 16) | 1200
+        with_dock = (shell, area, left, False)
+        without_dock = (shell, area, 0, False)
+        healthy = (False, True, True, False, False, False, True)
+        self.assertEqual(hosting_plan_for_snapshots(
+            with_dock, with_dock, healthy)[0], 'no-change')
+        self.assertEqual(hosting_plan_for_snapshots(
+            with_dock, without_dock, healthy)[0], 'restore-layout')
+        self.assertEqual(hosting_plan_for_snapshots(
+            without_dock, with_dock, healthy)[0], 'update-layout')
+        reason_snapshot = (shell, (10, 10, 180, 180),
+                           (200 << 48) | (400 << 32) | (200 << 16) | 800,
+                           False)
+        missing_snapshot = (shell, (10, 10, 180, 180), 0, False)
+        dirty = (False, True, True, False, False, True, True)
+        self.assertEqual(hosting_plan_for_snapshots(
+            missing_snapshot, reason_snapshot, dirty)[0], 'diagnostic-only')
+        for flags in [
+            (True, True, True, False, False, False, True),
+            (False, False, True, False, False, False, True),
+            (False, True, False, False, False, False, True),
+            (False, True, True, True, False, False, True),
+            (False, True, True, False, True, False, True),
+            (False, True, True, False, False, True, True),
+            (False, True, True, False, False, False, False),
+        ]:
+            with self.subTest(flags=flags):
+                self.assertEqual(hosting_plan_for_snapshots(
+                    without_dock, with_dock, flags)[0],
+                    'full-host-required')
+                self.assertEqual(hosting_plan_for_snapshots(
+                    with_dock, with_dock, flags)[0], 'no-change')
+        cp_usable = (10, 10, 180, 180)
+        moved_before = ((40, 40, 100, 80), cp_usable, 0, True)
+        moved_after = ((50, 40, 100, 80), cp_usable, 0, True)
+        self.assertEqual(hosting_plan_for_snapshots(
+            moved_before, moved_after, healthy)[0], 'update-layout')
+        mismatch = (False, True, True, False, True, False, True)
+        self.assertEqual(hosting_plan_for_snapshots(
+            moved_before, moved_after, mismatch)[0], 'full-host-required')
+        invalid = (shell, (10, 20, -1, 120), left, True)
+        self.assertEqual(hosting_plan_for_snapshots(
+            without_dock, invalid, healthy), ('invalid-geometry', None))
+        self.assertEqual(hosting_plan_for_snapshots(
+            invalid, with_dock, healthy), ('invalid-geometry', None))
 
     def test_tolerances_and_rejection(self):
         candidate = (40, 40, 100, 80)
