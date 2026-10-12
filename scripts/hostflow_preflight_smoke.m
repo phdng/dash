@@ -668,6 +668,91 @@ int main(void) {
             NSLog(@"FAIL: dock transition must preserve rejected outputs");
             return 1;
         }
+        // Independent snapshots: shell movement, usable-area growth and
+        // loss of dock must be evaluated, not only packed-state changes.
+        {
+            CGRect beforeSnapshotRect = CGRectMake(1, 2, 3, 4);
+            CGRect afterSnapshotRect = CGRectMake(5, 6, 7, 8);
+            NSString *beforeSnapshotLabel = @"before";
+            NSString *afterSnapshotLabel = @"after";
+            if (![DDHostDockLayoutTransitionForSnapshots(
+                    CGRectZero, area, leftDockState, NO,
+                    CGRectZero, CGRectMake(10, 20, 240, 120),
+                    leftDockState, NO, &beforeSnapshotRect,
+                    &afterSnapshotRect, &beforeSnapshotLabel,
+                    &afterSnapshotLabel) isEqualToString:@"updated"] ||
+                !CGRectEqualToRect(beforeSnapshotRect,
+                    CGRectMake(40, 20, 170, 120)) ||
+                !CGRectEqualToRect(afterSnapshotRect,
+                    CGRectMake(40, 20, 210, 120)) ||
+                ![beforeSnapshotLabel isEqualToString:@"measured-dock-nofrome"] ||
+                ![afterSnapshotLabel isEqualToString:beforeSnapshotLabel] ||
+                ![DDHostDockLayoutTransitionForSnapshots(
+                    combinedShell, combinedUsable, 0, YES,
+                    CGRectMake(50, 40, 100, 80), combinedUsable, 0, YES,
+                    &beforeSnapshotRect, &afterSnapshotRect,
+                    &beforeSnapshotLabel, &afterSnapshotLabel)
+                    isEqualToString:@"updated"] ||
+                !CGRectEqualToRect(beforeSnapshotRect, combinedShell) ||
+                !CGRectEqualToRect(afterSnapshotRect,
+                    CGRectMake(50, 40, 100, 80)) ||
+                ![DDHostDockLayoutTransitionForSnapshots(
+                    combinedShell, combinedUsable, 0, YES,
+                    combinedShell, CGRectMake(10, 10, 220, 180), 0, YES,
+                    &beforeSnapshotRect, &afterSnapshotRect,
+                    &beforeSnapshotLabel, &afterSnapshotLabel)
+                    isEqualToString:@"unchanged"] ||
+                !CGRectEqualToRect(beforeSnapshotRect, combinedShell) ||
+                !CGRectEqualToRect(afterSnapshotRect, combinedShell) ||
+                ![DDHostDockLayoutTransitionForSnapshots(
+                    CGRectZero, area, leftDockState, NO,
+                    CGRectZero, CGRectMake(10, 20, 240, 120), 0, NO,
+                    &beforeSnapshotRect, &afterSnapshotRect,
+                    &beforeSnapshotLabel, &afterSnapshotLabel)
+                    isEqualToString:@"restored"] ||
+                !CGRectEqualToRect(beforeSnapshotRect,
+                    CGRectMake(40, 20, 170, 120)) ||
+                !CGRectEqualToRect(afterSnapshotRect,
+                    CGRectMake(10, 20, 240, 120)) ||
+                ![DDHostDockLayoutTransitionForSnapshots(
+                    CGRectZero, area, 0, YES,
+                    area, area, 0, YES,
+                    &beforeSnapshotRect, &afterSnapshotRect,
+                    &beforeSnapshotLabel, &afterSnapshotLabel)
+                    isEqualToString:@"reason-only"] ||
+                !CGRectEqualToRect(beforeSnapshotRect, area) ||
+                !CGRectEqualToRect(afterSnapshotRect, area) ||
+                ![beforeSnapshotLabel isEqualToString:@"display-unmeasured-dock"] ||
+                ![afterSnapshotLabel isEqualToString:@"carplay-fullscreen"]) {
+                NSLog(@"FAIL: independent CarPlay snapshot transition geometry");
+                return 1;
+            }
+            beforeSnapshotRect = CGRectMake(1, 2, 3, 4);
+            afterSnapshotRect = CGRectMake(5, 6, 7, 8);
+            beforeSnapshotLabel = @"before";
+            afterSnapshotLabel = @"after";
+            if (![DDHostDockLayoutTransitionForSnapshots(
+                    combinedShell, combinedUsable, 0, YES,
+                    combinedShell, CGRectMake(NAN, 10, 180, 180),
+                    leftDockState, YES, &beforeSnapshotRect,
+                    &afterSnapshotRect, &beforeSnapshotLabel,
+                    &afterSnapshotLabel) isEqualToString:@"invalid-geometry"] ||
+                ![DDHostDockLayoutTransitionForSnapshots(
+                    combinedShell, CGRectZero, 0, YES,
+                    combinedShell, combinedUsable, leftDockState, YES,
+                    &beforeSnapshotRect, &afterSnapshotRect,
+                    &beforeSnapshotLabel, &afterSnapshotLabel)
+                    isEqualToString:@"invalid-geometry"] ||
+                !CGRectEqualToRect(beforeSnapshotRect,
+                    CGRectMake(1, 2, 3, 4)) ||
+                !CGRectEqualToRect(afterSnapshotRect,
+                    CGRectMake(5, 6, 7, 8)) ||
+                ![beforeSnapshotLabel isEqualToString:@"before"] ||
+                ![afterSnapshotLabel isEqualToString:@"after"]) {
+                NSLog(@"FAIL: invalid second CarPlay snapshot must not publish");
+                return 1;
+            }
+        }
         // 23D94: source-derived diagnostic label is suffixed only for covered.
         if (![DDHostFinalGeometryReason(@"carplay-subrect", @"covered")
                 isEqualToString:@"carplay-subrect+dock"] ||

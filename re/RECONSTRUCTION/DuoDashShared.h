@@ -313,6 +313,19 @@ FOUNDATION_EXPORT NSString * _Nonnull DDHostDockLayoutTransition(
     NSString * _Nullable * _Nullable previousReason,
     NSString * _Nullable * _Nullable nextReason);
 
+// Compare independent before/after CarPlay snapshots, including changes
+// to shell or usable bounds alongside dock state and exit mode. The result
+// labels match DDHostDockLayoutTransition; rejected snapshots never publish
+// any output. Caller owns all UI updates and notification lifetimes.
+FOUNDATION_EXPORT NSString * _Nonnull DDHostDockLayoutTransitionForSnapshots(
+    CGRect previousShellBounds, CGRect previousUsableBounds,
+    uint64_t previousDockState, BOOL previousExitEnabled,
+    CGRect nextShellBounds, CGRect nextUsableBounds,
+    uint64_t nextDockState, BOOL nextExitEnabled,
+    CGRect * _Nullable previousRect, CGRect * _Nullable nextRect,
+    NSString * _Nullable * _Nullable previousReason,
+    NSString * _Nullable * _Nullable nextReason);
+
 // 23D94: recover final diagnostic label after 269FC coverage.
 // Non-covered paths preserve the initial label; unknown covered labels
 // use the original generic covered+dock fallback.

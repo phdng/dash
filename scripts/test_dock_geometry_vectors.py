@@ -125,11 +125,14 @@ def resolve_state(shell, usable, state, exit_enabled):
     return base, final, coverage, final_reason
 
 
-def layout_transition(shell, usable, previous_state, previous_exit,
-                      next_state, next_exit):
-    """Independent comparison gate; no UI writes or persistent cached state."""
-    before = resolve_state(shell, usable, previous_state, previous_exit)
-    after = resolve_state(shell, usable, next_state, next_exit)
+def layout_transition_for_snapshots(previous_shell, previous_usable,
+                                    previous_state, previous_exit,
+                                    next_shell, next_usable, next_state,
+                                    next_exit):
+    """Compare complete independent CarPlay snapshots without shared bounds."""
+    before = resolve_state(previous_shell, previous_usable,
+                           previous_state, previous_exit)
+    after = resolve_state(next_shell, next_usable, next_state, next_exit)
     if before is None or after is None:
         return None
     if before[1] != after[1]:
@@ -140,6 +143,14 @@ def layout_transition(shell, usable, previous_state, previous_exit,
     else:
         decision = 'unchanged'
     return decision, before[1], after[1], before[3], after[3]
+
+
+def layout_transition(shell, usable, previous_state, previous_exit,
+                      next_state, next_exit):
+    """Compatibility with previous shared shell/usable layout comparison."""
+    return layout_transition_for_snapshots(shell, usable, previous_state,
+                                           previous_exit, shell, usable,
+                                           next_state, next_exit)
 
 
 class DockGeometryVectors(unittest.TestCase):
@@ -280,6 +291,40 @@ class DockGeometryVectors(unittest.TestCase):
                           'display-unmeasured-dock', 'measured-dock-nofrome'))
         self.assertIsNone(layout_transition(shell, (0, 0, 0, 0),
                                             adjacent, True, 0, False))
+
+    def test_independent_carplay_snapshot_transitions(self):
+        area = (10, 20, 200, 120)
+        bigger_area = (10, 20, 240, 120)
+        no_shell = (0, 0, 0, 0)
+        left = (100 << 48) | (200 << 32) | (300 << 16) | 1200
+        self.assertEqual(layout_transition_for_snapshots(
+            no_shell, area, left, False,
+            no_shell, bigger_area, left, False),
+            ('updated', (40, 20, 170, 120), (40, 20, 210, 120),
+             'measured-dock-nofrome', 'measured-dock-nofrome'))
+        usable = (10, 10, 180, 180)
+        shell = (40, 40, 100, 80)
+        moved = (50, 40, 100, 80)
+        self.assertEqual(layout_transition_for_snapshots(
+            shell, usable, 0, True, moved, usable, 0, True)[0:3],
+            ('updated', shell, moved))
+        self.assertEqual(layout_transition_for_snapshots(
+            shell, usable, 0, True, shell, (10, 10, 220, 180),
+            0, True)[0:3], ('unchanged', shell, shell))
+        self.assertEqual(layout_transition_for_snapshots(
+            no_shell, area, left, False, no_shell,
+            bigger_area, 0, False)[0:3],
+            ('restored', (40, 20, 170, 120), bigger_area))
+        self.assertEqual(layout_transition_for_snapshots(
+            no_shell, area, 0, True, area, area, 0, True),
+            ('reason-only', area, area,
+             'display-unmeasured-dock', 'carplay-fullscreen'))
+        self.assertIsNone(layout_transition_for_snapshots(
+            shell, usable, 0, True, shell,
+            (float('nan'), 10, 180, 180), left, True))
+        self.assertIsNone(layout_transition_for_snapshots(
+            shell, (0, 0, 0, 0), 0, True,
+            moved, usable, left, False))
 
     def test_tolerances_and_rejection(self):
         candidate = (40, 40, 100, 80)

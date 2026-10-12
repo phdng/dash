@@ -669,21 +669,24 @@ NSString *DDHostResolvedGeometryForDockState(CGRect shellBounds,
 // Hosting-facing transition gate: compare fully resolved geometry across
 // snapshots without updating UI. Geometry changes require a relayout;
 // diagnostic-only changes should not invalidate an unchanged CGRect.
-NSString *DDHostDockLayoutTransition(CGRect shellBounds, CGRect usableBounds,
+NSString *DDHostDockLayoutTransitionForSnapshots(
+    CGRect previousShellBounds, CGRect previousUsableBounds,
     uint64_t previousDockState, BOOL previousExitEnabled,
+    CGRect nextShellBounds, CGRect nextUsableBounds,
     uint64_t nextDockState, BOOL nextExitEnabled,
     CGRect * _Nullable previousRect, CGRect * _Nullable nextRect,
     NSString * _Nullable * _Nullable previousReason,
     NSString * _Nullable * _Nullable nextReason) {
     CGRect before = CGRectZero;
     CGRect after = CGRectZero;
-    NSString *beforeLabel = DDHostResolvedGeometryForDockState(shellBounds,
-        usableBounds, previousDockState, previousExitEnabled, NULL,
-        &before, NULL);
+    NSString *beforeLabel = DDHostResolvedGeometryForDockState(
+        previousShellBounds, previousUsableBounds,
+        previousDockState, previousExitEnabled, NULL, &before, NULL);
     if ([beforeLabel isEqualToString:@"invalid-geometry"])
         return @"invalid-geometry";
-    NSString *afterLabel = DDHostResolvedGeometryForDockState(shellBounds,
-        usableBounds, nextDockState, nextExitEnabled, NULL, &after, NULL);
+    NSString *afterLabel = DDHostResolvedGeometryForDockState(
+        nextShellBounds, nextUsableBounds,
+        nextDockState, nextExitEnabled, NULL, &after, NULL);
     if ([afterLabel isEqualToString:@"invalid-geometry"])
         return @"invalid-geometry";
     NSString *decision = @"unchanged";
@@ -706,6 +709,20 @@ NSString *DDHostDockLayoutTransition(CGRect shellBounds, CGRect usableBounds,
     if (nextReason)
         *nextReason = afterLabel;
     return decision;
+}
+
+// Existing callers pass unchanged shell/usable geometry. Route them through
+// the same before/after evaluator rather than maintaining duplicate logic.
+NSString *DDHostDockLayoutTransition(CGRect shellBounds, CGRect usableBounds,
+    uint64_t previousDockState, BOOL previousExitEnabled,
+    uint64_t nextDockState, BOOL nextExitEnabled,
+    CGRect * _Nullable previousRect, CGRect * _Nullable nextRect,
+    NSString * _Nullable * _Nullable previousReason,
+    NSString * _Nullable * _Nullable nextReason) {
+    return DDHostDockLayoutTransitionForSnapshots(
+        shellBounds, usableBounds, previousDockState, previousExitEnabled,
+        shellBounds, usableBounds, nextDockState, nextExitEnabled,
+        previousRect, nextRect, previousReason, nextReason);
 }
 
 // 23D94: only the 269FC `covered` label changes the diagnostic reason.
