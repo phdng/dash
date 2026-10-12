@@ -172,6 +172,30 @@ def hosting_plan_for_snapshots(previous, next, lifecycle):
     return plan, (before, after, before_label, after_label)
 
 
+def hosting_plan_for_observed_bounds(previous, next, lifecycle,
+                                    hosted_present, hosted_bounds):
+    """Host-frame reconciliation on top of complete snapshot planning."""
+    if hosted_present and not valid_rect(hosted_bounds):
+        return 'invalid-geometry', None
+    base, result = hosting_plan_for_snapshots(previous, next, lifecycle)
+    if base == 'invalid-geometry':
+        return base, None
+    before, target, before_label, next_label = result
+    if not hosted_present:
+        plan = 'full-host-required'
+    elif hosted_bounds == target:
+        plan = ('diagnostic-only' if before_label != next_label else
+                'no-change')
+    else:
+        dismiss, active, split, visible, mismatch, dirty, can_present = lifecycle
+        requires_full = (dismiss or not active or not split or visible or
+                         mismatch or dirty or not can_present)
+        plan = ('full-host-required' if requires_full else
+                'restore-layout' if base == 'restore-layout' else
+                'update-layout')
+    return plan, (before, target, before_label, next_label)
+
+
 class DockGeometryVectors(unittest.TestCase):
     def test_all_edges(self):
         usable = (10, 10, 180, 180)
@@ -397,6 +421,48 @@ class DockGeometryVectors(unittest.TestCase):
             without_dock, invalid, healthy), ('invalid-geometry', None))
         self.assertEqual(hosting_plan_for_snapshots(
             invalid, with_dock, healthy), ('invalid-geometry', None))
+
+    def test_observed_host_frame_reconciliation(self):
+        usable = (10, 20, 200, 120)
+        shell = (0, 0, 0, 0)
+        left = (100 << 48) | (200 << 32) | (300 << 16) | 1200
+        clipped = (40, 20, 170, 120)
+        with_dock = (shell, usable, left, False)
+        without_dock = (shell, usable, 0, False)
+        healthy = (False, True, True, False, False, False, True)
+        dirty = (False, True, True, False, False, True, True)
+        self.assertEqual(hosting_plan_for_observed_bounds(
+            with_dock, with_dock, healthy, True, usable)[0], 'update-layout')
+        self.assertEqual(hosting_plan_for_observed_bounds(
+            with_dock, without_dock, healthy, True, clipped)[0],
+            'restore-layout')
+        self.assertEqual(hosting_plan_for_observed_bounds(
+            with_dock, without_dock, healthy, True, usable)[0],
+            'diagnostic-only')
+        self.assertEqual(hosting_plan_for_observed_bounds(
+            with_dock, with_dock, healthy, True, clipped)[0], 'no-change')
+        self.assertEqual(hosting_plan_for_observed_bounds(
+            with_dock, with_dock, healthy, False, None)[0],
+            'full-host-required')
+        self.assertEqual(hosting_plan_for_observed_bounds(
+            with_dock, without_dock, dirty, True, clipped)[0],
+            'full-host-required')
+        self.assertEqual(hosting_plan_for_observed_bounds(
+            with_dock, with_dock, dirty, True, clipped)[0], 'no-change')
+        for invalid in [(10, 20, -1, 120),
+                        (10, 20, 200, 0),
+                        (float('nan'), 20, 200, 120)]:
+            with self.subTest(invalid=invalid):
+                self.assertEqual(hosting_plan_for_observed_bounds(
+                    with_dock, without_dock, healthy, True, invalid),
+                    ('invalid-geometry', None))
+        invalid_snapshot = (shell, (10, 20, -1, 120), left, False)
+        self.assertEqual(hosting_plan_for_observed_bounds(
+            with_dock, invalid_snapshot, healthy, False, None),
+            ('invalid-geometry', None))
+        self.assertEqual(hosting_plan_for_observed_bounds(
+            invalid_snapshot, with_dock, healthy, True, clipped),
+            ('invalid-geometry', None))
 
     def test_tolerances_and_rejection(self):
         candidate = (40, 40, 100, 80)

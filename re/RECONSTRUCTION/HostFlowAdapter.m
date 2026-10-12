@@ -766,6 +766,57 @@ NSString *DDHostDockHostingPlanForSnapshots(
     return plan;
 }
 
+// Reconcile the planned destination with the frame actually applied by
+// hosting. The 9D64 fast-equal path compares the stored CGRect exactly;
+// this remains advisory and does not access that private storage.
+NSString *DDHostDockHostingPlanForObservedBounds(
+    DDHostCarPlayLayoutSnapshot previous,
+    DDHostCarPlayLayoutSnapshot next,
+    DDHostHostingLifecycleSnapshot lifecycle,
+    BOOL hostedBoundsPresent, CGRect hostedBounds,
+    CGRect * _Nullable previousRect, CGRect * _Nullable nextRect,
+    NSString * _Nullable * _Nullable previousReason,
+    NSString * _Nullable * _Nullable nextReason) {
+    // Do not publish a target from an untrusted nonpositive/nonfinite host.
+    if (hostedBoundsPresent && !DDHostRectHasFinitePositiveSize(hostedBounds))
+        return @"invalid-geometry";
+    CGRect before = CGRectZero;
+    CGRect after = CGRectZero;
+    NSString *beforeLabel = nil;
+    NSString *afterLabel = nil;
+    NSString *basePlan = DDHostDockHostingPlanForSnapshots(previous, next,
+        lifecycle, &before, &after, &beforeLabel, &afterLabel);
+    if ([basePlan isEqualToString:@"invalid-geometry"])
+        return basePlan;
+
+    NSString *plan = @"no-change";
+    if (!hostedBoundsPresent) {
+        plan = @"full-host-required";
+    } else if (CGRectEqualToRect(hostedBounds, after)) {
+        if (![beforeLabel isEqualToString:afterLabel])
+            plan = @"diagnostic-only";
+    } else if (DDHostRequiresFullHost(
+            lifecycle.deactivateDismissPresent, lifecycle.active,
+            lifecycle.splitHosting, lifecycle.visible,
+            lifecycle.geometryMismatch, lifecycle.dirty,
+            lifecycle.canPresent)) {
+        plan = @"full-host-required";
+    } else if ([basePlan isEqualToString:@"restore-layout"]) {
+        plan = @"restore-layout";
+    } else {
+        plan = @"update-layout";
+    }
+    if (previousRect)
+        *previousRect = before;
+    if (nextRect)
+        *nextRect = after;
+    if (previousReason)
+        *previousReason = beforeLabel;
+    if (nextReason)
+        *nextReason = afterLabel;
+    return plan;
+}
+
 // 23D94: only the 269FC `covered` label changes the diagnostic reason.
 NSString *DDHostFinalGeometryReason(NSString * _Nullable initialReason,
                                     NSString * _Nullable coverageReason) {

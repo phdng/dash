@@ -2328,6 +2328,7 @@ for host_export in (
     "DDHostDockLayoutTransition",
     "DDHostDockLayoutTransitionForSnapshots",
     "DDHostDockHostingPlanForSnapshots",
+    "DDHostDockHostingPlanForObservedBounds",
     "DDHostDockCoverageEarlyReason",
     "DDHostDockAdjacentEdge",
     "DDHostDockCoveredExpandedBounds",

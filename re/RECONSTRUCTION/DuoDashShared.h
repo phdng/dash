@@ -359,6 +359,21 @@ FOUNDATION_EXPORT NSString * _Nonnull DDHostDockHostingPlanForSnapshots(
     NSString * _Nullable * _Nullable previousReason,
     NSString * _Nullable * _Nullable nextReason);
 
+// Advisory reconciliation with an externally observed hosted CGRect.
+// Unlike snapshot-only planning, this detects unapplied layout and avoids
+// redundant writes when the host is already at the desired destination.
+// hostedBoundsPresent=NO means no hosted frame can be trusted, requesting
+// full hosting. Invalid present bounds/snapshots return invalid-geometry
+// without modifying any outputs. No private access or UI mutation.
+FOUNDATION_EXPORT NSString * _Nonnull DDHostDockHostingPlanForObservedBounds(
+    DDHostCarPlayLayoutSnapshot previous,
+    DDHostCarPlayLayoutSnapshot next,
+    DDHostHostingLifecycleSnapshot lifecycle,
+    BOOL hostedBoundsPresent, CGRect hostedBounds,
+    CGRect * _Nullable previousRect, CGRect * _Nullable nextRect,
+    NSString * _Nullable * _Nullable previousReason,
+    NSString * _Nullable * _Nullable nextReason);
+
 // 23D94: recover final diagnostic label after 269FC coverage.
 // Non-covered paths preserve the initial label; unknown covered labels
 // use the original generic covered+dock fallback.

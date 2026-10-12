@@ -901,6 +901,97 @@ int main(void) {
                 return 1;
             }
         }
+        // Reconcile observed host rectangle against desired CarPlay geometry.
+        // Stale snapshots must still relayout; already-applied targets must
+        // not relayout when dock publication/host lifecycle changes.
+        {
+            DDHostCarPlayLayoutSnapshot observedBefore =
+                { CGRectZero, area, leftDockState, NO };
+            DDHostCarPlayLayoutSnapshot observedNext =
+                { CGRectZero, area, 0, NO };
+            DDHostHostingLifecycleSnapshot observedLifecycle =
+                { NO, YES, YES, NO, NO, NO, YES };
+            CGRect clippedHost = CGRectMake(40, 20, 170, 120);
+            CGRect outBefore = CGRectZero;
+            CGRect outNext = CGRectZero;
+            NSString *reasonBefore = nil;
+            NSString *reasonNext = nil;
+            if (![DDHostDockHostingPlanForObservedBounds(
+                    observedBefore, observedBefore, observedLifecycle,
+                    YES, area, &outBefore, &outNext,
+                    &reasonBefore, &reasonNext)
+                    isEqualToString:@"update-layout"] ||
+                !CGRectEqualToRect(outBefore, clippedHost) ||
+                !CGRectEqualToRect(outNext, clippedHost) ||
+                ![DDHostDockHostingPlanForObservedBounds(
+                    observedBefore, observedNext, observedLifecycle,
+                    YES, clippedHost, &outBefore, &outNext,
+                    &reasonBefore, &reasonNext)
+                    isEqualToString:@"restore-layout"] ||
+                !CGRectEqualToRect(outNext, area) ||
+                ![reasonNext isEqualToString:@"display-unmeasured-dock"] ||
+                ![DDHostDockHostingPlanForObservedBounds(
+                    observedBefore, observedNext, observedLifecycle,
+                    YES, area, &outBefore, &outNext,
+                    &reasonBefore, &reasonNext)
+                    isEqualToString:@"diagnostic-only"] ||
+                ![DDHostDockHostingPlanForObservedBounds(
+                    observedBefore, observedBefore, observedLifecycle,
+                    YES, clippedHost, &outBefore, &outNext,
+                    &reasonBefore, &reasonNext)
+                    isEqualToString:@"no-change"] ||
+                ![DDHostDockHostingPlanForObservedBounds(
+                    observedBefore, observedBefore, observedLifecycle,
+                    NO, CGRectZero, &outBefore, &outNext,
+                    &reasonBefore, &reasonNext)
+                    isEqualToString:@"full-host-required"]) {
+                NSLog(@"FAIL: observed dock hosting drift/restoration/no-op");
+                return 1;
+            }
+            observedLifecycle.dirty = YES;
+            if (![DDHostDockHostingPlanForObservedBounds(
+                    observedBefore, observedNext, observedLifecycle,
+                    YES, clippedHost, &outBefore, &outNext,
+                    &reasonBefore, &reasonNext)
+                    isEqualToString:@"full-host-required"] ||
+                ![DDHostDockHostingPlanForObservedBounds(
+                    observedBefore, observedBefore, observedLifecycle,
+                    YES, clippedHost, &outBefore, &outNext,
+                    &reasonBefore, &reasonNext)
+                    isEqualToString:@"no-change"]) {
+                NSLog(@"FAIL: observed docking lifecycle full-host guard");
+                return 1;
+            }
+            outBefore = CGRectMake(1, 2, 3, 4);
+            outNext = CGRectMake(5, 6, 7, 8);
+            reasonBefore = @"before-sentinel";
+            reasonNext = @"next-sentinel";
+            if (![DDHostDockHostingPlanForObservedBounds(
+                    observedBefore, observedNext, observedLifecycle,
+                    YES, CGRectMake(10, 20, -1, 120),
+                    &outBefore, &outNext, &reasonBefore, &reasonNext)
+                    isEqualToString:@"invalid-geometry"] ||
+                !CGRectEqualToRect(outBefore, CGRectMake(1, 2, 3, 4)) ||
+                !CGRectEqualToRect(outNext, CGRectMake(5, 6, 7, 8)) ||
+                ![reasonBefore isEqualToString:@"before-sentinel"] ||
+                ![reasonNext isEqualToString:@"next-sentinel"]) {
+                NSLog(@"FAIL: invalid observed host rectangle modified outputs");
+                return 1;
+            }
+            observedNext.usableBounds = CGRectZero;
+            if (![DDHostDockHostingPlanForObservedBounds(
+                    observedBefore, observedNext, observedLifecycle,
+                    NO, CGRectZero, &outBefore, &outNext,
+                    &reasonBefore, &reasonNext)
+                    isEqualToString:@"invalid-geometry"] ||
+                !CGRectEqualToRect(outBefore, CGRectMake(1, 2, 3, 4)) ||
+                !CGRectEqualToRect(outNext, CGRectMake(5, 6, 7, 8)) ||
+                ![reasonBefore isEqualToString:@"before-sentinel"] ||
+                ![reasonNext isEqualToString:@"next-sentinel"]) {
+                NSLog(@"FAIL: invalid next snapshot bypassed host reconciliation");
+                return 1;
+            }
+        }
         // 23D94: source-derived diagnostic label is suffixed only for covered.
         if (![DDHostFinalGeometryReason(@"carplay-subrect", @"covered")
                 isEqualToString:@"carplay-subrect+dock"] ||
