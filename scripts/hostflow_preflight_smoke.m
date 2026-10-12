@@ -345,19 +345,19 @@ int main(void) {
         }
         // 23D94: missing/undersized/outside shell falls back to the usable
         // CarPlay rectangle before clipping a measured edge dock.
-        CGRect fallback = CGRectMake(1, 2, 3, 4);
+        CGRect fallbackBounds = CGRectMake(1, 2, 3, 4);
         if (!DDHostTrimFallbackCarPlayBoundsForDockState(
-                CGRectZero, area, leftDockState, &fallback) ||
-            !CGRectEqualToRect(fallback, CGRectMake(40, 20, 170, 120)) ||
+                CGRectZero, area, leftDockState, &fallbackBounds) ||
+            !CGRectEqualToRect(fallbackBounds, CGRectMake(40, 20, 170, 120)) ||
             !DDHostTrimFallbackCarPlayBoundsForDockState(
-                CGRectMake(10, 20, 39, 100), area, leftDockState, &fallback) ||
+                CGRectMake(10, 20, 39, 100), area, leftDockState, &fallbackBounds) ||
             !DDHostTrimFallbackCarPlayBoundsForDockState(
-                CGRectMake(500, 20, 100, 100), area, leftDockState, &fallback) ||
+                CGRectMake(500, 20, 100, 100), area, leftDockState, &fallbackBounds) ||
             DDHostTrimFallbackCarPlayBoundsForDockState(
-                CGRectMake(50, 40, 100, 80), area, leftDockState, &fallback) ||
+                CGRectMake(50, 40, 100, 80), area, leftDockState, &fallbackBounds) ||
             DDHostTrimFallbackCarPlayBoundsForDockState(
-                CGRectZero, area, 0, &fallback) ||
-            !CGRectEqualToRect(fallback, CGRectMake(40, 20, 170, 120))) {
+                CGRectZero, area, 0, &fallbackBounds) ||
+            !CGRectEqualToRect(fallbackBounds, CGRectMake(40, 20, 170, 120))) {
             NSLog(@"FAIL: 23D94 fallback measured-dock clipping");
             return 1;
         }
