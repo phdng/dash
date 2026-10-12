@@ -385,6 +385,78 @@ int main(void) {
             NSLog(@"FAIL: 23D94 initial geometry bounds composition");
             return 1;
         }
+        // 23D94 writes the initial result before 269FC's covered expansion.
+        CGRect combinedInitial = CGRectMake(1, 2, 3, 4);
+        CGRect combinedResolved = CGRectMake(5, 6, 7, 8);
+        CGRect combinedShell = CGRectMake(40, 40, 100, 80);
+        CGRect combinedUsable = CGRectMake(10, 10, 180, 180);
+        if (![DDHostResolvedGeometryForDock(combinedShell, combinedUsable,
+                YES, CGRectMake(20, 40, 20, 80), YES, YES,
+                &combinedInitial, &combinedResolved) isEqualToString:@"covered"] ||
+            !CGRectEqualToRect(combinedInitial, combinedShell) ||
+            !CGRectEqualToRect(combinedResolved, CGRectMake(20, 40, 120, 80)) ||
+            ![DDHostResolvedGeometryForDock(combinedShell, combinedUsable,
+                NO, CGRectZero, YES, NO, &combinedInitial,
+                &combinedResolved) isEqualToString:@"no-strip-published"] ||
+            !CGRectEqualToRect(combinedInitial, combinedShell) ||
+            !CGRectEqualToRect(combinedResolved, combinedShell) ||
+            ![DDHostResolvedGeometryForDock(combinedShell, combinedUsable,
+                YES, CGRectMake(170, 40, 20, 80), YES, YES,
+                &combinedInitial, &combinedResolved) isEqualToString:@"strip-not-adjacent"] ||
+            !CGRectEqualToRect(combinedResolved, combinedShell) ||
+            ![DDHostResolvedGeometryForDock(combinedShell, CGRectZero,
+                NO, CGRectZero, YES, NO, &combinedInitial,
+                &combinedResolved) isEqualToString:@"invalid-geometry"] ||
+            !CGRectEqualToRect(combinedInitial, combinedShell) ||
+            !CGRectEqualToRect(combinedResolved, combinedShell)) {
+            NSLog(@"FAIL: 23D94/269FC combined geometry output order");
+            return 1;
+        }
+        // 23D94 final reason, intermediate coverage and both CGRect outputs.
+        NSString *finalCoverage = @"untouched";
+        CGRect finalInitial = CGRectMake(1, 2, 3, 4);
+        CGRect finalResolved = CGRectMake(5, 6, 7, 8);
+        if (![DDHostResolvedGeometryFinalReason(combinedShell, combinedUsable,
+                YES, CGRectMake(20, 40, 20, 80), YES, YES,
+                &finalInitial, &finalResolved, &finalCoverage)
+                isEqualToString:@"carplay-subrect+dock"] ||
+            ![finalCoverage isEqualToString:@"covered"] ||
+            !CGRectEqualToRect(finalInitial, combinedShell) ||
+            !CGRectEqualToRect(finalResolved, CGRectMake(20, 40, 120, 80)) ||
+            ![DDHostResolvedGeometryFinalReason(combinedShell, combinedUsable,
+                NO, CGRectZero, YES, NO, &finalInitial, &finalResolved,
+                &finalCoverage) isEqualToString:@"carplay-subrect"] ||
+            ![finalCoverage isEqualToString:@"no-strip-published"] ||
+            !CGRectEqualToRect(finalResolved, combinedShell) ||
+            ![DDHostResolvedGeometryFinalReason(combinedShell, CGRectZero,
+                NO, CGRectZero, YES, NO, &finalInitial, &finalResolved,
+                &finalCoverage) isEqualToString:@"invalid-geometry"] ||
+            ![finalCoverage isEqualToString:@"no-strip-published"] ||
+            !CGRectEqualToRect(finalInitial, combinedShell) ||
+            !CGRectEqualToRect(finalResolved, combinedShell)) {
+            NSLog(@"FAIL: 23D94 combined final diagnostic geometry");
+            return 1;
+        }
+        // 23D94: source-derived diagnostic label is suffixed only for covered.
+        if (![DDHostFinalGeometryReason(@"carplay-subrect", @"covered")
+                isEqualToString:@"carplay-subrect+dock"] ||
+            ![DDHostFinalGeometryReason(@"measured-dock", @"covered")
+                isEqualToString:@"measured-dock+dock"] ||
+            ![DDHostFinalGeometryReason(@"measured-dock-nofrome", @"covered")
+                isEqualToString:@"measured-dock-nofrome+dock"] ||
+            ![DDHostFinalGeometryReason(@"single-app", @"covered")
+                isEqualToString:@"single-app+dock"] ||
+            ![DDHostFinalGeometryReason(@"carplay-fullscreen", @"covered")
+                isEqualToString:@"covered+dock"] ||
+            ![DDHostFinalGeometryReason(nil, @"covered")
+                isEqualToString:@"covered+dock"] ||
+            ![DDHostFinalGeometryReason(@"measured-dock", @"outside-usable")
+                isEqualToString:@"measured-dock"] ||
+            ![DDHostFinalGeometryReason(@"carplay-subrect", nil)
+                isEqualToString:@"carplay-subrect"]) {
+            NSLog(@"FAIL: 23D94 final covered dock diagnostic labels");
+            return 1;
+        }
         // 23D94: missing/undersized/outside shell falls back to the usable
         // CarPlay rectangle before clipping a measured edge dock.
         CGRect fallbackBounds = CGRectMake(1, 2, 3, 4);

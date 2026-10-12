@@ -277,6 +277,27 @@ FOUNDATION_EXPORT BOOL DDHostInitialGeometryBounds(
     CGRect shellBounds, CGRect usableBounds, BOOL dockMeasured,
     CGRect dockBounds, CGRect * _Nullable outRect);
 
+// 23D94 + 269FC: retain initial CGRect independently from the
+// subsequent covered-dock expansion (original output pointer is written first).
+FOUNDATION_EXPORT NSString * _Nonnull DDHostResolvedGeometryForDock(
+    CGRect shellBounds, CGRect usableBounds, BOOL dockMeasured,
+    CGRect dockBounds, BOOL exitEnabled, BOOL dockPublished,
+    CGRect * _Nullable initialRect, CGRect * _Nullable resolvedRect);
+
+// 23D94: combined geometry plus original final diagnostic label.
+// Coverage decision is optional output; reason return is the final label.
+FOUNDATION_EXPORT NSString * _Nonnull DDHostResolvedGeometryFinalReason(
+    CGRect shellBounds, CGRect usableBounds, BOOL dockMeasured,
+    CGRect dockBounds, BOOL exitEnabled, BOOL dockPublished,
+    CGRect * _Nullable initialRect, CGRect * _Nullable resolvedRect,
+    NSString * _Nullable * _Nullable coverageReason);
+
+// 23D94: recover final diagnostic label after 269FC coverage.
+// Non-covered paths preserve the initial label; unknown covered labels
+// use the original generic covered+dock fallback.
+FOUNDATION_EXPORT NSString * _Nonnull DDHostFinalGeometryReason(
+    NSString * _Nullable initialReason, NSString * _Nullable coverageReason);
+
 // 23D94 fallback: invalid/uncontained shell selects the usable CarPlay
 // rectangle as dock-clipping base; caller supplies packed dock state.
 FOUNDATION_EXPORT BOOL DDHostTrimFallbackCarPlayBoundsForDockState(

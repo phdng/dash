@@ -1,10 +1,16 @@
 # STATE.md — DuoDash iOS Tweak Reconstruction
-_Last updated: 2026-10-12 session-407 (23D94 initial rectangle composition)_
+_Last updated: 2026-10-12 session-410 (23D94 resolved geometry with final diagnostic)_
 
 ## PROJECT:
 Tái hiện behavior-equivalent của iOS tweak **DuoDash-STL-1.0** (SenseTechLab, (c)2026) — CarPlay dual-pane AppBridge + HUD + Unified Keyboard + License + Perf tweaks. Artifacts: `DuoDash.dylib` (3087248B, 4018 funcs), `DuoDash.app` (`com.sensetechlab.duodash`), `DuoDashKey.app` (`com.sensetechlab.duodashkey`), `DuoDashPrefs.bundle` (`com.sensetechlab.duodash.prefs`).
 
 ## CURRENT STATUS:
+Session-410 adds `DDHostResolvedGeometryFinalReason`, composing the 23D94 initial rectangle, 269FC covered adjustment and 23D94 final diagnostic label. Returns the final label while optionally exposing initial/resolved CGRect and intermediate coverage reason; rejects invalid geometry without mutating any caller outputs. Objective-C smoke assertions cover covered, unpublished dock and invalid bounds; structural export registry updated. Local structural verifier (30 modules), 2 portable geometry tests and diff PASS; macOS compiled smoke, Theos arm64, live CarPlay still unverified.
+
+Session-409 adds source-evidenced `DDHostFinalGeometryReason` from original 23D94 diagnostic label logic following 269FC covered result. The helper maps carplay-subrect, measured-dock, measured-dock-nofrome and single-app to their +dock forms, otherwise covered+dock; for non-covered retains the initial reason. Smoke assertions and export verifier updated. Local 30-module structural verifier, Python geometry tests and git diff PASS; Objective-C macOS smoke, Theos arm64 and device CarPlay still require CI/device verification.
+
+Session-408 adds `DDHostResolvedGeometryForDock` combining source-derived 23D94 initial CGRect and later 269FC covered adjustment, retaining two independent rectangles in original call order. Tests cover covered left dock, unpublished dock, non-adjacent strip, and invalid usable area with unchanged caller output. This remains a pure-data adapter, not live CarPlay hosting. Local verifier (30 modules), Python geometry tests and diff PASS; compiled macOS smoke, Theos arm64 and real CarPlay remain unverified.
+
 Session-407 adds `DDHostInitialGeometryBounds`, composing source-derived `23D94` route precedence with `26654` dock clipping. It preserves contained subrect, defaults to usable CarPlay bounds for invalid shell, trims measured dock for full/fallback routes, retains the base rectangle for non-edge dock and rejects invalid usable geometry. Caller-fed pure-data input; does not apply 269FC later covered rectangle, read private state or mutate UI. Objective-C smoke extended and verifier updated. Local verifier (30 modules), Python geometry and diff PASS; macOS compiled smoke, Theos arm64 and CarPlay device unverified.
 
 Session-406 ports initial branch precedence from original `sub_23D94` through `DDHostInitialGeometryReason` in HostFlowAdapter.m: missing/undersized/outside shell selects display-unmeasured-dock or measured-dock-nofrome according to dock measurement; contained subrect selects carplay-subrect even when dock is measured; fullscreen uses measured-dock or carplay-fullscreen. Uses caller-fed CGRect/measurement flag; does not read private state or mutate UI. Objective-C smoke tests cover all routes. Local verifier (30 modules), Python dock vectors and git diff PASS; compiled macOS smoke, Theos arm64 and real CarPlay remain unverified in this workspace.

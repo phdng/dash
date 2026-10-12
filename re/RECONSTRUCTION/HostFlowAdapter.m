@@ -608,6 +608,67 @@ BOOL DDHostInitialGeometryBounds(CGRect shellBounds, CGRect usableBounds,
     return YES;
 }
 
+// 23D94 writes the initial rectangle before invoking 269FC; keep that
+// rectangle separate from the covered result rather than overwriting it.
+NSString *DDHostResolvedGeometryForDock(CGRect shellBounds, CGRect usableBounds,
+    BOOL dockMeasured, CGRect dockBounds, BOOL exitEnabled, BOOL dockPublished,
+    CGRect * _Nullable initialRect, CGRect * _Nullable resolvedRect) {
+    CGRect initial = CGRectZero;
+    if (!DDHostInitialGeometryBounds(shellBounds, usableBounds,
+            dockMeasured, dockBounds, &initial))
+        return @"invalid-geometry";
+    CGRect resolved = initial;
+    NSString *coverage = DDHostDockCoverageReason(exitEnabled, dockPublished,
+        usableBounds, initial, dockBounds, &resolved);
+    if (initialRect)
+        *initialRect = initial;
+    if (resolvedRect)
+        *resolvedRect = resolved;
+    return coverage;
+}
+
+// 23D94: derive the diagnostic label only after the initial geometry and
+// 269FC coverage decision have been computed; fail without output mutation.
+NSString *DDHostResolvedGeometryFinalReason(CGRect shellBounds,
+    CGRect usableBounds, BOOL dockMeasured, CGRect dockBounds,
+    BOOL exitEnabled, BOOL dockPublished, CGRect * _Nullable initialRect,
+    CGRect * _Nullable resolvedRect,
+    NSString * _Nullable * _Nullable coverageReason) {
+    CGRect initial = CGRectZero;
+    CGRect resolved = CGRectZero;
+    NSString *coverage = DDHostResolvedGeometryForDock(shellBounds,
+        usableBounds, dockMeasured, dockBounds, exitEnabled, dockPublished,
+        &initial, &resolved);
+    if ([coverage isEqualToString:@"invalid-geometry"])
+        return coverage;
+    NSString *baseReason = DDHostInitialGeometryReason(
+        shellBounds, usableBounds, dockMeasured);
+    NSString *finalReason = DDHostFinalGeometryReason(baseReason, coverage);
+    if (initialRect)
+        *initialRect = initial;
+    if (resolvedRect)
+        *resolvedRect = resolved;
+    if (coverageReason)
+        *coverageReason = coverage;
+    return finalReason;
+}
+
+// 23D94: only the 269FC `covered` label changes the diagnostic reason.
+NSString *DDHostFinalGeometryReason(NSString * _Nullable initialReason,
+                                    NSString * _Nullable coverageReason) {
+    if (![coverageReason isEqualToString:@"covered"])
+        return initialReason ?: @"";
+    if ([initialReason isEqualToString:@"carplay-subrect"])
+        return @"carplay-subrect+dock";
+    if ([initialReason isEqualToString:@"measured-dock"])
+        return @"measured-dock+dock";
+    if ([initialReason isEqualToString:@"measured-dock-nofrome"])
+        return @"measured-dock-nofrome+dock";
+    if ([initialReason isEqualToString:@"single-app"])
+        return @"single-app+dock";
+    return @"covered+dock";
+}
+
 // 23D94: when shell is empty/under 40pt or outside the one-point
 // expanded usable bounds, its dock path starts from carPlayUsableBounds.
 // This port only handles measured edge-dock clipping; the original
