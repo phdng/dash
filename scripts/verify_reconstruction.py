@@ -2361,7 +2361,7 @@ for arm64_contract in (
     '"$RUNNER_TEMP/HostFlowAdapter_arm64.o"',
     '"$RUNNER_TEMP/hostflow_preflight_smoke_arm64.o"',
     '"$RUNNER_TEMP/hostflow_preflight_smoke_arm64"',
-    'xcrun lipo -verify_arch arm64 "$RUNNER_TEMP/hostflow_preflight_smoke_arm64"',
+    'xcrun lipo "$RUNNER_TEMP/hostflow_preflight_smoke_arm64" -verify_arch arm64',
     "-framework Foundation -framework CoreFoundation",
     "make clean all",
 ):

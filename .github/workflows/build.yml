@@ -66,7 +66,7 @@ jobs:
             "$RUNNER_TEMP/HostFlowAdapter_arm64.o" \
             "$RUNNER_TEMP/hostflow_preflight_smoke_arm64.o" \
             -o "$RUNNER_TEMP/hostflow_preflight_smoke_arm64"
-          xcrun lipo -verify_arch arm64 "$RUNNER_TEMP/hostflow_preflight_smoke_arm64"
+          xcrun lipo "$RUNNER_TEMP/hostflow_preflight_smoke_arm64" -verify_arch arm64
 
       - name: Install Theos prerequisites
         run: brew install ldid xz
