@@ -32,10 +32,10 @@ Không thêm pass vào selectors, ObjC class metadata, constructor, daemon,
 container switching, SpringBoard hooks hoặc các source khác. Việc có gọi
 helper trong bản thực tế phụ thuộc runtime; không kết luận từ log build.
 
-`scripts/demo_ollvm/prepare.py` copy `demo/reconstruction/` vào **hai
-sandbox** hoàn toàn riêng trong `$RUNNER_TEMP`. Bản OLLVM tạo hai
-`policy.json` phục vụ compiler CWD nhưng giữ **tất cả Makefile/source demo
-y nguyên**. Bản chuẩn dùng Apple Clang. Bản OLLVM dùng adapter
+`scripts/demo_ollvm/prepare.py` copy `demo/reconstruction/` vào các
+sandbox riêng trong `$RUNNER_TEMP`. Các thay đổi scheme-specific về
+layout, dependencies, postinst và Makefile chỉ xảy ra trong **bản sao**;
+source demo gốc không bị sửa. Bản OLLVM tạo `policy.json` trong sandbox. Bản chuẩn dùng Apple Clang. Bản OLLVM dùng adapter
 `scripts/demo_ollvm/compiler_select.py` qua `TARGET_CC`, **ủy quyền
 mọi file khác** (bao gồm `CRCommon.m`, tweak/daemon/hooks) cho Apple Clang.
 Với `CRCredits.m`, **chỉ lát cắt arm64** dùng Homebrew LLVM19 Clang và
@@ -48,9 +48,46 @@ riêng. Workflow yêu cầu đúng **một** log `DEMO_OLLVM_SELECTED` cho
 `arm64` và **một** log `DEMO_OLLVM_BYPASS` cho `arm64e`, đồng thời yêu cầu
 đúng 8 sự kiện pass/hàm. Không tự bật pass trên toàn bundle.
 
-Phạm vi hiện tại chỉ chạy **rootful** theo action Theos của demo, với
-architectures gốc (arm64 + arm64e cho dylib/bundle); roothide là giai đoạn
-tiếp theo sau khi rootful thử nghiệm xanh.
+Workflow hiện chạy **hai job độc lập rootless/roothide**, cùng giữ
+kiểm tra Mach-O arm64 + arm64e cho dylib/bundle nhưng chỉ obfuscate
+CRCredits.m ở lát cắt arm64.
+
+## Package cho iPhone 6s iOS 15.8.8: rootless và roothide
+
+Thông báo `package architecture (iphoneos-arm) does not match system
+(iphoneos-arm64)` đến từ metadata Debian của `.deb` rootful, **không**
+phải do CPU iPhone 6s thiếu arm64e. CPU iPhone 6s là arm64.
+
+| Job | THEOS_PACKAGE_SCHEME | Theos | Architecture của .deb |
+| --- | --- | --- | --- |
+| rootless | `rootless` | `theos/theos` | `iphoneos-arm64` |
+| roothide | `roothide` | `roothide/theos` | `iphoneos-arm64e` |
+
+Roothide chuẩn dùng architecture `iphoneos-arm64e` như **namespace
+đóng gói** dù máy chỉ có CPU arm64. Nếu thiết bị thông báo hệ thống
+`iphoneos-arm64` như trường hợp này, cần kiểm tra bootstrap đang hoạt
+động; không mặc định cho rằng package rootless có thể cài vào roothide.
+
+Trên thiết bị chạy `dpkg --print-architecture` để xác nhận package manager.
+Với môi trường rootless chuẩn thật sự dùng `iphoneos-arm64`, chọn artifact
+`CraneDemo-OLLVM-rootless-EXPERIMENTAL`; với roothide chuẩn (đúng bootstrap
+roothide) chọn `CraneDemo-OLLVM-roothide-EXPERIMENTAL` khi kiến trúc dpkg
+tương thích. Nếu dùng roothide nhưng dpkg vẫn in `iphoneos-arm64`, **không
+cài hai artifact ngay**: xác định rõ dpkg/bootstrap trước để tránh đụng
+cấu trúc hệ thống.
+
+Workflow chạy hai job độc lập, kiểm tra `dpkg-deb -f <file.deb> Architecture`,
+dependency, đủ 33 tệp layout, nội dung và mode 0755 của `postinst`, kiến
+trúc Mach-O, pass logs và sự khác biệt CranePrefs. Rootless chỉ stage vào
+`/var/jb` và chuyển path launchd/postinst **trong sandbox**; roothide dùng
+roothide/theos và kiểm tra helper entitlements. Không có thao tác đổi
+metadata hậu đóng gói nhằm lách dpkg.
+
+Build PASS **không đảm bảo** thiết bị đã cài và chạy được: còn phụ thuộc
+bootstrap, loader, code signing, launchd và chức năng reconstruction.
+Chỉ cài thử trên máy phụ có backup và đường rollback, không cài song
+song bản rootless/roothide hay baseline/OLLVM cùng package ID.
+
 
 ## Chạy và kiểm tra GitHub Actions
 
@@ -67,7 +104,10 @@ CI:
    `.deb` bằng `dpkg-deb -x` (data) **và** `dpkg-deb -e` (control/postinst),
    truyền cả hai thư mục cho `verify_package_layout.py` để kiểm tra chính xác
    `postinst` cùng mode 0755; chạy verifier Mach-O architecture, rồi upload
-   `CraneDemo-Baseline-EXPERIMENTAL` trước khi biên dịch OLLVM.
+   `CraneDemo-Baseline-rootless-EXPERIMENTAL` hoặc
+   `CraneDemo-Baseline-roothide-EXPERIMENTAL` trước khi biên dịch OLLVM.
+   Rootless kiểm tra nội dung data trong `/var/jb`; roothide thêm kiểm tra
+   entitlement helper theo chính verifier gốc của demo.
 4. Build OLLVM plugin bằng LLVM19 và preflight khả năng biên dịch Objective-C
    Foundation/UIKit với bộ LLVM19 resource headers và SDK của Xcode, sau đó
    biên dịch lại package với **LLVM19 chỉ cho `CRCredits.m` ở arm64**. Apple
@@ -89,7 +129,7 @@ Audit pass log và selector compiler được xác minh độc lập.
 
 ## Kiểm tra trên thiết bị dự phòng
 
-Hai `.deb` dùng **cùng Package ID và đường dẫn cài đặt Crane**; chúng
+Các package dùng **cùng Package ID** nhưng có scheme/đường dẫn khác nhau;
 không được cài đồng thời. Chỉ thử trên thiết bị jailbreak phụ có thể
 rollback, đã backup dữ liệu, không phải iPhone chính.
 
@@ -110,7 +150,8 @@ Ghi lại cho *cả hai bản* ở cùng môi trường:
   các chức năng chưa hoàn thiện trong reconstruction không được ghi nhầm
   là regressions của OLLVM.
 - Test phiên bản baseline trước, sau đó thay bằng bản OLLVM; ghi phiên bản
-  thiết bị, iOS, jailbreak/rootful, artifact hash và các lỗi thực tế. Giữ
+  thiết bị, iOS, scheme/bootstrap, `dpkg --print-architecture`, artifact
+  hash và các lỗi thực tế. Giữ
   đường rollback về chính bản baseline đã thử.
 
 **Khả năng hoạt động trên thiết bị chưa được xác minh** bởi việc build CI.

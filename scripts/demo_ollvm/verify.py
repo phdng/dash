@@ -12,6 +12,7 @@ from pathlib import Path
 PASSES = ("split", "bcf", "fla", "sub")
 FUNCTIONS = ("CRCreditsOpenTwitter", "CRCreditsLocalizedRows")
 PREFS_EXECUTABLE = Path("Library/PreferenceBundles/CranePrefs.bundle/CranePrefs")
+PACKAGING_PREFIXES = {"roothide": Path("."), "rootless": Path("var/jb")}
 REQUIRED_CLASSES = (
     b"CRPCreditsController",
     b"CRPCreditsMiniZipController",
@@ -48,20 +49,23 @@ def verify_passes(log: str) -> dict[tuple[str, str], int]:
     return counts
 
 
-def verify_packages(plain: Path, candidate: Path) -> dict[str, str | int]:
+def verify_packages(plain: Path, candidate: Path, scheme: str = "roothide") -> dict[str, str | int]:
+    if scheme not in PACKAGING_PREFIXES:
+        raise AssertionError(f"Unsupported scheme {scheme!r}")
     if not plain.is_dir() or not candidate.is_dir():
         raise AssertionError("Both expanded package roots are required")
-    plain_files = {str(p.relative_to(plain)) for p in plain.rglob("*") if p.is_file()}
-    obf_files = {str(p.relative_to(candidate)) for p in candidate.rglob("*") if p.is_file()}
+    executable = PACKAGING_PREFIXES[scheme] / PREFS_EXECUTABLE
+    plain_files = {p.relative_to(plain).as_posix() for p in plain.rglob("*") if p.is_file()}
+    obf_files = {p.relative_to(candidate).as_posix() for p in candidate.rglob("*") if p.is_file()}
     if not plain_files or plain_files != obf_files:
         raise AssertionError(
             f"Package paths diverged. Missing: {sorted(plain_files - obf_files)[:10]}; "
             f"new: {sorted(obf_files - plain_files)[:10]}"
         )
-    if str(PREFS_EXECUTABLE) not in plain_files:
-        raise AssertionError("CranePrefs.bundle executable missing from package")
-    baseline = (plain / PREFS_EXECUTABLE).read_bytes()
-    protected = (candidate / PREFS_EXECUTABLE).read_bytes()
+    if executable.as_posix() not in plain_files:
+        raise AssertionError(f"CranePrefs.bundle executable missing from {scheme} package")
+    baseline = (plain / executable).read_bytes()
+    protected = (candidate / executable).read_bytes()
     if baseline == protected:
         raise AssertionError("CranePrefs Mach-O binary is byte-identical after OLLVM")
     for klass in REQUIRED_CLASSES:
@@ -76,13 +80,17 @@ def verify_packages(plain: Path, candidate: Path) -> dict[str, str | int]:
     }
 
 
-def report(plain: Path, candidate: Path, log_path: Path, out: Path) -> None:
+def report(plain: Path, candidate: Path, log_path: Path, out: Path,
+           scheme: str = "roothide") -> None:
     log = log_path.read_text(encoding="utf-8", errors="replace")
     verify_compiler_routes(log)
     counts = verify_passes(log)
-    info = verify_packages(plain, candidate)
+    info = verify_packages(plain, candidate, scheme)
     lines = [
         "# Crane demo OLLVM scoped evaluation",
+        "",
+        f"Theos package scheme: **{scheme}**.",
+        f"Expected Debian Architecture: **{'iphoneos-arm64' if scheme == 'rootless' else 'iphoneos-arm64e'}**.",
         "",
         "Selected target: CranePrefs / CRCredits.m (2 functions; 4 OLLVM passes).",
         "Architecture scope: **arm64 only** receives LLVM19 + OLLVM.",
@@ -121,5 +129,6 @@ if __name__ == "__main__":
     parser.add_argument("--ollvm", type=Path, required=True)
     parser.add_argument("--log", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--scheme", choices=PACKAGING_PREFIXES, default="roothide")
     args = parser.parse_args()
-    report(args.baseline, args.ollvm, args.log, args.report)
+    report(args.baseline, args.ollvm, args.log, args.report, args.scheme)

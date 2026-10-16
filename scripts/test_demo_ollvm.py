@@ -92,8 +92,23 @@ assert workflow.index("name: Preflight LLVM19 resource headers for Objective-C")
     "name: Build demo with OLLVM scoped only to CranePrefs credits"
 )
 assert "CranePrefs_CFLAGS += -O1 -fpass-plugin=" not in workflow
-assert "CraneDemo-Baseline-EXPERIMENTAL" in workflow
-assert "CraneDemo-OLLVM-EXPERIMENTAL" in workflow
+assert "CraneDemo-Baseline-${{ matrix.variant }}-EXPERIMENTAL" in workflow
+assert "CraneDemo-OLLVM-${{ matrix.variant }}-EXPERIMENTAL" in workflow
+assert "CraneDemo-OLLVM-${{ matrix.variant }}-Diagnostics" in workflow
+for scheme, repo, arch in (
+    ("rootless", "theos/theos", "iphoneos-arm64"),
+    ("roothide", "roothide/theos", "iphoneos-arm64e"),
+):
+    assert f"scheme: {scheme}" in workflow
+    assert f"theos_repo: {repo}" in workflow
+    assert f"deb_arch: {arch}" in workflow
+assert "theos-src: ${{ matrix.theos_repo }}" in workflow
+assert workflow.count('THEOS_PACKAGE_SCHEME="${{ matrix.scheme }}"') == 2
+assert workflow.count('test "$(dpkg-deb -f "$deb" Architecture)" = "${{ matrix.deb_arch }}"') == 2
+assert workflow.count("scripts/demo_ollvm/verify_install.py") == 2
+assert workflow.count(' --scheme "${{ matrix.scheme }}"') >= 3
+assert workflow.count("verify_helper_entitlements.py") == 2
+assert "--report \"$RUNNER_TEMP/demo-comparison/report.md\" --scheme \"${{ matrix.scheme }}\"" in workflow
 assert workflow.index("name: Upload clean demo baseline") < workflow.index(
     "name: Build demo with OLLVM scoped only to CranePrefs credits"
 )
@@ -114,7 +129,13 @@ def load(name: str, path: Path):
 
 prepare = load("demo_prepare", DIR / "prepare.py")
 check = load("demo_verify", DIR / "verify.py")
+install = load("demo_install_verify", DIR / "verify_install.py")
 select = load("demo_compiler_select", DIR / "compiler_select.py")
+assert install.SCHEMES == {
+    "rootless": ("iphoneos-arm64", "var/jb"),
+    "roothide": ("iphoneos-arm64e", ""),
+}
+assert check.PACKAGING_PREFIXES["rootless"].as_posix() == "var/jb"
 assert select.is_selected_compile(["-c", "CRCredits.m", "-arch", "arm64"])
 assert not select.is_selected_compile(["-c", "../prefs/CRCredits.m", "-arch", "arm64e"])
 assert select.compile_architecture(["-c", "CRCredits.m", "-target", "arm64-apple-ios11.0"]) == "arm64"
@@ -201,6 +222,93 @@ with tempfile.TemporaryDirectory() as tmp:
     assert (obf / "sources/maindylib/Makefile").read_text() == makefiles["sources/maindylib/Makefile"]
     assert (obf / "sources/cranesb/Makefile").read_text() == makefiles["sources/cranesb/Makefile"]
     assert (obf / "policy.json").read_bytes() == (obf / "sources/prefs/policy.json").read_bytes()
+    # Exercise scheme adaptation on a real, complete demo source tree.
+    rootless = tmp / "rootless"
+    roothide = tmp / "roothide"
+    prepare.prepare(DEMO, rootless, "baseline", None, "rootless")
+    prepare.prepare(DEMO, roothide, "baseline", None, "roothide")
+    original_postinst = (DEMO / "layout/DEBIAN/postinst").read_bytes()
+    original_make = (DEMO / "Makefile").read_bytes()
+    assert original_postinst == (roothide / "layout/DEBIAN/postinst").read_bytes()
+    assert original_make == (roothide / "Makefile").read_bytes()
+    assert "THEOS_STAGING_DIR)/var/jb/Library/" in (rootless / "Makefile").read_text()
+    assert "plist=/var/jb/Library/LaunchDaemons" in (
+        rootless / "layout/DEBIAN/postinst"
+    ).read_text()
+    import plistlib
+    assert plistlib.loads((rootless / "layout/Library/LaunchDaemons/com.opa334.cranehelperd.plist").read_bytes())["Program"] == "/var/jb/usr/local/libexec/cranehelperd"
+    assert "ifneq ($(THEOS_PACKAGE_SCHEME),roothide)" in (roothide / "sources/prefs/Makefile").read_text()
+    assert "ifeq ($(THEOS_PACKAGE_SCHEME),rootful)" in (rootless / "sources/prefs/Makefile").read_text()
+    assert "Depends: mobilesubstrate, firmware" in (rootless / "control").read_text()
+    assert "Depends: mobilesubstrate, firmware" in (roothide / "control").read_text()
+    assert (DEMO / "Makefile").read_bytes() == original_make
+    assert (DEMO / "layout/DEBIAN/postinst").read_bytes() == original_postinst
+    # Synthetic files verify the artifact's package architecture, install
+    # prefix and postinst guards without needing a macOS toolchain.
+    import shutil
+    import os
+    from contextlib import nullcontext
+    from unittest.mock import patch
+
+    def synthetic_mode_context(mode: int):
+        # Windows NTFS does not preserve POSIX executable mode bits.
+        return (patch.object(install.stat, "S_IMODE", return_value=mode)
+                if os.name == "nt" else nullcontext())
+
+    for scheme, sandbox in (("rootless", rootless), ("roothide", roothide)):
+        payload = tmp / f"{scheme}-payload"
+        control_dir = tmp / f"{scheme}-control"
+        control_dir.mkdir()
+        arch, prefix_str = install.SCHEMES[scheme]
+        base = payload / prefix_str
+        for f in (sandbox / "layout").rglob("*"):
+            if f.is_file() and f.relative_to(sandbox / "layout").parts[0] != "DEBIAN":
+                target = base / f.relative_to(sandbox / "layout")
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(f, target)
+        for rel in install.REQUIRED_FILES:
+            file = base / rel
+            if not file.is_file():
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_bytes(b"mock Mach-O binary")
+        (control_dir / "postinst").write_bytes((sandbox / "layout/DEBIAN/postinst").read_bytes())
+        (control_dir / "postinst").chmod(0o755)
+        control_text = (
+            f"Package: com.opa334.cranereconstruction\nArchitecture: {arch}\n"
+            "Depends: mobilesubstrate, firmware\n"
+        )
+        (control_dir / "control").write_text(control_text, encoding="utf-8")
+        with synthetic_mode_context(0o755):
+            install.verify(sandbox, payload, control_dir, scheme)
+        (control_dir / "control").write_text(control_text.replace(arch, "iphoneos-arm"), encoding="utf-8")
+        try:
+            with synthetic_mode_context(0o755):
+                install.verify(sandbox, payload, control_dir, scheme)
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError("Wrong DEB architecture must fail")
+        (control_dir / "control").write_text(control_text, encoding="utf-8")
+        if scheme == "rootless":
+            leaked = payload / "Library/unsafe-rootful-file"
+            leaked.parent.mkdir(parents=True, exist_ok=True)
+            leaked.write_text("bad", encoding="utf-8")
+            try:
+                with synthetic_mode_context(0o755):
+                    install.verify(sandbox, payload, control_dir, scheme)
+            except AssertionError:
+                pass
+            else:
+                raise AssertionError("Rootless root-path leak must fail")
+            leaked.unlink()
+        (control_dir / "postinst").chmod(0o644)
+        try:
+            with synthetic_mode_context(0o644):
+                install.verify(sandbox, payload, control_dir, scheme)
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError("Wrong postinst permissions must fail")
     try:
         prepare.prepare(template, obf, "ollvm", plug)
     except FileExistsError:
@@ -220,6 +328,14 @@ with tempfile.TemporaryDirectory() as tmp:
         (root / "Library/a.plist").write_text("same", encoding="utf-8")
     info = check.verify_packages(expanded_plain, expanded_obf)
     assert info["files"] == 2
+    prefix = Path("var/jb")
+    rootless_plain = tmp / "rootless_plain_pkg"
+    rootless_obf = tmp / "rootless_obf_pkg"
+    for src, dest in ((expanded_plain, rootless_plain), (expanded_obf, rootless_obf)):
+        target = dest / prefix / expected
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((src / expected).read_bytes())
+    assert check.verify_packages(rootless_plain, rootless_obf, "rootless")["files"] == 1
     assert info["baseline_sha"] != info["obf_sha"]
     (expanded_obf / "Library/a.plist").unlink()
     try:

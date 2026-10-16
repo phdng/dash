@@ -9,6 +9,19 @@ permissions:
 
 jobs:
   demo-ollvm:
+    name: Crane Demo OLLVM (${{ matrix.variant }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: rootless
+            scheme: rootless
+            theos_repo: theos/theos
+            deb_arch: iphoneos-arm64
+          - variant: roothide
+            scheme: roothide
+            theos_repo: roothide/theos
+            deb_arch: iphoneos-arm64e
     runs-on: macos-14
     timeout-minutes: 70
     defaults:
@@ -30,7 +43,7 @@ jobs:
       - name: Install Theos and the demo's build prerequisites
         uses: waruhachi/theos-action@v2.6.3
         with:
-          theos-src: theos/theos
+          theos-src: ${{ matrix.theos_repo }}
           theos-branch: master
           sdks-src: theos/sdks
           sdks-branch: master
@@ -55,28 +68,38 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/demo_ollvm/prepare.py \
-            --source demo/reconstruction --dest "$RUNNER_TEMP/crane-demo-plain" --variant baseline
+            --source demo/reconstruction --dest "$RUNNER_TEMP/crane-demo-plain" \
+            --variant baseline --scheme "${{ matrix.scheme }}"
           mkdir -p "$RUNNER_TEMP/demo-comparison" "$RUNNER_TEMP/demo-expanded-plain" "$RUNNER_TEMP/demo-control-plain"
           cd "$RUNNER_TEMP/crane-demo-plain"
           set -o pipefail
-          make clean package FINALPACKAGE=1 \
+          make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME="${{ matrix.scheme }}" \
             2>&1 | tee "$RUNNER_TEMP/demo-comparison/baseline-build.log"
           deb="$(find packages -type f -name '*.deb' -print -quit)"
           test -n "$deb"
-          cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-baseline.deb"
+          cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-${{ matrix.variant }}-baseline.deb"
           command -v dpkg-deb
           dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-plain"
           dpkg-deb -e "$deb" "$RUNNER_TEMP/demo-control-plain"
           test -f "$RUNNER_TEMP/demo-control-plain/postinst"
-          python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" \
-            "$RUNNER_TEMP/demo-expanded-plain" "$RUNNER_TEMP/demo-control-plain"
+          test "$(dpkg-deb -f "$deb" Architecture)" = "${{ matrix.deb_arch }}"
+          python3 "$GITHUB_WORKSPACE/scripts/demo_ollvm/verify_install.py" \
+            --sandbox "$RUNNER_TEMP/crane-demo-plain" \
+            --payload "$RUNNER_TEMP/demo-expanded-plain" \
+            --control "$RUNNER_TEMP/demo-control-plain" --scheme "${{ matrix.scheme }}"
+          if [ "${{ matrix.scheme }}" = roothide ]; then
+            python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" \
+              "$RUNNER_TEMP/demo-expanded-plain" "$RUNNER_TEMP/demo-control-plain"
+            python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_helper_entitlements.py" \
+              "$RUNNER_TEMP/demo-expanded-plain" roothide
+          fi
           python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_architectures.py" "$RUNNER_TEMP/demo-expanded-plain"
 
       - name: Upload clean demo baseline (retained if OLLVM fails)
         uses: actions/upload-artifact@v4
         with:
-          name: CraneDemo-Baseline-EXPERIMENTAL
-          path: ${{ runner.temp }}/demo-comparison/Crane-demo-baseline.deb
+          name: CraneDemo-Baseline-${{ matrix.variant }}-EXPERIMENTAL
+          path: ${{ runner.temp }}/demo-comparison/Crane-demo-${{ matrix.variant }}-baseline.deb
           if-no-files-found: error
 
       - name: Compile pinned OLLVM pass plugin using LLVM 19
@@ -127,7 +150,7 @@ jobs:
           set -euo pipefail
           python3 scripts/demo_ollvm/prepare.py \
             --source demo/reconstruction --dest "$RUNNER_TEMP/crane-demo-ollvm" \
-            --variant ollvm --plugin "$DEMO_OLLVM_PLUGIN"
+            --variant ollvm --scheme "${{ matrix.scheme }}" --plugin "$DEMO_OLLVM_PLUGIN"
           mkdir -p "$RUNNER_TEMP/demo-expanded-ollvm" "$RUNNER_TEMP/demo-control-ollvm"
           cd "$RUNNER_TEMP/crane-demo-ollvm"
           # Keep all seven targets on Apple Clang, including arm64e.
@@ -139,7 +162,7 @@ jobs:
           compiler="$GITHUB_WORKSPACE/scripts/demo_ollvm/compiler_select.py"
           chmod +x "$compiler"
           set -o pipefail
-          make clean package FINALPACKAGE=1 \
+          make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME="${{ matrix.scheme }}" \
             TARGET_CC="$compiler" TARGET_CXX="$(xcrun --find clang++)" \
             TARGET_LD="$(xcrun --find clang++)" \
             2>&1 | tee "$RUNNER_TEMP/demo-comparison/ollvm-build.log"
@@ -153,35 +176,47 @@ jobs:
           fi
           deb="$(find packages -type f -name '*.deb' -print -quit)"
           test -n "$deb"
-          cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-ollvm.deb"
+          cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-${{ matrix.variant }}-ollvm.deb"
           command -v dpkg-deb
           dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-ollvm"
           dpkg-deb -e "$deb" "$RUNNER_TEMP/demo-control-ollvm"
           test -f "$RUNNER_TEMP/demo-control-ollvm/postinst"
-          python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" \
-            "$RUNNER_TEMP/demo-expanded-ollvm" "$RUNNER_TEMP/demo-control-ollvm"
+          test "$(dpkg-deb -f "$deb" Architecture)" = "${{ matrix.deb_arch }}"
+          python3 "$GITHUB_WORKSPACE/scripts/demo_ollvm/verify_install.py" \
+            --sandbox "$RUNNER_TEMP/crane-demo-ollvm" \
+            --payload "$RUNNER_TEMP/demo-expanded-ollvm" \
+            --control "$RUNNER_TEMP/demo-control-ollvm" --scheme "${{ matrix.scheme }}"
+          if [ "${{ matrix.scheme }}" = roothide ]; then
+            python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" \
+              "$RUNNER_TEMP/demo-expanded-ollvm" "$RUNNER_TEMP/demo-control-ollvm"
+            python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_helper_entitlements.py" \
+              "$RUNNER_TEMP/demo-expanded-ollvm" roothide
+          fi
           python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_architectures.py" "$RUNNER_TEMP/demo-expanded-ollvm"
           python3 "$GITHUB_WORKSPACE/scripts/demo_ollvm/verify.py" \
             --baseline "$RUNNER_TEMP/demo-expanded-plain" \
             --ollvm "$RUNNER_TEMP/demo-expanded-ollvm" \
             --log "$RUNNER_TEMP/demo-comparison/ollvm-build.log" \
-            --report "$RUNNER_TEMP/demo-comparison/report.md"
+            --report "$RUNNER_TEMP/demo-comparison/report.md" --scheme "${{ matrix.scheme }}"
           cat "$RUNNER_TEMP/demo-comparison/report.md" >> "$GITHUB_STEP_SUMMARY"
           cat > "$RUNNER_TEMP/demo-comparison/NOT-FOR-PRODUCTION.txt" <<'NOTE'
           The package is a Crane reconstruction OLLVM experiment.
+          Bootstrap scheme: ${{ matrix.scheme }} (DEB architecture: ${{ matrix.deb_arch }}).
           Do not install on a primary device or co-install with another Crane build.
           Both .deb packages use the same install paths/package ID: replace one
           with the other only with an explicit rollback plan on a spare device.
-          OLLVM runs only on 2 named CranePrefs helper functions.
+          OLLVM runs only on 2 named CranePrefs helper functions (arm64 slice).
+          Only install if the device bootstrap's dpkg architecture and scheme match.
+          Roothide uses a different bootstrap/ABI namespace than rootless.
           Compilation/pass log checks cannot prove on-device UI correctness.
           NOTE
 
       - name: Upload demo OLLVM package if every check passed
         uses: actions/upload-artifact@v4
         with:
-          name: CraneDemo-OLLVM-EXPERIMENTAL
+          name: CraneDemo-OLLVM-${{ matrix.variant }}-EXPERIMENTAL
           path: |
-            ${{ runner.temp }}/demo-comparison/Crane-demo-ollvm.deb
+            ${{ runner.temp }}/demo-comparison/Crane-demo-${{ matrix.variant }}-ollvm.deb
             ${{ runner.temp }}/demo-comparison/report.md
             ${{ runner.temp }}/demo-comparison/NOT-FOR-PRODUCTION.txt
           if-no-files-found: error
@@ -190,7 +225,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: CraneDemo-OLLVM-Diagnostics
+          name: CraneDemo-OLLVM-${{ matrix.variant }}-Diagnostics
           path: |
             ${{ runner.temp }}/demo-comparison/baseline-build.log
             ${{ runner.temp }}/demo-comparison/ollvm-build.log
