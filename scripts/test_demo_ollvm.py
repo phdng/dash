@@ -333,9 +333,21 @@ with tempfile.TemporaryDirectory() as tmp:
         source_dylib = staging / relative
         source_dylib.parent.mkdir(parents=True, exist_ok=True)
         source_dylib.write_bytes(b"fixture-MachO")
-        canonical = staging / "var/jb" / normalizer.RELATIVE / " Crane.dylib"
-        assert normalizer.normalize(staging) == canonical
-        assert normalizer.normalize(staging) == canonical
+        # A lexical alias (parent/..) reproduces the same Path inequality
+        # as a macOS symlinked /var -> /private/var checkout location.
+        if index == 0:
+            (staging / "alias").mkdir()
+            requested_stage = staging / "alias" / ".."
+            assert requested_stage != requested_stage.resolve(strict=True)
+        else:
+            requested_stage = staging
+        canonical = requested_stage / "var/jb" / normalizer.RELATIVE / " Crane.dylib"
+        # macOS /var is commonly a symlink to /private/var. The normalizer
+        # intentionally resolves the stage root before returning its Path;
+        # compare physical paths instead of their two textual spellings.
+        assert normalizer.normalize(requested_stage) == canonical.resolve(strict=True)
+        assert normalizer.normalize(requested_stage) == canonical.resolve(strict=True)
+        assert canonical.is_file()
         assert canonical.read_bytes() == b"fixture-MachO"
         assert not (staging / "Library/MobileSubstrate/DynamicLibraries/Crane.dylib").exists()
     for error in ("missing", "duplicate", "empty"):
