@@ -1,24 +1,95 @@
 #!/usr/bin/env python3
-"""Prepare an isolated demo/Crane Theos tree; never alter uploaded demo sources.
+"""Prepare two isolated Crane demos using a real Theos package scheme.
 
-LLVM19 OLLVM is scoped only to two functions within CRCredits.m. The
-compiler_select.py adapter applies OLLVM flags only to CRCredits.m compile
-invocations; hooks, daemons, CRCommon.m, and other UI source files stay on
-Apple Clang. No production or sandbox Makefile is modified.
+Package architecture is a Debian control property, NOT an arm64 CPU subtype:
+rootless -> iphoneos-arm64, roothide -> iphoneos-arm64e.
+Sandbox-only layout changes are necessary because demo is originally
+rootful/roothide-oriented and its postinst contains absolute paths.
 """
+from __future__ import annotations
+
 import argparse
 import json
+import plistlib
 import shutil
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 POLICY = HERE / "policy.json"
 BUNDLE_INCLUDE = "include $(THEOS_MAKE_PATH)/bundle.mk"
+DEPENDS_ORIGINAL = (
+    "Depends: mobilesubstrate, ellekit, libhooker, firmware, "
+    "altlist, activator, choicy"
+)
+DEPENDS_MINIMAL = "Depends: mobilesubstrate, firmware"
+ROOTLESS_PREFIX = "/var/jb"
 
 
-def prepare(source: Path, destination: Path, variant: str, plugin: Path | None) -> None:
+def guarded_replace(path: Path, old: str, new: str) -> None:
+    content = path.read_text(encoding="utf-8")
+    if content.count(old) != 1:
+        raise ValueError(f"Unexpected source layout for {path}: expected exact marker {old!r}")
+    path.write_text(content.replace(old, new), encoding="utf-8")
+
+
+def adapt_package_scheme(destination: Path, scheme: str) -> None:
+    """Change only disposable sandbox files; do not rewrite DEB architecture."""
+    if scheme == "rootful":
+        return
+    if scheme not in ("rootless", "roothide"):
+        raise ValueError(f"Unsupported Theos scheme: {scheme}")
+
+    guarded_replace(destination / "control", DEPENDS_ORIGINAL, DEPENDS_MINIMAL)
+    if scheme == "roothide":
+        # Theos roothide automatically chooses iphoneos-arm64e metadata and
+        # virtual package paths. The original demo Makefile has a roothide
+        # feature flag and avoids unused AltList linking for that scheme.
+        return
+
+    # Standard rootless uses iphoneos-arm64 metadata and /var/jb staging.
+    # Unlike roothide, rootless has no virtual root path translation.
+    master = destination / "Makefile"
+    old_stage = '$(THEOS_STAGING_DIR)/Library/MobileSubstrate/DynamicLibraries'
+    master_text = master.read_text(encoding="utf-8")
+    if master_text.count(old_stage) != 8:
+        raise ValueError("Unexpected main Makefile staging rules for rootless")
+    master.write_text(
+        master_text.replace(old_stage,
+                            '$(THEOS_STAGING_DIR)/var/jb/Library/MobileSubstrate/DynamicLibraries'),
+        encoding="utf-8",
+    )
+    # The credits UI does not call AltList symbols, so do not link an unused
+    # optional framework into the rootless build. Theos handles rootless rpaths.
+    guarded_replace(
+        destination / "sources/prefs/Makefile",
+        "ifneq ($(THEOS_PACKAGE_SCHEME),roothide)",
+        "ifeq ($(THEOS_PACKAGE_SCHEME),rootful)",
+    )
+    postinst = destination / "layout/DEBIAN/postinst"
+    guarded_replace(
+        postinst,
+        "plist=/Library/LaunchDaemons/com.opa334.cranehelperd.plist",
+        "plist=/var/jb/Library/LaunchDaemons/com.opa334.cranehelperd.plist",
+    )
+    guarded_replace(
+        postinst,
+        "binary=/usr/local/libexec/cranehelperd",
+        "binary=/var/jb/usr/local/libexec/cranehelperd",
+    )
+    launchd = destination / "layout/Library/LaunchDaemons/com.opa334.cranehelperd.plist"
+    configuration = plistlib.loads(launchd.read_bytes())
+    if configuration.get("Program") != "/usr/local/libexec/cranehelperd":
+        raise ValueError("Unexpected launchd Program path: cannot adapt rootless safely")
+    configuration["Program"] = "/var/jb/usr/local/libexec/cranehelperd"
+    launchd.write_bytes(plistlib.dumps(configuration, sort_keys=False))
+
+
+def prepare(source: Path, destination: Path, variant: str, plugin: Path | None,
+            scheme: str = "rootful") -> None:
     if variant not in ("baseline", "ollvm"):
         raise ValueError("Unknown build variant")
+    if scheme not in ("rootful", "rootless", "roothide"):
+        raise ValueError("Unknown package scheme")
     if not (source / "Makefile").is_file() or not (
         source / "sources/prefs/CRCredits.m"
     ).is_file():
@@ -29,7 +100,7 @@ def prepare(source: Path, destination: Path, variant: str, plugin: Path | None) 
         source, destination,
         ignore=shutil.ignore_patterns(".theos", "packages", "obj", "build.log", "*.deb"),
     )
-
+    adapt_package_scheme(destination, scheme)
     if variant == "baseline":
         return
     if plugin is None or not plugin.is_file() or not plugin.is_absolute():
@@ -40,27 +111,17 @@ def prepare(source: Path, destination: Path, variant: str, plugin: Path | None) 
     configuration = json.loads(POLICY.read_text(encoding="utf-8"))
     if set(configuration) != {"policy_map", "policies"}:
         raise ValueError("Unexpected OLLVM policy shape")
-    # The OLLVM pass reads policy.json from process current working directory.
-    # Theos subprojects can compile in either the root or their own directories.
+    # The pass reads policy.json from the compiler's current working directory.
     content = POLICY.read_text(encoding="utf-8")
     for directory in (destination, destination / "sources/prefs"):
         (directory / "policy.json").write_text(content, encoding="utf-8")
-
-    # All source Makefiles remain byte-for-byte original. Only the CI-supplied
-    # compiler dispatcher chooses LLVM19 for one translation unit.
     makefile = destination / "sources/prefs/Makefile"
-    original = makefile.read_text(encoding="utf-8")
-    if original.count(BUNDLE_INCLUDE) != 1:
-        raise ValueError("Unexpected CranePrefs makefile layout")
-    if makefile.read_bytes() != (source / "sources/prefs/Makefile").read_bytes():
-        raise AssertionError("Sandbox unexpectedly modified CranePrefs Makefile")
+    if makefile.read_text(encoding="utf-8").count(BUNDLE_INCLUDE) != 1:
+        raise ValueError("Unexpected CranePrefs Makefile layout")
 
-    assert (destination / "sources/maindylib/Makefile").read_bytes() == (
-        source / "sources/maindylib/Makefile"
-    ).read_bytes()
-    assert (destination / "sources/cranesb/Makefile").read_bytes() == (
-        source / "sources/cranesb/Makefile"
-    ).read_bytes()
+    # Only the scheme-specific sandbox adapter can change package files.
+    for rel in ("sources/maindylib/Makefile", "sources/cranesb/Makefile"):
+        assert (destination / rel).read_bytes() == (source / rel).read_bytes()
 
 
 if __name__ == "__main__":
@@ -68,8 +129,9 @@ if __name__ == "__main__":
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--dest", type=Path, required=True)
     parser.add_argument("--variant", choices=("baseline", "ollvm"), required=True)
+    parser.add_argument("--scheme", choices=("rootful", "rootless", "roothide"), default="rootful")
     parser.add_argument("--plugin", type=Path)
     args = parser.parse_args()
     prepare(args.source.resolve(), args.dest.resolve(), args.variant,
-            args.plugin.resolve() if args.plugin is not None else None)
-    print(f"Demo {args.variant} sandbox prepared (source untouched): {args.dest}")
+            args.plugin.resolve() if args.plugin is not None else None, args.scheme)
+    print(f"Demo {args.variant} / {args.scheme} sandbox: {args.dest} (original untouched)")
