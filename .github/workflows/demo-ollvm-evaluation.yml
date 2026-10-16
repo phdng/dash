@@ -81,6 +81,8 @@ jobs:
           command -v dpkg-deb
           dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-plain"
           dpkg-deb -e "$deb" "$RUNNER_TEMP/demo-control-plain"
+          echo "=== Baseline packaged Crane tweak filenames (preserve leading space) ==="
+          find "$RUNNER_TEMP/demo-expanded-plain" -type f -name "*Crane.dylib" -print
           test -f "$RUNNER_TEMP/demo-control-plain/postinst"
           test "$(dpkg-deb -f "$deb" Architecture)" = "${{ matrix.deb_arch }}"
           python3 "$GITHUB_WORKSPACE/scripts/demo_ollvm/verify_install.py" \
@@ -200,6 +202,8 @@ jobs:
           command -v dpkg-deb
           dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-ollvm"
           dpkg-deb -e "$deb" "$RUNNER_TEMP/demo-control-ollvm"
+          echo "=== OLLVM packaged Crane tweak filenames (preserve leading space) ==="
+          find "$RUNNER_TEMP/demo-expanded-ollvm" -type f -name "*Crane.dylib" -print
           test -f "$RUNNER_TEMP/demo-control-ollvm/postinst"
           test "$(dpkg-deb -f "$deb" Architecture)" = "${{ matrix.deb_arch }}"
           python3 "$GITHUB_WORKSPACE/scripts/demo_ollvm/verify_install.py" \

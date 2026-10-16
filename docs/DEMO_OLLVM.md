@@ -291,6 +291,46 @@ Build thực tế vẫn cần chạy lại trên macOS; nếu `CRCredits.m` vẫ
 resource/module, cần xem `CraneDemo-OLLVM-Diagnostics` và bước preflight,
 không bỏ qua kiểm tra và không quay về ép LLVM19 cho toàn project.
 
+## Sửa CI rootless: thiếu ` Crane.dylib` trong .deb
+
+Ở job **rootless** (Debian Architecture `iphoneos-arm64`), `dm.pl`
+đã tạo `.deb` nhưng verifier fail:
+
+```text
+rootless: required package data missing:
+var/jb/Library/MobileSubstrate/DynamicLibraries/ Crane.dylib
+```
+
+Đây không phải lỗi CPU, Apple linker hay chính sách OLLVM. Tên
+` Crane.dylib` có **dấu cách đầu** là một phần của đường dẫn đã khôi phục;
+không được đổi điều kiện audit thành `Crane.dylib` để vượt kiểm tra.
+
+Theos rootless sử dụng staging riêng và thêm prefix `/var/jb` khi đóng
+gói. Trong sandbox cũ, `after-stage` đã được sửa để dùng `/var/jb`
+cho filter plist và rename, nhưng file `Crane.dylib` đôi lúc vẫn
+đang ở phần staging không có prefix. Thao tác rename có điều kiện bỏ
+qua file và package cuối cùng thiếu tên có dấu cách.
+
+Bản sửa giới hạn đúng job rootless: `prepare.py` đưa
+`normalize_rootless_stage.py` vào sandbox và gắn một `before-package`
+hook **trước khi dm.pl đóng gói**. Hook yêu cầu đúng **một** trong các
+vị trí staging đã biết (có/không prefix, có/không dấu cách), sau đó đặt
+tệp vào `var/jb/Library/MobileSubstrate/DynamicLibraries/ Crane.dylib`.
+Nếu không có tệp, có hai bản trùng, tệp rỗng hoặc là symlink thì fail
+rõ ràng. Không sửa `demo/reconstruction/Makefile` gốc, không thay đổi
+nhánh roothide hay policy STRONG.
+
+Verifier vẫn yêu cầu đúng đường dẫn có dấu cách, vẫn kiểm tra 33
+đường dẫn, postinst, CPU slices và layout. Workflow cũng in đường dẫn
+thực tế của `*Crane.dylib` trong package để giải quyết nhanh nếu CI
+rootless vẫn báo lỗi. `od: stdout: Broken pipe` là dòng cảnh báo khác;
+ở log này **exit code 1 xuất phát từ verifier**, không phải từ OLLVM.
+
+Kiểm thử trên Windows dùng 4 fixture vị trí staging và các trường hợp
+thiếu/trùng/rỗng, cùng fixture package sai tên để bảo đảm verifier
+không vô tình chấp nhận bản rootless thiếu file. Chỉ khi CI macOS build
+và kiểm tra .deb mới có thể kết luận rootless đã được sửa hoàn toàn.
+
 ## Khắc phục lỗi linker: arm64e.old không tương thích arm64e
 
 Log mới cho thấy OLLVM đã chạy đầy đủ SPLIT/BCF/FLA/SUB trên hai helper,

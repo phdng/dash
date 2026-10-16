@@ -71,6 +71,19 @@ def verify(source_sandbox: Path, payload: Path, control: Path, scheme: str) -> N
     expected.update(REQUIRED_FILES)
     for rel in sorted(expected):
         if not (base / rel).is_file():
+            if rel == "Library/MobileSubstrate/DynamicLibraries/ Crane.dylib":
+                options = (
+                    base / "Library/MobileSubstrate/DynamicLibraries/Crane.dylib",
+                    payload / "Library/MobileSubstrate/DynamicLibraries/ Crane.dylib",
+                    payload / "Library/MobileSubstrate/DynamicLibraries/Crane.dylib",
+                    payload / "var/jb/var/jb/Library/MobileSubstrate/DynamicLibraries/ Crane.dylib",
+                )
+                seen = [p.relative_to(payload).as_posix() for p in options if p.is_file()]
+                raise AssertionError(
+                    f"{scheme}: required package data missing: {prefix}/{rel}; "
+                    f"incorrectly named/prefixed candidates={seen}. "
+                    "Preserve the leading space in the main Crane dylib."
+                )
             raise AssertionError(f"{scheme}: required package data missing: {prefix}/{rel}")
 
     if scheme == "rootless":

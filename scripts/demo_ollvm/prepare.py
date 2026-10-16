@@ -53,11 +53,27 @@ def adapt_package_scheme(destination: Path, scheme: str) -> None:
     master_text = master.read_text(encoding="utf-8")
     if master_text.count(old_stage) != 8:
         raise ValueError("Unexpected main Makefile staging rules for rootless")
-    master.write_text(
-        master_text.replace(old_stage,
-                            '$(THEOS_STAGING_DIR)/var/jb/Library/MobileSubstrate/DynamicLibraries'),
-        encoding="utf-8",
+    master_text = master_text.replace(
+        old_stage, '$(THEOS_STAGING_DIR)/var/jb/Library/MobileSubstrate/DynamicLibraries'
     )
+    # Normal Theos staging can place the compiled Crane.dylib in the
+    # unprefixed tree even though our reconstructed filter-plist overrides
+    # target /var/jb. Repair only that exact known filename BEFORE dm.pl.
+    # Do not weaken the post-package path/content audit.
+    hook = (
+        "\n# Isolated rootless staging preflight: preserve the recovered leading space.\n"
+        "before-package::\n"
+        "\t@python3 \"$(THEOS_PROJECT_DIR)/tools/normalize_rootless_stage.py\" "
+        "\"$(THEOS_STAGING_DIR)\"\n"
+    )
+    if "normalize_rootless_stage.py" in master_text:
+        raise ValueError("Unexpected rootless Makefile layout; refusing duplicate hook")
+    separator = "" if master_text.endswith("\n") else "\n"
+    master.write_text(master_text + separator + hook, encoding="utf-8")
+    target_helper = destination / "tools/normalize_rootless_stage.py"
+    if target_helper.exists():
+        raise ValueError("Rootless staging normalizer already present in sandbox")
+    shutil.copyfile(HERE / "normalize_rootless_stage.py", target_helper)
     # The credits UI does not call AltList symbols, so do not link an unused
     # optional framework into the rootless build. Theos handles rootless rpaths.
     guarded_replace(

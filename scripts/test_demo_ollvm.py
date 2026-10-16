@@ -125,6 +125,10 @@ assert "theos-src: ${{ matrix.theos_repo }}" in workflow
 assert workflow.count('THEOS_PACKAGE_SCHEME="${{ matrix.scheme }}"') == 2
 assert workflow.count('test "$(dpkg-deb -f "$deb" Architecture)" = "${{ matrix.deb_arch }}"') == 2
 assert workflow.count("scripts/demo_ollvm/verify_install.py") == 2
+assert workflow.count('-type f -name "*Crane.dylib" -print') == 2
+assert "Sửa CI rootless: thiếu" in (
+    ROOT / "docs/DEMO_OLLVM.md"
+).read_text(encoding="utf-8")
 assert workflow.count(' --scheme "${{ matrix.scheme }}"') >= 3
 assert workflow.count("verify_helper_entitlements.py") == 2
 assert "--report \"$RUNNER_TEMP/demo-comparison/report.md\" --scheme \"${{ matrix.scheme }}\"" in workflow
@@ -165,6 +169,7 @@ assert "CRANE_ROOTHIDE_DEVICE_TEST.md" in (
     ROOT / "docs/DEMO_OLLVM.md"
 ).read_text(encoding="utf-8")
 select = load("demo_compiler_select", DIR / "compiler_select.py")
+normalizer = load("demo_rootless_stage", DIR / "normalize_rootless_stage.py")
 audit = load("demo_assembly_audit", DIR / "analyze_binary.py")
 assert audit.ARM64_CPU == 0x0100000C
 sample_assembly = ("_CRCreditsOpenTwitter:\n"
@@ -298,6 +303,13 @@ with tempfile.TemporaryDirectory() as tmp:
     assert original_postinst == (roothide / "layout/DEBIAN/postinst").read_bytes()
     assert original_make == (roothide / "Makefile").read_bytes()
     assert "THEOS_STAGING_DIR)/var/jb/Library/" in (rootless / "Makefile").read_text()
+    rootless_make = (rootless / "Makefile").read_text()
+    assert rootless_make.count("tools/normalize_rootless_stage.py") == 1
+    assert rootless_make.index("before-package::") < rootless_make.index("tools/normalize_rootless_stage.py")
+    assert (rootless / "tools/normalize_rootless_stage.py").read_bytes() == (
+        DIR / "normalize_rootless_stage.py"
+    ).read_bytes()
+    assert not (roothide / "tools/normalize_rootless_stage.py").exists()
     assert "plist=/var/jb/Library/LaunchDaemons" in (
         rootless / "layout/DEBIAN/postinst"
     ).read_text()
@@ -309,6 +321,42 @@ with tempfile.TemporaryDirectory() as tmp:
     assert "Depends: mobilesubstrate, firmware" in (roothide / "control").read_text()
     assert (DEMO / "Makefile").read_bytes() == original_make
     assert (DEMO / "layout/DEBIAN/postinst").read_bytes() == original_postinst
+    # Rootless Theos may stage the main tweak before /var/jb prefix merging.
+    # Verify the exact recovered leading-space name survives all valid layouts.
+    for index, relative in enumerate((
+        Path("Library/MobileSubstrate/DynamicLibraries/Crane.dylib"),
+        Path("Library/MobileSubstrate/DynamicLibraries/ Crane.dylib"),
+        Path("var/jb/Library/MobileSubstrate/DynamicLibraries/Crane.dylib"),
+        Path("var/jb/Library/MobileSubstrate/DynamicLibraries/ Crane.dylib"),
+    )):
+        staging = tmp / f"stage_normalizer_{index}"
+        source_dylib = staging / relative
+        source_dylib.parent.mkdir(parents=True, exist_ok=True)
+        source_dylib.write_bytes(b"fixture-MachO")
+        canonical = staging / "var/jb" / normalizer.RELATIVE / " Crane.dylib"
+        assert normalizer.normalize(staging) == canonical
+        assert normalizer.normalize(staging) == canonical
+        assert canonical.read_bytes() == b"fixture-MachO"
+        assert not (staging / "Library/MobileSubstrate/DynamicLibraries/Crane.dylib").exists()
+    for error in ("missing", "duplicate", "empty"):
+        staging = tmp / f"stage_{error}"
+        staging.mkdir()
+        if error == "duplicate":
+            for name in ("var/jb/Library/MobileSubstrate/DynamicLibraries/Crane.dylib",
+                         "Library/MobileSubstrate/DynamicLibraries/Crane.dylib"):
+                file = staging / name
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_bytes(b"duplicate")
+        elif error == "empty":
+            file = staging / "var/jb" / normalizer.RELATIVE / " Crane.dylib"
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_bytes(b"")
+        try:
+            normalizer.normalize(staging)
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError(f"Invalid {error} staging must fail closed")
     # Synthetic files verify the artifact's package architecture, install
     # prefix and postinst guards without needing a macOS toolchain.
     import shutil
@@ -367,6 +415,20 @@ with tempfile.TemporaryDirectory() as tmp:
             else:
                 raise AssertionError("Rootless root-path leak must fail")
             leaked.unlink()
+            # Reproduce the exact CI regression: Theos emitted Crane.dylib
+            # without the original leading space. The verifier must fail.
+            expected_binary = base / normalizer.RELATIVE / " Crane.dylib"
+            mistaken_binary = base / normalizer.RELATIVE / "Crane.dylib"
+            expected_binary.rename(mistaken_binary)
+            try:
+                with synthetic_mode_context(0o755):
+                    install.verify(sandbox, payload, control_dir, scheme)
+            except AssertionError as error:
+                assert "incorrectly named/prefixed candidates" in str(error)
+                assert "Crane.dylib" in str(error)
+            else:
+                raise AssertionError("Missing leading-space Crane dylib must fail")
+            mistaken_binary.rename(expected_binary)
         (control_dir / "postinst").chmod(0o644)
         try:
             with synthetic_mode_context(0o644):
