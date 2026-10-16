@@ -44,6 +44,15 @@ workflow = CI.read_text(encoding="utf-8")
 assert "workflow_dispatch:" in workflow
 assert not re.search(r"(?m)^  (push|pull_request):", workflow)
 assert "waruhachi/theos-action@v2.6.3" in workflow
+# macos-14 may have Theos's dm.pl packager but not the dpkg-deb extractor.
+assert "name: Install Debian package inspection tool" in workflow
+assert "brew install dpkg" in workflow
+assert "dpkg-deb --version" in workflow
+assert workflow.count("command -v dpkg-deb") == 3
+assert workflow.count('dpkg-deb -x "$deb"') == 2
+assert workflow.index("name: Install Debian package inspection tool") < workflow.index(
+    "name: Prepare and build unmodified demo baseline"
+)
 assert "demo/reconstruction" in workflow
 assert "CRANEPREFS" not in workflow
 assert workflow.count("make clean package FINALPACKAGE=1") == 2

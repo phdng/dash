@@ -53,7 +53,10 @@ sau khi push workflow, script và mã nguồn demo cần thiết.
 
 CI:
 1. Kiểm tra policy và mã nguồn demo đang hiện diện trong commit.
-2. Dùng cùng `waruhachi/theos-action@v2.6.3` như CI gốc của demo.
+2. Dùng cùng `waruhachi/theos-action@v2.6.3` như CI gốc của demo; cài
+   thêm Homebrew `dpkg` và kiểm tra `dpkg-deb --version` trước khi build.
+   Theos dùng `dm.pl` để đóng gói nhưng runner không nhất thiết có `dpkg-deb`
+   để đọc/giải nén package.
 3. Build `make clean package FINALPACKAGE=1` phiên bản **baseline**. Unpack
    `.deb`, chạy verifier layout và Mach-O architecture của demo, rồi upload
    `CraneDemo-Baseline-EXPERIMENTAL` trước khi biên dịch OLLVM.
@@ -105,3 +108,20 @@ Các kiểm tra trên Windows chỉ xác minh policy, tính cô lập sandbox v�
 audit; iOS/Xcode/Theos/LLVM19 build yêu cầu runner macOS. Nếu baseline demo
 không build được vì framework/vendor, cần xử lý lỗi baseline trước khi
 quy lỗi cho OLLVM.
+
+## Khắc phục lỗi runner macOS: thiếu dpkg-deb
+
+Nếu thấy `dm.pl: building package ... .deb` rồi ngay sau đó
+`dpkg-deb: command not found` (exit 127), đó là lỗi **thiếu công cụ giải
+nén .deb trên runner**, không phải lỗi biên dịch OLLVM hay lỗi tạo package.
+Workflow đã thêm step **Install Debian package inspection tool** chạy
+`brew install dpkg`, `command -v dpkg-deb`, `dpkg-deb --version` trước
+lần build baseline và kiểm tra lại trước cả hai lệnh `dpkg-deb -x`.
+
+Homebrew `dpkg` trên macOS cung cấp `dpkg-deb` để **kiểm tra/giải nén**;
+không sử dụng các lệnh `dpkg -i` hoặc cài package vào host macOS.
+Dòng `od: stdout: Broken pipe` cạnh log đóng gói thường có thể do bên đọc
+pipeline đóng sớm; không kết luận đó là lỗi build trừ khi có exit code
+thực sự phát sinh từ lệnh đóng gói. Sau khi sửa, kiểm tra status các bước
+**baseline package**, **verify package layout**, **verify architectures**, rồi
+mới phân tích pass OLLVM. Chưa có xác nhận CI macOS chạy lại sau sửa.

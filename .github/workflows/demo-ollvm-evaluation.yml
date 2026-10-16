@@ -42,6 +42,15 @@ jobs:
           comet: "false"
           orion: "false"
 
+      - name: Install Debian package inspection tool
+        run: |
+          set -euo pipefail
+          # Theos can package with its own dm.pl, but that does not provide dpkg-deb.
+          # Both baseline and OLLVM need dpkg-deb to inspect the .deb payload.
+          brew install dpkg
+          command -v dpkg-deb
+          dpkg-deb --version
+
       - name: Prepare and build unmodified demo baseline
         run: |
           set -euo pipefail
@@ -55,6 +64,7 @@ jobs:
           deb="$(find packages -type f -name '*.deb' -print -quit)"
           test -n "$deb"
           cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-baseline.deb"
+          command -v dpkg-deb
           dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-plain"
           python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" "$RUNNER_TEMP/demo-expanded-plain"
           python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_architectures.py" "$RUNNER_TEMP/demo-expanded-plain"
@@ -104,6 +114,7 @@ jobs:
           deb="$(find packages -type f -name '*.deb' -print -quit)"
           test -n "$deb"
           cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-ollvm.deb"
+          command -v dpkg-deb
           dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-ollvm"
           python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" "$RUNNER_TEMP/demo-expanded-ollvm"
           python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_architectures.py" "$RUNNER_TEMP/demo-expanded-ollvm"
