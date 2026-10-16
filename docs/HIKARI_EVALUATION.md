@@ -1,6 +1,6 @@
 # DuoDash Hikari — thử nghiệm string/constant obfuscation
 
-**Trạng thái: thử nghiệm độc lập, chưa đưa vào `DuoDashReconstruction.dylib`.** Người dùng xác nhận workflow Hikari fixture ban đầu đã build PASS; hiện bổ sung pilot Objective-C real-source để kiểm thử vòng tiếp theo.
+**Trạng thái: các pilot Hikari C và Objective-C đã PASS theo xác nhận của người dùng. Đã bổ sung tùy chọn build dylib Hikari-only thử nghiệm, chưa được kiểm chứng trên iPhone.**
 
 Kỹ thuật gợi ý từ SLLVM được thử thông qua module **Hikari có mã nguồn**
 trong [lich4/ollvm-pass](https://github.com/lich4/ollvm-pass), **không phải**
@@ -12,8 +12,7 @@ SLLVM trên GitHub hiện không có mã nguồn compiler/pass để tích hợp
 
 1. Đẩy các file workflow/fixture lên nhánh muốn kiểm thử.
 2. Vào **Actions → Evaluate Hikari Obfuscation (Experimental) → Run workflow**.
-3. Xem Job Summary và artifact `DuoDash-Hikari-Evaluation-Diagnostics` (chỉ
-   chứa báo cáo và log, **không** phân phối Hikari plugin/binary).
+3. Xem Job Summary và artifact `DuoDash-Hikari-Evaluation-Diagnostics` (chứa log/báo cáo). Mặc định `build_tweak` tắt; bật tùy chọn này khi muốn thử tạo một dylib Hikari-only riêng, không dành cho production.
 4. Nếu thất bại, xem step và các log `hikari-native.log`, `hikari-ios.log`.
 
 Workflow này **chỉ có `workflow_dispatch`**, không chạy trên push/PR, không
@@ -80,6 +79,32 @@ của Hikari khi xử lý Objective-C, **không tự động vô hiệu hoá bà
 Kiểm tra string marker không chứng minh toàn bộ chuỗi đã được bảo vệ; những
 selector và symbol cần thiết cho runtime Objective-C vẫn phải được giữ lại.
 
+## Tweak Hikari thử nghiệm (opt-in)
+
+Người dùng đã xác nhận pilot Objective-C trên GitHub Actions PASS. Workflow
+thêm checkbox **build_tweak** mặc định **false**. Khi tắt, không build dylib.
+
+Khi bật tại **Actions → Evaluate Hikari Obfuscation (Experimental) → Run workflow**,
+CI vẫn chạy đầy đủ fixture C và 213 case Objective-C, rồi thực hiện:
+
+- Tạo sandbox trong RUNNER_TEMP và copy Makefile, control, filter plist và source
+  re/RECONSTRUCTION. Không thay đổi mã nguồn production hoặc root policy.json.
+- Build Theos bình thường trước để lưu bản chuẩn so sánh.
+- Build Hikari riêng với LLVM19 và policy tweak_policy.json trong sandbox;
+  chỉ hai helper VersionDeviceHelpers.m được chọn. Không nạp cùng OLLVM.
+- Kiểm tra arm64, log đúng hai pass/hàm, symbol bắt buộc, dấu vết plaintext
+  trong baseline so với bản Hikari, SHA-256 và kích thước dylib.
+- Chỉ upload **DuoDashReconstruction-Hikari-EXPERIMENTAL** khi toàn bộ
+  kiểm tra PASS. Artifact có dylib, plist và file cảnh báo.
+
+Workflow Build Reconstruction thông thường không thay đổi; hai artifact
+DuoDashReconstruction và DuoDashReconstruction-OLLVM vẫn độc lập.
+
+**Quan trọng:** Đây là bản thử nghiệm chưa được xác nhận chạy đúng trên iPhone.
+Không cài trên thiết bị chính hoặc phân phối như bản phát hành. Cần kiểm
+tra launch, SpringBoard/CarPlay, license, preferences, crash, rollback và
+nguồn gốc/giấy phép Hikari trước khi phát hành rộng rãi.
+
 ## Kiểm tra cục bộ
 
 ```sh
@@ -94,7 +119,7 @@ Windows thì không thể kết luận tương thích dựa trên static tests.
 
 ## Giới hạn an toàn và phát hành
 
-- Hai hàm thật đã được **trích ra và kiểm tra riêng**, nhưng **chưa áp dụng trên dylib/tweak production** hoặc `Makefile`.
+- Hai hàm thật đã được **kiểm tra riêng**; có thể bật Hikari trong dylib thử nghiệm opt-in, nhưng **không trong pipeline production** hoặc Makefile gốc.
 - Chưa kiểm chứng Hikari + Obfuscator khi cùng nạp trong một compilation.
 - Không bật `enable-fco`, `enable-indibran`, `enable-funcwra` hoặc
   anti-debug/anti-hook. Các pass đó cần một vòng thí nghiệm riêng.
@@ -103,6 +128,4 @@ Windows thì không thể kết luận tương thích dựa trên static tests.
   phân phối hoặc tái sử dụng ngoài hoạt động thử nghiệm.
 - Không nên lưu secret trong client chỉ vì phép thử mã hóa chuỗi thành công.
 
-Nếu pilot Objective-C đạt, bước tiếp theo là xác minh chính các helper
-trong một bản tweak thử nghiệm có thể cài trên thiết bị, thêm regression
-runtime; sau đó mới cân nhắc FCO/indirect-branch/function-wrapper.
+Khi bản dylib Hikari thử nghiệm build xanh, bước tiếp theo là kiểm tra runtime trên thiết bị dự phòng, chuẩn bị phương án rollback, rồi mới nghiên cứu FCO/indirect-branch/function-wrapper.

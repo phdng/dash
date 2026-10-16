@@ -1,0 +1,28 @@
+{
+  "policy_map": {
+    "objc_tweak_string": {
+      "enable-strcry": true,
+      "strcry_prob": 100
+    },
+    "objc_tweak_const": {
+      "enable-constenc": true,
+      "constenc_subxor": true,
+      "constenc_subxor_prob": 100,
+      "constenc_togv": false,
+      "constenc_togv_prob": 50,
+      "constenc_times": 1
+    }
+  },
+  "policies": [
+    {
+      "module": "re/RECONSTRUCTION/VersionDeviceHelpers\\.m",
+      "func": "^DDVersionDeviceSanitizeMachineModel$",
+      "policy": "objc_tweak_string"
+    },
+    {
+      "module": "re/RECONSTRUCTION/VersionDeviceHelpers\\.m",
+      "func": "^DDVersionDeviceFormatClientVersion$",
+      "policy": "objc_tweak_const"
+    }
+  ]
+}

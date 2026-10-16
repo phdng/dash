@@ -56,7 +56,7 @@ assert "python3 audit.py ios" in workflow
 assert "arm64-apple-ios14.0" in workflow
 assert "DuoDash-Hikari-Evaluation-Diagnostics" in workflow
 assert "DuoDashReconstruction-OLLVM" not in workflow
-assert "make clean all" not in workflow
+assert "make clean all" not in workflow.split("name: Prepare isolated Hikari tweak sandbox")[0]
 assert "DuoDashReconstruction_FILES" not in workflow
 
 existing_policy = json.loads((ROOT / "policy.json").read_text(encoding="utf-8"))
@@ -171,4 +171,60 @@ expect_failure(pilot_audit.check_outputs, pilot_lines, pilot_lines.replace("xyz"
 expect_failure(pilot_audit.check_outputs, pilot_lines, "")
 assert "hikari-evaluation.yml" not in (ROOT / ".github/workflows/build.yml").read_text(encoding="utf-8")
 
-print("Hikari C fixture and DuoDash real-source Objective-C pilot: PASS")
+
+# Opt-in Hikari-only tweak build must remain disabled by default and isolated.
+tweak_policy = json.loads((TRIAL / "tweak_policy.json").read_text(encoding="utf-8"))
+assert set(tweak_policy) == {"policy_map", "policies"}
+assert tweak_policy["policy_map"] == {
+    "objc_tweak_string": pilot_policy["policy_map"]["objc_pilot_string"],
+    "objc_tweak_const": pilot_policy["policy_map"]["objc_pilot_const"],
+}
+assert len(tweak_policy["policies"]) == 2
+for rule, function, profile in (
+    (tweak_policy["policies"][0], "DDVersionDeviceSanitizeMachineModel", "objc_tweak_string"),
+    (tweak_policy["policies"][1], "DDVersionDeviceFormatClientVersion", "objc_tweak_const"),
+):
+    assert re.fullmatch(rule["module"], "re/RECONSTRUCTION/VersionDeviceHelpers.m")
+    assert re.fullmatch(rule["func"], function)
+    assert rule["policy"] == profile
+    assert not re.fullmatch(rule["func"], "DDVersionDeviceFormatOSVersion")
+assert "      build_tweak:" in workflow
+assert "        default: false" in workflow
+assert workflow.count("if: ${{ inputs.build_tweak == true }}") == 4
+assert workflow.index("name: Cross-compile real Objective-C helpers for iOS arm64") < workflow.index(
+    "name: Prepare isolated Hikari tweak sandbox"
+)
+assert "cp \"$GITHUB_WORKSPACE/scripts/hikari_eval/tweak_policy.json\" \"$trial_dir/policy.json\"" in workflow
+assert 'TARGET_CC="$HIKARI_CLANG"' in workflow
+assert "DuoDashReconstruction_CFLAGS=" in workflow
+assert 'OLLVM=1' in workflow  # comment documents explicit prohibition
+assert "xcrun nm -g \"$out/DuoDashReconstruction.dylib\"" in workflow
+assert "python3 \"$GITHUB_WORKSPACE/scripts/hikari_eval/verify_tweak.py\"" in workflow
+assert "name: DuoDashReconstruction-Hikari-EXPERIMENTAL" in workflow
+assert "EXPERIMENTAL-NOT-FOR-PRODUCTION.txt" in workflow
+assert "DuoDashReconstruction-OLLVM" not in workflow
+assert "-fpass-plugin=$(OLLVM_PLUGIN)" in (ROOT / "Makefile").read_text(encoding="utf-8")
+assert "-fpass-plugin=$HIKARI_PLUGIN" in workflow
+assert "HIKARI" not in (ROOT / ".github/workflows/build.yml").read_text(encoding="utf-8")
+
+verify_spec = importlib.util.spec_from_file_location("verify_tweak", TRIAL / "verify_tweak.py")
+verify_tweak = importlib.util.module_from_spec(verify_spec)
+verify_spec.loader.exec_module(verify_tweak)
+required_log = "\n".join(
+    f">>>> run {pass_name} on {function}"
+    for pass_name, function in verify_tweak.EXPECTED.items()
+)
+baseline_binary = b"header" + verify_tweak.WHITELIST + b"tail"
+protected_binary = b"changed-obfuscated-data"
+symbol_data = "_DDVersionDeviceSanitizeMachineModel\n_DDVersionDeviceFormatClientVersion\n"
+verify_tweak.inspect(baseline_binary, protected_binary, required_log, symbol_data)
+expect_failure(verify_tweak.inspect, baseline_binary, protected_binary, required_log, "")
+expect_failure(verify_tweak.inspect, baseline_binary, baseline_binary, required_log, symbol_data)
+expect_failure(verify_tweak.inspect, baseline_binary, protected_binary,
+               required_log + "\n>>>> run strenc on DDVersionTupleAtLeast", symbol_data)
+expect_failure(verify_tweak.inspect, baseline_binary, protected_binary,
+               required_log.splitlines()[0], symbol_data)
+expect_failure(verify_tweak.inspect, b"no whitelist", protected_binary,
+               required_log, symbol_data)
+
+print("Hikari C, real Objective-C and opt-in tweak pilot configuration: PASS")

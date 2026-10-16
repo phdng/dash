@@ -3,6 +3,12 @@ name: Evaluate Hikari Obfuscation (Experimental)
 # Intentionally manual-only. Does not alter the production Reconstruction job.
 on:
   workflow_dispatch:
+    inputs:
+      build_tweak:
+        description: "Also produce a Hikari-only experimental DuoDash dylib (NOT FOR PRODUCTION)"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -148,6 +154,81 @@ jobs:
           printf '\nObjective-C real-source helper pilot: native equivalence tested; iOS arm64 compile-only.\n' >> "$GITHUB_WORKSPACE/scripts/hikari_eval/out/report.md"
           cat "$GITHUB_WORKSPACE/scripts/hikari_eval/out/report.md" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Prepare isolated Hikari tweak sandbox
+        if: ${{ inputs.build_tweak == true }}
+        run: |
+          set -euo pipefail
+          brew install ldid xz
+          export THEOS="$GITHUB_WORKSPACE/.theos-sdk"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$THEOS"
+          echo "THEOS=$THEOS" >> "$GITHUB_ENV"
+          trial_dir="$RUNNER_TEMP/duodash-hikari-tweak"
+          mkdir -p "$trial_dir/re" "$GITHUB_WORKSPACE/scripts/hikari_eval/out/tweak-pilot"
+          cp -R "$GITHUB_WORKSPACE/re/RECONSTRUCTION" "$trial_dir/re/RECONSTRUCTION"
+          cp "$GITHUB_WORKSPACE/Makefile" "$trial_dir/Makefile"
+          cp "$GITHUB_WORKSPACE/DuoDashReconstruction.plist" "$trial_dir/"
+          cp "$GITHUB_WORKSPACE/control" "$trial_dir/"
+          cp "$GITHUB_WORKSPACE/scripts/hikari_eval/tweak_policy.json" "$trial_dir/policy.json"
+          test -f "$trial_dir/re/RECONSTRUCTION/VersionDeviceHelpers.m"
+          echo "HIKARI_TWEAK_DIR=$trial_dir" >> "$GITHUB_ENV"
+
+      - name: Build baseline tweak in isolated sandbox
+        if: ${{ inputs.build_tweak == true }}
+        run: |
+          set -euo pipefail
+          cd "$HIKARI_TWEAK_DIR"
+          make clean all
+          dylib="$(find .theos/obj -type f -name 'DuoDashReconstruction.dylib' -print -quit)"
+          test -n "$dylib"
+          out="$GITHUB_WORKSPACE/scripts/hikari_eval/out/tweak-pilot"
+          cp "$dylib" "$out/DuoDashReconstruction-baseline.dylib"
+          xcrun lipo "$out/DuoDashReconstruction-baseline.dylib" -verify_arch arm64
+
+      - name: Build Hikari-only experimental tweak
+        if: ${{ inputs.build_tweak == true }}
+        run: |
+          set -euo pipefail
+          cd "$HIKARI_TWEAK_DIR"
+          # Command-line override preserves all default ObjC flags.
+          # Deliberately NEVER set OLLVM=1: do not load both LLVM passes.
+          make clean all \
+            TARGET_CC="$HIKARI_CLANG" TARGET_CXX="$(dirname "$HIKARI_CLANG")/clang++" \
+            TARGET_LD="$(xcrun --find clang++)" \
+            DuoDashReconstruction_CFLAGS="-fobjc-arc -Wall -Wextra -O1 -fpass-plugin=$HIKARI_PLUGIN" \
+            2>&1 | tee "$GITHUB_WORKSPACE/scripts/hikari_eval/out/hikari-tweak.log"
+          dylib="$(find .theos/obj -type f -name 'DuoDashReconstruction.dylib' -print -quit)"
+          test -n "$dylib"
+          out="$GITHUB_WORKSPACE/scripts/hikari_eval/out/tweak-pilot"
+          cp "$dylib" "$out/DuoDashReconstruction.dylib"
+          cp "$GITHUB_WORKSPACE/DuoDashReconstruction.plist" "$out/"
+          xcrun lipo "$out/DuoDashReconstruction.dylib" -verify_arch arm64
+          xcrun nm -g "$out/DuoDashReconstruction.dylib" > "$out/hikari-symbols.txt"
+          python3 "$GITHUB_WORKSPACE/scripts/hikari_eval/verify_tweak.py" \
+            "$out/DuoDashReconstruction-baseline.dylib" \
+            "$out/DuoDashReconstruction.dylib" \
+            "$GITHUB_WORKSPACE/scripts/hikari_eval/out/hikari-tweak.log" \
+            "$out/hikari-symbols.txt" \
+            "$GITHUB_WORKSPACE/scripts/hikari_eval/out/report.md"
+          cat "$GITHUB_WORKSPACE/scripts/hikari_eval/out/report.md" >> "$GITHUB_STEP_SUMMARY"
+          cat > "$out/EXPERIMENTAL-NOT-FOR-PRODUCTION.txt" <<'NOTE'
+          Experimental Hikari-only DuoDash Reconstruction tweak binary.
+          The two selected helpers were obfuscated with Hikari (not OLLVM).
+          This artifact has NOT been tested on an iPhone.
+          Keep standard and OLLVM builds as the rollback baseline.
+          Do not distribute or install on a primary device.
+          NOTE
+
+      - name: Upload experimental Hikari tweak (opt-in only)
+        if: ${{ inputs.build_tweak == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDashReconstruction-Hikari-EXPERIMENTAL
+          path: |
+            scripts/hikari_eval/out/tweak-pilot/DuoDashReconstruction.dylib
+            scripts/hikari_eval/out/tweak-pilot/DuoDashReconstruction.plist
+            scripts/hikari_eval/out/tweak-pilot/EXPERIMENTAL-NOT-FOR-PRODUCTION.txt
+          if-no-files-found: error
+
       - name: Upload Hikari test-only diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -159,4 +240,5 @@ jobs:
             scripts/hikari_eval/out/hikari-ios.log
             scripts/hikari_eval/out/hikari-objc-native.log
             scripts/hikari_eval/out/hikari-objc-ios.log
+            scripts/hikari_eval/out/hikari-tweak.log
           if-no-files-found: warn
