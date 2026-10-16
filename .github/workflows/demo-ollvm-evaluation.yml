@@ -130,8 +130,9 @@ jobs:
             --variant ollvm --plugin "$DEMO_OLLVM_PLUGIN"
           mkdir -p "$RUNNER_TEMP/demo-expanded-ollvm" "$RUNNER_TEMP/demo-control-ollvm"
           cd "$RUNNER_TEMP/crane-demo-ollvm"
-          # Default to Apple Clang for all seven targets. The dispatcher
-          # selects LLVM19 + OLLVM only for CRCredits.m (2 architectures).
+          # Keep all seven targets on Apple Clang, including arm64e.
+          # Use LLVM19 + OLLVM ONLY for CRCredits.m on arm64. Homebrew
+          # LLVM19 generates arm64e.old, which Apple ld rejects for arm64e.
           export DEMO_APPLE_CLANG="$(xcrun --find clang)"
           export DEMO_OLLVM_RESOURCE_DIR="$(cat "$RUNNER_TEMP/demo-ollvm-resource-dir.txt")"
           export DEMO_OLLVM_MODULE_CACHE="$RUNNER_TEMP/demo-ollvm-llvm19-modules"
@@ -142,10 +143,12 @@ jobs:
             TARGET_CC="$compiler" TARGET_CXX="$(xcrun --find clang++)" \
             TARGET_LD="$(xcrun --find clang++)" \
             2>&1 | tee "$RUNNER_TEMP/demo-comparison/ollvm-build.log"
-          selected="$(grep -c '^DEMO_OLLVM_SELECTED: CRCredits.m -> LLVM19' \
+          selected="$(grep -c '^DEMO_OLLVM_SELECTED: CRCredits.m (arm64) -> LLVM19;' \
             "$RUNNER_TEMP/demo-comparison/ollvm-build.log" || true)"
-          if [ "$selected" -ne 2 ]; then
-            echo "::error::Expected exactly 2 CRCredits.m LLVM19 compile events (arm64, arm64e); got $selected."
+          bypassed="$(grep -c '^DEMO_OLLVM_BYPASS: CRCredits.m (arm64e) -> Apple Clang;' \
+            "$RUNNER_TEMP/demo-comparison/ollvm-build.log" || true)"
+          if [ "$selected" -ne 1 ] || [ "$bypassed" -ne 1 ]; then
+            echo "::error::Expected one LLVM19 arm64 compile + one Apple Clang arm64e compile; selected=$selected bypassed=$bypassed."
             exit 1
           fi
           deb="$(find packages -type f -name '*.deb' -print -quit)"

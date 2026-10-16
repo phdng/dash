@@ -81,8 +81,10 @@ assert 'TARGET_CC="$compiler"' in workflow
 assert 'compiler="$GITHUB_WORKSPACE/scripts/demo_ollvm/compiler_select.py"' in workflow
 assert 'chmod +x "$compiler"' in workflow
 assert 'TARGET_CXX="$(xcrun --find clang++)"' in workflow
-assert "DEMO_OLLVM_SELECTED: CRCredits.m -> LLVM19" in workflow
-assert "if [ \"$selected\" -ne 2 ]; then" in workflow
+assert "DEMO_OLLVM_SELECTED: CRCredits.m (arm64) -> LLVM19" in workflow
+assert "DEMO_OLLVM_BYPASS: CRCredits.m (arm64e) -> Apple Clang" in workflow
+assert 'if [ "$selected" -ne 1 ] || [ "$bypassed" -ne 1 ]; then' in workflow
+assert 'TARGET_CC="$DEMO_OLLVM_CLANG"' not in workflow
 assert "-fmodules-cache-path=\"$RUNNER_TEMP/demo-ollvm-llvm19-modules\"" in workflow
 assert "-print-resource-dir" in workflow
 assert "__stddef_max_align_t.h" in workflow
@@ -114,7 +116,17 @@ prepare = load("demo_prepare", DIR / "prepare.py")
 check = load("demo_verify", DIR / "verify.py")
 select = load("demo_compiler_select", DIR / "compiler_select.py")
 assert select.is_selected_compile(["-c", "CRCredits.m", "-arch", "arm64"])
-assert select.is_selected_compile(["-c", "../prefs/CRCredits.m", "-arch", "arm64e"])
+assert not select.is_selected_compile(["-c", "../prefs/CRCredits.m", "-arch", "arm64e"])
+assert select.compile_architecture(["-c", "CRCredits.m", "-target", "arm64-apple-ios11.0"]) == "arm64"
+assert select.compile_architecture(["-c", "CRCredits.m", "-target=arm64e-apple-ios11.0"]) == "arm64e"
+assert select.compile_architecture(["-c", "CRCredits.m", "-arch", "arm64e"]) == "arm64e"
+for invalid in (["-c", "CRCredits.m"], ["-c", "CRCredits.m", "-arch", "arm64", "-target", "arm64e-apple-ios11.0"]):
+    try:
+        select.compile_architecture(invalid)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError(f"Ambiguous/missing architecture must fail closed: {invalid!r}")
 for command in (
     ["-c", "../common/CRCommon.m", "-arch", "arm64e"],
     ["-c", "CRPreferences.m"],
@@ -171,6 +183,15 @@ with tempfile.TemporaryDirectory() as tmp:
     assert any(flag.startswith("-fmodules-cache-path=") for flag in selected)
     non_selected = select.command_for(["-c", "../common/CRCommon.m"], values)
     assert non_selected == ["/opt/apple/clang", "-c", "../common/CRCommon.m"]
+    arm64e_args = ["-c", "../prefs/CRCredits.m", "-arch", "arm64e"]
+    assert select.command_for(arm64e_args, values) == [values["DEMO_APPLE_CLANG"], *arm64e_args]
+    assert "-fpass-plugin" not in " ".join(select.command_for(arm64e_args, values))
+    try:
+        select.command_for(["-c", "CRCredits.m"], values)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("Missing CRCredits architecture must fail closed")
     try:
         select.command_for(source_args, {"DEMO_APPLE_CLANG": "/opt/apple/clang"})
     except RuntimeError:
@@ -213,9 +234,26 @@ good_log = "\n".join(
     for name in check.FUNCTIONS for pas in check.PASSES
 )
 assert all(count == 1 for count in check.verify_passes(good_log).values())
+routing_log = (
+    "DEMO_OLLVM_SELECTED: CRCredits.m (arm64) -> LLVM19; resource_dir=/tmp/llvm19\n"
+    "DEMO_OLLVM_BYPASS: CRCredits.m (arm64e) -> Apple Clang; reason=LLVM19-arm64e.old"
+)
+check.verify_compiler_routes(routing_log)
+for invalid_route in (
+    routing_log.splitlines()[0],
+    routing_log + "\nDEMO_OLLVM_SELECTED: CRCredits.m (arm64) -> LLVM19; duplicate",
+    routing_log.replace("(arm64e)", "(arm64)"),
+):
+    try:
+        check.verify_compiler_routes(invalid_route)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("Missing/extra/invalid compiler routes must fail")
 for broken in (
     good_log.splitlines()[1],
     good_log + "\n>>>> run fla on CRReportRuntimeInjection",
+    good_log + "\n>>>> run fla on CRCreditsOpenTwitter",
 ):
     try:
         check.verify_passes(broken)

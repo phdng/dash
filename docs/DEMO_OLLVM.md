@@ -37,13 +37,16 @@ sandbox** hoàn toàn riêng trong `$RUNNER_TEMP`. Bản OLLVM tạo hai
 `policy.json` phục vụ compiler CWD nhưng giữ **tất cả Makefile/source demo
 y nguyên**. Bản chuẩn dùng Apple Clang. Bản OLLVM dùng adapter
 `scripts/demo_ollvm/compiler_select.py` qua `TARGET_CC`, **ủy quyền
-mọi file khác** (bao gồm `CRCommon.m`, tweak/daemon/hooks) cho Apple Clang;
-chỉ compile `CRCredits.m` bằng Homebrew LLVM19 Clang và nạp OLLVM plugin
-`lich4/ollvm-pass` commit
+mọi file khác** (bao gồm `CRCommon.m`, tweak/daemon/hooks) cho Apple Clang.
+Với `CRCredits.m`, **chỉ lát cắt arm64** dùng Homebrew LLVM19 Clang và
+nạp OLLVM plugin; **lát cắt arm64e** dùng Apple Clang nguyên bản do LLVM19
+sinh object `arm64e.old` không tương thích với Apple linker cần `arm64e`.
+Plugin lấy từ `lich4/ollvm-pass` commit
 `592f215f852e3957da01b2b15024dc63713a462e`. Apple clang++ được dùng
 để link. Adapter đặt tường minh LLVM19 `-resource-dir`, có module cache
-riêng và ghi `DEMO_OLLVM_SELECTED` vào log cho cả hai architecture arm64 +
-arm64e. Workflow yêu cầu đúng 2 lần chọn; không tự bật pass trên toàn bundle.
+riêng. Workflow yêu cầu đúng **một** log `DEMO_OLLVM_SELECTED` cho
+`arm64` và **một** log `DEMO_OLLVM_BYPASS` cho `arm64e`, đồng thời yêu cầu
+đúng 8 sự kiện pass/hàm. Không tự bật pass trên toàn bundle.
 
 Phạm vi hiện tại chỉ chạy **rootful** theo action Theos của demo, với
 architectures gốc (arm64 + arm64e cho dylib/bundle); roothide là giai đoạn
@@ -67,9 +70,10 @@ CI:
    `CraneDemo-Baseline-EXPERIMENTAL` trước khi biên dịch OLLVM.
 4. Build OLLVM plugin bằng LLVM19 và preflight khả năng biên dịch Objective-C
    Foundation/UIKit với bộ LLVM19 resource headers và SDK của Xcode, sau đó
-   biên dịch lại package với **LLVM19 chỉ cho `CRCredits.m`** và dùng Apple
-   Clang cho 6 target cùng các file khác. Yêu cầu đúng 2 sự kiện chọn compiler
-   (arm64/arm64e), tạo `CraneDemo-OLLVM-EXPERIMENTAL` khi các audit đều đạt.
+   biên dịch lại package với **LLVM19 chỉ cho `CRCredits.m` ở arm64**. Apple
+   Clang xử lý `CRCredits.m` ở arm64e và toàn bộ source khác. Yêu cầu đúng
+   một sự kiện chọn LLVM19 ở arm64 và một sự kiện bypass ở arm64e; chỉ tạo
+   `CraneDemo-OLLVM-EXPERIMENTAL` khi các audit đều đạt.
 5. `scripts/demo_ollvm/verify.py` yêu cầu cả **4 pass trên từng hàm**,
    không có sự kiện OLLVM trên các hàm ngoài danh sách, hai package có cùng
    đường dẫn payload, `CranePrefs` binary thay đổi và ba class UI Credits
@@ -79,14 +83,22 @@ CI:
    được ghi trong log; giữ `CraneDemo-OLLVM-Diagnostics` cả khi job lỗi.
 
 **Không coi chênh lệch binary là bằng chứng riêng của OLLVM:** riêng
-`CRCredits.m` được biên dịch bằng LLVM19 ở bản OLLVM thay vì Apple Clang
-trong baseline. Audit pass log và selector compiler được xác minh độc lập.
+`CRCredits.m` (arm64) được biên dịch bằng LLVM19 ở bản OLLVM thay vì
+Apple Clang trong baseline. Lát arm64e tiếp tục dùng Apple Clang.
+Audit pass log và selector compiler được xác minh độc lập.
 
 ## Kiểm tra trên thiết bị dự phòng
 
 Hai `.deb` dùng **cùng Package ID và đường dẫn cài đặt Crane**; chúng
 không được cài đồng thời. Chỉ thử trên thiết bị jailbreak phụ có thể
 rollback, đã backup dữ liệu, không phải iPhone chính.
+
+**Giới hạn đặc biệt của phiên bản này:** chỉ lát cắt **arm64** chứa OLLVM;
+lát cắt **arm64e** chưa được mã hóa. Trên thiết bị tải lát cắt arm64e,
+việc giao diện chạy đúng **không chứng minh** chức năng OLLVM đã được
+thử trong runtime. Xác minh lát cắt được chọn khi chạy trước khi kết luận
+về hiệu quả OLLVM trên thiết bị. Không chỉnh sửa Mach-O subtype để ép
+liên kết `arm64e.old` sang `arm64e`.
 
 Ghi lại cho *cả hai bản* ở cùng môi trường:
 
@@ -178,7 +190,26 @@ OLLVM có một smoke test compile Objective-C Foundation/UIKit bằng đúng
 LLVM19 và iPhoneOS SDK; lỗi SDK/Clang sẽ được tách ra sớm và rõ.
 
 Kiểm thử cục bộ xác minh adapter chọn đúng file, giữ nguyên Makefile demo,
-không chọn `CRCommon.m`/hook/daemon, và chính xác hai log lựa chọn compile.
+không chọn `CRCommon.m`/hook/daemon, và chỉ LLVM19 ở arm64 (Apple Clang
+ở arm64e).
 Build thực tế vẫn cần chạy lại trên macOS; nếu `CRCredits.m` vẫn gặp lỗi
 resource/module, cần xem `CraneDemo-OLLVM-Diagnostics` và bước preflight,
 không bỏ qua kiểm tra và không quay về ép LLVM19 cho toàn project.
+
+## Khắc phục lỗi linker: arm64e.old không tương thích arm64e
+
+Log mới cho thấy OLLVM đã chạy đầy đủ SPLIT/BCF/FLA/SUB trên hai helper,
+nhưng Apple linker từ chối `CRCredits.m.*.o` với architecture
+`arm64e.old` khi target cần `arm64e`, gây thiếu symbol
+`_CRCreditsOpenTwitter` (sự cố ABI, không phải source thiếu hàm).
+Cảnh báo `-multiply_defined is obsolete` không phải lỗi dừng link.
+
+Không đổi tên/mã CPU subtype của object hoặc bỏ lát cắt arm64e trong
+package chuẩn vì làm vậy che giấu lỗi ABI. Thay vào đó adapter
+`compiler_select.py` dựa vào kiến trúc của lệnh biên dịch: ở `arm64`
+dùng LLVM19 + OLLVM, ở `arm64e` dùng Apple Clang; các file khác cũng
+Apple Clang. CI vẫn buộc package đủ arm64+arm64e bằng verifier gốc.
+Audit mới fail nếu thiếu/nhân đôi một trong 8 pass events trên arm64,
+hoặc thiếu hai sự kiện routing compiler. Việc kiểm chứng obfuscation
+trực tiếp trên thiết bị arm64e cần giải pháp compiler/ABI tương thích
+mới; hiện không tuyên bố đã bảo vệ lát arm64e.

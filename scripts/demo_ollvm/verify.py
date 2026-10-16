@@ -17,6 +17,18 @@ REQUIRED_CLASSES = (
     b"CRPCreditsMiniZipController",
     b"CRPCreditsZipArchiveController",
 )
+SELECTED_ROUTE = "DEMO_OLLVM_SELECTED: CRCredits.m (arm64) -> LLVM19;"
+BYPASS_ROUTE = "DEMO_OLLVM_BYPASS: CRCredits.m (arm64e) -> Apple Clang;"
+
+
+def verify_compiler_routes(log: str) -> None:
+    routes = [line.strip() for line in log.splitlines()
+              if line.strip().startswith(("DEMO_OLLVM_SELECTED:", "DEMO_OLLVM_BYPASS:"))]
+    if (len(routes) != 2 or
+        sum(line.startswith(SELECTED_ROUTE) for line in routes) != 1 or
+        sum(line.startswith(BYPASS_ROUTE) for line in routes) != 1 or
+        any(not line.startswith((SELECTED_ROUTE, BYPASS_ROUTE)) for line in routes)):
+        raise AssertionError(f"Expected one LLVM19 arm64 / Apple arm64e route: {routes!r}")
 
 
 def verify_passes(log: str) -> dict[tuple[str, str], int]:
@@ -30,9 +42,9 @@ def verify_passes(log: str) -> dict[tuple[str, str], int]:
     if unexpected:
         raise AssertionError(f"Unexpected OLLVM transformations: {sorted(unexpected)}")
     counts = {pair: matches.count(pair) for pair in allowed}
-    missing = sorted(pair for pair, count in counts.items() if count == 0)
-    if missing:
-        raise AssertionError(f"Missing OLLVM pass/function coverage: {missing}")
+    incorrect = sorted((pair, count) for pair, count in counts.items() if count != 1)
+    if incorrect:
+        raise AssertionError(f"Expected each OLLVM pass/function exactly once on arm64: {incorrect}")
     return counts
 
 
@@ -66,12 +78,15 @@ def verify_packages(plain: Path, candidate: Path) -> dict[str, str | int]:
 
 def report(plain: Path, candidate: Path, log_path: Path, out: Path) -> None:
     log = log_path.read_text(encoding="utf-8", errors="replace")
+    verify_compiler_routes(log)
     counts = verify_passes(log)
     info = verify_packages(plain, candidate)
     lines = [
         "# Crane demo OLLVM scoped evaluation",
         "",
         "Selected target: CranePrefs / CRCredits.m (2 functions; 4 OLLVM passes).",
+        "Architecture scope: **arm64 only** receives LLVM19 + OLLVM.",
+        "The **arm64e** slice is compiled by Apple Clang without OLLVM to preserve its ABI.",
         "",
         "| Function | SPLIT | BCF | FLA | SUB |",
         "| --- | ---: | ---: | ---: | ---: |",
@@ -88,7 +103,8 @@ def report(plain: Path, candidate: Path, log_path: Path, out: Path) -> None:
         f"| Baseline | {info['baseline_bytes']} | `{info['baseline_sha']}` |",
         f"| OLLVM | {info['obf_bytes']} | `{info['obf_sha']}` |",
         "",
-        "PASS: pass log coverage, binary difference, UI class markers and equal package paths.",
+        "PASS: one LLVM19 arm64 compile + one Apple arm64e compile, eight OLLVM pass events,",
+        "binary difference, UI class markers and equal package paths.",
         "",
         "**Limitations:** compilers differ (Apple Clang vs LLVM19 Clang);",
         "binary differences alone are not proof of OLLVM strength.",
