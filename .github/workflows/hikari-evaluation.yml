@@ -86,7 +86,67 @@ jobs:
             out/hikari-ios.log out/report.md
           printf '\nChecks: pass invocation logs, test-only plaintext, exact 513 native vectors.\n' >> out/report.md
           printf 'iOS arm64 is compile-only; no iPhone runtime coverage is implied.\n' >> out/report.md
-          cat out/report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare real DuoDash Objective-C helper pilot
+        run: |
+          set -euo pipefail
+          pilot_dir="$RUNNER_TEMP/hikari-objc-pilot"
+          python3 extract_pilot.py --output "$pilot_dir/pilot.m"
+          cp pilot_policy.json "$pilot_dir/policy.json"
+          test -f "$pilot_dir/pilot.m"
+          test -f "$pilot_dir/policy.json"
+          echo "HIKARI_PILOT_DIR=$pilot_dir" >> "$GITHUB_ENV"
+
+      - name: Compare real Objective-C helpers on macOS
+        run: |
+          set -euo pipefail
+          sdk="$(xcrun --sdk macosx --show-sdk-path)"
+          cd "$HIKARI_PILOT_DIR"
+          xcrun clang -O1 -fobjc-arc -Wall -Wextra -Werror -isysroot "$sdk" \
+            -c pilot.m -o pilot-native-plain.o
+          "$HIKARI_CLANG" -O1 -fobjc-arc -Wall -Wextra -Werror -isysroot "$sdk" \
+            -fpass-plugin="$HIKARI_PLUGIN" \
+            -c pilot.m -o pilot-native-hikari.o \
+            2>&1 | tee "$GITHUB_WORKSPACE/scripts/hikari_eval/out/hikari-objc-native.log"
+          xcrun clang -O1 -fobjc-arc -Wall -Wextra -Werror -isysroot "$sdk" \
+            -c "$GITHUB_WORKSPACE/scripts/hikari_eval/pilot_runner.m" \
+            -o pilot-runner.o
+          xcrun clang -framework Foundation pilot-native-plain.o pilot-runner.o \
+            -o pilot-native-plain
+          xcrun clang -framework Foundation pilot-native-hikari.o pilot-runner.o \
+            -o pilot-native-hikari
+          ./pilot-native-plain > pilot-native-plain.txt
+          ./pilot-native-hikari > pilot-native-hikari.txt
+          python3 "$GITHUB_WORKSPACE/scripts/hikari_eval/audit_pilot.py" native \
+            pilot-native-plain.o pilot-native-hikari.o \
+            "$GITHUB_WORKSPACE/scripts/hikari_eval/out/hikari-objc-native.log" \
+            "$GITHUB_WORKSPACE/scripts/hikari_eval/out/report.md" \
+            --plain-output pilot-native-plain.txt \
+            --protected-output pilot-native-hikari.txt \
+            --protected-executable pilot-native-hikari
+
+      - name: Cross-compile real Objective-C helpers for iOS arm64
+        run: |
+          set -euo pipefail
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          cd "$HIKARI_PILOT_DIR"
+          xcrun clang -O1 -fobjc-arc -Wall -Wextra -Werror \
+            -target arm64-apple-ios14.0 -isysroot "$sdk" \
+            -c pilot.m -o pilot-ios-plain.o
+          "$HIKARI_CLANG" -O1 -fobjc-arc -Wall -Wextra -Werror \
+            -target arm64-apple-ios14.0 -isysroot "$sdk" \
+            -fpass-plugin="$HIKARI_PLUGIN" \
+            -c pilot.m -o pilot-ios-hikari.o \
+            2>&1 | tee "$GITHUB_WORKSPACE/scripts/hikari_eval/out/hikari-objc-ios.log"
+          xcrun lipo pilot-ios-hikari.o -verify_arch arm64
+          xcrun nm -g pilot-ios-hikari.o | grep -Fq '_DDVersionDeviceSanitizeMachineModel'
+          xcrun nm -g pilot-ios-hikari.o | grep -Fq '_DDVersionDeviceFormatClientVersion'
+          python3 "$GITHUB_WORKSPACE/scripts/hikari_eval/audit_pilot.py" ios \
+            pilot-ios-plain.o pilot-ios-hikari.o \
+            "$GITHUB_WORKSPACE/scripts/hikari_eval/out/hikari-objc-ios.log" \
+            "$GITHUB_WORKSPACE/scripts/hikari_eval/out/report.md"
+          printf '\nObjective-C real-source helper pilot: native equivalence tested; iOS arm64 compile-only.\n' >> "$GITHUB_WORKSPACE/scripts/hikari_eval/out/report.md"
+          cat "$GITHUB_WORKSPACE/scripts/hikari_eval/out/report.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Hikari test-only diagnostics
         if: always()
@@ -97,4 +157,6 @@ jobs:
             scripts/hikari_eval/out/report.md
             scripts/hikari_eval/out/hikari-native.log
             scripts/hikari_eval/out/hikari-ios.log
+            scripts/hikari_eval/out/hikari-objc-native.log
+            scripts/hikari_eval/out/hikari-objc-ios.log
           if-no-files-found: warn

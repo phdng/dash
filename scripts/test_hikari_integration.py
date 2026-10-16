@@ -94,4 +94,81 @@ expect_failure(audit.audit_output, vectors, vectors.replace("00000000", "1111111
 expect_failure(audit.audit_output, vectors, "not enough")
 expect_failure(audit.audit_output, vectors, "")
 
-print("Isolated Hikari CI policy, 2 passes, 513 vectors and fail-closed auditing: PASS")
+
+# Gated real-source Objective-C pilot, isolated from the production tweak.
+pilot_policy = json.loads((TRIAL / "pilot_policy.json").read_text(encoding="utf-8"))
+assert set(pilot_policy["policy_map"]) == {"objc_pilot_string", "objc_pilot_const"}
+assert pilot_policy["policy_map"]["objc_pilot_string"] == {
+    "enable-strcry": True, "strcry_prob": 100,
+}
+assert pilot_policy["policy_map"]["objc_pilot_const"] == {
+    "enable-constenc": True, "constenc_subxor": True,
+    "constenc_subxor_prob": 100, "constenc_togv": False,
+    "constenc_togv_prob": 50, "constenc_times": 1,
+}
+assert len(pilot_policy["policies"]) == 2
+for rule, func, profile in (
+    (pilot_policy["policies"][0], "DDVersionDeviceSanitizeMachineModel", "objc_pilot_string"),
+    (pilot_policy["policies"][1], "DDVersionDeviceFormatClientVersion", "objc_pilot_const"),
+):
+    assert re.fullmatch(rule["module"], "pilot.m")
+    assert re.fullmatch(rule["func"], func)
+    assert rule["policy"] == profile
+    assert not re.fullmatch(rule["func"], "DDRepublishAppBridgeResolvedSnapshot")
+
+extract_spec = importlib.util.spec_from_file_location("extract_pilot", TRIAL / "extract_pilot.py")
+extract = importlib.util.module_from_spec(extract_spec)
+extract_spec.loader.exec_module(extract)
+original = (ROOT / "re/RECONSTRUCTION/VersionDeviceHelpers.m").read_text(encoding="utf-8")
+pilot_source = extract.render(original)
+assert "#import <Foundation/Foundation.h>" in pilot_source
+assert "DuoDashShared.h" not in pilot_source
+assert "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,_-" in pilot_source
+for func in extract.FUNCTIONS:
+    assert pilot_source.count(func + "(") == 1
+assert "DDVersionDeviceFormatOSVersion" not in pilot_source
+assert "DDVersionTupleAtLeast" not in pilot_source
+try:
+    extract.extract_function(original, "DDDoesNotExist")
+except ValueError:
+    pass
+else:
+    raise AssertionError("Source extraction must reject unknown symbols")
+
+pilot_runner = (TRIAL / "pilot_runner.m").read_text(encoding="utf-8")
+assert 'assert_equals(DDVersionDeviceSanitizeMachineModel' in pilot_runner
+assert 'assert_equals(DDVersionDeviceFormatClientVersion' in pilot_runner
+samples_block = pilot_runner.split("NSString *samples[] = {", 1)[1].split("};", 1)[0]
+assert len(re.findall(r'@"(?:[^"\\]|\\.)*"', samples_block)) == 22
+assert "code = 32; code <= 126;" in pilot_runner
+assert "-fobjc-arc" in workflow
+assert workflow.count("audit_pilot.py") == 2
+assert "python3 extract_pilot.py --output" in workflow
+assert "cp pilot_policy.json" in workflow
+assert "HIKARI_PILOT_DIR" in workflow
+assert "pilot-ios-hikari.o" in workflow
+assert "xcrun nm -g pilot-ios-hikari.o" in workflow
+assert "_DDVersionDeviceSanitizeMachineModel" in workflow
+assert "_DDVersionDeviceFormatClientVersion" in workflow
+assert "hikari-objc-native.log" in workflow
+assert "hikari-objc-ios.log" in workflow
+assert workflow.index("name: Prepare real DuoDash Objective-C helper pilot") < workflow.index("name: Compare real Objective-C helpers on macOS")
+assert workflow.index("name: Compare real Objective-C helpers on macOS") < workflow.index("name: Cross-compile real Objective-C helpers for iOS arm64")
+
+pilot_spec = importlib.util.spec_from_file_location("audit_pilot", TRIAL / "audit_pilot.py")
+pilot_audit = importlib.util.module_from_spec(pilot_spec)
+pilot_spec.loader.exec_module(pilot_audit)
+log = "\n".join(pilot_audit.REQUIRED_LOGS)
+plain_obj = b"baseline_" + pilot_audit.ALLOWED_MODEL_ALPHABET + b"_end"
+protected_obj = b"hikari_object_without_plaintext"
+pilot_audit.check_objects(plain_obj, protected_obj, log)
+expect_failure(pilot_audit.check_objects, plain_obj, protected_obj, "")
+expect_failure(pilot_audit.check_objects, plain_obj, plain_obj, log)
+expect_failure(pilot_audit.check_objects, b"no expected string", protected_obj, log)
+pilot_lines = "\n".join(f"{i:03d}:xyz:abc" for i in range(213)) + "\n"
+pilot_audit.check_outputs(pilot_lines, pilot_lines)
+expect_failure(pilot_audit.check_outputs, pilot_lines, pilot_lines.replace("xyz", "zzz", 1))
+expect_failure(pilot_audit.check_outputs, pilot_lines, "")
+assert "hikari-evaluation.yml" not in (ROOT / ".github/workflows/build.yml").read_text(encoding="utf-8")
+
+print("Hikari C fixture and DuoDash real-source Objective-C pilot: PASS")

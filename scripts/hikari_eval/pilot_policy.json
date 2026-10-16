@@ -1,0 +1,28 @@
+{
+  "policy_map": {
+    "objc_pilot_string": {
+      "enable-strcry": true,
+      "strcry_prob": 100
+    },
+    "objc_pilot_const": {
+      "enable-constenc": true,
+      "constenc_subxor": true,
+      "constenc_subxor_prob": 100,
+      "constenc_togv": false,
+      "constenc_togv_prob": 50,
+      "constenc_times": 1
+    }
+  },
+  "policies": [
+    {
+      "module": "pilot\\.m",
+      "func": "^DDVersionDeviceSanitizeMachineModel$",
+      "policy": "objc_pilot_string"
+    },
+    {
+      "module": "pilot\\.m",
+      "func": "^DDVersionDeviceFormatClientVersion$",
+      "policy": "objc_pilot_const"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # DuoDash Hikari — thử nghiệm string/constant obfuscation
 
-**Trạng thái: thử nghiệm độc lập, chưa đưa vào `DuoDashReconstruction.dylib`.**
+**Trạng thái: thử nghiệm độc lập, chưa đưa vào `DuoDashReconstruction.dylib`.** Người dùng xác nhận workflow Hikari fixture ban đầu đã build PASS; hiện bổ sung pilot Objective-C real-source để kiểm thử vòng tiếp theo.
 
 Kỹ thuật gợi ý từ SLLVM được thử thông qua module **Hikari có mã nguồn**
 trong [lich4/ollvm-pass](https://github.com/lich4/ollvm-pass), **không phải**
@@ -49,6 +49,37 @@ riêng cho native macOS và iOS. Kiểm tra byte chỉ chứng minh một test m
 không còn nguyên dạng; không xác nhận mọi string của app đều được mã hóa.
 Log chạy pass cũng không chứng minh biến đổi luôn đúng cho Objective-C.
 
+## Pilot trên hai helper Objective-C thật (chỉ trong workflow thử nghiệm)
+
+Bên cạnh fixture C đã pass, workflow mới **trích đúng hai function body từ**
+`re/RECONSTRUCTION/VersionDeviceHelpers.m` bằng
+`scripts/hikari_eval/extract_pilot.py` để biên dịch thành translation unit
+`pilot.m` trong `$RUNNER_TEMP`:
+
+- `DDVersionDeviceSanitizeMachineModel`: thử Hikari `enable-strcry` trên
+  chuỗi whitelist hiện có của hàm.
+- `DDVersionDeviceFormatClientVersion`: thử `enable-constenc` trên các
+  nhánh định dạng/version và hằng số hiện có.
+
+Policy nằm tại `scripts/hikari_eval/pilot_policy.json`, được copy sang
+`$RUNNER_TEMP/hikari-objc-pilot/policy.json` trước khi biên dịch. Compiler
+nạp plugin Hikari trong **thư mục riêng**, không nạp chung với OLLVM.
+Không sửa file `.m` production, `Makefile`, hoặc workflow build tweak.
+
+Runner macOS `pilot_runner.m` thử các case chuẩn và biên (model hợp lệ,
+whitespace, ký tự bị loại, độ dài vượt 32, phiên bản lỗi, chuỗi Unicode),
+đồng thời quét printable ASCII. Bước audit mới yêu cầu **213 vector** chạy
+bản chuẩn và bản Hikari giống hệt, có log **strenc** và **constenc** cho
+đúng hai hàm và kiểm tra whitelist có mặt trong object chuẩn nhưng không
+còn dưới dạng plaintext trong object/binary Hikari. Cũng biên dịch
+hai hàm này thành object Objective-C cho iOS arm64 và xác thực pass +
+plaintext; không tuyên bố đã kiểm tra runtime trên iPhone.
+
+Nếu pilot Objective-C thất bại, kết quả phải được xem là lỗi hoặc giới hạn
+của Hikari khi xử lý Objective-C, **không tự động vô hiệu hoá bài audit**.
+Kiểm tra string marker không chứng minh toàn bộ chuỗi đã được bảo vệ; những
+selector và symbol cần thiết cho runtime Objective-C vẫn phải được giữ lại.
+
 ## Kiểm tra cục bộ
 
 ```sh
@@ -63,16 +94,15 @@ Windows thì không thể kết luận tương thích dựa trên static tests.
 
 ## Giới hạn an toàn và phát hành
 
-- Chưa áp dụng trên các hàm thật của DuoDash hay `Makefile`.
+- Hai hàm thật đã được **trích ra và kiểm tra riêng**, nhưng **chưa áp dụng trên dylib/tweak production** hoặc `Makefile`.
 - Chưa kiểm chứng Hikari + Obfuscator khi cùng nạp trong một compilation.
 - Không bật `enable-fco`, `enable-indibran`, `enable-funcwra` hoặc
   anti-debug/anti-hook. Các pass đó cần một vòng thí nghiệm riêng.
-- Chưa thử mã hóa `NSString`/`CFString`: Objective-C selectors, lớp/runtime
-  và các symbol dùng bởi Substrate phải được giữ nguyên.
+- Pilot Objective-C có thử mã hóa hằng `NSString` trong `DDVersionDeviceSanitizeMachineModel`; chỉ khi macOS CI pass mới kết luận thí nghiệm này tương thích trên các vector đã thử. Objective-C selectors, lớp/runtime và symbol dùng bởi Substrate phải được giữ nguyên.
 - Kiểm tra license/provenance của các thành phần Hikari trước khi đóng gói,
   phân phối hoặc tái sử dụng ngoài hoạt động thử nghiệm.
 - Không nên lưu secret trong client chỉ vì phép thử mã hóa chuỗi thành công.
 
-Nếu fixture đạt, giai đoạn sau là thử một helper ít nhạy cảm của DuoDash
-với regression độc lập và kiểm tra bằng thiết bị thật, sau đó mới cân nhắc
-mở rộng sang FCO/indirect-branch/function-wrapper.
+Nếu pilot Objective-C đạt, bước tiếp theo là xác minh chính các helper
+trong một bản tweak thử nghiệm có thể cài trên thiết bị, thêm regression
+runtime; sau đó mới cân nhắc FCO/indirect-branch/function-wrapper.
