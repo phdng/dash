@@ -11,6 +11,7 @@ on:
       - "scripts/hostflow_preflight_smoke.m"
       - "scripts/test_dock_geometry_vectors.py"
       - "scripts/test_ollvm_integration.py"
+      - "scripts/verify_ollvm_log.py"
       - "scripts/ollvm_probe.c"
       - "policy.json"
       - "docs/OLLVM.md"
@@ -25,6 +26,7 @@ on:
       - "scripts/hostflow_preflight_smoke.m"
       - "scripts/test_dock_geometry_vectors.py"
       - "scripts/test_ollvm_integration.py"
+      - "scripts/verify_ollvm_log.py"
       - "scripts/ollvm_probe.c"
       - "policy.json"
       - "docs/OLLVM.md"
@@ -141,8 +143,26 @@ jobs:
             -fpass-plugin="$OLLVM_PLUGIN" \
             -c scripts/ollvm_probe.c -o "$RUNNER_TEMP/ollvm_probe_arm64.o" \
             2>&1 | tee "$RUNNER_TEMP/ollvm_probe.log"
-          grep -q '>>>> run sub on dd_ollvm_probe' "$RUNNER_TEMP/ollvm_probe.log"
+          python3 scripts/verify_ollvm_log.py probe "$RUNNER_TEMP/ollvm_probe.log"
           xcrun lipo "$RUNNER_TEMP/ollvm_probe_arm64.o" -verify_arch arm64
+
+      - name: Compare native OLLVM probe with unmodified Clang output
+        if: ${{ env.OLLVM_ENABLED == 'true' }}
+        run: |
+          set -o pipefail
+          sdk="$(xcrun --sdk macosx --show-sdk-path)"
+          xcrun clang -O1 -DOLLVM_PROBE_MAIN -isysroot "$sdk" \
+            scripts/ollvm_probe.c -o "$RUNNER_TEMP/probe_plain"
+          "$OLLVM_CLANG" -O1 -DOLLVM_PROBE_MAIN -isysroot "$sdk" \
+            -fpass-plugin="$OLLVM_PLUGIN" scripts/ollvm_probe.c \
+            -o "$RUNNER_TEMP/probe_obfuscated" \
+            2>&1 | tee "$RUNNER_TEMP/ollvm_probe_native.log"
+          python3 scripts/verify_ollvm_log.py probe "$RUNNER_TEMP/ollvm_probe_native.log"
+          "$RUNNER_TEMP/probe_plain" > "$RUNNER_TEMP/probe_plain.txt"
+          "$RUNNER_TEMP/probe_obfuscated" > "$RUNNER_TEMP/probe_obfuscated.txt"
+          test "$(wc -l < "$RUNNER_TEMP/probe_plain.txt" | tr -d ' ')" = 513
+          cmp "$RUNNER_TEMP/probe_plain.txt" "$RUNNER_TEMP/probe_obfuscated.txt"
+          echo "OLLVM native probe matches baseline across 513 input values and 3 functions" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build tweak (OLLVM)
         if: ${{ env.OLLVM_ENABLED == 'true' }}
@@ -152,10 +172,7 @@ jobs:
             TARGET_CC="$OLLVM_CLANG" TARGET_CXX="$OLLVM_CLANGXX" \
             TARGET_LD="$(xcrun --find clang++)" \
             2>&1 | tee "$RUNNER_TEMP/ollvm_tweak.log"
-          if ! grep -q '>>>> run sub on ' "$RUNNER_TEMP/ollvm_tweak.log"; then
-            echo "::error::OLLVM built without transforming any selected tweak functions"
-            exit 1
-          fi
+          python3 scripts/verify_ollvm_log.py tweak "$RUNNER_TEMP/ollvm_tweak.log"
 
       - name: Collect OLLVM dylib
         if: ${{ env.OLLVM_ENABLED == 'true' }}
@@ -165,6 +182,19 @@ jobs:
           test -n "$dylib"
           cp "$dylib" dist-ollvm/DuoDashReconstruction.dylib
           cp DuoDashReconstruction.plist dist-ollvm/DuoDashReconstruction.plist
+          echo "### DuoDash OLLVM comparison" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Variant | dylib size (bytes) | SHA-256 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | ---: | --- |" >> "$GITHUB_STEP_SUMMARY"
+          for variant in standard ollvm; do
+            if [ "$variant" = standard ]; then
+              path="dist/DuoDashReconstruction.dylib"
+            else
+              path="dist-ollvm/DuoDashReconstruction.dylib"
+            fi
+            bytes="$(wc -c < "$path" | tr -d ' ')"
+            sha="$(shasum -a 256 "$path" | cut -d ' ' -f 1)"
+            echo "| $variant | $bytes | \`$sha\` |" >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - name: Upload OLLVM artifact
         if: ${{ env.OLLVM_ENABLED == 'true' }}

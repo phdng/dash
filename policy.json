@@ -1,18 +1,56 @@
 {
   "policy_map": {
-    "duodash_light": {
-      "enable_fla": true,
-      "enable_bcf": true,
+    "existing_coverage": {
       "enable_split": true,
+      "split_n": 2,
+      "enable_bcf": true,
+      "bcf_prob": 30,
+      "bcf_times": 1,
+      "enable_fla": true,
       "enable_sub": true,
       "sub_times": 1
+    },
+    "full_strength_eval": {
+      "enable_split": true,
+      "split_n": 4,
+      "enable_bcf": true,
+      "bcf_prob": 100,
+      "bcf_times": 2,
+      "enable_fla": true,
+      "enable_sub": true,
+      "sub_times": 3
     }
   },
   "policies": [
     {
-      "module": ".*(LicenseHelpers|PrefsResolver|ollvm_probe)\\.(m|c)",
+      "module": ".*(LicenseHelpers|PrefsResolver)\\.m",
       "func": ".*",
-      "policy": "duodash_light"
+      "policy": "existing_coverage"
+    },
+    {
+      "module": ".*LicenseHelpers\\.m",
+      "func": "^(DDLicenseIsPrintableASCIIString|DDLicenseKeyPrefixIndex)$",
+      "policy": "full_strength_eval"
+    },
+    {
+      "module": ".*PrefsResolver\\.m",
+      "func": "^DDAppBridgeBaseClassification$",
+      "policy": "full_strength_eval"
+    },
+    {
+      "module": ".*VersionDeviceHelpers\\.m",
+      "func": "^(DDVersionTupleAtLeast|DDVersionDeviceSanitizeMachineModel)$",
+      "policy": "full_strength_eval"
+    },
+    {
+      "module": ".*ToggleValueHelpers\\.m",
+      "func": "^DDFontFloorOverrideValue$",
+      "policy": "full_strength_eval"
+    },
+    {
+      "module": ".*ollvm_probe\\.c",
+      "func": "^dd_ollvm_probe(_[A-Za-z0-9_]+)?$",
+      "policy": "full_strength_eval"
     }
   ]
 }
