@@ -1,0 +1,91 @@
+name: Protection Lab - SLLVM-inspired CE and ICALL (Experimental)
+
+# Distinct from the green Crane OLLVM and Apple ABI/VM canary workflows.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sllvm-inspired:
+    name: Apple Clang source pilot - arm64 and arm64e
+    runs-on: macos-14
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run standalone pilot regression tests
+        run: |
+          set -euo pipefail
+          python3 scripts/test_sllvm_pilot.py
+          python3 scripts/test_protection_lab.py
+
+      - name: Generate CE fixture and check native host equivalence
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/sllvm-pilot"
+          mkdir -p "$out"
+          python3 "$lab/sllvm_generator.py" --out "$out/sllvm_encoded.h"
+          xcrun clang --version > "$out/apple-clang-version.txt"
+          xcrun clang -std=c11 -O2 -Wall -Wextra -Werror \
+            -I "$out" "$lab/sllvm_plain.c" "$lab/sllvm_protected.c" \
+            "$lab/sllvm_runner.c" -o "$out/sllvm-host"
+          "$out/sllvm-host" | tee "$out/host-vectors.txt"
+          grep -Fx 'SLLVM_PILOT_HOST_PASS: 8192 CE/ICALL parity vectors' \
+            "$out/host-vectors.txt"
+
+      - name: Build and audit two native iOS architecture slices
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/sllvm-pilot"
+          clang="$(xcrun --sdk iphoneos --find clang)"
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          for arch in arm64 arm64e; do
+            for variant in plain protected; do
+              "$clang" -std=c11 -arch "$arch" -isysroot "$sdk" \
+                -miphoneos-version-min=14.0 -O2 -Wall -Wextra -Werror \
+                -fvisibility=hidden -I "$out" \
+                -dynamiclib -Wl,-install_name,@rpath/libDoudashSllvmPilot.dylib \
+                "$lab/sllvm_$variant.c" -o "$out/$variant-$arch.dylib"
+              test -s "$out/$variant-$arch.dylib"
+              xcrun otool -tvV "$out/$variant-$arch.dylib" > "$out/$variant-$arch.asm"
+            done
+          done
+          python3 "$lab/sllvm_audit.py" \
+            --arm64-plain "$out/plain-arm64.dylib" \
+            --arm64-protected "$out/protected-arm64.dylib" \
+            --arm64e-plain "$out/plain-arm64e.dylib" \
+            --arm64e-protected "$out/protected-arm64e.dylib" \
+            --host-log "$out/host-vectors.txt" \
+            --header "$out/sllvm_encoded.h" \
+            --out "$out/report.json"
+          shasum -a 256 "$out/"*.dylib > "$out/macho-hashes.txt"
+          echo '### CE and typed indirect-call pilot' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Native host parity: 8192 vectors. Binary marker delta: arm64 + arm64e.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'SLLVM compiler/plugin: NOT USED. iOS A12+ PAC runtime: NOT TESTED.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload independent SLLVM-inspired binary comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProtectionLab-SLLVM-inspired-arm64-arm64e-EXPERIMENTAL
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/sllvm-pilot/report.json
+            ${{ runner.temp }}/sllvm-pilot/host-vectors.txt
+            ${{ runner.temp }}/sllvm-pilot/sllvm_encoded.h
+            ${{ runner.temp }}/sllvm-pilot/macho-hashes.txt
+            ${{ runner.temp }}/sllvm-pilot/apple-clang-version.txt
+            ${{ runner.temp }}/sllvm-pilot/plain-arm64.dylib
+            ${{ runner.temp }}/sllvm-pilot/protected-arm64.dylib
+            ${{ runner.temp }}/sllvm-pilot/plain-arm64e.dylib
+            ${{ runner.temp }}/sllvm-pilot/protected-arm64e.dylib
+            ${{ runner.temp }}/sllvm-pilot/plain-arm64.asm
+            ${{ runner.temp }}/sllvm-pilot/protected-arm64.asm
+            ${{ runner.temp }}/sllvm-pilot/plain-arm64e.asm
+            ${{ runner.temp }}/sllvm-pilot/protected-arm64e.asm

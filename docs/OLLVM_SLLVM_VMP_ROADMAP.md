@@ -14,6 +14,16 @@ Ngày cập nhật: 2026-10-16. Trạng thái: **Sprint P0/P1 prototype đã có
 - OLLVM STRONG hiện có thêm `CRCredits-machine-report.json`: công bố rõ
   arm64 LLVM19/OLLVM STRONG, arm64e Apple Clang bypass, report object-level
   ratio và hash, không gắn nhãn bảo vệ arm64e.
+- Người dùng xác nhận workflow Protection Lab trước đã build xanh; đây là
+  kết quả CI do người dùng báo, chưa phải thử PAC runtime trên A12+.
+- **Sprint P2 thử nghiệm đã viết:** workflow riêng
+  `.github/workflows/protection-sllvm-pilot.yml` với phép biến đổi
+  **CE/ICALL-inspired ở mức source C**, build Apple Clang plain/protected
+  cho arm64 và arm64e; strict Mach-O subtype/PAC ABI audit, kiểm tra chuỗi
+  canary biến mất và dữ liệu mã hóa xuất hiện, native host parity 8.192 vector
+  và 10.003 portable fixture vectors. Xem
+  [`scripts/protection_lab/README.md`](../scripts/protection_lab/README.md).
+  Workflow mới **chưa chạy**, không được gọi arm64e device PASS.
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 

@@ -51,6 +51,42 @@ Actions → **Protection Lab - Apple arm64e ABI and VM canary (Experimental)**
 - `host-vectors.txt`: bằng chứng runner host có 8.192 vector PASS.
   Đây **không** phải iOS runtime hay PAC test.
 
+
+## Sprint CE/ICALL theo ý tưởng SLLVM — thử nghiệm riêng
+
+Workflow thủ công: **Protection Lab - SLLVM-inspired CE and ICALL (Experimental)**
+trong `.github/workflows/protection-sllvm-pilot.yml`.
+
+Phạm vi (không tích hợp SLLVM proprietary, không động vào Crane):
+- `sllvm_plain.c`: C baseline giữ **chuỗi canary công khai** làm đối chứng.
+- `sllvm_generator.py`: tạo `sllvm_encoded.h` (35 byte XOR với
+  keystream cố định), **chỉ là obfuscation dễ đảo**, không mã hóa bảo vệ key.
+- `sllvm_protected.c`: đọc byte mã hóa bằng `const volatile` rồi
+  giải mã để chạy phép kiểm tra hash; gọi hàm qua **bảng function pointer
+  có kiểu**, không ép con trỏ số nguyên, để Apple Clang giữ ABI/PAC.
+- `sllvm_runner.c`: **8.192 test vector thực** trên host macOS so sánh
+  native/plain với CE+indirect phiên bản mới.
+- `sllvm_audit.py`: kiểm tra ABI trên Mach-O plain/protected cho hai
+  slice, yêu cầu chuỗi canary hiện diện trong baseline, **không còn nguyên
+  chuỗi** trong protected, có byte đã mã hóa trong protected, và kiểm tra
+  log runtime host. Xuất `report.json`.
+- `scripts/test_sllvm_pilot.py`: test fixture cross-platform
+  **10.003 vector** và negative gates (sai PAC ABI, thiếu baseline marker,
+  lộ plaintext, host log giả). **Kết quả fixture không phải bằng chứng
+  binary sản phẩm thực tế.**
+
+Chạy local: `python scripts/test_sllvm_pilot.py`. Trên Actions chọn
+workflow thủ công vừa nêu. Nếu CI xanh, artifact
+`ProtectionLab-SLLVM-inspired-arm64-arm64e-EXPERIMENTAL` gồm
+`plain-arm64*.dylib`, `protected-arm64*.dylib` cho cả hai slice,
+4 tệp `.asm`, `report.json`, header, hashes, log host vectors. Mở
+hai cặp binary trong IDA để xem chênh lệch. **Không cài các dylib
+canary này trên thiết bị**; chưa kiểm chứng PAC A12+ runtime, chưa gọi
+đây là SLLVM chính thức hoặc bảo mật chống dịch ngược.
+
+**Chiến lược tiếp theo:** thử IGV/IBR và CE cho ObjC literal trong
+canary tách biệt trước khi cân nhắc một helper CranePrefs không trọng yếu.
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker
