@@ -1,0 +1,21 @@
+{
+  "policy_map": {
+    "credits_ui_eval": {
+      "enable_split": true,
+      "split_n": 2,
+      "enable_bcf": true,
+      "bcf_prob": 30,
+      "bcf_times": 1,
+      "enable_fla": true,
+      "enable_sub": true,
+      "sub_times": 1
+    }
+  },
+  "policies": [
+    {
+      "module": ".*CRCredits\\.m",
+      "func": "^(CRCreditsOpenTwitter|CRCreditsLocalizedRows)$",
+      "policy": "credits_ui_eval"
+    }
+  ]
+}

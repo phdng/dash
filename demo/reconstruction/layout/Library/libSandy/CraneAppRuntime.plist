@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Main ' Crane.dylib' can run in arbitrary third-party bundles.
+         Mirror the two service-specific Mach extension classes already used
+         by the recovered CraneSupport/CraneRB profiles for privileged lookup
+         of cranehelperd.xpc. Do not grant filesystem or any other service. -->
+    <key>AllowedProcesses</key>
+    <array>
+        <string>*</string>
+    </array>
+    <key>Extensions</key>
+    <array>
+        <dict>
+            <key>type</key>
+            <string>mach</string>
+            <key>extension_class</key>
+            <string>com.apple.app-sandbox.mach</string>
+            <key>mach_name</key>
+            <string>com.opa334.cranehelperd.xpc</string>
+        </dict>
+        <dict>
+            <key>type</key>
+            <string>mach</string>
+            <key>extension_class</key>
+            <string>com.apple.security.exception.mach-lookup.global-name</string>
+            <key>mach_name</key>
+            <string>com.opa334.cranehelperd.xpc</string>
+        </dict>
+    </array>
+</dict>
+</plist>

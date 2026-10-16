@@ -1,0 +1,553 @@
+# Known Differences
+
+Every item below is a real, deliberate gap. Nothing here is presented as
+equivalent. Each is labelled with the evidence status of the claim on the other
+side, and the analysis files that establish it.
+
+## 1. Scope-level differences
+
+### D-01 — Six of eleven binaries had no IDA export, so they could not be transcribed
+
+**Original:** `usr/lib/libcrane.dylib` (339 KB, the container registry and XPC
+client), `usr/local/libexec/cranehelperd` (118 KB), `usr/local/bin/cranehelperd_start`,
+`CraneApplication_Legacy.app`, both `CraneShortcuts.appex` binaries.
+
+**Reconstruction:** `CraneManager` exists with every recovered selector, and
+`cranehelperd` registers both Mach services with the recovered class names, but
+their behaviour is reconstructed from call sites, not transcribed.
+
+**Consequence:** the container registry's on-disk format, the identifier
+generation scheme, the archive format and the XPC protocol differ from the
+original. **Containers written by one build are not guaranteed to be readable by
+the other.**
+
+Evidence: `analysis/environment_report.md` §5; U-01, U-04, U-06, U-08.
+
+### D-02 — The cranehelperd XPC protocol is this project's own
+
+**Original:** the protocol vended by `CRHGlobalService` is unknown (U-01).
+**Reconstruction:** `CRHelperServiceProtocol` in `sources/common/CRManager.h`.
+
+Method names were chosen to match what the exported binaries actually call, so
+call sites line up, but argument encodings and reply-block shapes were chosen by
+this project. The original daemon will reject these messages.
+
+**Test impact:** `T-F19-1`, `T-F19-2` cannot pass against the original daemon.
+
+### D-03 — Read subsystems were indexed, not all read line by line
+
+The initial pass transcribed 17 recovered functions. Subsequent fidelity passes
+also transcribed the main-dylib hook-table details, libroot path shim behaviour
+and the core `CraneActivatorManager` listener/event flow. Most of the 2651
+exported functions still remain at selector/call-graph/string-constant coverage
+rather than full control-flow transcription.
+
+**Consequence:** F-14, F-15 (partially),
+F-16 (partially) and F-19 remain declarations/dispatch or incomplete
+implementations. F-20 now has its recovered `CRErrorAlert`/presenter core
+transcribed, but launch-injection verification still depends on U-01. F-21 now has its recovered Choicy provider/runtime core
+transcribed, and the optional per-container Choicy editor is now ported from 0x3F108-0x3F774; native and device validation remain pending. F-08 now has its recovered apsd-side token/topic hook chain
+transcribed but still lacks the SpringBoard notification-routing half and U-01 health proxy. F-11 now has its recovered lsd/device-identifier hook chain
+transcribed but still depends on U-01 helperd/PID plumbing. F-09 now has its recovered accountsd/Core Data hook chain
+transcribed but still depends on U-01/U-06 runtime plumbing. F-05 now has its recovered cfprefsd hook/ABI chain transcribed
+but still depends on U-01 PID transport. F-06 now has its recovered containermanagerd hook/cache/proxy
+chain transcribed but still depends on missing libcrane/helperd transport. F-12
+now has its recovered pkd/PlugInKit server-side hook chain
+transcribed, but still depends on the SpringBoard notification-support query-tag
+path for the container-specific notification-extension case. See
+`reconstruction/IMPLEMENTATION_STATUS.md` §2.
+
+## 2. Behavioural differences in what *is* implemented
+
+### D-04 — SpringBoard's launch APIs are not hooked
+
+**Original:** `CraneSB` hooks `FBProcessManager`
+`_bootstrapProcessWithExecutionContext:synchronously:error:`,
+`_createProcessWithExecutionContext:`,
+`createApplicationProcessForBundleID:withExecutionContext:` and
+`SBIconController` `_launchFromIconView:`(+ two variants), then injects the
+environment through `crane_applyModificationsIfNeededToExecutionContext:`.
+
+**Reconstruction:** those `MSHookMessageEx` calls are **not** present.
+`CRApplyEnvironmentChanges` is implemented and its contract is transcribed, but
+nothing calls it, because the shape of `FBProcessExecutionContext` is a private
+SpringBoard API that could not be recovered.
+
+**Consequence:** F-01 does not work end-to-end. The function that decides what
+the environment should be is correct; the plumbing that delivers it is absent.
+This is the single largest functional gap.
+
+### D-05 — cfprefsd hook chain is reconstructed; PID transport remains incomplete
+
+**Original:** `initCfprefsd` captures the client host bundle identifier and PID,
+uses `ClientContainerCache` to resolve a non-default active container, and hooks
+CoreFoundation's source/path resolution. Explicit-container paths are moved under
+the Crane container. Path-less domains temporarily carry the active container in
+the current thread dictionary so `__CFPrefsGetPathForTriplet` can rewrite the
+plist basename to `<domain>.c_r_a_n_e.<container>.plist`. CoreFoundation 1740–1999
+uses Objective-C hooks with a `libundirect` fallback; CoreFoundation 2000+ hooks
+the recovered shared-cache symbols directly.
+
+**Reconstruction:** `CRCfprefs.m` now transcribes that request capture, both
+`withSourceForDomain` ABI families, the version/libundirect selection logic and
+the 0x400-byte triplet-path rewrite. Private XPC PID lookup is runtime-resolved
+to avoid Xcode's unavailable declaration.
+
+**Remaining difference:** `ClientContainerCache` still receives `DEFAULT` from
+the reconstructed helperd/libcrane PID→container transport (U-01), so the hooks
+cannot yet be claimed behaviorally effective end-to-end. Runtime/device testing
+has not been performed.
+
+### D-06 — Keychain isolation is entirely absent
+
+**Original:** `initSecurityd` hooks `SecItemAdd` / `SecItemCopyMatching` /
+`SecItemDelete` / `SecItemUpdate` with `_orig` storage, rewrites keychain access
+groups per container, and **patches securityd's own code signature** using an
+embedded ~180-function toolkit (`csd_*`, `macho_*`, `fat_*`, `memory_stream_*`,
+`pfsec_*` arm64 pattern scanner, `arm64_gen_*`/`arm64_dec_*`).
+
+**Reconstruction:** `initSecurityd()` exists and does nothing.
+
+**Consequence:** every container shares one keychain. This is a data-integrity
+difference, not just a missing feature: an app that writes credentials in
+container A will find them in container B.
+
+**Why it was not stubbed differently:** a partial implementation that rewrites
+some access groups would break credentials *without* isolating them, which is
+strictly worse than not touching the keychain at all.
+
+### D-07 — apsd-side notification isolation is reconstructed; SpringBoard routing remains absent
+
+**Original:** `initApsd` installs ten method hooks total — two on
+`APSCourierConnection` and eight on `APSCourier`/`APSUserCourier` — while
+`CraneSB`'s `initNotificationSupport` contributes roughly 40 producer/routing,
+title and badge hooks. The apsd side uses Crane topics of the form
+`<topic>.c_r_a_n_e.<container>`, maps uncraned/craned topic hashes during token
+registration, restores the craned hash on token responses, and can recover an
+incoming message's actual topic hash from apsd's per-app token keychain record.
+The feature is gated globally by `notificationsSupportEnabled` and per-app by
+`separateNotificationRegistrationsEnabled` on the SpringBoard side.
+
+**Reconstruction:** `CRApsd.m` now transcribes the complete recovered
+CraneSupport/apsd chain, including the `crane_topicStorage` associated state,
+ApplePushService `dlopen`/`dlsym` helper lookup with SHA-1/string fallbacks,
+keychain topic lookup, all ten method wrappers, token request/response hash
+translation, and the incoming-message transform. The latter retains the
+original `verifyCraneSBLoadedAndReply:` safety gate; because reconstructed
+`CraneManager.cranehelperdGlobalSyncRemoteObjectProxy` still returns `nil`, it
+currently fails open and leaves incoming messages unchanged.
+
+**Remaining difference:** the CraneSB notification-support hooks that create
+craned registrations, select the target container, alter notification titles,
+and maintain per-container badges are still unported because their target
+classes remain U-10. Therefore F-08 is not end-to-end equivalent even though
+its apsd/server half is source-transcribed.
+
+**Compounding uncertainty:** even with the hook bodies read, the target class of
+each of the 40 `CraneSB` hooks is aliased in the decompilation (U-10), so they
+cannot be attributed to classes without inventing them.
+
+### D-08 — Modern and legacy container-selection UI are reconstructed; badge decoration remains
+
+**Original:** the modern path injects a placeholder `SBSApplicationShortcutItem`,
+then replaces it through one of two `UIMenu` initializer hooks. The recovered
+`crane_replacementMenu` creates one action per container using the short display
+name, adds an active `checkmark`, optionally adds New Container, and adds
+Settings. In non-expanded mode Settings is wrapped separately and the outer
+`CRSubtitleMenu` carries the active container name as subtitle with
+`square.grid.2x2`; CF >=1854.0 reverses the children array. Private context-menu
+cell hooks preserve/render that subtitle. Older systems use the separate
+`SBUIAppIconForceTouch*` / `SBUIActionView` family. Container rows may become
+`CRBadgeAction`s when F-14 notification badges are enabled.
+
+**Reconstruction:** `CRMenuHooks.m` now transcribes both menu families. The
+modern UIMenu-era path includes placeholder injection and app-id capture, both
+initializer variants, `SBSApplicationShortcutItem` section/system
+classification, active checkmark/subtitle, optional New Container,
+Settings/Shuffle URL handling, launch-on-selection, subtitle-preserving UIMenu
+copies, three `_configureCell` variants and `_interfaceActionGroupForActions:`.
+The CF <1665.15 path now reproduces the recovered two-phase hook timing: early
+`SBUIIconForceTouchViewController` / `SBUIAppIconForceTouchController` /
+`SBUIAction` / `SBUIActionView` hooks, then the
+`SBUIAppIconForceTouchControllerDataProvider.applicationShortcutItems` hook
+after SpringBoard finishes launching. It reconstructs the parent Container row,
+expanded per-container rows, active checkmark, 2pt separator rendering, New
+Container/Settings handlers, biometric switching, and optional app activation.
+`CRNewContainerAlert` is also reconstructed in `CRErrorAlerts.m`, and the
+`createNewContainerWithName:forApplicationWithIdentifier:` return contract was
+corrected to return the created identifier as required by the recovered alert
+handler. U-05 is RESOLVED statically from these bodies.
+
+**Remaining difference:** F-14 badge-specific `CRBadgeAction` / per-container
+notification-badge rendering is deliberately deferred. The original
+container-switch success callback includes a BOOL used for an old-CF
+delayed-launch nuance; reconstructed libcrane does not expose that reply detail,
+so the reconstructed menu paths act immediately after their available success
+callback. No device or visual comparison has been performed.
+
+### D-09 — Choicy provider and container editor source are reconstructed; runtime validation is pending
+
+**Original:** `crane_initChoicyIntegration` resolves the jailbreak-root-aware
+`ChoicySB.dylib` path, loads it dynamically, obtains
+`ChoicyOverrideManager.sharedManager`, and registers
+`CraneChoicyOverwriteProvider`. The provider has six methods with recovered
+encodings (`I24@0:8@16`, four `B24@0:8@16`, `@24@0:8@16`). For a non-default
+active container, `choicyConfigurationOverwriteEnabled` gates bitmask `7`; the
+remaining values come from the per-container nested
+`choicyConfigurationOverwrite` dictionary. The allow-list path preserves the
+main tweak's load-bearing name `" Crane"`.
+
+**Reconstruction:** `CRSpringBoard.m` now transcribes that dynamic registration
+and all six provider bodies, including NSNumber-only fallback parsing,
+`tweakInjectionDisabled`, `customTweakConfigurationEnabled`,
+`overwriteGlobalTweakConfiguration`, `allowDenyMode`, `allowedTweaks` and
+`deniedTweaks` semantics. The previous inferred global preference contract was
+corrected: the gate and nested payload are per-container, as corroborated by
+CranePrefs 0x10E68 and 0x3F44C/0x3F5C.
+
+**Container editor:** `CRChoicyEditor.m` now creates the optional dynamic
+`CRPContainerChoicyOverwriteListController` subclass, with the five initializer
+selectors proven against the original ARM64 memory dump. It scopes
+`readPreferences`/`writePreferences` to the selected container, hides plug-ins
+and the main `" Crane"` tweak, delegates other tweak visibility, and reloads only
+the active application's container. It does not invoke Choicy's global store
+writers. The settings row opens this editor only after checking private method
+ABIs; incompatible versions retain the read-only preview. Rejecting stale or
+DEFAULT containers and non-plist edits are explicit reconstruction guards.
+
+**Remaining difference:** real Settings/Choicy registration and editor/provider
+behavior have not been tested. An actual-source Foundation smoke test is wired
+into rootful/roothide CI, but no native execution or Theos build was possible in
+this Windows session. U-07's older-CF SpringBoard branch interaction remains
+unresolved.
+
+### D-10 — The backup/restore engine is absent
+
+**Original:** embedded `SSZipArchive` + MiniZip in `CranePrefs`, 41-method
+`CRPBackupOperation`, 42-method `CRPNewBackupListController`, 43-method
+`CRPRestoreOperation`, a `CRPKeychainManager` category, and daemon-side keychain
+dump/restore.
+
+**Reconstruction:** `CRPCreditsController` and the credits panes are referenced
+but no backup engine exists.
+
+**Consequence:** `CREATE_MULTI_CONTAINER_BACKUP` and
+`RESTORE_MULTI_CONTAINER_BACKUP` in `Root.plist` reference actions that do
+nothing. The specifier cells themselves are present and correctly labelled.
+
+### D-11 — The two app bundles and the Shortcuts extensions are not reproduced
+
+Both `CraneApplication` builds and both `CraneShortcuts.appex` binaries have no
+source available (`CraneIntentHandlerShared` bodies are U-08), and the Swift/App-
+Intents layer cannot be reconstructed from 53 exported functions. No app is
+built by this project.
+
+**Consequence:** F-22 is not implemented. The `NSUserActivityTypes` and
+`SBAppTags` metadata is documented in `analysis/behavior_specification.md` §23
+but no binary carries it.
+
+**Related (U-19, BLOCKED):** the original ships *two* app bundles sharing the
+identifier `com.opa334.CraneApplication` and must have a `postinst` selecting
+between them by `MinimumOSVersion`. That script is not in the tree and no
+`dpkg-deb`/`ar` is available here, so the mechanism is unknown. This
+reconstruction ships no app, which sidesteps the collision entirely.
+
+## 3. Configurations and dependencies
+
+### D-12 — `prefer_opaque` / `LSRequiresIPhoneOS` and code signing are not reproduced
+
+The original's binaries are re-signed by the packaging tool (no entitlements
+blob anywhere). This project does not attempt to reproduce signature bytes; a
+rebuild will produce different ones (U-20).
+
+### D-13 — Substrate `Flags` semantics are carried over verbatim, not interpreted
+
+`CraneSupport.plist` has `Flags = 1`. Whatever that means for a given Substrate
+version is copied unchanged rather than re-derived (U-18).
+
+### D-14 — Dependency list is this project's best reading, not a recovered `Depends` line
+
+No `DEBIAN/control` exists in the tree. The reconstructed `control` lists
+`mobilesubstrate, ellekit, libhooker, firmware, altlist, activator, choicy`,
+derived from the `LC_LOAD_DYLIB` set plus the runtime-probed optional tweaks.
+`activator` and `choicy` are probed with `dlopen` in the original, so making them
+hard dependencies is a deliberate simplification — the original treats them as
+optional and degrades gracefully.
+
+## 4. Configuration semantics
+
+### D-15 — Preference storage is `NSUserDefaults`, not the original's mechanism
+
+`CraneManager.preferenceValueForKey:` is transcribed, but the original's backing
+store is inside `libcrane.dylib` and unknown. This build uses
+`NSUserDefaults.standardUserDefaults` for the `com.opa334.craneprefs` domain.
+A `CFPreferences` daemon or a domain-specific suite would be observationally
+equivalent for reads inside Crane's own processes but would differ if another
+tweak read the same domain.
+
+### D-16 — Per-application settings live in memory, not in a persisted registry
+
+`setApplicationSettings:forApplicationWithIdentifier:` writes to an in-memory
+dictionary. The original persists across process restarts through a store inside
+`libcrane.dylib`. **Consequence:** container settings do not survive a reboot in
+this build.
+
+### D-17 — Defaults for unset per-app keys
+
+`boolValue` on `nil` yields `NO`, matching the original's behaviour for the keys
+with no explicit `default`. The one exception,
+`separateNotificationRegistrationsEnabled`, carries `default = 1` on its
+specifier (recovered from `CranePrefs` 0x8D00) and is reproduced. U-17 records
+that this has not been confirmed against `readPreferenceValue:`.
+
+## 5. UI
+
+### D-18 — Settings pane implemented for 2 of 3 recovered controllers
+
+`CRPRootListController`, `CRPApplicationConfigurationListController` (43 methods
+in the original, ~15 reproduced) and `CRPActiveContainerListItemsController` are
+implemented. `CRPContainerConfigurationListController` (60 methods — the largest
+class in `CranePrefs`, holding per-container device-identifier, Game Center,
+notification and keychain rows), the 12 backup/restore controllers, the 9
+`CRPCredits*` classes and the 6 custom cells are not.
+
+`Root.plist` still references them, so the settings UI will reference classes
+that do not exist in the rebuilt bundle.
+
+### D-19 — Self-verification alert core is reconstructed; new-container and injection-check edges remain partial
+
+**Original:** `InitFunc_0` creates the runtime `SBAlertItem` subclass
+`CRErrorAlert` with retain-nonatomic `errorTitle`, `errorMessage`, `actions` and
+a BOOL `crane_reappearsAfterUnlock`. Its `configure:requirePasscodeForActions:`
+hook populates the private alert controller and supplies a default
+`deactivateForButton` handler to actions that do not already have one;
+`reappearsAfterUnlock` forwards the Crane flag. The libSandy, daemon-insurance,
+main-dylib, apsd-registration and pkd-registration presenters create these
+alerts, localize the messages, and activate them through
+`SBAlertItemsController`. Newer systems also add forwarding methods to
+`UNSUserNotificationServerConnectionListener` so runningboardd-side failures can
+reach SpringBoard. The daemon-error restart action asks cranehelperd to reload
+the affected daemons and then relaunches SpringBoard.
+
+**Reconstruction:** `CRErrorAlerts.m` now transcribes that runtime class,
+associated storage, configure/reappear behavior, daemon-name formatting, five
+presenters, close/restart actions and the CF >=1665.15 listener bridge without private
+SpringBoard headers. `CRApplyEnvironmentChanges` now invokes the recovered
+libSandy and daemon/insurance presenters instead of merely logging those
+fail-open errors. `CraneSB` now links Substrate explicitly because the original
+binary imports `_MSHookMessageEx`.
+
+`CRNewContainerAlert` (InitFunc_1) is now also reconstructed with its retained
+`applicationID`, text field, Create/Launch action, active-container switch and
+optional app launch.
+
+**Remaining difference:** the launch-injection verification path at
+0x18238/0x194EC/0x19608 is now wired using the recovered two-argument
+`fetchActiveContainerIDForProcessWithPid:reply:` block ABI. The reconstruction
+carries that ABI over its own audit-token-authenticated raw-XPC transport and a
+live app runtime report; this is not protocol-compatible with the unrecovered
+original U-01 daemon interface and has not been device-validated. The original
+`injectionFixupError` producer is also not reconstructed, so its optional
+`FIXUP_ERROR_DESCRIPTION` paragraph is not emitted. No device alert/presentation
+test has been performed.
+
+### D-20 — No visual comparison was performed
+
+No screenshots of the original exist in the repository and no device is
+available, so `tests/ui_comparison.md` records metrics as NOT_TESTED. The only
+UI facts recovered are the icon set (8 PNGs, byte-identical, and used verbatim),
+the localization tables (204 keys), and the specifier order from `Root.plist`.
+
+### Device-reported blank Settings and app crashes
+
+Source repairs now use the Roothide SDK resolver for installed resource paths,
+return a usable localization fallback when resources are absent, and correct
+the scalar `indexForIndexPath:` signature. Settings lists have explicit first
+groups; container updates coalesce on the main queue after selection dispatch.
+This deferred full refresh deliberately replaces the reconstruction's
+animated row/cache replacement.
+
+The main dylib's libhooker call now passes the table and count retained by the
+original ARM64 tail branch at 0x7380. Borrowed environment values are captured
+before `unsetenv`, and sandbox HOME rewriting refuses nil or oversized paths.
+The last two are safety deviations from the recovered source. New startup logs
+help distinguish environment preparation from later app crashes.
+
+The supplied device log contains registry writes but no exception/backtrace.
+**Exact crash causes and device resolution remain unverified.** A shared-code
+localization smoke is added to native CI; Windows source checks alone do not
+validate Settings or Chrome.
+
+## 6. Lifecycle and timing
+
+### D-21 — `dispatch_once` behaviour for the `Apps Shortcuts Enabled` block
+
+`crane_initSpringBoard` guards `dispatch_once(&qword_2D400, &stru_289E8)` behind
+`applicationShortcutsEnabled() && qword_2D400 != -1`. The initial value of
+`qword_2D400` and the block body were not recovered. Not reproduced.
+
+### D-22 — `InitFunc_0`/`InitFunc_1` module-constructor ordering
+
+The three `__mod_init_func` constructors of `CraneSB` (0x9684, 0x9E08, 0x1BC70)
+run in address order, i.e. `CRErrorAlert` and `CRNewContainerAlert` are created
+before `crane_initSpringBoard`. The reconstruction still has one physical
+constructor, but `CRInitErrorAlerts()` now creates both runtime alert classes
+before `CRInitSpringBoard()`, preserving the observable InitFunc_0/InitFunc_1
+ordering dependency. The remaining difference here is structural constructor
+layout rather than a known alert-class availability difference.
+
+### D-23 — Activator core and icon ABI are reconstructed; observer refresh remains partial
+
+**Original:** `CraneActivatorManager` dynamically loads Activator, registers one
+set-active listener and one changed-container event per app/container pair,
+handles receive/abort by switching/restoring the active container, and supplies
+localized metadata plus app icons generated through the private SpringBoard
+`generateIconImageWithInfo:` ABI.
+
+**Reconstruction:** dynamic loading, listener/event registration, naming/parsing,
+switch/abort behaviour, metadata and app-icon generation are transcribed from
+the recovered methods. Machine-code inspection of both arm64 slices confirms
+`generateIconImageWithInfo:` receives a four-double homogeneous aggregate
+`{29, 29, scale, 5}` in `d0..d3`; that exact ABI is now used. `CraneManager`
+observer membership is implemented, but the original manager's notification-
+dispatch body is unavailable, so cache refresh after an in-process container-
+list change is not claimed equivalent. Activator absence still degrades to a
+no-op as in the original.
+
+**Test impact:** F-23 is source-implemented only and remains runtime NOT_TESTED.
+
+### D-24 — PlugInKit isolation is server-side complete but notification query tagging is still coupled to F-08
+
+**Original:** `initPkd` stores `crane_activeContainerID` on each `PKDPlugIn`,
+consumes a private `crane_containerID` rule from Transaction XPC requests,
+propagates it through all `PKDatabase` query variants, terminates stale plug-ins
+when their active container changes, and injects `CRANE_CONTAINER_IDENTIFIER`
+into extension launch environments. SpringBoard's notification-support hooks
+supply that private rule via thread-local `extension_containerIDToAppend`.
+
+**Reconstruction:** the recovered pkd/PlugInKit server-side chain is transcribed
+in `CRPkd.m`, including the four enable variants, query wrappers, termination,
+reload notification and older-PKD server capture. The SpringBoard-side tagging
+hooks live inside the still-unported notification-support group whose target
+classes are U-10, so container-specific notification-service extension queries
+are not yet end-to-end equivalent.
+
+### D-25 — Container-manager hooks are transcribed; PID transport remains reconstruction-limited
+
+**Original:** `CraneSupport` carries a shared `ClientContainerCache` keyed by PID,
+cleared on `com.opa334.cranesb/Loaded`. `initContainermanagerd` selects among
+modern `MCMContainerFactory`, legacy `MCMClientConnection`, and older group-path
+APIs, rewriting root/data paths into the active Crane container. On newer Core
+Foundation versions, `initCraneProxy` wraps containermanagerd XPC and accepts
+`crane_isProxyMessage` requests only from six signing-identifier allowlisted
+CraneSupport daemons.
+
+**Reconstruction:** those hook bodies, cache queue semantics, PID-capture hook,
+metadata/path copying, corrupt suppression, group rewrite and guarded modern
+proxy are transcribed in `CRMCM.m` without private MobileContainerManager
+headers. Audit-token/SecTask SPI is resolved dynamically and fails closed if it
+is unavailable.
+
+**Remaining difference:** the original cache obtains a PID's active container
+through libcrane's synchronous cranehelperd proxy, with an error-specific direct
+containermanagerd fallback. The reconstructed `CraneManager`/helperd transport
+is still U-01 and currently answers `DEFAULT`, and libcrane's private
+`_populateContainerDirectory:ofType:` body is unavailable. The hook chain is
+therefore source-complete at the recovered CraneSupport layer but not claimed
+end-to-end behaviourally equivalent.
+
+### D-26 — System-account database redirection is transcribed; client/container plumbing remains partial
+
+**Original:** `initAccountsd` adds active-container state to `ACDAccountStore` and
+selects a target container from the AccountsDaemon client. App Store family
+clients map to `com.apple.AppStore`, `itunescloudd` maps to `com.apple.Music`,
+normal clients use `ClientContainerCache(pid)`, and `gamed` uses Crane's Game
+Center state. On newer systems each normalized container gets its own Core Data
+`NSPersistentStoreCoordinator` and `Crane/<container>.sqlite`; older systems
+cache an `ACDDatabase` per container and reset AccountsDaemon's global shared-
+coordinator once-token between store paths. The tweak also suppresses the Start
+Using iCloud follow-up while a redirected account store is active.
+
+**Reconstruction:** `CRAccountsd.m` transcribes those two OS generations, the
+associated-object properties/cache maps, client routing, Core Data store setup,
+legacy shared-coordinator reset/cache, and both iCloud follow-up suppression
+variants without hard-linking AccountsDaemon private headers.
+
+**Remaining difference:** ordinary PID-based routing still depends on U-01
+because reconstructed `ClientContainerCache` receives `DEFAULT` from the missing
+helperd/libcrane transport. The `gamed` branch additionally depends on the
+original Game Center storage model (U-06); it therefore fails closed when the
+reconstructed manager does not expose `gameCenter_enabledApplicationIdentifiers`.
+No device/runtime account-switch test has been performed.
+
+### D-27 — LSD/device-identifier hook chain is reconstructed; helperd integration still differs
+
+**Original:** `initLsd` dynamically extends `_LSDDeviceIdentifierProtocol`,
+substitutes the extended protocol on `NSXPCInterface`, and hooks
+`_LSDDeviceIdentifierClient getIdentifierOfType:completionHandler:`. For type 0
+and a non-default Crane container, lsd derives the caller signing identifier from
+the XPC audit token and returns either `customDeviceIdentifier` or the container
+identifier as an `NSUUID` (with `useContainerIdentifierAsDeviceIdentifier`
+defaulting to true). Two Crane-only protocol methods let the original
+`cranehelperd` read/write `_LSDeviceIdentifierCache` on its private queue; those
+methods authorize the caller by comparing its executable path to the resolved
+`/usr/local/libexec/cranehelperd` path.
+
+**Reconstruction:** `CRLsd.m` transcribes that protocol extension, type-0 hook,
+container-setting selection, vendor-key derivation, helper-only authorization,
+`_LSDeviceIdentifierCache` / persona-cache fallback, and queued cache read/write.
+The reconstructed `CraneManager` was also corrected to use the confirmed
+`customDeviceIdentifier` setting key rather than the earlier inferred
+`deviceIdentifier` key.
+
+**Remaining difference:** app-side spoofing still needs a working PID→container
+mapping from U-01. Separately, the reconstructed helperd currently persists its
+`getIdentifierOfType` / `setIdentifier` values in `NSUserDefaults`; the original
+helperd body is unavailable, so it is not yet wired to call these recovered lsd
+protocol extensions. No device/runtime identifier isolation test has been run.
+
+## 7. Untested edge cases
+
+No runtime testing was possible, so these are untested rather than known-good:
+
+- Rapid enable/disable of a container switch
+- Process restart with an active non-default container
+- Device lock/unlock with a `crane_reappearsAfterUnlock` alert
+- Safe mode (`_MSSafeMode=1`/`_SafeMode=1` are set for the daemon, and the main
+  dylib's `Flags = 0`)
+- Rootless vs rootful path resolution in practice (U-12 resolved statically, not
+  exercised)
+- Hook conflicts with other container-manipulation tweaks
+- Behaviour on iOS versions where `kCFCoreFoundationVersionNumber` crosses the
+  1665.15 and 1932.101 thresholds
+- Whether deleting the **active** container is blocked (U-09)
+
+## 8. Unsupported environments
+
+| Environment | Status |
+|---|---|
+| iOS 12–13 | No app bundle shipped (D-11); tweak dylibs declare iOS 11.0 and should load |
+| iOS 14–17 | Same |
+| iOS 18+ | Same |
+| Non-jailbroken | Out of scope — the package is jailbreak-only (`SEROTONIN_ROOTHIDE_INCOMPATIBILITY_MESSAGE`) |
+| Rootless jailbreaks | Path handling implemented via libroot (U-12, CONFIRMED_STATIC), never exercised |
+| Rootful jailbreaks | Implemented; never exercised |
+| Original `cranehelperd` (from the original package) | **Incompatible** with this build's XPC protocol (D-02) |
+| Containers written by Crane 6.0 | **Not readable** (D-01) |
+
+## 9. Summary
+
+| Category | Count |
+|---|---:|
+| Whole subsystems absent (F-07, F-14, F-17, F-22) | 4 |
+| Partially implemented | 14 |
+| Fully implemented | 5 (F-02, F-03, F-04, F-18, and F-01's contract) |
+| Whole binaries not reconstructed | 6 of 11 |
+| Function coverage | Initial 17-function core plus later main-dylib/libroot/Activator, cfprefsd, accountsd/Core Data, lsd/device-ID, apsd token/topic isolation, Choicy override provider, self-verification/new-container alerts, modern container-selection menus, containermanagerd/cache/proxy and pkd/PlugInKit transcriptions; no inflated single 1:1 count is claimed |
+| Runtime tests executed | 0 |
+| Visual comparisons performed | 0 |
+
+**This reconstruction is not a behavioural equivalent of Crane 6.0.** It is a
+transcription of the fully-recovered core plus a faithful packaging and
+configuration layer, with every remaining gap named above rather than filled
+with plausible-looking code.

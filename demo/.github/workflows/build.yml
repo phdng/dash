@@ -1,0 +1,674 @@
+name: Build reconstruction
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Theos package (${{ matrix.variant }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: rootful
+            scheme: rootful
+            theos_repo: theos/theos
+            deb_arch: iphoneos-arm
+          - variant: roothide
+            scheme: roothide
+            theos_repo: roothide/theos
+            deb_arch: iphoneos-arm64e
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify XPC ping source contract
+        run: python3 reconstruction/tools/check_xpc_ping_contract.py
+
+      - name: Verify Clang-emitted XPC protocol metadata
+        run: python3 reconstruction/tools/check_xpc_protocol_metadata_contract.py
+
+      - name: Verify Settings labels and app startup safety
+        run: python3 reconstruction/tools/check_ui_runtime_contract.py
+
+      - name: Verify daemon safety contracts
+        run: python3 reconstruction/tools/check_daemon_contract.py
+
+      - name: Verify helper transport diagnostics and signing inputs
+        run: python3 reconstruction/tools/check_helper_transport_contract.py
+
+      - name: Verify helper launchd job and read-only recovery diagnostic
+        run: |
+          python3 reconstruction/tools/check_helper_launch_registration_contract.py
+          sh -n reconstruction/tools/diagnose_cranehelperd.sh
+
+      - name: Verify recovered privileged helper operations
+        run: python3 reconstruction/tools/check_helper_privileged_contract.py
+
+      - name: Verify helper keychain move/delete safety
+        run: python3 reconstruction/tools/check_helper_keychain_contract.py
+
+      - name: Verify recovered libcrane storage and lifecycle contracts
+        run: python3 reconstruction/tools/check_libcrane_original_contract.py
+
+      - name: Verify runningboardd launch hook ABI
+        run: python3 reconstruction/tools/check_runningboard_contract.py
+
+      - name: Verify bounded post-launch injection proof and diagnostics
+        run: python3 reconstruction/tools/check_postlaunch_injection_contract.py
+
+      - name: Verify app runtime report transport probe and data safety
+        run: python3 reconstruction/tools/check_app_runtime_probe_contract.py
+
+      - name: Verify per-app runtime Mach sandbox extension
+        run: |
+          # Library/ contains workstation-only original binaries/IDA exports.
+          # GitHub Actions checks the tracked evidence fixture instead.
+          CRANE_SUPPORT_SKIP_NATIVE_EXPORT=1 python3 reconstruction/tools/check_app_runtime_sandbox_contract.py
+          sh -n reconstruction/tools/diagnose_crane_app_mach.sh
+
+      - name: Verify app injection and per-process diagnostic coverage
+        run: python3 reconstruction/tools/check_main_injection_diagnostics_contract.py
+
+      - name: Verify Roothide SpringBoard launch-environment compatibility
+        run: python3 reconstruction/tools/check_roothide_launch_environment_contract.py
+
+      - name: Verify Roothide daemon injection probes
+        run: python3 reconstruction/tools/check_roothide_daemon_probe_contract.py
+
+      - name: Verify APNs topic/hash isolation decoding
+        run: python3 reconstruction/tools/check_apsd_topic_contract.py
+
+      - name: Verify original shortcut gates and default container
+        run: python3 reconstruction/tools/check_shortcut_gate_contract.py
+
+      - name: Verify recovered 159-hook textual coverage matrix
+        run: python3 reconstruction/tools/crane_hook_coverage_audit.py --check
+
+      - name: Test hook registration provenance without claiming runtime parity
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_hook_coverage_audit.py -v
+
+      - name: Test original notification removal callback identifier order
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_notification_removal_order.py -v
+
+      - name: Verify native menu badge contracts
+        run: python3 reconstruction/tools/check_menu_badge_contract.py
+
+      - name: Verify container switch callbacks
+        run: python3 reconstruction/tools/check_container_switch_contract.py
+
+      - name: Verify Activator listener/event safety
+        run: python3 reconstruction/tools/check_activator_contract.py
+
+      - name: Verify legacy Force Touch shortcuts
+        run: python3 reconstruction/tools/check_legacy_shortcut_contract.py
+
+      - name: Verify container lifecycle safety
+        run: python3 reconstruction/tools/check_container_lifecycle_contract.py
+
+      - name: Verify cfprefsd preference isolation
+        run: python3 reconstruction/tools/check_preferences_isolation_contract.py
+
+      - name: Verify securityd keychain isolation
+        run: python3 reconstruction/tools/check_keychain_isolation_contract.py
+
+      - name: Verify accountsd isolated SQLite stores
+        run: python3 reconstruction/tools/check_accountsd_isolation_contract.py
+
+      - name: Verify PlugInKit reload and bounded termination
+        run: python3 reconstruction/tools/check_pkd_lifecycle_contract.py
+
+      - name: Verify PlugInKit private-rule query state
+        run: python3 reconstruction/tools/check_pkd_query_state_contract.py
+
+      - name: Verify Crane Shortcuts extension discovery
+        run: python3 reconstruction/tools/check_pkd_shortcuts_contract.py
+
+      - name: Verify Preferences Game Center settings
+        run: python3 reconstruction/tools/check_prefs_settings_contract.py
+
+      - name: Verify original Game Center account registry schema
+        run: python3 reconstruction/tools/check_gamecenter_account_schema_contract.py
+
+      - name: Verify per-container Game Center account picker
+        run: python3 reconstruction/tools/check_gamecenter_picker_contract.py
+
+      - name: Verify safe Game Center account manager UI
+        run: python3 reconstruction/tools/check_gamecenter_accounts_ui_contract.py
+
+      - name: Verify Game Center unused-account delete guards
+        run: python3 reconstruction/tools/check_gamecenter_unused_delete_contract.py
+
+      - name: Verify recovered Credits and original license assets
+        run: python3 reconstruction/tools/check_credits_contract.py
+
+      - name: Verify original Root Suggestions provider and info cells
+        run: python3 reconstruction/tools/check_root_suggestions_contract.py
+
+      - name: Verify Root Settings nested preferences
+        run: python3 reconstruction/tools/check_root_settings_contract.py
+
+      - name: Verify Root localized rows and safe plist actions
+        run: python3 reconstruction/tools/check_root_actions_contract.py
+
+      - name: Verify read-only Crane backup inspector safety
+        run: python3 reconstruction/tools/check_backup_inspector_contract.py
+
+      - name: Test Crane single/multi backup schema with isolated ZIP fixtures
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_backup_inspector.py -v
+
+      - name: Verify offline disposable-only Crane backup writer contract
+        run: python3 reconstruction/tools/check_backup_fixture_writer_contract.py
+
+      - name: Smoke-test synthetic Crane backup writer and inspector roundtrip
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_backup_fixture_writer.py -v
+
+      - name: Verify original Crane writable filesystem metadata allowlist
+        run: python3 reconstruction/tools/check_backup_metadata_contract.py
+
+      - name: Test offline backup metadata projection and plist dates
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_backup_metadata.py -v
+
+      - name: Verify redacted Crane backup shape comparison contract
+        run: python3 reconstruction/tools/check_backup_shape_compare_contract.py
+
+      - name: Test offline original-vs-candidate ZIP shape reporting
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_backup_shape_compare.py -v
+
+      - name: Verify bounded non-Keychain ZIP payload SHA-256 parity contract
+        run: python3 reconstruction/tools/check_backup_payload_parity_contract.py
+
+      - name: Test offline source-vs-candidate ZIP byte and metadata parity
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_backup_payload_parity.py -v
+
+      - name: Verify original Crane ZIP read-only audit privacy contract
+        run: python3 reconstruction/tools/check_original_archive_audit_contract.py
+
+      - name: Test original Crane ZIP audit (private local reference optional)
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_original_archive_audit.py -v
+
+      - name: Verify synthetic eight-field metadata source and safety contract
+        run: python3 reconstruction/tools/check_original_metadata_shape_contract.py
+
+      - name: Test original-observed 8-field schema with entirely fictitious fixture values
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_original_metadata_shape.py -v
+
+      - name: Verify original Crane ZIP envelope evidence and fixture-only layout
+        run: python3 reconstruction/tools/check_backup_zip_envelope_contract.py
+
+      - name: Test single-archive SSZipArchive envelope characteristics offline
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_backup_zip_envelope.py -v
+
+      - name: Verify native non-destructive Crane Backup Info/Restore Reader contract
+        run: python3 reconstruction/tools/check_native_backup_core_contract.py
+
+      - name: Test synthetic ZIP64 local-Info native reader inputs
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_native_backup_core.py -v
+
+      - name: Verify native read-only full ZIP structural survey safety contract
+        run: python3 reconstruction/tools/check_native_backup_survey_contract.py
+
+      - name: Test synthetic malformed archive headers for native ZIP survey
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_native_backup_survey.py -v
+
+      - name: Verify non-Keychain native ZIP CRC safety contract
+        run: python3 reconstruction/tools/check_native_backup_crc_contract.py
+
+      - name: Test native CRC fixture data and tamper cases
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_native_crc_verification.py -v
+
+      - name: Verify N4 native disposable source collector contract
+        run: python3 reconstruction/tools/check_native_fixture_collector_contract.py
+
+      - name: Test fail-closed N4 native fixture verifier and source guard
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_native_fixture_collector.py -v
+
+      - name: Verify native N5-N10 source resolver and opaque inode identity contract
+        run: python3 reconstruction/tools/check_native_source_preflight_contract.py
+
+      - name: Test N5-N10 root-only preflight and inode identity regression
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_native_source_preflight.py -v
+
+      - name: Verify N6 read-only CraneManager bridge contract
+        run: python3 reconstruction/tools/check_native_manager_bridge_contract.py
+
+      - name: Test N6 native CraneManager bridge safety regression
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_native_manager_bridge.py -v
+
+      - name: Verify N7-N10 typed roots, late mapping and inode continuity contract
+        run: python3 reconstruction/tools/check_native_typed_preflight_contract.py
+
+      - name: Test N7-N10 typed sources and in-place root replacement regression
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_native_typed_preflight.py -v
+
+      - name: Verify N8 opt-in disposable source diagnostic contract
+        run: python3 reconstruction/tools/check_disposable_source_diagnostic_contract.py
+
+      - name: Test N8 consent and fixture-bound source diagnostics
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_disposable_source_diagnostic.py -v
+
+      - name: Verify native disposable ZIP writer contract
+        run: python3 reconstruction/tools/check_native_backup_writer_contract.py
+
+      - name: Test native dummy ZIP64 verifier fail-closed contract
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_native_writer_verify.py -v
+
+      - name: Verify read-only Crane restore mapping preflight safety
+        run: python3 reconstruction/tools/check_restore_preflight_contract.py
+
+      - name: Test Crane restore preflight on synthetic archive inventories
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_restore_preflight.py -v
+
+      - name: Verify virtual-only Crane restore transaction model contract
+        run: python3 reconstruction/tools/check_restore_transaction_model_contract.py
+
+      - name: Fault-inject synthetic single/multi restore transactions
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_restore_transaction_model.py -v
+
+      - name: Verify temp-only restore filesystem journal contract
+        run: python3 reconstruction/tools/check_restore_journal_lab_contract.py
+
+      - name: Test synthetic restore journal interruption and recovery
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_restore_journal_lab.py -v
+
+      - name: Verify read-only Crane restore ZIP work plan
+        run: python3 reconstruction/tools/check_restore_work_plan_contract.py
+
+      - name: Test read-only Crane archive restore work manifests
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_restore_work_plan.py -v
+
+      - name: Verify synthetic-only Crane restore quarantine materializer
+        run: python3 reconstruction/tools/check_restore_fixture_materializer_contract.py
+
+      - name: Test disposable Crane ZIP file materialization and staging rollback
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_restore_fixture_materializer.py -v
+
+      - name: Verify read-only Crane quarantine ZIP integrity contract
+        run: python3 reconstruction/tools/check_restore_quarantine_verify_contract.py
+
+      - name: Test post-materialization ZIP vs quarantine SHA-256 verification
+        run: python3 -m unittest discover -s reconstruction/tools -p test_crane_restore_quarantine_verify.py -v
+
+      - name: Verify optional Choicy integration (tracked native evidence)
+        run: CRANE_CHOICY_SKIP_NATIVE_EXPORT=1 python3 reconstruction/tools/check_choicy_integration_contract.py
+
+      - name: Verify asynchronous container size footer
+        run: python3 reconstruction/tools/check_container_size_contract.py
+
+      - name: Verify Filza Browse Data view
+        run: python3 reconstruction/tools/check_browse_container_contract.py
+
+      - name: Verify per-container notification permission
+        run: python3 reconstruction/tools/check_prefs_notification_contract.py
+
+      - name: Verify guarded device identifier settings
+        run: python3 reconstruction/tools/check_device_identifier_settings_contract.py
+
+      - name: Test installer registration with a mock launchctl
+        run: |
+          sh -n reconstruction/layout/DEBIAN/postinst
+          python3 reconstruction/tools/helper_postinst_smoke.py
+
+      - name: Set up Theos
+        uses: waruhachi/theos-action@v2.6.3
+        with:
+          theos-src: ${{ matrix.theos_repo }}
+          theos-branch: master
+          sdks-src: theos/sdks
+          sdks-branch: master
+          altlist: "true"
+          altlist-src: opa334/AltList
+          altlist-branch: main
+          remotelog: "false"
+          libgcuniversal: "false"
+          comet: "false"
+          orion: "false"
+
+      - name: Record toolchain
+        run: |
+          {
+            echo "### Toolchain"
+            echo '~~~text'
+            sw_vers
+            xcodebuild -version
+            clang --version | head -n 1
+            make --version | head -n 1
+            echo "THEOS=${THEOS:-unset}"
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Smoke-test native Crane single Backup Info builder and read-only ZIP64 reader
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          python3 tools/native_backup_reader_fixture.py --output-dir "$RUNNER_TEMP"
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/prefs \
+            sources/prefs/CRBackupNativeCore.m tools/native_backup_core_smoke.m \
+            -framework Foundation -framework CoreFoundation -lz \
+            -o "$RUNNER_TEMP/native_backup_core_smoke"
+          "$RUNNER_TEMP/native_backup_core_smoke" \
+            "$RUNNER_TEMP/crane-native-valid.cranect" \
+            "$RUNNER_TEMP/crane-native-bad-crc.cranect" \
+            "$RUNNER_TEMP/crane-native-invalid-info.cranect" \
+            "$RUNNER_TEMP/crane-native-bad-central-size.cranect" \
+            "$RUNNER_TEMP/crane-native-bad-central-crc.cranect"
+
+      - name: Smoke-test native Crane read-only ZIP central/local survey
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          python3 tools/native_backup_survey_fixture.py --output-dir "$RUNNER_TEMP"
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/prefs \
+            sources/prefs/CRBackupArchiveSurvey.m tools/native_backup_survey_smoke.m \
+            -framework Foundation -lz \
+            -o "$RUNNER_TEMP/native_backup_survey_smoke"
+          "$RUNNER_TEMP/native_backup_survey_smoke" \
+            "$RUNNER_TEMP/crane-survey-valid.cranect" \
+            "$RUNNER_TEMP/crane-survey-traversal.cranect" \
+            "$RUNNER_TEMP/crane-survey-duplicate.cranect" \
+            "$RUNNER_TEMP/crane-survey-symlink.cranect" \
+            "$RUNNER_TEMP/crane-survey-missing-meta.cranect" \
+            "$RUNNER_TEMP/crane-survey-local-mismatch.cranect" \
+            "$RUNNER_TEMP/crane-survey-central-mismatch.cranect" \
+            "$RUNNER_TEMP/crane-survey-descriptor-mismatch.cranect" \
+            "$RUNNER_TEMP/crane-survey-keychain-shape.cranect"
+
+      - name: Smoke-test bounded non-Keychain native CRC with tampered payloads
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          N3_FIXTURES="$RUNNER_TEMP/crane-n3-fixtures"
+          mkdir -p "$N3_FIXTURES"
+          python3 tools/native_backup_survey_fixture.py --output-dir "$N3_FIXTURES"
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/prefs \
+            sources/prefs/CRBackupArchiveSurvey.m tools/native_backup_crc_smoke.m \
+            -framework Foundation -lz \
+            -o "$RUNNER_TEMP/native_backup_crc_smoke"
+          "$RUNNER_TEMP/native_backup_crc_smoke" \
+            "$N3_FIXTURES/crane-survey-valid.cranect" \
+            "$N3_FIXTURES/crane-survey-payload-corrupt.cranect" \
+            "$N3_FIXTURES/crane-survey-keychain-shape.cranect" \
+            "$N3_FIXTURES/crane-survey-keychain-corrupt.cranect" \
+            "$N3_FIXTURES/crane-survey-large-payload.cranect" \
+            "$N3_FIXTURES/crane-survey-stored-payload.cranect"
+
+      - name: Smoke-test native disposable single ZIP64 writer with N0 N1 and full dummy CRC
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/prefs \
+            sources/prefs/CRBackupNativeCore.m \
+            sources/prefs/CRBackupArchiveSurvey.m \
+            sources/prefs/CRBackupNativeFixtureWriter.m \
+            tools/native_backup_fixture_writer_smoke.m \
+            -framework Foundation -framework CoreFoundation -lz \
+            -o "$RUNNER_TEMP/native_backup_fixture_writer_smoke"
+          ARCHIVE="$("$RUNNER_TEMP/native_backup_fixture_writer_smoke" | sed -n 's/^CRANE_N2_FIXTURE=//p')"
+          test -n "$ARCHIVE"
+          python3 tools/crane_native_writer_verify.py --archive "$ARCHIVE"
+
+      - name: Smoke-test native disposable file/metadata collector end-to-end
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/prefs \
+            sources/prefs/CRBackupNativeCore.m \
+            sources/prefs/CRBackupArchiveSurvey.m \
+            sources/prefs/CRBackupNativeFixtureWriter.m \
+            sources/prefs/CRBackupNativeFixtureCollector.m \
+            tools/native_backup_fixture_collector_smoke.m \
+            -framework Foundation -framework CoreFoundation -lz \
+            -o "$RUNNER_TEMP/native_backup_fixture_collector_smoke"
+          ROOT="$("$RUNNER_TEMP/native_backup_fixture_collector_smoke" | sed -n 's/^CRANE_N4_FIXTURE=//p')"
+          test -n "$ROOT"
+          python3 tools/crane_native_collector_verify.py --fixture-root "$ROOT"
+
+      - name: Smoke-test native registered source-root preflight without reading files
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/prefs \
+            sources/prefs/CRBackupNativeSourcePreflight.m \
+            tools/native_backup_source_preflight_smoke.m \
+            -framework Foundation \
+            -o "$RUNNER_TEMP/native_backup_source_preflight_smoke"
+          "$RUNNER_TEMP/native_backup_source_preflight_smoke"
+
+      - name: Smoke-test typed root remap, registry revocation and inode replacement rejection
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/prefs \
+            sources/prefs/CRBackupNativeSourcePreflight.m \
+            sources/prefs/CRBackupNativeTypedPreflight.m \
+            tools/native_backup_typed_preflight_smoke.m \
+            -framework Foundation \
+            -o "$RUNNER_TEMP/native_backup_typed_preflight_smoke"
+          "$RUNNER_TEMP/native_backup_typed_preflight_smoke"
+
+      - name: Smoke-test real CraneManager adapter with disposable mock registry
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/prefs -I sources/common \
+            sources/prefs/CRBackupNativeSourcePreflight.m \
+            sources/prefs/CRBackupNativeManagerPreflight.m \
+            sources/prefs/CRBackupNativeTypedPreflight.m \
+            sources/prefs/CRBackupDisposableDiagnostic.m \
+            tools/native_backup_manager_bridge_smoke.m \
+            -framework Foundation \
+            -o "$RUNNER_TEMP/native_backup_manager_bridge_smoke"
+          "$RUNNER_TEMP/native_backup_manager_bridge_smoke"
+
+      - name: Smoke-test Clang XPC protocol metadata with Foundation
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/common \
+            tools/xpc_protocol_metadata_smoke.m \
+            -framework Foundation \
+            -o xpc_protocol_metadata_smoke
+          ./xpc_protocol_metadata_smoke 2>&1 | tee xpc_protocol_metadata_smoke.log
+
+      - name: Smoke-test Root Settings nested visibility
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/common tools/root_settings_projection_smoke.m \
+            -framework Foundation -o root_settings_projection_smoke
+          ./root_settings_projection_smoke 2>&1 | tee root_settings_projection_smoke.log
+
+      - name: Smoke-test container scaffold and shortcut defaults
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/common tools/container_menu_smoke.m \
+            -framework Foundation -o container_menu_smoke
+          ./container_menu_smoke 2>&1 | tee container_menu_smoke.log
+
+      - name: Smoke-test production XPC diagnostic decoder
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/common tools/xpc_diagnostics_smoke.m \
+            -framework Foundation -o xpc_diagnostics_smoke
+          ./xpc_diagnostics_smoke 2>&1 | tee xpc_diagnostics_smoke.log
+
+      - name: Smoke-test shared localization fallback
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/common tools/localization_smoke.m \
+            -framework Foundation -o localization_smoke
+          ./localization_smoke 2>&1 | tee localization_smoke.log
+
+      - name: Smoke-test dynamic Choicy container editor
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+          clang -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -I sources/common -I sources/prefs \
+            sources/prefs/CRChoicyEditor.m tools/choicy_editor_smoke.m \
+            -framework Foundation -o choicy_editor_smoke
+          for mode in missing incomplete incompatible collision valid; do
+            ./choicy_editor_smoke "$mode" 2>&1 | tee -a choicy_editor_smoke.log
+          done
+
+      - name: Select Roothide package dependencies
+        if: matrix.variant == 'roothide'
+        working-directory: reconstruction
+        run: |
+          python3 -c 'from pathlib import Path; p=Path("control"); s=p.read_text(); old="Depends: mobilesubstrate, ellekit, libhooker, firmware, altlist, activator, choicy"; assert s.count(old) == 1; p.write_text(s.replace(old, "Depends: mobilesubstrate, firmware"))'
+
+      - name: Build package
+        working-directory: reconstruction
+        run: |
+          set -o pipefail
+          if [ "${{ matrix.variant }}" = roothide ]; then
+            make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=roothide 2>&1 | tee build.log
+          else
+            make clean package FINALPACKAGE=1 2>&1 | tee build.log
+          fi
+
+      - name: Inspect package
+        working-directory: reconstruction
+        run: |
+          set -euo pipefail
+
+          DEB="$(find packages -maxdepth 1 -type f -name '*.deb' -print | sort | head -n 1)"
+          if [ -z "$DEB" ]; then
+            echo "::error::No .deb was produced"
+            exit 1
+          fi
+
+          echo "DEB=$DEB"
+          shasum -a 256 "$DEB" | tee deb.sha256
+
+          rm -rf pkg
+          mkdir pkg
+
+          # A .deb is an ar archive containing data.tar.*. macOS runners do not
+          # ship dpkg-deb, but Xcode provides ar and the system bsdtar detects
+          # the data member's compression format automatically.
+          DATA_MEMBER="$(ar -t "$DEB" | awk '/^data\.tar\./ { print; exit }')"
+          if [ -z "$DATA_MEMBER" ]; then
+            echo "::error::No data.tar.* member found in $DEB"
+            ar -t "$DEB" || true
+            exit 1
+          fi
+          echo "DATA_MEMBER=$DATA_MEMBER"
+          ar -p "$DEB" "$DATA_MEMBER" | tar -xf - -C pkg
+
+          find pkg -type f -print | LC_ALL=C sort | while IFS= read -r file; do
+            shasum -a 256 "$file"
+          done > pkg.manifest.sha256
+
+          CONTROL_MEMBER="$(ar -t "$DEB" | awk '/^control\.tar\./ { print; exit }')"
+          test -n "$CONTROL_MEMBER" || { echo "::error::Missing control archive"; exit 1; }
+          mkdir pkg-control
+          ar -p "$DEB" "$CONTROL_MEMBER" | tar -xf - -C pkg-control
+          python3 tools/verify_package_layout.py pkg pkg-control
+          python3 tools/verify_architectures.py pkg
+          python3 tools/verify_helper_entitlements.py pkg "${{ matrix.variant }}"
+          echo '### Mach-O dependencies (installed payload)' >> "$GITHUB_STEP_SUMMARY"
+          echo '~~~text' >> "$GITHUB_STEP_SUMMARY"
+          for binary in \
+            'pkg/Library/PreferenceBundles/CranePrefs.bundle/CranePrefs' \
+            'pkg/Library/MobileSubstrate/DynamicLibraries/CraneSB.dylib' \
+            'pkg/Library/MobileSubstrate/DynamicLibraries/CraneSupport.dylib' \
+            'pkg/usr/lib/libcrane.dylib'; do
+            echo "--- $binary" | tee -a linkage.txt
+            otool -L "$binary" | tee -a linkage.txt
+          done
+          if [ "${{ matrix.variant }}" = roothide ]; then
+            # RootHide requires jailbreak-library dependencies to use a
+            # @loader_path/.jbroot/... install name. System libraries remain
+            # ordinary /usr/lib or /System paths.
+            for binary in \
+              'pkg/Library/MobileSubstrate/DynamicLibraries/CraneSB.dylib' \
+              'pkg/Library/MobileSubstrate/DynamicLibraries/CraneSupport.dylib'; do
+              otool -L "$binary" | tail -n +2 | \
+                grep -Ei 'libsubstrate|CydiaSubstrate|libcrane\.dylib' | \
+                while IFS= read -r dep; do
+                  case "$dep" in
+                    *'@loader_path/.jbroot/'*) ;;
+                    *)
+                      echo "::error::Invalid roothide jailbreak dependency load path in $binary: $dep"
+                      exit 1
+                      ;;
+                  esac
+                done
+            done
+          fi
+          cat linkage.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '~~~' >> "$GITHUB_STEP_SUMMARY"
+          cp pkg-control/control package.control
+          grep -Fx "Architecture: ${{ matrix.deb_arch }}" package.control || {
+            echo "::error::Unexpected architecture for ${{ matrix.variant }}"; exit 1;
+          }
+          if [ "${{ matrix.variant }}" = roothide ]; then
+            grep -Fx 'Depends: mobilesubstrate, firmware' package.control || {
+              echo '::error::Roothide package has unexpected hard dependencies'; exit 1;
+            }
+          fi
+          echo "VARIANT=${{ matrix.variant }}" >> "$GITHUB_STEP_SUMMARY"
+
+          {
+            echo "### Package"
+            echo '~~~text'
+            cat deb.sha256
+            tail -n 2 pkg.manifest.sha256 || true
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ matrix.variant }}
+          if-no-files-found: warn
+          path: |
+            reconstruction/build.log
+            reconstruction/deb.sha256
+            reconstruction/linkage.txt
+            reconstruction/xpc_protocol_metadata_smoke.log
+            reconstruction/choicy_editor_smoke.log
+            reconstruction/localization_smoke.log
+            reconstruction/container_menu_smoke.log
+            reconstruction/xpc_diagnostics_smoke.log
+
+      - name: Upload package
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crane-reconstruction-${{ matrix.variant }}
+          if-no-files-found: error
+          path: |
+            reconstruction/packages/*.deb
+            reconstruction/deb.sha256
+            reconstruction/pkg.manifest.sha256

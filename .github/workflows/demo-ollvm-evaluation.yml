@@ -1,0 +1,144 @@
+name: Evaluate OLLVM on Crane Demo (Experimental)
+
+# Independent of DuoDash and the demo's own nested CI.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demo-ollvm:
+    runs-on: macos-14
+    timeout-minutes: 70
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout DuoDash workspace with demo source
+        uses: actions/checkout@v4
+
+      - name: Validate demo source and isolated evaluation policy
+        run: |
+          set -euo pipefail
+          test -f demo/reconstruction/Makefile || {
+            echo "::error::demo/reconstruction is absent from this Git commit; commit the demo source before running this job."
+            exit 1
+          }
+          python3 scripts/test_demo_ollvm.py
+
+      - name: Install Theos and the demo's build prerequisites
+        uses: waruhachi/theos-action@v2.6.3
+        with:
+          theos-src: theos/theos
+          theos-branch: master
+          sdks-src: theos/sdks
+          sdks-branch: master
+          altlist: "true"
+          altlist-src: opa334/AltList
+          altlist-branch: main
+          remotelog: "false"
+          libgcuniversal: "false"
+          comet: "false"
+          orion: "false"
+
+      - name: Prepare and build unmodified demo baseline
+        run: |
+          set -euo pipefail
+          python3 scripts/demo_ollvm/prepare.py \
+            --source demo/reconstruction --dest "$RUNNER_TEMP/crane-demo-plain" --variant baseline
+          mkdir -p "$RUNNER_TEMP/demo-comparison" "$RUNNER_TEMP/demo-expanded-plain"
+          cd "$RUNNER_TEMP/crane-demo-plain"
+          set -o pipefail
+          make clean package FINALPACKAGE=1 \
+            2>&1 | tee "$RUNNER_TEMP/demo-comparison/baseline-build.log"
+          deb="$(find packages -type f -name '*.deb' -print -quit)"
+          test -n "$deb"
+          cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-baseline.deb"
+          dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-plain"
+          python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" "$RUNNER_TEMP/demo-expanded-plain"
+          python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_architectures.py" "$RUNNER_TEMP/demo-expanded-plain"
+
+      - name: Upload clean demo baseline (retained if OLLVM fails)
+        uses: actions/upload-artifact@v4
+        with:
+          name: CraneDemo-Baseline-EXPERIMENTAL
+          path: ${{ runner.temp }}/demo-comparison/Crane-demo-baseline.deb
+          if-no-files-found: error
+
+      - name: Compile pinned OLLVM pass plugin using LLVM 19
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          source_dir="$RUNNER_TEMP/demo-ollvm-pass"
+          git init -q "$source_dir"
+          git -C "$source_dir" remote add origin https://github.com/lich4/ollvm-pass.git
+          git -C "$source_dir" fetch --depth 1 origin 592f215f852e3957da01b2b15024dc63713a462e
+          git -C "$source_dir" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$source_dir" rev-parse HEAD)" = "592f215f852e3957da01b2b15024dc63713a462e"
+          llvm_prefix="$(brew --prefix llvm@19)"
+          cmake -S "$source_dir/obfuscator" -B "$RUNNER_TEMP/demo-ollvm-plugin-build" -G Ninja \
+            -DLLVM_DIR="$llvm_prefix/lib/cmake/llvm"
+          cmake --build "$RUNNER_TEMP/demo-ollvm-plugin-build" --parallel 3
+          plugin="$(find "$RUNNER_TEMP/demo-ollvm-plugin-build" -type f \
+            \( -name 'Obfuscator.dylib' -o -name 'Obfuscator.so' \) -print -quit)"
+          test -n "$plugin"
+          test -f "$plugin"
+          echo "DEMO_OLLVM_PLUGIN=$plugin" >> "$GITHUB_ENV"
+          echo "DEMO_OLLVM_CLANG=$llvm_prefix/bin/clang" >> "$GITHUB_ENV"
+          echo "DEMO_OLLVM_CLANGXX=$llvm_prefix/bin/clang++" >> "$GITHUB_ENV"
+
+      - name: Build demo with OLLVM scoped only to CranePrefs credits
+        run: |
+          set -euo pipefail
+          python3 scripts/demo_ollvm/prepare.py \
+            --source demo/reconstruction --dest "$RUNNER_TEMP/crane-demo-ollvm" \
+            --variant ollvm --plugin "$DEMO_OLLVM_PLUGIN"
+          mkdir -p "$RUNNER_TEMP/demo-expanded-ollvm"
+          cd "$RUNNER_TEMP/crane-demo-ollvm"
+          set -o pipefail
+          make clean package FINALPACKAGE=1 \
+            TARGET_CC="$DEMO_OLLVM_CLANG" TARGET_CXX="$DEMO_OLLVM_CLANGXX" \
+            TARGET_LD="$(xcrun --find clang++)" \
+            2>&1 | tee "$RUNNER_TEMP/demo-comparison/ollvm-build.log"
+          deb="$(find packages -type f -name '*.deb' -print -quit)"
+          test -n "$deb"
+          cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-ollvm.deb"
+          dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-ollvm"
+          python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" "$RUNNER_TEMP/demo-expanded-ollvm"
+          python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_architectures.py" "$RUNNER_TEMP/demo-expanded-ollvm"
+          python3 "$GITHUB_WORKSPACE/scripts/demo_ollvm/verify.py" \
+            --baseline "$RUNNER_TEMP/demo-expanded-plain" \
+            --ollvm "$RUNNER_TEMP/demo-expanded-ollvm" \
+            --log "$RUNNER_TEMP/demo-comparison/ollvm-build.log" \
+            --report "$RUNNER_TEMP/demo-comparison/report.md"
+          cat "$RUNNER_TEMP/demo-comparison/report.md" >> "$GITHUB_STEP_SUMMARY"
+          cat > "$RUNNER_TEMP/demo-comparison/NOT-FOR-PRODUCTION.txt" <<'NOTE'
+          The package is a Crane reconstruction OLLVM experiment.
+          Do not install on a primary device or co-install with another Crane build.
+          Both .deb packages use the same install paths/package ID: replace one
+          with the other only with an explicit rollback plan on a spare device.
+          OLLVM runs only on 2 named CranePrefs helper functions.
+          Compilation/pass log checks cannot prove on-device UI correctness.
+          NOTE
+
+      - name: Upload demo OLLVM package if every check passed
+        uses: actions/upload-artifact@v4
+        with:
+          name: CraneDemo-OLLVM-EXPERIMENTAL
+          path: |
+            ${{ runner.temp }}/demo-comparison/Crane-demo-ollvm.deb
+            ${{ runner.temp }}/demo-comparison/report.md
+            ${{ runner.temp }}/demo-comparison/NOT-FOR-PRODUCTION.txt
+          if-no-files-found: error
+
+      - name: Upload build logs for diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CraneDemo-OLLVM-Diagnostics
+          path: |
+            ${{ runner.temp }}/demo-comparison/baseline-build.log
+            ${{ runner.temp }}/demo-comparison/ollvm-build.log
+            ${{ runner.temp }}/demo-comparison/report.md
+          if-no-files-found: warn
