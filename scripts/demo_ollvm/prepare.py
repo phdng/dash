@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Prepare an isolated demo/Crane Theos tree; never alter uploaded demo sources.
 
-LLVM19 OLLVM is scoped only to the CranePrefs UI target and exactly two
-non-selector functions in CRCredits.m. All hooks, daemons and managers retain
-their source text and do not receive a pass plugin.
+LLVM19 OLLVM is scoped only to two functions within CRCredits.m. The
+compiler_select.py adapter applies OLLVM flags only to CRCredits.m compile
+invocations; hooks, daemons, CRCommon.m, and other UI source files stay on
+Apple Clang. No production or sandbox Makefile is modified.
 """
 import argparse
 import json
@@ -13,7 +14,6 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 POLICY = HERE / "policy.json"
 BUNDLE_INCLUDE = "include $(THEOS_MAKE_PATH)/bundle.mk"
-FLAG_PREFIX = "CranePrefs_CFLAGS += -O1 -fpass-plugin="
 
 
 def prepare(source: Path, destination: Path, variant: str, plugin: Path | None) -> None:
@@ -46,14 +46,15 @@ def prepare(source: Path, destination: Path, variant: str, plugin: Path | None) 
     for directory in (destination, destination / "sources/prefs"):
         (directory / "policy.json").write_text(content, encoding="utf-8")
 
+    # All source Makefiles remain byte-for-byte original. Only the CI-supplied
+    # compiler dispatcher chooses LLVM19 for one translation unit.
     makefile = destination / "sources/prefs/Makefile"
     original = makefile.read_text(encoding="utf-8")
-    if original.count(BUNDLE_INCLUDE) != 1 or FLAG_PREFIX in original:
-        raise ValueError("CranePrefs makefile has changed; refuse unsafe injection")
-    replacement = f"{FLAG_PREFIX}{plugin}\n\n{BUNDLE_INCLUDE}"
-    makefile.write_text(original.replace(BUNDLE_INCLUDE, replacement), encoding="utf-8")
+    if original.count(BUNDLE_INCLUDE) != 1:
+        raise ValueError("Unexpected CranePrefs makefile layout")
+    if makefile.read_bytes() != (source / "sources/prefs/Makefile").read_bytes():
+        raise AssertionError("Sandbox unexpectedly modified CranePrefs Makefile")
 
-    # This is the only modified makefile, in a disposable sandbox.
     assert (destination / "sources/maindylib/Makefile").read_bytes() == (
         source / "sources/maindylib/Makefile"
     ).read_bytes()

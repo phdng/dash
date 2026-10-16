@@ -77,7 +77,19 @@ assert "demo/reconstruction" in workflow
 assert "CRANEPREFS" not in workflow
 assert workflow.count("make clean package FINALPACKAGE=1") == 2
 assert "llvm@19" in workflow and "592f215f852e3957da01b2b15024dc63713a462e" in workflow
-assert 'TARGET_CC="$DEMO_OLLVM_CLANG"' in workflow
+assert 'TARGET_CC="$compiler"' in workflow
+assert 'compiler="$GITHUB_WORKSPACE/scripts/demo_ollvm/compiler_select.py"' in workflow
+assert 'chmod +x "$compiler"' in workflow
+assert 'TARGET_CXX="$(xcrun --find clang++)"' in workflow
+assert "DEMO_OLLVM_SELECTED: CRCredits.m -> LLVM19" in workflow
+assert "if [ \"$selected\" -ne 2 ]; then" in workflow
+assert "-fmodules-cache-path=\"$RUNNER_TEMP/demo-ollvm-llvm19-modules\"" in workflow
+assert "-print-resource-dir" in workflow
+assert "__stddef_max_align_t.h" in workflow
+assert workflow.index("name: Preflight LLVM19 resource headers for Objective-C") < workflow.index(
+    "name: Build demo with OLLVM scoped only to CranePrefs credits"
+)
+assert "CranePrefs_CFLAGS += -O1 -fpass-plugin=" not in workflow
 assert "CraneDemo-Baseline-EXPERIMENTAL" in workflow
 assert "CraneDemo-OLLVM-EXPERIMENTAL" in workflow
 assert workflow.index("name: Upload clean demo baseline") < workflow.index(
@@ -100,6 +112,17 @@ def load(name: str, path: Path):
 
 prepare = load("demo_prepare", DIR / "prepare.py")
 check = load("demo_verify", DIR / "verify.py")
+select = load("demo_compiler_select", DIR / "compiler_select.py")
+assert select.is_selected_compile(["-c", "CRCredits.m", "-arch", "arm64"])
+assert select.is_selected_compile(["-c", "../prefs/CRCredits.m", "-arch", "arm64e"])
+for command in (
+    ["-c", "../common/CRCommon.m", "-arch", "arm64e"],
+    ["-c", "CRPreferences.m"],
+    ["-c", "CRMainDylib.m"],
+    ["-o", "CranePrefs", "CRCredits.m"],
+    ["-c", "Prefix.pch"],
+):
+    assert not select.is_selected_compile(command), command
 assert set(check.PASSES) == {"split", "bcf", "fla", "sub"}
 assert set(check.FUNCTIONS) == {"CRCreditsOpenTwitter", "CRCreditsLocalizedRows"}
 
@@ -126,7 +149,34 @@ with tempfile.TemporaryDirectory() as tmp:
     prepare.prepare(template, obf, "ollvm", plug)
     assert (plain / "sources/prefs/Makefile").read_text() == makefiles["sources/prefs/Makefile"]
     assert "fpass-plugin=" not in (plain / "sources/prefs/Makefile").read_text()
-    assert "fpass-plugin=" in (obf / "sources/prefs/Makefile").read_text()
+    assert "fpass-plugin=" not in (obf / "sources/prefs/Makefile").read_text()
+    assert (obf / "sources/prefs/Makefile").read_bytes() == (
+        template / "sources/prefs/Makefile"
+    ).read_bytes()
+    resource = tmp / "llvm19" / "lib" / "clang" / "19"
+    (resource / "include").mkdir(parents=True)
+    (resource / "include/stddef.h").write_text("mock", encoding="utf-8")
+    values = {
+        "DEMO_APPLE_CLANG": "/opt/apple/clang",
+        "DEMO_OLLVM_CLANG": "/opt/llvm19/clang",
+        "DEMO_OLLVM_PLUGIN": str(plug),
+        "DEMO_OLLVM_RESOURCE_DIR": str(resource),
+        "DEMO_OLLVM_MODULE_CACHE": str(tmp / "llvm19-cache"),
+    }
+    source_args = ["-c", "CRCredits.m", "-arch", "arm64"]
+    selected = select.command_for(source_args, values)
+    assert selected[0] == values["DEMO_OLLVM_CLANG"]
+    assert selected[-2:] == ["-resource-dir", str(resource)]
+    assert f"-fpass-plugin={plug}" in selected
+    assert any(flag.startswith("-fmodules-cache-path=") for flag in selected)
+    non_selected = select.command_for(["-c", "../common/CRCommon.m"], values)
+    assert non_selected == ["/opt/apple/clang", "-c", "../common/CRCommon.m"]
+    try:
+        select.command_for(source_args, {"DEMO_APPLE_CLANG": "/opt/apple/clang"})
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("No LLVM toolchain must fail selected compilation")
     assert (obf / "sources/maindylib/Makefile").read_text() == makefiles["sources/maindylib/Makefile"]
     assert (obf / "sources/cranesb/Makefile").read_text() == makefiles["sources/cranesb/Makefile"]
     assert (obf / "policy.json").read_bytes() == (obf / "sources/prefs/policy.json").read_bytes()

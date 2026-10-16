@@ -33,14 +33,17 @@ container switching, SpringBoard hooks hoặc các source khác. Việc có gọ
 helper trong bản thực tế phụ thuộc runtime; không kết luận từ log build.
 
 `scripts/demo_ollvm/prepare.py` copy `demo/reconstruction/` vào **hai
-sandbox** hoàn toàn riêng trong `$RUNNER_TEMP`. Bản OLLVM thêm
-`CranePrefs_CFLAGS += -O1 -fpass-plugin=<pinned-plugin>` vào **Makefile của
-CranePrefs trong sandbox** và tạo hai `policy.json` phục vụ compiler CWD.
-Không chỉnh sửa bất kỳ source/Makefile nào của demo gốc. Bản chuẩn build
-với toolchain mặc định; bản OLLVM build bằng LLVM19 Clang tương ứng với
-plugin `lich4/ollvm-pass` commit
+sandbox** hoàn toàn riêng trong `$RUNNER_TEMP`. Bản OLLVM tạo hai
+`policy.json` phục vụ compiler CWD nhưng giữ **tất cả Makefile/source demo
+y nguyên**. Bản chuẩn dùng Apple Clang. Bản OLLVM dùng adapter
+`scripts/demo_ollvm/compiler_select.py` qua `TARGET_CC`, **ủy quyền
+mọi file khác** (bao gồm `CRCommon.m`, tweak/daemon/hooks) cho Apple Clang;
+chỉ compile `CRCredits.m` bằng Homebrew LLVM19 Clang và nạp OLLVM plugin
+`lich4/ollvm-pass` commit
 `592f215f852e3957da01b2b15024dc63713a462e`. Apple clang++ được dùng
-để link. Cả 7 target vẫn được biên dịch; **chỉ CranePrefs nạp OLLVM pass**.
+để link. Adapter đặt tường minh LLVM19 `-resource-dir`, có module cache
+riêng và ghi `DEMO_OLLVM_SELECTED` vào log cho cả hai architecture arm64 +
+arm64e. Workflow yêu cầu đúng 2 lần chọn; không tự bật pass trên toàn bundle.
 
 Phạm vi hiện tại chỉ chạy **rootful** theo action Theos của demo, với
 architectures gốc (arm64 + arm64e cho dylib/bundle); roothide là giai đoạn
@@ -62,9 +65,11 @@ CI:
    truyền cả hai thư mục cho `verify_package_layout.py` để kiểm tra chính xác
    `postinst` cùng mode 0755; chạy verifier Mach-O architecture, rồi upload
    `CraneDemo-Baseline-EXPERIMENTAL` trước khi biên dịch OLLVM.
-4. Build OLLVM plugin cùng phiên bản và toolchain đã dùng trong DuoDash,
-   biên dịch lại toàn bộ package với đúng **hai hàm đã chọn** để tạo
-   `CraneDemo-OLLVM-EXPERIMENTAL`.
+4. Build OLLVM plugin bằng LLVM19 và preflight khả năng biên dịch Objective-C
+   Foundation/UIKit với bộ LLVM19 resource headers và SDK của Xcode, sau đó
+   biên dịch lại package với **LLVM19 chỉ cho `CRCredits.m`** và dùng Apple
+   Clang cho 6 target cùng các file khác. Yêu cầu đúng 2 sự kiện chọn compiler
+   (arm64/arm64e), tạo `CraneDemo-OLLVM-EXPERIMENTAL` khi các audit đều đạt.
 5. `scripts/demo_ollvm/verify.py` yêu cầu cả **4 pass trên từng hàm**,
    không có sự kiện OLLVM trên các hàm ngoài danh sách, hai package có cùng
    đường dẫn payload, `CranePrefs` binary thay đổi và ba class UI Credits
@@ -73,8 +78,9 @@ CI:
 6. Tạo `report.md` so sánh SHA-256 và dung lượng bundle UI, số lần pass
    được ghi trong log; giữ `CraneDemo-OLLVM-Diagnostics` cả khi job lỗi.
 
-**Không coi chênh lệch binary là bằng chứng riêng của OLLVM:** bản OLLVM
-đồng thời dùng LLVM19 Clang còn baseline dùng Apple Clang.
+**Không coi chênh lệch binary là bằng chứng riêng của OLLVM:** riêng
+`CRCredits.m` được biên dịch bằng LLVM19 ở bản OLLVM thay vì Apple Clang
+trong baseline. Audit pass log và selector compiler được xác minh độc lập.
 
 ## Kiểm tra trên thiết bị dự phòng
 
@@ -150,3 +156,29 @@ python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" \
 Nếu lần chạy mới vẫn FAIL, thông báo sẽ xác định được lỗi thật ở
 `postinst` (không tồn tại, nội dung khác hoặc sai mode) hoặc lỗi package
 khác. Bản sửa này chưa được chạy trên runner macOS sau khi cập nhật.
+
+## Khắc phục lỗi LLVM19/Xcode 15.4 resource headers
+
+Sau khi baseline package PASS, lần build OLLVM có thể lỗi từ
+`XcodeDefault.xctoolchain/.../clang/include/stddef.h` với
+`__stddef_max_align_t.h file not found`, tiếp đó cascade
+`could not build module 'Darwin'`, Foundation/UIKit và lỗi `CRCommon.m`.
+Trong phiên bản workflow cũ, `TARGET_CC` trỏ thẳng LLVM19 cho **toàn bộ**
+7 target dù OLLVM chỉ cần trên 2 helper của trang Credits. Đồng thời,
+`CranePrefs_CFLAGS += -fpass-plugin=...` vô tình áp dụng plugin cho tất cả
+source trong bundle. Đây là phạm vi quá rộng, dễ gây xung đột hệ thống
+header/Clang module giữa Xcode và Homebrew LLVM.
+
+Workflow mới dùng adapter `compiler_select.py` để dùng Apple Clang cho mọi
+file trừ **một translation unit** `CRCredits.m` và bật pass chỉ ở lần
+compile của file đó. LLVM19 được ép dùng đúng thư mục resource headers do
+`clang -print-resource-dir` cung cấp, gồm `stddef.h` và
+`__stddef_max_align_t.h`; module cache độc lập cho LLVM19. Trước build
+OLLVM có một smoke test compile Objective-C Foundation/UIKit bằng đúng
+LLVM19 và iPhoneOS SDK; lỗi SDK/Clang sẽ được tách ra sớm và rõ.
+
+Kiểm thử cục bộ xác minh adapter chọn đúng file, giữ nguyên Makefile demo,
+không chọn `CRCommon.m`/hook/daemon, và chính xác hai log lựa chọn compile.
+Build thực tế vẫn cần chạy lại trên macOS; nếu `CRCredits.m` vẫn gặp lỗi
+resource/module, cần xem `CraneDemo-OLLVM-Diagnostics` và bước preflight,
+không bỏ qua kiểm tra và không quay về ép LLVM19 cho toàn project.

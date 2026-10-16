@@ -101,6 +101,27 @@ jobs:
           echo "DEMO_OLLVM_CLANG=$llvm_prefix/bin/clang" >> "$GITHUB_ENV"
           echo "DEMO_OLLVM_CLANGXX=$llvm_prefix/bin/clang++" >> "$GITHUB_ENV"
 
+      - name: Preflight LLVM19 resource headers for Objective-C
+        run: |
+          set -euo pipefail
+          resource_dir="$("$DEMO_OLLVM_CLANG" -print-resource-dir)"
+          test -f "$resource_dir/include/stddef.h"
+          test -f "$resource_dir/include/__stddef_max_align_t.h"
+          echo "LLVM19 builtin resource directory: $resource_dir"
+          printf '%s\n' "$resource_dir" > "$RUNNER_TEMP/demo-ollvm-resource-dir.txt"
+          mkdir -p "$RUNNER_TEMP/demo-ollvm-llvm19-modules"
+          # Fail early and clearly if LLVM19 cannot consume the selected SDK.
+          "$DEMO_OLLVM_CLANG" -resource-dir "$resource_dir" \
+            -target arm64-apple-ios11.0 \
+            -isysroot "$(xcrun --sdk iphoneos --show-sdk-path)" \
+            -fobjc-arc -fmodules \
+            -fmodules-cache-path="$RUNNER_TEMP/demo-ollvm-llvm19-modules" \
+            -x objective-c -fsyntax-only - <<'OBJC'
+          #import <Foundation/Foundation.h>
+          #import <UIKit/UIKit.h>
+          void dd_demo_llvm19_headers(NSString *s) { (void)s; }
+          OBJC
+
       - name: Build demo with OLLVM scoped only to CranePrefs credits
         run: |
           set -euo pipefail
@@ -109,11 +130,24 @@ jobs:
             --variant ollvm --plugin "$DEMO_OLLVM_PLUGIN"
           mkdir -p "$RUNNER_TEMP/demo-expanded-ollvm" "$RUNNER_TEMP/demo-control-ollvm"
           cd "$RUNNER_TEMP/crane-demo-ollvm"
+          # Default to Apple Clang for all seven targets. The dispatcher
+          # selects LLVM19 + OLLVM only for CRCredits.m (2 architectures).
+          export DEMO_APPLE_CLANG="$(xcrun --find clang)"
+          export DEMO_OLLVM_RESOURCE_DIR="$(cat "$RUNNER_TEMP/demo-ollvm-resource-dir.txt")"
+          export DEMO_OLLVM_MODULE_CACHE="$RUNNER_TEMP/demo-ollvm-llvm19-modules"
+          compiler="$GITHUB_WORKSPACE/scripts/demo_ollvm/compiler_select.py"
+          chmod +x "$compiler"
           set -o pipefail
           make clean package FINALPACKAGE=1 \
-            TARGET_CC="$DEMO_OLLVM_CLANG" TARGET_CXX="$DEMO_OLLVM_CLANGXX" \
+            TARGET_CC="$compiler" TARGET_CXX="$(xcrun --find clang++)" \
             TARGET_LD="$(xcrun --find clang++)" \
             2>&1 | tee "$RUNNER_TEMP/demo-comparison/ollvm-build.log"
+          selected="$(grep -c '^DEMO_OLLVM_SELECTED: CRCredits.m -> LLVM19' \
+            "$RUNNER_TEMP/demo-comparison/ollvm-build.log" || true)"
+          if [ "$selected" -ne 2 ]; then
+            echo "::error::Expected exactly 2 CRCredits.m LLVM19 compile events (arm64, arm64e); got $selected."
+            exit 1
+          fi
           deb="$(find packages -type f -name '*.deb' -print -quit)"
           test -n "$deb"
           cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-ollvm.deb"
