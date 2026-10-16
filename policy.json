@@ -1,0 +1,18 @@
+{
+  "policy_map": {
+    "duodash_light": {
+      "enable_fla": false,
+      "enable_bcf": false,
+      "enable_split": false,
+      "enable_sub": true,
+      "sub_times": 1
+    }
+  },
+  "policies": [
+    {
+      "module": ".*(LicenseHelpers|PrefsResolver|ollvm_probe)\\.(m|c)",
+      "func": ".*",
+      "policy": "duodash_light"
+    }
+  ]
+}

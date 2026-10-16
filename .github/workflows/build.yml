@@ -10,6 +10,10 @@ on:
       - "scripts/verify_reconstruction.py"
       - "scripts/hostflow_preflight_smoke.m"
       - "scripts/test_dock_geometry_vectors.py"
+      - "scripts/test_ollvm_integration.py"
+      - "scripts/ollvm_probe.c"
+      - "policy.json"
+      - "docs/OLLVM.md"
       - ".github/workflows/build.yml"
   pull_request:
     paths:
@@ -20,8 +24,18 @@ on:
       - "scripts/verify_reconstruction.py"
       - "scripts/hostflow_preflight_smoke.m"
       - "scripts/test_dock_geometry_vectors.py"
+      - "scripts/test_ollvm_integration.py"
+      - "scripts/ollvm_probe.c"
+      - "policy.json"
+      - "docs/OLLVM.md"
       - ".github/workflows/build.yml"
   workflow_dispatch:
+    inputs:
+      ollvm:
+        description: "Use OLLVM for the tweak build (manual runs only)"
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   build:
@@ -38,6 +52,9 @@ jobs:
 
       - name: Verify dock geometry vectors
         run: python3 scripts/test_dock_geometry_vectors.py
+
+      - name: Verify OLLVM policy configuration
+        run: python3 scripts/test_ollvm_integration.py
 
       - name: Execute compiled host switch preflight smoke test
         run: |
@@ -74,8 +91,55 @@ jobs:
       - name: Install Theos
         run: git clone --recursive --depth 1 https://github.com/theos/theos.git "$THEOS"
 
-      - name: Build tweak
+      - name: Install LLVM 19 and compile pinned OLLVM plugin
+        if: ${{ inputs.ollvm == true }}
+        run: |
+          brew install llvm@19 cmake ninja
+          source_dir="$RUNNER_TEMP/ollvm-pass"
+          git init -q "$source_dir"
+          git -C "$source_dir" remote add origin https://github.com/lich4/ollvm-pass.git
+          git -C "$source_dir" fetch --depth 1 origin 592f215f852e3957da01b2b15024dc63713a462e
+          git -C "$source_dir" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$source_dir" rev-parse HEAD)" = "592f215f852e3957da01b2b15024dc63713a462e"
+          llvm_prefix="$(brew --prefix llvm@19)"
+          cmake -S "$source_dir/obfuscator" -B "$RUNNER_TEMP/ollvm-build" -G Ninja \
+            -DLLVM_DIR="$llvm_prefix/lib/cmake/llvm"
+          cmake --build "$RUNNER_TEMP/ollvm-build" --parallel 3
+          plugin="$(find "$RUNNER_TEMP/ollvm-build" -type f \( -name 'Obfuscator.dylib' -o -name 'Obfuscator.so' \) -print -quit)"
+          test -n "$plugin"
+          test -f "$plugin"
+          echo "OLLVM_PLUGIN=$plugin" >> "$GITHUB_ENV"
+          echo "OLLVM_CLANG=$llvm_prefix/bin/clang" >> "$GITHUB_ENV"
+          echo "OLLVM_CLANGXX=$llvm_prefix/bin/clang++" >> "$GITHUB_ENV"
+
+      - name: Verify OLLVM actually transforms iOS arm64 code
+        if: ${{ inputs.ollvm == true }}
+        run: |
+          set -o pipefail
+          "$OLLVM_CLANG" -O1 -target arm64-apple-ios14.0 \
+            -isysroot "$(xcrun --sdk iphoneos --show-sdk-path)" \
+            -fpass-plugin="$OLLVM_PLUGIN" \
+            -c scripts/ollvm_probe.c -o "$RUNNER_TEMP/ollvm_probe_arm64.o" \
+            2>&1 | tee "$RUNNER_TEMP/ollvm_probe.log"
+          grep -q '>>>> run sub on dd_ollvm_probe' "$RUNNER_TEMP/ollvm_probe.log"
+          xcrun lipo "$RUNNER_TEMP/ollvm_probe_arm64.o" -verify_arch arm64
+
+      - name: Build tweak (standard)
+        if: ${{ inputs.ollvm != true }}
         run: make clean all
+
+      - name: Build tweak (OLLVM)
+        if: ${{ inputs.ollvm == true }}
+        run: |
+          set -o pipefail
+          make clean all OLLVM=1 OLLVM_PLUGIN="$OLLVM_PLUGIN" \
+            TARGET_CC="$OLLVM_CLANG" TARGET_CXX="$OLLVM_CLANGXX" \
+            TARGET_LD="$(xcrun --find clang++)" \
+            2>&1 | tee "$RUNNER_TEMP/ollvm_tweak.log"
+          if ! grep -q '>>>> run sub on ' "$RUNNER_TEMP/ollvm_tweak.log"; then
+            echo "::error::OLLVM built without transforming any selected tweak functions"
+            exit 1
+          fi
 
       - name: Collect dylib
         run: |
@@ -88,6 +152,6 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DuoDashReconstruction
+          name: ${{ inputs.ollvm == true && 'DuoDashReconstruction-OLLVM' || 'DuoDashReconstruction' }}
           path: dist/
           if-no-files-found: error
