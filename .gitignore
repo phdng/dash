@@ -7,3 +7,4 @@ dist/
 packages/
 __pycache__/
 *.pyc
+re
