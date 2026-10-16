@@ -1,0 +1,100 @@
+name: Evaluate Hikari Obfuscation (Experimental)
+
+# Intentionally manual-only. Does not alter the production Reconstruction job.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hikari-probe:
+    runs-on: macos-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: scripts/hikari_eval
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Validate isolated Hikari policy and tests
+        run: python3 ../test_hikari_integration.py
+
+      - name: Compile pinned Hikari pass for LLVM 19
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          source_dir="$RUNNER_TEMP/hikari-source"
+          git init -q "$source_dir"
+          git -C "$source_dir" remote add origin https://github.com/lich4/ollvm-pass.git
+          git -C "$source_dir" fetch --depth 1 origin 592f215f852e3957da01b2b15024dc63713a462e
+          git -C "$source_dir" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$source_dir" rev-parse HEAD)" = "592f215f852e3957da01b2b15024dc63713a462e"
+          llvm_prefix="$(brew --prefix llvm@19)"
+          cmake -S "$source_dir/hikari" -B "$RUNNER_TEMP/hikari-build" -G Ninja \
+            -DLLVM_DIR="$llvm_prefix/lib/cmake/llvm"
+          cmake --build "$RUNNER_TEMP/hikari-build" --parallel 3
+          plugin="$(find "$RUNNER_TEMP/hikari-build" -type f \
+            \( -name 'Hikari.dylib' -o -name 'Hikari.so' \
+            -o -name 'libHikari.dylib' -o -name 'libHikari.so' \) -print -quit)"
+          test -n "$plugin"
+          test -f "$plugin"
+          echo "HIKARI_PLUGIN=$plugin" >> "$GITHUB_ENV"
+          echo "HIKARI_CLANG=$llvm_prefix/bin/clang" >> "$GITHUB_ENV"
+
+      - name: Native macOS semantics and plaintext audit
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          printf '# Hikari experimental report\n\n' > out/report.md
+          printf 'This report is from disposable fixture code, not the DuoDash tweak.\n\n' >> out/report.md
+          printf '| Target | Plain .o bytes | Hikari .o bytes | Plain SHA-256 prefix | Hikari SHA-256 prefix | Checks |\n' >> out/report.md
+          printf '| --- | ---: | ---: | --- | --- | --- |\n' >> out/report.md
+          sdk="$(xcrun --sdk macosx --show-sdk-path)"
+          xcrun clang -O1 -Wall -Wextra -Werror -isysroot "$sdk" \
+            -c probe.c -o out/probe-native-plain.o
+          "$HIKARI_CLANG" -O1 -Wall -Wextra -Werror -isysroot "$sdk" \
+            -fpass-plugin="$HIKARI_PLUGIN" \
+            -c probe.c -o out/probe-native-hikari.o \
+            2>&1 | tee out/hikari-native.log
+          xcrun clang -O1 -Wall -Wextra -Werror -isysroot "$sdk" \
+            -c runner.c -o out/runner.o
+          xcrun clang out/probe-native-plain.o out/runner.o -o out/probe-native-plain
+          xcrun clang out/probe-native-hikari.o out/runner.o -o out/probe-native-hikari
+          ./out/probe-native-plain > out/native-plain.txt
+          ./out/probe-native-hikari > out/native-hikari.txt
+          python3 audit.py native out/probe-native-plain.o out/probe-native-hikari.o \
+            out/hikari-native.log out/report.md \
+            --plain-output out/native-plain.txt \
+            --protected-output out/native-hikari.txt \
+            --protected-executable out/probe-native-hikari
+
+      - name: Cross-compile iOS arm64 fixture and audit plaintext marker
+        run: |
+          set -euo pipefail
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          xcrun clang -O1 -Wall -Wextra -Werror -target arm64-apple-ios14.0 \
+            -isysroot "$sdk" -c probe.c -o out/probe-ios-plain.o
+          "$HIKARI_CLANG" -O1 -Wall -Wextra -Werror -target arm64-apple-ios14.0 \
+            -isysroot "$sdk" -fpass-plugin="$HIKARI_PLUGIN" \
+            -c probe.c -o out/probe-ios-hikari.o \
+            2>&1 | tee out/hikari-ios.log
+          xcrun lipo out/probe-ios-hikari.o -verify_arch arm64
+          python3 audit.py ios out/probe-ios-plain.o out/probe-ios-hikari.o \
+            out/hikari-ios.log out/report.md
+          printf '\nChecks: pass invocation logs, test-only plaintext, exact 513 native vectors.\n' >> out/report.md
+          printf 'iOS arm64 is compile-only; no iPhone runtime coverage is implied.\n' >> out/report.md
+          cat out/report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Hikari test-only diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Hikari-Evaluation-Diagnostics
+          path: |
+            scripts/hikari_eval/out/report.md
+            scripts/hikari_eval/out/hikari-native.log
+            scripts/hikari_eval/out/hikari-ios.log
+          if-no-files-found: warn

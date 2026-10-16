@@ -1,0 +1,28 @@
+{
+  "policy_map": {
+    "hikari_probe_string": {
+      "enable-strcry": true,
+      "strcry_prob": 100
+    },
+    "hikari_probe_const": {
+      "enable-constenc": true,
+      "constenc_subxor": true,
+      "constenc_subxor_prob": 100,
+      "constenc_togv": false,
+      "constenc_togv_prob": 50,
+      "constenc_times": 1
+    }
+  },
+  "policies": [
+    {
+      "module": "probe\\.c",
+      "func": "^dd_hikari_probe_string$",
+      "policy": "hikari_probe_string"
+    },
+    {
+      "module": "probe\\.c",
+      "func": "^dd_hikari_probe_const$",
+      "policy": "hikari_probe_const"
+    }
+  ]
+}
