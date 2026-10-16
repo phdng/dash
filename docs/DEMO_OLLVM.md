@@ -58,7 +58,9 @@ CI:
    Theos dùng `dm.pl` để đóng gói nhưng runner không nhất thiết có `dpkg-deb`
    để đọc/giải nén package.
 3. Build `make clean package FINALPACKAGE=1` phiên bản **baseline**. Unpack
-   `.deb`, chạy verifier layout và Mach-O architecture của demo, rồi upload
+   `.deb` bằng `dpkg-deb -x` (data) **và** `dpkg-deb -e` (control/postinst),
+   truyền cả hai thư mục cho `verify_package_layout.py` để kiểm tra chính xác
+   `postinst` cùng mode 0755; chạy verifier Mach-O architecture, rồi upload
    `CraneDemo-Baseline-EXPERIMENTAL` trước khi biên dịch OLLVM.
 4. Build OLLVM plugin cùng phiên bản và toolchain đã dùng trong DuoDash,
    biên dịch lại toàn bộ package với đúng **hai hàm đã chọn** để tạo
@@ -124,4 +126,27 @@ Dòng `od: stdout: Broken pipe` cạnh log đóng gói thường có thể do b�
 pipeline đóng sớm; không kết luận đó là lỗi build trừ khi có exit code
 thực sự phát sinh từ lệnh đóng gói. Sau khi sửa, kiểm tra status các bước
 **baseline package**, **verify package layout**, **verify architectures**, rồi
-mới phân tích pass OLLVM. Chưa có xác nhận CI macOS chạy lại sau sửa.
+mới phân tích pass OLLVM.
+
+## Khắc phục lỗi control archive: postinst was not verified
+
+Nếu log báo `FAIL control archive root not supplied; postinst was not
+verified` dù 33 data files đều OK, nguyên nhân là script verifier của demo
+cần **hai** đối số thư mục; bản workflow cũ chỉ truyền thư mục data sau
+`dpkg-deb -x`. Script kiểm tra `postinst` có nội dung khớp file đã review
+trong `demo/reconstruction/layout/DEBIAN/postinst` và quyền thực thi **0755**.
+Không nên tắt bài kiểm tra này.
+
+Workflow hiện đã thêm **cả hai nhánh baseline và OLLVM**:
+
+```sh
+# Baseline (nhánh OLLVM dùng demo-expanded-ollvm và demo-control-ollvm)
+dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-plain"
+dpkg-deb -e "$deb" "$RUNNER_TEMP/demo-control-plain"
+python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" \
+  "$RUNNER_TEMP/demo-expanded-plain" "$RUNNER_TEMP/demo-control-plain"
+```
+
+Nếu lần chạy mới vẫn FAIL, thông báo sẽ xác định được lỗi thật ở
+`postinst` (không tồn tại, nội dung khác hoặc sai mode) hoặc lỗi package
+khác. Bản sửa này chưa được chạy trên runner macOS sau khi cập nhật.

@@ -56,7 +56,7 @@ jobs:
           set -euo pipefail
           python3 scripts/demo_ollvm/prepare.py \
             --source demo/reconstruction --dest "$RUNNER_TEMP/crane-demo-plain" --variant baseline
-          mkdir -p "$RUNNER_TEMP/demo-comparison" "$RUNNER_TEMP/demo-expanded-plain"
+          mkdir -p "$RUNNER_TEMP/demo-comparison" "$RUNNER_TEMP/demo-expanded-plain" "$RUNNER_TEMP/demo-control-plain"
           cd "$RUNNER_TEMP/crane-demo-plain"
           set -o pipefail
           make clean package FINALPACKAGE=1 \
@@ -66,7 +66,10 @@ jobs:
           cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-baseline.deb"
           command -v dpkg-deb
           dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-plain"
-          python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" "$RUNNER_TEMP/demo-expanded-plain"
+          dpkg-deb -e "$deb" "$RUNNER_TEMP/demo-control-plain"
+          test -f "$RUNNER_TEMP/demo-control-plain/postinst"
+          python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" \
+            "$RUNNER_TEMP/demo-expanded-plain" "$RUNNER_TEMP/demo-control-plain"
           python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_architectures.py" "$RUNNER_TEMP/demo-expanded-plain"
 
       - name: Upload clean demo baseline (retained if OLLVM fails)
@@ -104,7 +107,7 @@ jobs:
           python3 scripts/demo_ollvm/prepare.py \
             --source demo/reconstruction --dest "$RUNNER_TEMP/crane-demo-ollvm" \
             --variant ollvm --plugin "$DEMO_OLLVM_PLUGIN"
-          mkdir -p "$RUNNER_TEMP/demo-expanded-ollvm"
+          mkdir -p "$RUNNER_TEMP/demo-expanded-ollvm" "$RUNNER_TEMP/demo-control-ollvm"
           cd "$RUNNER_TEMP/crane-demo-ollvm"
           set -o pipefail
           make clean package FINALPACKAGE=1 \
@@ -116,7 +119,10 @@ jobs:
           cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-ollvm.deb"
           command -v dpkg-deb
           dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-ollvm"
-          python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" "$RUNNER_TEMP/demo-expanded-ollvm"
+          dpkg-deb -e "$deb" "$RUNNER_TEMP/demo-control-ollvm"
+          test -f "$RUNNER_TEMP/demo-control-ollvm/postinst"
+          python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_package_layout.py" \
+            "$RUNNER_TEMP/demo-expanded-ollvm" "$RUNNER_TEMP/demo-control-ollvm"
           python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_architectures.py" "$RUNNER_TEMP/demo-expanded-ollvm"
           python3 "$GITHUB_WORKSPACE/scripts/demo_ollvm/verify.py" \
             --baseline "$RUNNER_TEMP/demo-expanded-plain" \

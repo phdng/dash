@@ -50,6 +50,26 @@ assert "brew install dpkg" in workflow
 assert "dpkg-deb --version" in workflow
 assert workflow.count("command -v dpkg-deb") == 3
 assert workflow.count('dpkg-deb -x "$deb"') == 2
+# -x extracts data only; the verifier also requires postinst from control.tar.
+assert workflow.count('dpkg-deb -e "$deb"') == 2
+for variant in ("plain", "ollvm"):
+    assert f'dpkg-deb -e "$deb" "$RUNNER_TEMP/demo-control-{variant}"' in workflow
+    assert f'test -f "$RUNNER_TEMP/demo-control-{variant}/postinst"' in workflow
+    assert (
+        '"$RUNNER_TEMP/demo-expanded-' + variant + '" '
+        '"$RUNNER_TEMP/demo-control-' + variant + '"'
+    ) in workflow
+    extract = workflow.index(f'dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-{variant}"')
+    control = workflow.index(f'dpkg-deb -e "$deb" "$RUNNER_TEMP/demo-control-{variant}"')
+    verify = workflow.index(
+        f'"$RUNNER_TEMP/demo-expanded-{variant}" "$RUNNER_TEMP/demo-control-{variant}"',
+        control,
+    )
+    assert extract < control < verify
+verifier_source = (DEMO / "tools/verify_package_layout.py").read_text(encoding="utf-8")
+assert "postinst = pathlib.Path(control_arg) / \"postinst\"" in verifier_source
+assert "postinst.read_bytes() != original.read_bytes()" in verifier_source
+assert "postinst.stat().st_mode & 0o777 != 0o755" in verifier_source
 assert workflow.index("name: Install Debian package inspection tool") < workflow.index(
     "name: Prepare and build unmodified demo baseline"
 )
