@@ -83,6 +83,17 @@ assert 'chmod +x "$compiler"' in workflow
 assert 'TARGET_CXX="$(xcrun --find clang++)"' in workflow
 assert "DEMO_OLLVM_SELECTED: CRCredits.m (arm64) -> LLVM19" in workflow
 assert "DEMO_OLLVM_BYPASS: CRCredits.m (arm64e) -> Apple Clang" in workflow
+# macOS /bin/bash 3.2 has no mapfile; keep fail-closed exact-one-object guard.
+assert "mapfile -t" not in workflow
+assert "readarray -t" not in workflow
+assert "test -d .theos/obj/arm64" in workflow
+assert "protected_count=0" in workflow
+assert "while IFS= read -r object_path; do" in workflow
+assert "protected_count=$((protected_count + 1))" in workflow
+assert 'if [ "$protected_count" -ne 1 ]; then' in workflow
+assert '--protected "$protected_object"' in workflow
+assert 'cp "$protected_object"' in workflow
+assert "${protected_objects[" not in workflow
 assert "CraneDemo-OLLVM-STRONG-${{ matrix.variant }}-EXPERIMENTAL" in workflow
 assert "CRCredits-llvm19-no-pass-arm64.o" in workflow
 assert "CRCredits-ollvm-strong-arm64.o" in workflow

@@ -180,20 +180,29 @@ jobs:
             exit 1
           fi
           test -s "$DEMO_OLLVM_CONTROL_OBJECT"
-          mapfile -t protected_objects < <(find .theos/obj/arm64 -type f -name 'CRCredits.m.*.o' -print)
-          if [ "${#protected_objects[@]}" -ne 1 ]; then
-            echo "::error::Expected one arm64 CRCredits protected object; found ${#protected_objects[@]}"
+          # macOS /bin/bash is 3.2: mapfile/readarray arrived in Bash 4.
+          # Count paths in the parent shell; avoid empty arrays under set -u.
+          # No find | head/quit pipe, avoiding a broken-pipe side effect.
+          test -d .theos/obj/arm64
+          protected_count=0
+          protected_object=''
+          while IFS= read -r object_path; do
+            protected_count=$((protected_count + 1))
+            protected_object="$object_path"
+          done < <(find .theos/obj/arm64 -type f -name 'CRCredits.m.*.o' -print)
+          if [ "$protected_count" -ne 1 ]; then
+            echo "::error::Expected one arm64 CRCredits protected object; found $protected_count"
             exit 1
           fi
           mkdir -p "$RUNNER_TEMP/demo-comparison/arm64-binary-audit"
           python3 "$GITHUB_WORKSPACE/scripts/demo_ollvm/analyze_binary.py" \
             --control "$DEMO_OLLVM_CONTROL_OBJECT" \
-            --protected "${protected_objects[0]}" \
+            --protected "$protected_object" \
             --objdump "$(brew --prefix llvm@19)/bin/llvm-objdump" \
             --out "$RUNNER_TEMP/demo-comparison/arm64-binary-audit"
           cp "$DEMO_OLLVM_CONTROL_OBJECT" \
             "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CRCredits-llvm19-no-pass-arm64.o"
-          cp "${protected_objects[0]}" \
+          cp "$protected_object" \
             "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CRCredits-ollvm-strong-arm64.o"
           cat "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CRCredits-disassembly-report.md" >> "$GITHUB_STEP_SUMMARY"
           deb="$(find packages -type f -name '*.deb' -print -quit)"
