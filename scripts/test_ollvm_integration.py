@@ -30,4 +30,25 @@ for excluded in (
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
 assert "ifeq ($(OLLVM),1)" in makefile
 assert "-fpass-plugin=$(OLLVM_PLUGIN)" in makefile
-print("OLLVM integration policy: PASS")
+
+workflow = (ROOT / ".github/workflows/build.yml").read_text(encoding="utf-8")
+assert "default: true" in workflow, "OLLVM must be enabled for manual dispatch by default"
+assert (
+    "OLLVM_ENABLED: ${{ github.event_name != 'workflow_dispatch' || inputs.ollvm == true }}"
+    in workflow
+), "Push and PR runs must enable OLLVM without workflow_dispatch inputs"
+assert "if: ${{ inputs.ollvm == true }}" not in workflow, "Legacy skipped steps remain"
+assert "if: ${{ inputs.ollvm != true }}" not in workflow, "Legacy standard-only condition remains"
+assert workflow.count("if: ${{ env.OLLVM_ENABLED == 'true' }}") == 5
+positions = [
+    workflow.index("name: Build tweak (standard)"),
+    workflow.index("name: Upload standard artifact"),
+    workflow.index("name: Install LLVM 19 and compile pinned OLLVM plugin"),
+    workflow.index("name: Verify OLLVM actually transforms iOS arm64 code"),
+    workflow.index("name: Build tweak (OLLVM)"),
+    workflow.index("name: Upload OLLVM artifact"),
+]
+assert positions == sorted(positions), "Artifacts must be uploaded in the intended order"
+assert "name: DuoDashReconstruction-OLLVM" in workflow
+assert "name: DuoDashReconstruction\n" in workflow
+print("OLLVM integration policy and workflow dispatch: PASS")

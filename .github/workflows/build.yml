@@ -32,16 +32,18 @@ on:
   workflow_dispatch:
     inputs:
       ollvm:
-        description: "Use OLLVM for the tweak build (manual runs only)"
+        description: "Also build and upload OLLVM dylib (enabled by default)"
         type: boolean
         required: false
-        default: false
+        default: true
 
 jobs:
   build:
     runs-on: macos-latest
     env:
       THEOS: ${{ github.workspace }}/.theos-sdk
+      # Push/PR builds always produce both variants. Manual runs may opt out.
+      OLLVM_ENABLED: ${{ github.event_name != 'workflow_dispatch' || inputs.ollvm == true }}
 
     steps:
       - name: Checkout
@@ -91,8 +93,26 @@ jobs:
       - name: Install Theos
         run: git clone --recursive --depth 1 https://github.com/theos/theos.git "$THEOS"
 
+      - name: Build tweak (standard)
+        run: make clean all
+
+      - name: Collect standard dylib
+        run: |
+          mkdir -p dist
+          dylib="$(find .theos/obj -type f -name 'DuoDashReconstruction.dylib' -print -quit)"
+          test -n "$dylib"
+          cp "$dylib" dist/DuoDashReconstruction.dylib
+          cp DuoDashReconstruction.plist dist/DuoDashReconstruction.plist
+
+      - name: Upload standard artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDashReconstruction
+          path: dist/
+          if-no-files-found: error
+
       - name: Install LLVM 19 and compile pinned OLLVM plugin
-        if: ${{ inputs.ollvm == true }}
+        if: ${{ env.OLLVM_ENABLED == 'true' }}
         run: |
           brew install llvm@19 cmake ninja
           source_dir="$RUNNER_TEMP/ollvm-pass"
@@ -113,7 +133,7 @@ jobs:
           echo "OLLVM_CLANGXX=$llvm_prefix/bin/clang++" >> "$GITHUB_ENV"
 
       - name: Verify OLLVM actually transforms iOS arm64 code
-        if: ${{ inputs.ollvm == true }}
+        if: ${{ env.OLLVM_ENABLED == 'true' }}
         run: |
           set -o pipefail
           "$OLLVM_CLANG" -O1 -target arm64-apple-ios14.0 \
@@ -124,12 +144,8 @@ jobs:
           grep -q '>>>> run sub on dd_ollvm_probe' "$RUNNER_TEMP/ollvm_probe.log"
           xcrun lipo "$RUNNER_TEMP/ollvm_probe_arm64.o" -verify_arch arm64
 
-      - name: Build tweak (standard)
-        if: ${{ inputs.ollvm != true }}
-        run: make clean all
-
       - name: Build tweak (OLLVM)
-        if: ${{ inputs.ollvm == true }}
+        if: ${{ env.OLLVM_ENABLED == 'true' }}
         run: |
           set -o pipefail
           make clean all OLLVM=1 OLLVM_PLUGIN="$OLLVM_PLUGIN" \
@@ -141,17 +157,19 @@ jobs:
             exit 1
           fi
 
-      - name: Collect dylib
+      - name: Collect OLLVM dylib
+        if: ${{ env.OLLVM_ENABLED == 'true' }}
         run: |
-          mkdir -p dist
+          mkdir -p dist-ollvm
           dylib="$(find .theos/obj -type f -name 'DuoDashReconstruction.dylib' -print -quit)"
           test -n "$dylib"
-          cp "$dylib" dist/DuoDashReconstruction.dylib
-          cp DuoDashReconstruction.plist dist/DuoDashReconstruction.plist
+          cp "$dylib" dist-ollvm/DuoDashReconstruction.dylib
+          cp DuoDashReconstruction.plist dist-ollvm/DuoDashReconstruction.plist
 
-      - name: Upload build artifact
+      - name: Upload OLLVM artifact
+        if: ${{ env.OLLVM_ENABLED == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.ollvm == true && 'DuoDashReconstruction-OLLVM' || 'DuoDashReconstruction' }}
-          path: dist/
+          name: DuoDashReconstruction-OLLVM
+          path: dist-ollvm/
           if-no-files-found: error

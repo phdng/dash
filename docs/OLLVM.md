@@ -1,19 +1,24 @@
-# Optional OLLVM build in GitHub Actions
+# OLLVM build in GitHub Actions
 
-The regular Reconstruction workflow keeps its existing Apple Clang/Xcode
-preflights and default Theos build. A separate, manual **OLLVM** mode builds
-the iOS tweak with a LLVM 19 Clang and a version-matched third-party OLLVM
-pass plugin (not Apple's system Clang).
+The Reconstruction workflow keeps its Apple Clang/Xcode preflights and
+always builds and uploads the standard Theos dylib first. On **push** and
+**pull_request**, it then automatically builds the additional OLLVM variant
+using LLVM 19 Clang and a version-matched third-party LLVM pass plugin.
 
-## Trigger
+## Trigger and artifacts
 
-1. Open **Actions → Build Reconstruction → Run workflow**.
-2. Set **ollvm = true**.
-3. Download artifact **DuoDashReconstruction-OLLVM** if the job succeeds.
+- Push/PR: OLLVM is **enabled automatically**, so a successful workflow
+  uploads **both** `DuoDashReconstruction` and `DuoDashReconstruction-OLLVM`.
+- Manual: open **Actions → Build Reconstruction → Run workflow**;
+  the **ollvm** checkbox is on by default and may be unchecked to skip
+  the extra OLLVM build.
+- The standard artifact uploads **before** OLLVM begins. If the OLLVM
+  compiler/plugin fails, the workflow correctly reports failure, but the
+  standard artifact remains available for troubleshooting.
 
-Without this option, push/PR/manual runs retain the standard artifact
-`DuoDashReconstruction`. The mode is not silently enabled on push/PR
-because this is a separate compiler and needs real-device validation.
+A successful normal tweak build alone is not proof that OLLVM was used:
+`Verify OLLVM actually transforms iOS arm64 code` and `Build tweak (OLLVM)`
+must both succeed, followed by `Upload OLLVM artifact`.
 
 ## Toolchain, reproducibility and verification
 
@@ -47,5 +52,6 @@ and Makefile switch without requiring a macOS compiler. A full OLLVM build
 requires the macOS GitHub Actions runner (or a properly configured macOS
 Theos + LLVM 19 environment).
 
-When OLLVM mode is off, the Makefile and workflow do not require LLVM 19,
-the plugin, or `policy.json`.
+If OLLVM is manually disabled, the Makefile and workflow do not require
+LLVM 19 or the pass plugin. Push/PR builds always attempt both variants.
+On-device testing is still required before distributing the obfuscated build.
