@@ -159,6 +159,9 @@ jobs:
           export DEMO_APPLE_CLANG="$(xcrun --find clang)"
           export DEMO_OLLVM_RESOURCE_DIR="$(cat "$RUNNER_TEMP/demo-ollvm-resource-dir.txt")"
           export DEMO_OLLVM_MODULE_CACHE="$RUNNER_TEMP/demo-ollvm-llvm19-modules"
+          # Compile CRCredits.m/arm64 one additional time with identical LLVM19
+          # flags except the pass plugin, to isolate actual OLLVM codegen.
+          export DEMO_OLLVM_CONTROL_OBJECT="$RUNNER_TEMP/demo-comparison/CRCredits-llvm19-no-pass-arm64.o"
           compiler="$GITHUB_WORKSPACE/scripts/demo_ollvm/compiler_select.py"
           chmod +x "$compiler"
           set -o pipefail
@@ -174,9 +177,26 @@ jobs:
             echo "::error::Expected one LLVM19 arm64 compile + one Apple Clang arm64e compile; selected=$selected bypassed=$bypassed."
             exit 1
           fi
+          test -s "$DEMO_OLLVM_CONTROL_OBJECT"
+          mapfile -t protected_objects < <(find .theos/obj/arm64 -type f -name 'CRCredits.m.*.o' -print)
+          if [ "${#protected_objects[@]}" -ne 1 ]; then
+            echo "::error::Expected one arm64 CRCredits protected object; found ${#protected_objects[@]}"
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/demo-comparison/arm64-binary-audit"
+          python3 "$GITHUB_WORKSPACE/scripts/demo_ollvm/analyze_binary.py" \
+            --control "$DEMO_OLLVM_CONTROL_OBJECT" \
+            --protected "${protected_objects[0]}" \
+            --objdump "$(brew --prefix llvm@19)/bin/llvm-objdump" \
+            --out "$RUNNER_TEMP/demo-comparison/arm64-binary-audit"
+          cp "$DEMO_OLLVM_CONTROL_OBJECT" \
+            "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CRCredits-llvm19-no-pass-arm64.o"
+          cp "${protected_objects[0]}" \
+            "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CRCredits-ollvm-strong-arm64.o"
+          cat "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CRCredits-disassembly-report.md" >> "$GITHUB_STEP_SUMMARY"
           deb="$(find packages -type f -name '*.deb' -print -quit)"
           test -n "$deb"
-          cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-${{ matrix.variant }}-ollvm.deb"
+          cp "$deb" "$RUNNER_TEMP/demo-comparison/Crane-demo-${{ matrix.variant }}-ollvm-strong.deb"
           command -v dpkg-deb
           dpkg-deb -x "$deb" "$RUNNER_TEMP/demo-expanded-ollvm"
           dpkg-deb -e "$deb" "$RUNNER_TEMP/demo-control-ollvm"
@@ -193,6 +213,21 @@ jobs:
               "$RUNNER_TEMP/demo-expanded-ollvm" roothide
           fi
           python3 "$GITHUB_WORKSPACE/demo/reconstruction/tools/verify_architectures.py" "$RUNNER_TEMP/demo-expanded-ollvm"
+          # Also preserve the *installed, linked* arm64 slice for examination
+          # in IDA/Ghidra; the object comparison above isolates the OLLVM pass.
+          bundle="Library/PreferenceBundles/CranePrefs.bundle/CranePrefs"
+          if [ "${{ matrix.scheme }}" = rootless ]; then bundle="var/jb/$bundle"; fi
+          lipo -thin arm64 "$RUNNER_TEMP/demo-expanded-plain/$bundle" \
+            -output "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CranePrefs-baseline-arm64"
+          lipo -thin arm64 "$RUNNER_TEMP/demo-expanded-ollvm/$bundle" \
+            -output "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CranePrefs-ollvm-strong-arm64"
+          if cmp -s "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CranePrefs-baseline-arm64" \
+                   "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CranePrefs-ollvm-strong-arm64"; then
+            echo "::error::Packaged arm64 CranePrefs is unchanged by OLLVM"
+            exit 1
+          fi
+          shasum -a 256 "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CranePrefs-"*"-arm64" \
+            > "$RUNNER_TEMP/demo-comparison/arm64-binary-audit/CranePrefs-arm64-hashes.txt"
           python3 "$GITHUB_WORKSPACE/scripts/demo_ollvm/verify.py" \
             --baseline "$RUNNER_TEMP/demo-expanded-plain" \
             --ollvm "$RUNNER_TEMP/demo-expanded-ollvm" \
@@ -205,7 +240,9 @@ jobs:
           Do not install on a primary device or co-install with another Crane build.
           Both .deb packages use the same install paths/package ID: replace one
           with the other only with an explicit rollback plan on a spare device.
-          OLLVM runs only on 2 named CranePrefs helper functions (arm64 slice).
+          STRONG EVALUATION: SPLIT4 + BCF100% x2 + FLA + SUB x3 only on
+          CRCreditsOpenTwitter and CRCreditsLocalizedRows, arm64 slice only.
+          LLVM19 no-pass vs strong OLLVM object disassembly is in the artifact.
           Only install if the device bootstrap's dpkg architecture and scheme match.
           Roothide uses a different bootstrap/ABI namespace than rootless.
           Compilation/pass log checks cannot prove on-device UI correctness.
@@ -214,10 +251,19 @@ jobs:
       - name: Upload demo OLLVM package if every check passed
         uses: actions/upload-artifact@v4
         with:
-          name: CraneDemo-OLLVM-${{ matrix.variant }}-EXPERIMENTAL
+          name: CraneDemo-OLLVM-STRONG-${{ matrix.variant }}-EXPERIMENTAL
           path: |
-            ${{ runner.temp }}/demo-comparison/Crane-demo-${{ matrix.variant }}-ollvm.deb
+            ${{ runner.temp }}/demo-comparison/Crane-demo-${{ matrix.variant }}-ollvm-strong.deb
             ${{ runner.temp }}/demo-comparison/report.md
+            ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CRCredits-disassembly-report.md
+            ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CRCredits-llvm19-no-pass-arm64.asm
+            ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CRCredits-ollvm-strong-arm64.asm
+            ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CRCredits-arm64.diff
+            ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CRCredits-llvm19-no-pass-arm64.o
+            ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CRCredits-ollvm-strong-arm64.o
+            ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CranePrefs-baseline-arm64
+            ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CranePrefs-ollvm-strong-arm64
+            ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CranePrefs-arm64-hashes.txt
             ${{ runner.temp }}/demo-comparison/NOT-FOR-PRODUCTION.txt
           if-no-files-found: error
 
@@ -225,9 +271,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: CraneDemo-OLLVM-${{ matrix.variant }}-Diagnostics
+          name: CraneDemo-OLLVM-STRONG-${{ matrix.variant }}-Diagnostics
           path: |
             ${{ runner.temp }}/demo-comparison/baseline-build.log
             ${{ runner.temp }}/demo-comparison/ollvm-build.log
             ${{ runner.temp }}/demo-comparison/report.md
+            ${{ runner.temp }}/demo-comparison/arm64-binary-audit/
           if-no-files-found: warn

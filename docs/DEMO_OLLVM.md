@@ -10,10 +10,10 @@ chưa hoàn chỉnh, vì vậy phép thử vẫn phải phân biệt build PASS 
 Workflow root: `.github/workflows/demo-ollvm-evaluation.yml` →
 **Evaluate OLLVM on Crane Demo (Experimental)**, chỉ `workflow_dispatch`.
 
-**Quan trọng:** Lúc khảo sát, `demo/` là thư mục **untracked** trong Git của
-DuoDash. GitHub Actions **không nhìn thấy file trên máy người dùng**. Cần đưa
-ít nhất `demo/reconstruction/` (mã nguồn, layout, vendor và build tools) vào
-commit/nhánh trên GitHub trước khi chạy. **Rà soát quyền sử dụng và tránh đưa
+**Quan trọng:** Lúc khảo sát đầu tiên, `demo/` là thư mục **untracked**
+trong Git. Hiện người dùng đã chạy CI thành công với demo trên GitHub, nhưng
+vẫn cần giữ `demo/reconstruction/` (mã nguồn, layout, vendor và build tools)
+trong commit của từng lần build. **Rà soát quyền sử dụng và tránh đưa
 demo/usr, demo/Library, binaries gốc hay dữ liệu riêng lên GitHub vô ý.**
 Workflow fail ngay nếu thiếu `demo/reconstruction/Makefile`.
 
@@ -24,8 +24,8 @@ Policy ở `scripts/demo_ollvm/policy.json`, chỉ chọn source
 
 | Function | SPLIT | BCF | FLA | SUB |
 | --- | --- | --- | --- | --- |
-| `CRCreditsOpenTwitter` | 2 block | 30%, 1 vòng | On | 1 vòng |
-| `CRCreditsLocalizedRows` | 2 block | 30%, 1 vòng | On | 1 vòng |
+| `CRCreditsOpenTwitter` | 4 block | 100%, 2 vòng | On | 3 vòng |
+| `CRCreditsLocalizedRows` | 4 block | 100%, 2 vòng | On | 3 vòng |
 
 Đây là hai helper liên quan đến trang Credits của giao diện Preferences.
 Không thêm pass vào selectors, ObjC class metadata, constructor, daemon,
@@ -51,6 +51,49 @@ riêng. Workflow yêu cầu đúng **một** log `DEMO_OLLVM_SELECTED` cho
 Workflow hiện chạy **hai job độc lập rootless/roothide**, cùng giữ
 kiểm tra Mach-O arm64 + arm64e cho dylib/bundle nhưng chỉ obfuscate
 CRCredits.m ở lát cắt arm64.
+
+## Tăng độ rối mã để kiểm chứng trực quan (STRONG, thử nghiệm)
+
+Sau khi người dùng xác nhận **bản roothide cũ chạy bình thường trên
+iPhone 6s / iOS 15.8.8**, cấu hình mới nâng hai helper Credits từ:
+
+- Đã thử trên máy: SPLIT2 / BCF30% × 1 / FLA / SUB × 1.
+- STRONG mới: **SPLIT4 / BCF100% × 2 / FLA / SUB × 3**.
+
+Đây là **obfuscation mã máy**, **không phải mã hóa dữ liệu/binary bằng
+thuật toán mật mã**. Các tên ObjC selector, metadata, nội dung UI và
+các thư viện/hook/daemon khác không bị can thiệp; code protection chỉ
+được bật ở **arm64** trên hai helper như trước, `arm64e` vẫn dùng
+Apple Clang. Build và runtime của cấu hình STRONG chưa được xác nhận.
+
+Để phân biệt thay đổi do compiler với OLLVM, workflow mới **biên dịch
+`CRCredits.m/arm64` hai lần bằng cùng LLVM19**, cùng SDK, flags,
+optimization, v.v., chỉ khác có/không có
+`-fpass-plugin=Obfuscator.dylib`. Bộ đối chứng **không được link** vào
+package. Audit trong `scripts/demo_ollvm/analyze_binary.py` yêu cầu
+Mach-O objects đều arm64, mã lệnh khác nhau, tăng số lệnh ít nhất
+**1,20×** ở toàn file (ngưỡng *dễ quan sát*, không phải điểm bảo mật).
+
+Trong artifact `CraneDemo-OLLVM-STRONG-roothide-EXPERIMENTAL`:
+
+| File | Mục đích |
+| --- | --- |
+| `CRCredits-disassembly-report.md` | Số lệnh, số nhánh có điều kiện (ước lượng), SHA object và hệ số tăng |
+| `CRCredits-llvm19-no-pass-arm64.asm` | Assembly object không OLLVM |
+| `CRCredits-ollvm-strong-arm64.asm` | Assembly object có OLLVM STRONG |
+| `CRCredits-arm64.diff` | Diff hiển thị sự khác biệt trực tiếp |
+| `CRCredits-llvm19-no-pass-arm64.o` và `CRCredits-ollvm-strong-arm64.o` | Hai binary object để tải vào Ghidra, IDA hoặc công cụ Mach-O |
+| `CranePrefs-baseline-arm64` và `CranePrefs-ollvm-strong-arm64` | Hai lát cắt **arm64 được trích từ binary đã link và đóng gói** để kiểm tra sản phẩm thực tế |
+
+Các đối tượng `.o` chỉ phục vụ phân tích, **không cài lên iPhone**.
+Muốn quan sát trực tiếp có thể mở hai file `.asm` cạnh nhau, hoặc dùng
+Ghidra/IDA để so sánh hai `.o` và hai bản `CranePrefs-*arm64`.
+
+Chỉ phân tích chức năng/đường đi đã nhắm đến, không suy diễn rằng mã
+được bảo vệ toàn bộ. Tăng nhánh, số lệnh và băm khác nhau không tự chứng
+minh chống được reverse engineering. FLA/BCF mạnh có thể tăng thời
+gian chạy/crash; cần chạy lại bài test Credits, giấy phép, links, mở
+đóng nhiều lần trên iPhone 6s, luôn giữ bản đã hoạt động làm rollback.
 
 ## Package cho iPhone 6s iOS 15.8.8: rootless và roothide
 
@@ -113,7 +156,10 @@ CI:
    biên dịch lại package với **LLVM19 chỉ cho `CRCredits.m` ở arm64**. Apple
    Clang xử lý `CRCredits.m` ở arm64e và toàn bộ source khác. Yêu cầu đúng
    một sự kiện chọn LLVM19 ở arm64 và một sự kiện bypass ở arm64e; chỉ tạo
-   `CraneDemo-OLLVM-EXPERIMENTAL` khi các audit đều đạt.
+   `CraneDemo-OLLVM-STRONG-rootless-EXPERIMENTAL` hoặc
+   `CraneDemo-OLLVM-STRONG-roothide-EXPERIMENTAL` khi các audit đều đạt.
+   Audit bổ sung so sánh object LLVM19 không-pass với có-pass và hai lát
+   cắt arm64 đã link, lưu báo cáo và disassembly chi tiết.
 5. `scripts/demo_ollvm/verify.py` yêu cầu cả **4 pass trên từng hàm**,
    không có sự kiện OLLVM trên các hàm ngoài danh sách, hai package có cùng
    đường dẫn payload, `CranePrefs` binary thay đổi và ba class UI Credits
@@ -154,7 +200,15 @@ Ghi lại cho *cả hai bản* ở cùng môi trường:
   hash và các lỗi thực tế. Giữ
   đường rollback về chính bản baseline đã thử.
 
-**Khả năng hoạt động trên thiết bị chưa được xác minh** bởi việc build CI.
+**Cập nhật kiểm thử (16/10/2026):** Người dùng xác nhận bản OLLVM roothide
+trước khi tăng độ rối đã build, **cài đặt và hoạt động bình thường** trên
+iPhone 6s / iOS 15.8.8. Report CI có 33 đường dẫn khớp, 8 pass events,
+CranePrefs có SHA-256 khác nhưng cùng kích thước. Đây là kết quả runtime
+**người dùng trực tiếp báo**, chưa có log chứng minh từng test D01–D09 hoặc
+bản STRONG mới. Bản cũ là mốc rollback khi kiểm thử STRONG.
+
+Bài test D01–D09, bảng điền kết quả và tiêu chí đối chiếu baseline được
+lưu trong [CRANE_ROOTHIDE_DEVICE_TEST.md](CRANE_ROOTHIDE_DEVICE_TEST.md).
 Không phát hành/distribute bản demo OLLVM như bản production.
 
 ## Local verification

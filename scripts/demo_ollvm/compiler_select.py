@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -86,6 +87,23 @@ def command_for(arguments: list[str], env: dict[str, str]) -> list[str]:
     ]
 
 
+def plain_control_command(protected: list[str], output: Path) -> list[str]:
+    """Same LLVM19 compile, same flags, but no OLLVM plugin: real control."""
+    if "-o" not in protected or protected.count("-o") != 1:
+        raise RuntimeError("Selected CRCredits compilation requires one -o argument")
+    argv = [arg for arg in protected if not arg.startswith("-fpass-plugin=")]
+    index = argv.index("-o")
+    if index + 1 >= len(argv):
+        raise RuntimeError("Selected CRCredits -o has no object path")
+    argv[index + 1] = str(output)
+    # Keep dependency generation separate; otherwise the control compile can
+    # overwrite the dependency metadata for the protected Theos object.
+    for index, arg in enumerate(argv):
+        if arg == "-MF" and index + 1 < len(argv):
+            argv[index + 1] = str(output.with_suffix(".d"))
+    return argv
+
+
 def main() -> None:
     args = sys.argv[1:]
     try:
@@ -95,6 +113,29 @@ def main() -> None:
         print(f"DEMO_OLLVM_COMPILER_ERROR: {exc}", file=sys.stderr)
         raise SystemExit(2) from exc
     if arch == "arm64":
+        control_path = os.environ.get("DEMO_OLLVM_CONTROL_OBJECT", "")
+        if not control_path:
+            print("DEMO_OLLVM_COMPILER_ERROR: missing no-pass LLVM19 control object path",
+                  file=sys.stderr)
+            raise SystemExit(2)
+        control = Path(control_path)
+        control.parent.mkdir(parents=True, exist_ok=True)
+        if control.exists():
+            print("DEMO_OLLVM_COMPILER_ERROR: control object already exists",
+                  file=sys.stderr)
+            raise SystemExit(2)
+        try:
+            subprocess.run(plain_control_command(command, control), check=True)
+        except (subprocess.CalledProcessError, RuntimeError) as exc:
+            print(f"DEMO_OLLVM_COMPILER_ERROR: no-pass control compile failed: {exc}",
+                  file=sys.stderr)
+            raise SystemExit(2) from exc
+        if not control.is_file() or control.stat().st_size == 0:
+            print("DEMO_OLLVM_COMPILER_ERROR: missing/empty no-pass control object",
+                  file=sys.stderr)
+            raise SystemExit(2)
+        print("DEMO_OLLVM_CONTROL: CRCredits.m (arm64) -> LLVM19 without plugin; "
+              f"object={control}", file=sys.stderr, flush=True)
         print(
             "DEMO_OLLVM_SELECTED: CRCredits.m (arm64) -> LLVM19; "
             f"resource_dir={os.environ['DEMO_OLLVM_RESOURCE_DIR']}",
