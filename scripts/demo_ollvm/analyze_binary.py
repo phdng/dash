@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import hashlib
+import json
 import re
 import struct
 import subprocess
@@ -121,6 +122,41 @@ def analyze(control: Path, protected: Path, objdump: str, output: Path) -> str:
     ]
     report = "\n".join(lines) + "\n"
     (output / "CRCredits-disassembly-report.md").write_text(report, encoding="utf-8")
+    # Machine-readable evidence is strictly scoped to *one arm64 object*.
+    # The object-wide instruction ratio is not a per-function security score.
+    policy = json.loads((Path(__file__).resolve().parent / "policy.json").read_text(encoding="utf-8"))
+    machine = {
+        "schema": 1,
+        "source": "CRCredits.m",
+        "measurement_scope": "whole_arm64_object___TEXT___text_not_per_function",
+        "arm64": {
+            "compiler": "LLVM19",
+            "pass": "OLLVM_STRONG",
+            "controls": "same_LLVM19_without_plugin",
+            "policy_rules": policy["policies"],
+            "policy_map": policy["policy_map"],
+            "object_cpu_subtype": 0,
+            "control_instructions": len(no),
+            "protected_instructions": len(yes),
+            "instruction_ratio": round(ratio, 6),
+            "control_conditional_branches_approx": conditional_count(no),
+            "protected_conditional_branches_approx": conditional_count(yes),
+            "control_object_sha256": hashlib.sha256(control_data).hexdigest(),
+            "protected_object_sha256": hashlib.sha256(protected_data).hexdigest(),
+        },
+        "arm64e": {
+            "compiler": "Apple Clang",
+            "obfuscation": "NONE",
+            "reason": "LLVM19_arm64e.old_is_not_Apple_arm64e_ABI",
+            "object_audited_here": False,
+            "device_pac_validation": "NOT_TESTED",
+        },
+        "security_score": None,
+        "device_test_in_this_workflow": False,
+    }
+    (output / "CRCredits-machine-report.json").write_text(
+        json.dumps(machine, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print(f"LLVM19 strong evidence PASS: {len(no)} -> {len(yes)} instructions ({ratio:.2f}x); "
           f"branches {conditional_count(no)} -> {conditional_count(yes)}")
     return report

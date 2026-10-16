@@ -14,8 +14,12 @@
 - **Runtime người dùng báo (16/10/2026):** bản OLLVM roothide trước khi
   tăng cấu hình đã **hoạt động bình thường trên iPhone 6s**. Đây là xác nhận
   tổng quát, chưa điền riêng kết quả D02–D09, chưa có crash/benchmark log.
+- **OLLVM STRONG mới (16/10/2026):** người dùng xác nhận build PASS,
+  ứng dụng vẫn hoạt động đúng chức năng, IDA đã quan sát thấy làm rối mã
+  trên binary. Đây là đánh giá tổng quát người dùng báo, **chưa phân tích
+  riêng D01–D09, chưa benchmark hoặc thử arm64e/PAC trên A12+**.
 - **Chưa xác minh:** từng kịch bản UI cụ thể, runtime trực tiếp của từng
-  helper, daemon/hook/container data, và phiên bản OLLVM STRONG mới.
+  helper, daemon/hook/container data và thử nghiệm PAC/arm64e thực.
 
 SHA-256 báo cáo (CranePrefs, cùng kích thước 494960 byte):
 - Baseline: `0310754a4a3635f8315b453eea9b5b7575a6cf682cca9d8978786b91331177e4`
@@ -27,9 +31,10 @@ Cũng không đồng nghĩa tất cả chức năng reconstruction đã hoàn ch
 ## Bài test ưu tiên — không sửa dữ liệu ứng dụng
 
 Chỉ dùng thiết bị dự phòng đã sao lưu và giữ bản đã chạy ổn định trước
-khi nâng lên STRONG để rollback. Không cài đồng thời baseline/OLLVM hoặc
-các biến thể cùng Package ID. **Lặp D02–D07 trên bản STRONG mới**, không
-đánh dấu PASS dựa vào trải nghiệm từ bản OLLVM cũ.
+để rollback khi kiểm thử các profile mới hơn STRONG. Không cài đồng thời
+baseline/OLLVM hoặc các biến thể cùng Package ID. Người dùng báo STRONG hoạt
+động đúng tổng thể, nhưng **D02–D07 vẫn cần ghi PASS theo từng tình huống**;
+không tự điền khi chưa có kết quả cụ thể.
 
 | ID | Thao tác | Kết quả mong đợi | Kết quả thực tế |
 | --- | --- | --- | --- |

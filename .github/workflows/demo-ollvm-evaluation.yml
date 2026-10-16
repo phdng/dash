@@ -269,6 +269,7 @@ jobs:
             ${{ runner.temp }}/demo-comparison/Crane-demo-${{ matrix.variant }}-ollvm-strong.deb
             ${{ runner.temp }}/demo-comparison/report.md
             ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CRCredits-disassembly-report.md
+            ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CRCredits-machine-report.json
             ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CRCredits-llvm19-no-pass-arm64.asm
             ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CRCredits-ollvm-strong-arm64.asm
             ${{ runner.temp }}/demo-comparison/arm64-binary-audit/CRCredits-arm64.diff

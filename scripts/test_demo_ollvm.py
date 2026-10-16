@@ -101,6 +101,7 @@ assert "CranePrefs-ollvm-strong-arm64" in workflow
 assert "lipo -thin arm64" in workflow
 assert "cmp -s" in workflow
 assert "CRCredits-arm64.diff" in workflow
+assert "CRCredits-machine-report.json" in workflow
 assert "scripts/demo_ollvm/analyze_binary.py" in workflow
 assert 'if [ "$selected" -ne 1 ] || [ "$bypassed" -ne 1 ]; then' in workflow
 assert 'TARGET_CC="$DEMO_OLLVM_CLANG"' not in workflow
@@ -484,6 +485,14 @@ with tempfile.TemporaryDirectory() as tmp:
     assert (tmp / "disasm/CRCredits-arm64.diff").is_file()
     assert (tmp / "disasm/CRCredits-llvm19-no-pass-arm64.asm").is_file()
     assert (tmp / "disasm/CRCredits-ollvm-strong-arm64.asm").is_file()
+    machine = json.loads((tmp / "disasm/CRCredits-machine-report.json").read_text(encoding="utf-8"))
+    assert machine["measurement_scope"].startswith("whole_arm64_object")
+    assert machine["arm64"]["compiler"] == "LLVM19"
+    assert machine["arm64"]["instruction_ratio"] > 1.20
+    assert machine["arm64e"]["compiler"] == "Apple Clang"
+    assert machine["arm64e"]["obfuscation"] == "NONE"
+    assert machine["arm64e"]["device_pac_validation"] == "NOT_TESTED"
+    assert machine["device_test_in_this_workflow"] is False
     try:
         audit.verify_arm64_object(tmp / "disasm/CRCredits-arm64.diff")
     except AssertionError:

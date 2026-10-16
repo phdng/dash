@@ -1,0 +1,111 @@
+name: Protection Lab - Apple arm64e ABI and VM canary (Experimental)
+
+# This lab never packages, signs, injects or installs a Crane tweak.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    name: Isolated Apple-Clang arm64/arm64e and bytecode VM
+    runs-on: macos-14
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check isolated lab and ABI audit regression vectors
+        run: |
+          set -euo pipefail
+          python3 scripts/test_protection_lab.py
+          python3 scripts/test_demo_ollvm.py
+
+      - name: Generate deterministic bytecode and run native reference on CI host
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/protection-lab"
+          mkdir -p "$out"
+          python3 "$lab/program.py" --out "$out/vm_program.h"
+          xcrun --find clang > "$out/apple-clang-path.txt"
+          xcrun clang --version > "$out/apple-clang-version.txt"
+          xcrun clang -std=c11 -O2 -Wall -Wextra -Werror \
+            -I "$out" "$lab/canary.c" "$lab/vm.c" "$lab/runner.c" \
+            -o "$out/host-canary"
+          "$out/host-canary" | tee "$out/host-vectors.txt"
+          grep -Fx 'PROTECTION_LAB_HOST_PASS: 8192 native/VM/indirect vectors' \
+            "$out/host-vectors.txt"
+
+      - name: Apple Clang builds two distinct iOS Mach-O slices
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/protection-lab"
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          clang="$(xcrun --sdk iphoneos --find clang)"
+          test -f "$out/vm_program.h"
+          for arch in arm64 arm64e; do
+            "$clang" -std=c11 -arch "$arch" -isysroot "$sdk" \
+              -miphoneos-version-min=14.0 -O2 -Wall -Wextra -Werror \
+              -fvisibility=hidden -I "$out" \
+              -dynamiclib -Wl,-install_name,@rpath/libDoudashProtectionLab.dylib \
+              "$lab/canary.c" "$lab/vm.c" -o "$out/protection-$arch.dylib"
+            test -s "$out/protection-$arch.dylib"
+            xcrun otool -hv "$out/protection-$arch.dylib" \
+              > "$out/otool-$arch.txt"
+          done
+          python3 "$lab/audit.py" \
+            --arm64 "$out/protection-arm64.dylib" \
+            --arm64e "$out/protection-arm64e.dylib" \
+            --source "$lab/canary.c" --source "$lab/vm.c" \
+            --source "$out/vm_program.h" \
+            --host-log "$out/host-vectors.txt" \
+            --out "$out/report.json"
+          xcrun lipo -create "$out/protection-arm64.dylib" \
+            "$out/protection-arm64e.dylib" \
+            -output "$out/protection-universal.dylib"
+          xcrun lipo -info "$out/protection-universal.dylib" \
+            > "$out/lipo-info.txt"
+          # Independently extract the *linked* universal slices and recheck
+          # genuine arm64e ABI v2 (old ABI subtype 1 must never pass).
+          xcrun lipo -thin arm64 "$out/protection-universal.dylib" \
+            -output "$out/reextracted-arm64.dylib"
+          xcrun lipo -thin arm64e "$out/protection-universal.dylib" \
+            -output "$out/reextracted-arm64e.dylib"
+          python3 "$lab/audit.py" \
+            --arm64 "$out/reextracted-arm64.dylib" \
+            --arm64e "$out/reextracted-arm64e.dylib" \
+            --source "$lab/canary.c" --source "$lab/vm.c" \
+            --source "$out/vm_program.h" \
+            --host-log "$out/host-vectors.txt" \
+            --out "$out/universal-extraction-report.json"
+          cmp "$out/protection-arm64.dylib" "$out/reextracted-arm64.dylib"
+          cmp "$out/protection-arm64e.dylib" "$out/reextracted-arm64e.dylib"
+          shasum -a 256 "$out/"*.dylib > "$out/macho-hashes.txt"
+          echo '### Protection Lab — native ABI build only' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Apple-Clang arm64 + native arm64e v2 Mach-O verified.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Host VM parity: 8192 vectors. iOS device/PAC runtime: NOT TESTED.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No OLLVM/SLLVM plugin applied to arm64e; this is an isolated canary.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload experimental proof (not an installable tweak)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProtectionLab-Apple-arm64-arm64e-VM-EXPERIMENTAL
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/protection-lab/report.json
+            ${{ runner.temp }}/protection-lab/universal-extraction-report.json
+            ${{ runner.temp }}/protection-lab/vm_program.h
+            ${{ runner.temp }}/protection-lab/protection-arm64.dylib
+            ${{ runner.temp }}/protection-lab/protection-arm64e.dylib
+            ${{ runner.temp }}/protection-lab/protection-universal.dylib
+            ${{ runner.temp }}/protection-lab/lipo-info.txt
+            ${{ runner.temp }}/protection-lab/macho-hashes.txt
+            ${{ runner.temp }}/protection-lab/otool-arm64.txt
+            ${{ runner.temp }}/protection-lab/otool-arm64e.txt
+            ${{ runner.temp }}/protection-lab/apple-clang-version.txt
+            ${{ runner.temp }}/protection-lab/host-vectors.txt

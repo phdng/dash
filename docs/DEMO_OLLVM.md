@@ -64,7 +64,11 @@ iPhone 6s / iOS 15.8.8**, cấu hình mới nâng hai helper Credits từ:
 thuật toán mật mã**. Các tên ObjC selector, metadata, nội dung UI và
 các thư viện/hook/daemon khác không bị can thiệp; code protection chỉ
 được bật ở **arm64** trên hai helper như trước, `arm64e` vẫn dùng
-Apple Clang. Build và runtime của cấu hình STRONG chưa được xác nhận.
+Apple Clang. **Cập nhật 16/10/2026 (người dùng xác nhận): STRONG build PASS,
+app trên thiết bị thử vẫn hoạt động đúng và IDA thấy mã được làm rối.**
+Đây là kết quả báo cáo trực tiếp, chưa xác minh PAC trên thiết bị A12+,
+chưa có benchmark theo hàm hoặc kiểm thử arm64e native đã obfuscate.
+Roadmap nghiên cứu tiếp: [OLLVM_SLLVM_VMP_ROADMAP.md](OLLVM_SLLVM_VMP_ROADMAP.md).
 
 Để phân biệt thay đổi do compiler với OLLVM, workflow mới **biên dịch
 `CRCredits.m/arm64` hai lần bằng cùng LLVM19**, cùng SDK, flags,
@@ -79,6 +83,7 @@ Trong artifact `CraneDemo-OLLVM-STRONG-roothide-EXPERIMENTAL`:
 | File | Mục đích |
 | --- | --- |
 | `CRCredits-disassembly-report.md` | Số lệnh, số nhánh có điều kiện (ước lượng), SHA object và hệ số tăng |
+| `CRCredits-machine-report.json` | Báo cáo máy đọc được theo slice: arm64 đã OLLVM STRONG, arm64e Apple Clang **chưa obfuscate**, ratio trên toàn object (không phải từng hàm) và hashes |
 | `CRCredits-llvm19-no-pass-arm64.asm` | Assembly object không OLLVM |
 | `CRCredits-ollvm-strong-arm64.asm` | Assembly object có OLLVM STRONG |
 | `CRCredits-arm64.diff` | Diff hiển thị sự khác biệt trực tiếp |
