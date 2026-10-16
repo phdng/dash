@@ -1,9 +1,9 @@
 {
   "policy_map": {
     "duodash_light": {
-      "enable_fla": false,
-      "enable_bcf": false,
-      "enable_split": false,
+      "enable_fla": true,
+      "enable_bcf": true,
+      "enable_split": true,
       "enable_sub": true,
       "sub_times": 1
     }
