@@ -162,6 +162,28 @@ Khi chạy macOS Actions, artifact
 để so sánh trong IDA. **Build và host Foundation ARC** chỉ xác nhận sau
 khi workflow mới chạy; không đánh dấu runtime A12+/iOS PAC PASS.
 
+## Sprint iOS device runtime: kiểm thử thực tế trên thiết bị A12+
+
+Workflow thủ công **Protection Lab - iOS device runtime canary (Experimental)**
+trong `.github/workflows/protection-device-runtime.yml` liên kết toàn bộ
+**VM / CE-ICALL / IGV-IBR / Objective-C NSString CE** vào một executable
+độc lập. Chạy cùng bộ test **4 x 8.192 vector** trên host macOS, sau đó
+biên dịch riêng executable iOS **arm64 và arm64e** và kiểm tra đúng
+`MH_EXECUTE`, subtype/PAC ABI cùng SHA-256. Không auto-sign/install vào
+thiết bị, không chạm đến package/hook/daemon Crane.
+
+- Mã mới: `device_suites.c/.h`, `device_main.m`, `device_audit.py`.
+- Kiểm tra hồi quy: `scripts/test_device_runtime_canary.py` bao gồm
+  log giả/mất dòng, sai CPU, subtype `arm64e.old`, kernel ABI và metadata
+  artifact; test giả lập không chứng minh runtime thực tế.
+- Trên thiết bị thật, dùng binary độc lập đã được ký đúng bootstrap và
+  lưu nguyên stdout + exit code. Parser `device_audit.py verify-log`
+  xác minh **7 dòng** bắt buộc nhưng không xác thực nguồn gốc log.
+- Xem chi tiết [docs/PROTECTION_DEVICE_RUNTIME.md](../../docs/PROTECTION_DEVICE_RUNTIME.md).
+
+**Lưu ý:** build xanh ở CI mới chỉ kiểm chứng build và macOS host parity;
+đến khi có iPhone A12+ và log thật, `arm64e` runtime vẫn `NOT_TESTED`.
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker

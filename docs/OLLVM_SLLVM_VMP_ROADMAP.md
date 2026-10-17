@@ -40,8 +40,17 @@ Ngày cập nhật: 2026-10-16. Trạng thái: **Sprint P0/P1 prototype đã có
   và tạo NSString bằng Apple Clang/ARC. Có 10.008 vector Python mô hình,
   macOS host Foundation 8.192 lượt đối chiếu được cấu hình, bốn Mach-O
   arm64/arm64e plain/protected, kiểm tra marker/encoded bytes và ABI trước
-  khi xuất artifact IDA. Workflow này **chưa chạy macOS**, không thay đổi
-  Crane OLLVM STRONG hoặc công bố bảo vệ thật trên thiết bị.
+  khi xuất artifact IDA. Người dùng báo workflow ObjC CE đã **build xanh**,
+  nhưng chưa xác nhận chạy trên iPhone; Crane OLLVM STRONG giữ nguyên.
+- **Sprint iOS Device Runtime Canary mới:** workflow thủ công
+  `.github/workflows/protection-device-runtime.yml` tạo executable riêng
+  cho `arm64` và `arm64e` từ bốn nhóm thử VM, CE/ICALL, IGV/IBR và NSString CE.
+  Chạy 4 x 8.192 vector trên macOS host, xác minh log chính xác rồi biên
+  dịch hai iOS `MH_EXECUTE` với audit subtype/PAC ABI, SHA và dependencies.
+  Workflow tuyệt đối không ký/cài/chạy vào iPhone, không tạo `.deb`; người
+  dùng cần ký và chạy riêng trên máy dự phòng A12+ để có runtime evidence.
+  `device_audit.py verify-log` kiểm tra 7 dòng log nhưng không thể chứng
+  thực nguồn log. Hướng dẫn [PROTECTION_DEVICE_RUNTIME.md](PROTECTION_DEVICE_RUNTIME.md).
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 

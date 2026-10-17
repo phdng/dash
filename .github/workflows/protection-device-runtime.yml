@@ -1,0 +1,120 @@
+name: Protection Lab - iOS device runtime canary (Experimental)
+
+# Compiles non-installable test executables; never flashes/signs/installs a device
+# and never packages or modifies a Crane build.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  device-canary:
+    runs-on: macos-14
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Portable runtime-log, ABI and previous pilot regression tests
+        run: |
+          set -euo pipefail
+          python3 scripts/test_device_runtime_canary.py
+          python3 scripts/test_objc_ce_pilot.py
+          python3 scripts/test_igv_ibr_pilot.py
+          python3 scripts/test_sllvm_pilot.py
+          python3 scripts/test_protection_lab.py
+
+      - name: Generate static public bytecode and CE headers
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/device-runtime"
+          mkdir -p "$out"
+          python3 "$lab/program.py" --out "$out/vm_program.h"
+          python3 "$lab/sllvm_generator.py" --out "$out/sllvm_encoded.h"
+          python3 "$lab/objc_ce_generator.py" --out "$out/objc_ce_data.h"
+          xcrun clang --version > "$out/apple-clang-version.txt"
+
+      - name: Build and run identical suite on macOS host
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/device-runtime"
+          mkdir -p "$out/mac/objs"
+          for name in canary vm sllvm_plain sllvm_protected igv_ibr_plain igv_ibr_protected device_suites; do
+            xcrun clang -std=c11 -O1 -Wall -Wextra -Werror \
+              -I "$lab" -I "$out" -c "$lab/$name.c" \
+              -o "$out/mac/objs/$name.o"
+          done
+          for name in objc_ce_plain objc_ce_protected device_main; do
+            xcrun clang -fobjc-arc -O1 -Wall -Wextra -Werror \
+              -I "$lab" -I "$out" -c "$lab/$name.m" \
+              -o "$out/mac/objs/$name.o"
+          done
+          xcrun clang "$out/mac/objs/"*.o -framework Foundation \
+            -o "$out/mac/protection-lab-host"
+          "$out/mac/protection-lab-host" | tee "$out/host-runtime.log"
+          python3 "$lab/device_audit.py" verify-host \
+            --log "$out/host-runtime.log" --out "$out/host-report.json"
+
+      - name: Compile unsigned-for-device iOS executables arm64 and arm64e
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/device-runtime"
+          clang="$(xcrun --sdk iphoneos --find clang)"
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          for arch in arm64 arm64e; do
+            mkdir -p "$out/$arch/objs"
+            for name in canary vm sllvm_plain sllvm_protected igv_ibr_plain igv_ibr_protected device_suites; do
+              "$clang" -std=c11 -arch "$arch" -isysroot "$sdk" \
+                -miphoneos-version-min=14.0 -O1 -Wall -Wextra -Werror \
+                -I "$lab" -I "$out" -c "$lab/$name.c" \
+                -o "$out/$arch/objs/$name.o"
+            done
+            for name in objc_ce_plain objc_ce_protected device_main; do
+              "$clang" -fobjc-arc -arch "$arch" -isysroot "$sdk" \
+                -miphoneos-version-min=14.0 -O1 -Wall -Wextra -Werror \
+                -I "$lab" -I "$out" -c "$lab/$name.m" \
+                -o "$out/$arch/objs/$name.o"
+            done
+            "$clang" -arch "$arch" -isysroot "$sdk" \
+              -miphoneos-version-min=14.0 "$out/$arch/objs/"*.o \
+              -framework Foundation -o "$out/protection-device-$arch"
+            test -s "$out/protection-device-$arch"
+            xcrun otool -hv "$out/protection-device-$arch" \
+              > "$out/macho-$arch.txt"
+            xcrun otool -L "$out/protection-device-$arch" \
+              > "$out/dependencies-$arch.txt"
+          done
+          python3 "$lab/device_audit.py" build \
+            --arm64 "$out/protection-device-arm64" \
+            --arm64e "$out/protection-device-arm64e" \
+            --out "$out/build-report.json"
+          shasum -a 256 "$out/protection-device-arm64" \
+            "$out/protection-device-arm64e" > "$out/binary-sha256.txt"
+          echo '### Standalone iOS runtime canary: build only' >> "$GITHUB_STEP_SUMMARY"
+          echo 'macOS host: 4 suites x 8192 PASS; iOS arm64 + arm64e MH_EXECUTE ABI checked.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'On-device execution / arm64e A12+ PAC runtime: NOT TESTED.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Device-specific signing/provisioning/install: NOT PERFORMED.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload test executables and host proof (not install packages)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProtectionLab-iOS-DeviceRuntime-arm64-arm64e-EXPERIMENTAL
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/device-runtime/protection-device-arm64
+            ${{ runner.temp }}/device-runtime/protection-device-arm64e
+            ${{ runner.temp }}/device-runtime/build-report.json
+            ${{ runner.temp }}/device-runtime/host-runtime.log
+            ${{ runner.temp }}/device-runtime/host-report.json
+            ${{ runner.temp }}/device-runtime/binary-sha256.txt
+            ${{ runner.temp }}/device-runtime/macho-arm64.txt
+            ${{ runner.temp }}/device-runtime/macho-arm64e.txt
+            ${{ runner.temp }}/device-runtime/dependencies-arm64.txt
+            ${{ runner.temp }}/device-runtime/dependencies-arm64e.txt
+            ${{ runner.temp }}/device-runtime/apple-clang-version.txt
