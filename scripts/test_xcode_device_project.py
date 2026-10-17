@@ -122,7 +122,7 @@ for expected in (
     '"$out/xcode-arm64-build.log"',
     '"$out/xcode-arm64-macho.txt"',
     'inspect_executable',
-    "No signing, app installation",
+    "No CI signing, installation",
 ):
     assert expected in workflow, expected
 for forbidden in (

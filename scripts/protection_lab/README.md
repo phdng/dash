@@ -277,6 +277,23 @@ PAC runtime hay mức độ chống reverse engineering.
   Apple Clang arm64e nghiên cứu và policy PAC nghiêm ngặt vẫn tách riêng.
   Xem [PROTECTION_XCODE_DEVICE_TEST.md](../../docs/PROTECTION_XCODE_DEVICE_TEST.md).
 
+## Chính sách thử nghiệm TrollStore arm64 / arm64e build-only
+
+- **Thiết bị hiện có TrollStore, chưa có A12+**: CI xuất IPA nghiên cứu
+  `ProtectionLab-TrollStore-arm64.ipa` với `Payload/ProtectionLab.app`
+  và binary arm64, không ký/cài tự động. `package_trollstore_ipa.py`
+  kiểm tra Info.plist/Mach-O, cấu trúc ZIP, quyền executable, CRC/SHA và
+  cấm app sai subtype hoặc có sẵn CodeSignature trong gói unsigned.
+- **Arm64e chỉ build/audit**: Apple Clang compile/link arm64e, audit
+  versioned userspace PAC ABI subtype `0x80000002`, LC_UUID/hash; dùng
+  `build_gate.py` tạo `build-gates.json` với `arm64e` build PASS và
+  `a12_plus_device_runtime=DEFERRED_NO_DEVICE`, tuyệt đối không giả
+  lập runtime A12+ hay đổi PAC ABI để pass.
+- Test portable: `python scripts/test_trollstore_ipa.py`, negative
+  Info.plist, subtype arm64e không được xuất thành arm64 IPA, ZIP path
+  traversal, SHA cross-report; CI vẫn độc lập Crane OLLVM STRONG.
+- Tài liệu: [PROTECTION_TROLLSTORE_ARM64.md](../../docs/PROTECTION_TROLLSTORE_ARM64.md).
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker

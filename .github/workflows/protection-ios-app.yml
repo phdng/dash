@@ -1,7 +1,7 @@
 name: Protection Lab - iOS UIKit test app (Experimental)
 
-# Standalone unsigned .app archives only. No signing, provisioning, jailbreak,
-# installation, or production Crane modification is performed by this job.
+# Standalone arm64 test IPA for manual TrollStore import; arm64e BUILD/AUDIT ONLY.
+# No signing, provisioning, installation or Crane modification in CI.
 on:
   workflow_dispatch:
 
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   unsigned-app:
-    name: Build independent physical-iPhone test app (arm64 + arm64e)
+    name: arm64 IPA for TrollStore + arm64e build-only ABI audit
     runs-on: macos-14
     timeout-minutes: 30
     defaults:
@@ -26,6 +26,7 @@ jobs:
           python3 scripts/test_protection_perf.py
           python3 scripts/test_device_evidence.py
           python3 scripts/test_xcode_device_project.py
+          python3 scripts/test_trollstore_ipa.py
           python3 scripts/test_device_runtime_canary.py
           python3 scripts/test_objc_ce_pilot.py
           python3 scripts/test_igv_ibr_pilot.py
@@ -124,22 +125,37 @@ jobs:
             --arm64 "$out/ProtectionLab-arm64.app/ProtectionLab" \
             --arm64e "$out/ProtectionLab-arm64e.app/ProtectionLab" \
             --out "$out/build-identity.json"
+          # Only arm64 is packaged for manual TrollStore import.
+          # arm64e stays strict Apple Clang build + ABI/UUID audit ONLY.
+          python3 "$lab/package_trollstore_ipa.py" \
+            --app "$out/ProtectionLab-arm64.app" \
+            --ipa "$out/ProtectionLab-TrollStore-arm64.ipa" \
+            --report "$out/TrollStore-IPA-report.json"
+          python3 "$lab/build_gate.py" \
+            --build "$out/build-report.json" \
+            --identity "$out/build-identity.json" \
+            --ipa "$out/TrollStore-IPA-report.json" \
+            --out "$out/build-gates.json"
           echo '### UIKit on-device parity application — unsigned bundles' >> "$GITHUB_STEP_SUMMARY"
           echo 'Two Apple Clang iPhoneOS MH_EXECUTE app binaries ABI-validated.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'App requires legitimate local signing/provisioning before device install.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'arm64 test IPA packaged for manual TrollStore import; installation NOT TESTED.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'arm64e: Apple Clang compilation + strict ABI/Mach-O/UUID PASS only; no A12+ runtime requirement.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Unsigned standard arm64 Xcode project also passed xcodebuild; device signing remains manual.' >> "$GITHUB_STEP_SUMMARY"
           echo 'LC_UUID identity extracted per app; user logs must be checked separately.' >> "$GITHUB_STEP_SUMMARY"
           echo 'UUID is not device cryptographic attestation or proof of PAC enforcement.' >> "$GITHUB_STEP_SUMMARY"
           echo 'On-device ARC/function-pointer/PAC runtime: NOT TESTED in CI.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Optional timed samples are observations, not iOS measurements or acceptance gates.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'No signing, app installation, jailbreaking, or Crane modification.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No CI signing, installation, device execution, or Crane modification.' >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload unsigned test-app bundles and Mach-O proof
+      - name: Upload arm64 TrollStore test IPA and arm64e build-only proof
         uses: actions/upload-artifact@v4
         with:
           name: ProtectionLab-UIKit-OnDevice-UNSIGNED-arm64-arm64e
           if-no-files-found: error
           path: |
+            ${{ runner.temp }}/ios-lab-app/ProtectionLab-TrollStore-arm64.ipa
+            ${{ runner.temp }}/ios-lab-app/TrollStore-IPA-report.json
+            ${{ runner.temp }}/ios-lab-app/build-gates.json
             ${{ runner.temp }}/ios-lab-app/ProtectionLab-UNSIGNED-arm64.zip
             ${{ runner.temp }}/ios-lab-app/ProtectionLab-UNSIGNED-arm64e.zip
             ${{ runner.temp }}/ios-lab-app/build-report.json

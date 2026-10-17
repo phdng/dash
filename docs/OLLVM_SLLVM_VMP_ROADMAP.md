@@ -1,6 +1,6 @@
 # DuoDash / Crane: kế hoạch Protection Engine cho arm64, arm64e và VM
 
-Ngày cập nhật: 2026-10-16. Trạng thái: **Sprint P0/P1 prototype đã có mã và CI thủ công, native iOS chưa xác minh; SLLVM và VMProtect thương mại chưa tích hợp**.
+Ngày cập nhật: 2026-10-17. Trạng thái: **Sprint P0/P1 prototype đã có mã và CI thủ công, native iOS chưa xác minh; SLLVM và VMProtect thương mại chưa tích hợp**.
 
 ## Sprint P0/P1 đã được hiện thực hóa trong workspace
 
@@ -87,6 +87,16 @@ Ngày cập nhật: 2026-10-16. Trạng thái: **Sprint P0/P1 prototype đã có
   local**, không nhầm với CI unsigned. Chưa xác nhận chạy trên iPhone hay
   `arm64e` PAC runtime. Xem
   [PROTECTION_XCODE_DEVICE_TEST.md](PROTECTION_XCODE_DEVICE_TEST.md).
+- **Điều chỉnh theo thiết bị người dùng (2026-10-17):** đã có TrollStore,
+  chưa có iPhone A12+. Workflow UIKit xuất thêm
+  `ProtectionLab-TrollStore-arm64.ipa` đúng `Payload/ProtectionLab.app`
+  cho thử nghiệm arm64 thủ công; không yêu cầu Apple certificate trong CI.
+  Arm64e chỉ cần Apple Clang compile/link + strict subtype/PAC ABI và
+  LC_UUID/SHA audit PASS, **không chờ device runtime**. Report
+  `build-gates.json` ghi arm64e build PASS và
+  `a12_plus_device_runtime=DEFERRED_NO_DEVICE`. Khi có thiết bị mới quay
+  lại kiểm tra arm64e runtime. Xem
+  [PROTECTION_TROLLSTORE_ARM64.md](PROTECTION_TROLLSTORE_ARM64.md).
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 

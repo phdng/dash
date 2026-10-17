@@ -1,8 +1,6 @@
 # Protection Lab — ứng dụng UIKit để kiểm chứng trên iPhone thật
 
-**Trạng thái:** ứng dụng nghiên cứu riêng, chỉ có mã nguồn và pipeline
-tạo `.app` **chưa ký**. Không phải bản cập nhật Crane hoặc package jailbreak.
-CI có thể build iOS app mà **không chạy bất cứ kiểm tra nào trên thiết bị**.
+**Trạng thái:** ứng dụng nghiên cứu riêng; workflow tạo **IPA arm64 thử với TrollStore** cùng binary nghiên cứu arm64e **chỉ build/audit**. Không phải bản cập nhật Crane hay package jailbreak. IPA chưa được CI ký hoặc thử cài; build xanh không chứng minh ứng dụng chạy trên thiết bị. Xem [PROTECTION_TROLLSTORE_ARM64.md](PROTECTION_TROLLSTORE_ARM64.md).
 
 ## Thứ mới triển khai
 
@@ -71,20 +69,13 @@ Workflow thực hiện:
    tạo checksum, thư viện liên kết và báo cáo JSON. Không gọi codesign,
    devicectl, SSH, dpkg hay tạo tweak.
 
-Artifact: `ProtectionLab-UIKit-OnDevice-UNSIGNED-arm64-arm64e`.
+Artifact: `ProtectionLab-UIKit-OnDevice-UNSIGNED-arm64-arm64e`, nay có thêm `ProtectionLab-TrollStore-arm64.ipa`, `TrollStore-IPA-report.json` và `build-gates.json`. **arm64e build/audit PASS là mục tiêu hiện tại; runtime A12+ được hoãn.**
 
 ## Thử trên iPhone dự phòng
 
 1. Tải artifact, kiểm tra SHA-256 và hai phần `build-report.json`.
-2. Chọn `UNSIGNED-arm64.zip` cho iPhone 6s/A9 hoặc
-   `UNSIGNED-arm64e.zip` cho thiết bị A12+ dự định kiểm chứng PAC.
-   **Không suy ra arm64e từ tên package roothide**.
-3. Giải nén bundle. Tại một máy macOS có Xcode và quyền provisioning
-   hợp lệ cho thiết bị thử, ký và cài ứng dụng qua quy trình phát triển
-   iOS được Apple hỗ trợ, phù hợp kiến trúc và iOS của máy.
-   `UNSIGNED` **không thể cài trực tiếp**. Thiết bị/Xcode có thể từ chối
-   `arm64e` độc lập hoặc yêu cầu entitlement/provisioning riêng; ghi
-   lại lỗi, **không patch Mach-O subtype/PAC hoặc bỏ kiểm tra ký** để ép chạy.
+2. Chọn IPA `ProtectionLab-TrollStore-arm64.ipa` để thử trên thiết bị arm64 đang có. Hai ZIP `UNSIGNED` được giữ làm artifact nghiên cứu; binary arm64e chỉ dùng kiểm chứng biên dịch/Mach-O trong CI. **Không suy ra arm64e từ tên package roothide**.
+3. **Với thiết bị hiện tại có TrollStore**, tải `ProtectionLab-TrollStore-arm64.ipa`, mở tệp bằng TrollStore rồi kiểm tra có cài/chạy được không; IPA chưa được ký ở CI và việc cài thực tế **chưa kiểm chứng**. Nếu lỗi, giữ log chính xác. Cần iOS 15+ do deployment target. **Không thử bản arm64e khi chưa có thiết bị A12+**. Quy trình Xcode với Apple Development team ở dưới là lựa chọn thay thế, không còn là điều kiện bắt buộc cho IPA arm64.
 4. Mở ứng dụng, xem trạng thái **NOT TESTED**, nhấn Run, xác nhận bốn
    phép thử xong. Nhấn **Share result text**, sao chép **nguyên văn**
    vào tệp UTF-8 không kèm tiền tố timestamp/log của ứng dụng khác.

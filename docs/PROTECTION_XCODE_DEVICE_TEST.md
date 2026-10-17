@@ -5,6 +5,8 @@ kiểm tra project bằng `xcodebuild` được bổ sung nhưng **chưa chạy 
 macOS trong lượt này**. Người dùng xác nhận workflow UIKit/UUID trước
 build xanh, **chưa cung cấp log thiết bị A12+ chạy thực**.
 
+**Cập nhật:** người dùng hiện có TrollStore, nên quy trình chính để thử app arm64 là IPA từ GitHub Actions, **không bắt buộc có Apple Development team**. Xcode vẫn là lựa chọn thay thế để debug với signing thông thường. Chi tiết: [PROTECTION_TROLLSTORE_ARM64.md](PROTECTION_TROLLSTORE_ARM64.md). arm64e chỉ yêu cầu CI build/audit PASS cho đến khi có A12+.
+
 ## Lý do có project riêng
 
 Các artifact trước là bundle `UNSIGNED` tạo bằng Apple Clang, không thể

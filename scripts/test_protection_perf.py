@@ -154,7 +154,7 @@ for required in (
     '"$lab/perf_audit.py" verify', "--context MACOS_HOST",
     "host-performance.log", "host-performance-report.json",
     "device_suites perf_pilot perf_report; do",
-    "No signing, app installation", "workflow_dispatch:",
+    "No CI signing, installation", "workflow_dispatch:",
 ):
     assert required in workflow, required
 for disallowed in ("codesign -s", "ldid -S", "devicectl device install",
