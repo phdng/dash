@@ -78,7 +78,7 @@ jobs:
             }
           binary="$out/xcode-derived/Build/Products/Debug-iphoneos/ProtectionLab.app/ProtectionLab"
           test -s "$binary"
-          python3 -c "import sys; sys.path.insert(0, '$lab'); from device_audit import inspect_executable; print(inspect_executable('$binary', 'arm64')['cpu_subtype_raw'])"
+          python3 -c "import sys; from pathlib import Path; sys.path.insert(0, '$lab'); from device_audit import inspect_executable; print(inspect_executable(Path(sys.argv[1]), 'arm64')['cpu_subtype_raw'])" "$binary"
           xcrun otool -hv "$binary" > "$out/xcode-arm64-macho.txt"
 
       - name: Build separate unsigned UIKit app bundles for iPhone

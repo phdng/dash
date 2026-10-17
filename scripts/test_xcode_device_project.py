@@ -7,7 +7,10 @@ from __future__ import annotations
 
 import plistlib
 import re
+import struct
+import subprocess
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -122,9 +125,44 @@ for expected in (
     '"$out/xcode-arm64-build.log"',
     '"$out/xcode-arm64-macho.txt"',
     'inspect_executable',
+    "Path(sys.argv[1])",
+    '"$binary"',
     "No CI signing, installation",
 ):
     assert expected in workflow, expected
+# Execute the exact Python expression embedded in the GitHub workflow on a
+# synthetic Mach-O binary. This catches accidentally passing a str rather
+# than pathlib.Path to inspect_executable() before the macOS CI run.
+command = re.search(
+    r'^\s*python3 -c "([^"\n]+)" "\$binary"\s*$',
+    workflow, re.M
+)
+assert command is not None, "Expected quoted binary argv to Python audit"
+expression = command.group(1).replace("'$lab'", repr(str(LAB)))
+with tempfile.TemporaryDirectory(prefix="xcode audit regression ") as tmp:
+    binary = Path(tmp) / "Protection Lab arm64 fixture"
+    header = struct.pack(
+        "<IIIIIIII", 0xFEEDFACF, 0x0100000C, 0, 2, 0, 0, 0, 0
+    )
+    binary.write_bytes(header + b"safe-fixture")
+    ok = subprocess.run(
+        [sys.executable, "-c", expression, str(binary)],
+        capture_output=True, text=True, check=False
+    )
+    assert ok.returncode == 0, ok.stderr
+    assert ok.stdout.strip() == "0x00000000", ok.stdout
+    # A fake arm64e slice must still fail the strict arm64 audit.
+    binary.write_bytes(struct.pack(
+        "<IIIIIIII", 0xFEEDFACF, 0x0100000C, 0x80000002,
+        2, 0, 0, 0, 0
+    ))
+    bad = subprocess.run(
+        [sys.executable, "-c", expression, str(binary)],
+        capture_output=True, text=True, check=False
+    )
+    assert bad.returncode != 0
+    assert "expected arm64 MH_EXECUTE" in bad.stderr
+
 for forbidden in (
     "codesign -s", "ldid -S", "devicectl device install",
     "DEVELOPMENT_TEAM=ABCDE", "PROVISIONING_PROFILE", "signingCertificate",
