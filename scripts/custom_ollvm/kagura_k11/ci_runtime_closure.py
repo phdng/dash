@@ -112,6 +112,11 @@ def make_closure(src: Path, out: Path, sdk: str,
         if not obj.is_file() or not obj.stat().st_size:
             raise AssertionError("K11 missing original iOS object " + str(obj))
         raw = run(["xcrun", "nm", "-u", "-j", str(obj)])
+        label = obj.relative_to(out).as_posix().replace("/", "-")
+        # Retain raw nm output even when parsing rejects an unexpected
+        # Apple toolchain output; GitHub uploads the directory on failure.
+        (out / ("ios-nm-undefined-" + label + ".txt")).write_text(
+            raw, encoding="utf-8")
         raw_nm[obj.relative_to(out).as_posix()] = {
             "nm_command": "xcrun nm -u -j",
             "raw_stdout": raw,
@@ -243,6 +248,8 @@ def make_closure(src: Path, out: Path, sdk: str,
         "resolver_source": resolver_rel,
         "initial_undefined_kagura_symbols": initial_list,
         "required_historical_missing_symbols": sorted(expected),
+        "initial_nm_format": "APPLE_NM_UNDEFINED_JUST_SYMBOL_NAMES",
+        "initial_nm_raw_report_sha256": sha(out / "ios-runtime-initial-nm.json"),
         "providers_by_undefined_symbol": dict(sorted(per_symbol.items())),
         "selected_provider_sources": info_list,
         "final_unresolved_kagura_symbols": [],

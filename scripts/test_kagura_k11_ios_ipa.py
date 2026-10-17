@@ -354,6 +354,13 @@ assert "Kagura-K11-BUILD-FAILURE.txt" in build
 assert "ci_runtime_closure.py" in build
 assert "ios-runtime-closure.json" in build
 assert "ios-runtime-extra-objects.txt" in build
+assert "xcrun nm -u -j" in closure.__doc__ or (
+    '["xcrun", "nm", "-u", "-j", str(obj)]' in
+    (LAB / "ci_runtime_closure.py").read_text(encoding="utf-8"))
+assert "ios-runtime-initial-nm.json" in (LAB / "ci_runtime_closure.py").read_text()
+assert "ios-runtime-initial-nm.json" in evidence_source
+assert "initial_nm_raw_report_sha256" in evidence_source
+assert "ios-runtime-extra-objects.txt" in build
 assert "K11_RESOLVE_PINNED_IOS_RUNTIME_C_DEPENDENCY_CLOSURE" in build
 assert "while IFS= read -r object_path; do" in build
 assert "mapfile -t" not in build
@@ -362,6 +369,8 @@ assert "runtime_closure.required_symbols(inputs)" in evidence_source
 assert "runtime_closure.defined_of(obj)" in evidence_source
 assert "-Wl,-undefined,error" not in build
 assert "ios_runtime_closure_sha256" in evidence_source
+assert "ios_runtime_initial_nm_raw_report_sha256" in evidence_source
+assert "APPLE_NM_UNDEFINED_JUST_SYMBOL_NAMES" in evidence_source
 assert "_kagura_image_list_contains" in evidence_source
 assert "_kagura_suspicious_image_patterns" in evidence_source
 assert "ios-kagura-rtld-symbols.txt" in build

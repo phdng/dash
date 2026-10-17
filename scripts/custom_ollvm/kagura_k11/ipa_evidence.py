@@ -88,6 +88,22 @@ def inspect(out: Path) -> dict:
     if not closure_file.is_file():
         raise AssertionError("K11 missing real upstream iOS Kagura dependency closure")
     closure = json.loads(closure_file.read_text(encoding="utf-8"))
+    nm_report_file = out / "ios-runtime-initial-nm.json"
+    if not nm_report_file.is_file():
+        raise AssertionError("K11 missing unmodified raw Apple nm symbol output")
+    raw_nm = json.loads(nm_report_file.read_text(encoding="utf-8"))
+    expected_originals = ("05-ci/ios.o", "ios-kagura-rtld.o",
+                          "ios-probe.o", "ios-app-main.o")
+    if set(raw_nm) != set(expected_originals):
+        raise AssertionError("K11 raw nm evidence missing original iOS objects")
+    for path in expected_originals:
+        entry = raw_nm[path]
+        if (entry.get("nm_command") != "xcrun nm -u -j" or
+                entry.get("parsed_kagura_symbols") != sorted(
+                    s for s in runtime_closure.parse_undefined_names(
+                        entry.get("raw_stdout", ""))
+                    if s.startswith("_kagura_"))):
+            raise AssertionError("K11 raw Apple nm stdout/parser evidence mismatch")
     required_runtime = {"_kagura_image_list_contains",
                         "_kagura_suspicious_image_patterns"}
     providers = closure.get("providers_by_undefined_symbol")
@@ -96,6 +112,11 @@ def inspect(out: Path) -> dict:
             closure.get("scope") !=
             "PINNED_IOS_ARM64_RUNTIME_C_SYMBOL_CLOSURE_NOT_SHIMS" or
             closure.get("resolver_source") != runtime_source or
+            closure.get("initial_nm_format") !=
+            "APPLE_NM_UNDEFINED_JUST_SYMBOL_NAMES" or
+            closure.get("initial_nm_raw_report_sha256") != sha(nm_report_file) or
+            not required_runtime.issubset(
+                set(raw_nm["ios-kagura-rtld.o"]["parsed_kagura_symbols"])) or
             closure.get("macos_library_linked_to_ios") is not False or
             closure.get("stubs_inserted") is not False or
             closure.get("final_unresolved_kagura_symbols") != [] or
@@ -162,6 +183,8 @@ def inspect(out: Path) -> dict:
         "ios_upstream_resolver_definition_verified_by_nm": True,
         "ios_upstream_resolver_discovery_sha256": sha(locator),
         "ios_runtime_closure_sha256": sha(closure_file),
+        "ios_runtime_initial_nm_raw_report_sha256": sha(nm_report_file),
+        "ios_runtime_nm_source_format": closure["initial_nm_format"],
         "ios_runtime_resolved_symbols": dict(sorted(providers.items())),
         "ios_runtime_dependency_objects_sha256": {
             key: value["object_sha256"]

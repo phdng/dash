@@ -397,7 +397,7 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k11_runtime_closure_script") !=
         "scripts/custom_ollvm/kagura_k11/ci_runtime_closure.py" or
         kagura.get("k11_last_observed_ci_failure") !=
-        "IOS_LD_UNDEFINED_KAGURA_IMAGE_LIST_CONTAINS_AND_SUSPICIOUS_IMAGE_PATTERNS" or
+        "IOS_ARM64_NM_U_TYPED_PARSER_SILENTLY_DROPPED_BARE_NAMES" or
         kagura.get("k11_macho_arch") !=
         "arm64_SUBTYPE0_MH_EXECUTE_LC_UUID" or
         kagura.get("k11_device_runtime") != "NOT_TESTED" or

@@ -84,6 +84,25 @@ Workflow riêng: `.github/workflows/kagura-k11-ios-ipa.yml`
    linker macOS đã deprecated `-Wl,-undefined,error`;
    Apple linker vẫn bắt undefined `MH_EXECUTE` mặc định.
 
+   **Lỗi CI tiếp theo đã xác định từ traceback người dùng:**
+   `KAGURA_K10_SERIALIZED_METADATA_AND_NATIVE_EVIDENCE_PASS`
+   và `K11_UPSTREAM_CI_RESOLVER_SOURCE_DEFINED=runtime/anti_debug/anti_debug.c`
+   tiếp tục đúng; nhưng `ci_runtime_closure.py:93` dừng với
+   `expected CI anti_debug object dependencies missing:
+   ['_kagura_image_list_contains', '_kagura_suspicious_image_patterns'];
+   actual []`. Kết luận **không** phải dependency đã tự biến mất:
+   bộ phân tích Python cũ mặc định `xcrun nm -u` luôn in `U _name`,
+   trong khi Apple `nm -u` có thể chỉ in tên `_name`, nên đã
+   bỏ qua các symbol thực. Sửa K11 đọc `xcrun nm -u -j`,
+   áp dụng parser riêng kiểm mỗi dòng **chỉ tên symbol**.
+   Nếu sai định dạng, FAIL rõ ràng chứ không đổi thành set rỗng.
+   Lưu `ios-nm-undefined-*.txt` nguyên văn và
+   `ios-runtime-initial-nm.json` chứa input, output và symbol parse,
+   đối chiếu lại SHA-256 và các symbol bắt buộc trong
+   `ipa_evidence.py`. Kiểm thử synthetic có dạng Apple bare-name
+   và yêu cầu hai symbol thật được giải qua các object đã cross-build.
+   Giữ K11 ở trạng thái staged cho đến khi có artifact IPA macOS mới.
+
    **Chưa có kết quả run workflow sau sửa này**; giữ
    `k11_ios_ipa_status=STAGED_MANUAL_IOS_IPA_CI_NOT_VERIFIED`
    cho đến khi ZIP artifact thật qua kiểm chứng. Nếu lỗi tái hiện,
