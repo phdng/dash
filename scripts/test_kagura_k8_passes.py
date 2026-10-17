@@ -27,6 +27,7 @@ def rejects(fn, label: str) -> None:
 
 assert set(k8.CANDIDATES) == {"ibr", "mvo", "genc", "fsplit", "ci"}
 assert k8.SEED == "82712"
+assert k8.mvo_expected_checksum() == "64e61045bbc4a250"
 registry = "\n".join(
     f'KAGURA_{kind}_PASS({name.upper()}, "kagura-{name}", "fixture", Pass())'
     for name, (kind, _cls, _pipeline) in k8.CANDIDATES.items()
@@ -85,9 +86,11 @@ rejects(lambda: k8.validate_genc_input_ir(base.replace(
     "internal constant i64 123", "internal global i64 123")),
     "GENC mutable global not eligible")
 
-# MVO regression: -O1 can remove/promote the integer alloca. The K8
-# pilot MUST use a separate O0/no-optnone input and compare it against
-# the matching O0 baseline, not O1 (that would be fake IR/object delta).
+# MVO regression: BOTH Clang -O1 and -O0/no-optnone C fixtures failed
+# the real Actions preflight. The exact C frontend output is not assumed
+# to be eligible. A separate literal LLVM IR canary must contain one
+# nonescaping integer alloca with direct load/store; native parity is
+# against its own untransformed object, never against the O1 C fixture.
 mvo_eligible = (
     "define i64 @dd_k8_evaluate(i64 %n, i64 %salt) {\n"
     "entry:\n"
@@ -116,14 +119,48 @@ k8.validate_mvo_input_ir(mvo_eligible.replace(
     "  %other = alloca i64, align 8\n"
     "  call void @llvm.lifetime.start.p0(i64 8, ptr %other)\n"
     "  ret i64 %loaded\n"))
+mvo_template = (BASE / "mvo.ll").read_text(encoding="utf-8")
+assert "@@TRIPLE@@" in mvo_template
+assert "optnone" not in mvo_template
+assert "@llvm.lifetime." not in mvo_template
+assert mvo_template.count("alloca i64") == 1
+for target in ("arm64-apple-ios15.0", "arm64-apple-darwin23.6.0"):
+    target_ir = k8.materialize_mvo_ir(mvo_template, target)
+    assert f'target triple = "{target}"' in target_ir
+    assert "@@TRIPLE@@" not in target_ir
+    k8.validate_mvo_input_ir(target_ir)
+    rejects(lambda: k8.materialize_mvo_ir(
+        mvo_template.replace("load volatile i64", "load i64"), target),
+        "MVO LLVM IR canary missing direct volatile load")
+    rejects(lambda: k8.materialize_mvo_ir(
+        mvo_template.replace("store volatile i64", "store i64"), target),
+        "MVO LLVM IR canary missing direct volatile store")
+    rejects(lambda: k8.materialize_mvo_ir(
+        mvo_template.replace(
+            "  %value = load volatile i64, ptr %slot, align 8\n",
+            "  call void @llvm.lifetime.start.p0(i64 8, ptr %slot)\n"
+            "  %value = load volatile i64, ptr %slot, align 8\n"),
+        target), "MVO LLVM IR rejects alloca lifetime pointer escapes")
+rejects(lambda: k8.materialize_mvo_ir(
+    mvo_template, 'arm64-apple-ios15.0"\n@evil=global i8 0\n'),
+    "MVO target triple injection")
+rejects(lambda: k8.materialize_mvo_ir(
+    mvo_template.replace("@@TRIPLE@@", "arm64-apple-ios15.0"),
+    "arm64-apple-ios15.0"), "MVO missing target template")
+rejects(lambda: k8.materialize_mvo_ir(
+    mvo_template.replace("%slot = alloca i64, align 8\n", ""),
+    "arm64-apple-ios15.0"), "MVO no eligible alloca")
 pilot_source = (BASE / "pilot.py").read_text(encoding="utf-8")
 for contract in (
-    '"-O0", "-Xclang", "-disable-O0-optnone"',
+    'mvo_template = (HERE / "mvo.ll").read_text',
+    'command([llvm_as, str(mvo_host_ir), "-o", str(mvo_host_bc)])',
+    'command([llvm_as, str(mvo_ios_ir), "-o", str(mvo_ios_bc)])',
     'mvo_host_bc if name == "mvo" else plain_bc',
     'mvo_host_obj if name == "mvo" else plain_obj',
     'mvo_ios_bc if name == "mvo" else ios_plain_bc',
     'mvo_ios_obj if name == "mvo" else ios_plain_obj',
-    'mvo_host_log.read_bytes() != plain_log.read_bytes()',
+    'baseline_log = mvo_host_log if name == "mvo" else plain_log',
+    'mvo_digest != mvo_expected_checksum()',
     'validate_mvo_input_ir(mvo_text)',
     'validate_mvo_input_ir(mvo_ios_ir.read_text',
     'host_before_obj.read_bytes()',

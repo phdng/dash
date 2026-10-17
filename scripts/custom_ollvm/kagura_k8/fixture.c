@@ -40,11 +40,11 @@ DD_NOINLINE uint64_t dd_k8_evaluate(uint64_t n, uint64_t salt) {
         (char)('a' + (salt & 7U)), 'Z', '\0'
     };
     const size_t length = strlen(token);
-    /* Volatile local for MVO; on LLVM19 -O1 is NOT guaranteed to leave
-     * direct alloca/load/store-only users after optimizer passes.
-     * pilot.py recompiles this fixture ONLY for MVO at -O0 with
-     * -Xclang -disable-O0-optnone, and validates eligibility before opt.
-     * Its plain/protected object comparison uses this SAME O0 baseline. */
+    /* This local is part of the original K8 C canary for the four
+     * non-MVO lanes. Clang may change its alloca/lifetime representation.
+     * The MVO-specific lane now uses explicit mvo.ll instead of this C
+     * function, ensuring direct nonescaping integer alloca load/store.
+     * Both lanes still require real compiler deltas and native parity. */
     volatile uint64_t box = dd_k8_internal(n ^ salt, (uint64_t)length);
     const uint64_t direct_global_load =
         *(const volatile uint64_t *)&dd_k8_genc_scalar;

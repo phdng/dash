@@ -135,6 +135,21 @@ def validate_mvo_input_ir(ir: str) -> None:
         "no-op pass is not accepted")
 
 
+def materialize_mvo_ir(template: str, triple: str) -> str:
+    """Freeze exactly one MVO-eligible LLVM IR canary per target.
+
+    LLVM-as on this template performs no C frontend optimization, unlike
+    -O0/-O1 compilation of a C volatile local. Native/arm64 use the same
+    function body and are separately compiled, not assumed interchangeable.
+    """
+    if template.count("@@TRIPLE@@") != 1 or not re.fullmatch(
+            r"[A-Za-z0-9_.-]+", triple):
+        raise AssertionError("Malformed K8 MVO LLVM IR target template")
+    ir = template.replace("@@TRIPLE@@", triple)
+    validate_mvo_input_ir(ir)
+    return ir
+
+
 def validate_genc_input_ir(ir: str) -> None:
     """GENC pinned compiler only finds a direct load of a private constant.
 
@@ -154,6 +169,23 @@ def validate_genc_input_ir(ir: str) -> None:
         raise AssertionError(
             "K8 GENC input lacks direct volatile LoadInst of private "
             "constant integer global; no-op pass is not accepted")
+
+
+def mvo_expected_checksum() -> str:
+    """Independent Python oracle for the explicit public LLVM IR canary."""
+    mask = (1 << 64) - 1
+    def rot(value: int, bits: int) -> int:
+        return ((value << bits) | (value >> (64 - bits))) & mask
+    checksum = 0
+    for i in range(VECTORS):
+        n = (0x123456789abcdef0 ^ (i * 0x9e3779b97f4a7c15 & mask)) & mask
+        salt = (
+            0x5a17c3e9d4b02f61 ^
+            ((i * 7 + 3) * 0xbf58476d1ce4e5b9 & mask)
+        ) & mask
+        value = rot(n ^ salt, 11) ^ 0x9e3779b97f4a7c15
+        checksum = (rot(checksum ^ value, 9) + i) & mask
+    return f"{checksum:016x}"
 
 
 def validate_native_output(raw: str) -> str:
@@ -198,6 +230,7 @@ def run(*, llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
     clang = str(llvm / "bin/clang")
     opt = str(llvm / "bin/opt")
     dis = str(llvm / "bin/llvm-dis")
+    llvm_as = str(llvm / "bin/llvm-as")
     sdk_mac = command(["xcrun", "--sdk", "macosx", "--show-sdk-path"]).strip()
     sdk_ios = command(["xcrun", "--sdk", "iphoneos", "--show-sdk-path"]).strip()
     # CI is the ONLY candidate that imports the resolver from runtime.
@@ -243,18 +276,19 @@ def run(*, llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
     command([dis, str(ios_plain_bc), "-o", str(ios_plain_ir)])
     validate_genc_input_ir(ios_plain_ir.read_text(encoding="utf-8"))
 
-    # MVO needs *direct* integer alloca users (load/store only). LLVM -O1
-    # can promote/remove that alloca or retain lifetime intrinsics that the
-    # pinned upstream conservatively treats as escaping the pointer.
-    # Compile only this fixture again at O0 with optnone explicitly disabled.
-    # Both MVO baseline and transformed module use identical LLVM19 flags.
-    mvo_flags = ["-O0", "-Xclang", "-disable-O0-optnone",
-                 *fixture_opts[1:]]
+    # Dedicated MVO fixture is explicit LLVM IR, not C. The two attempts
+    # with -O1 and -O0/no-optnone C yielded no qualifying alloca on CI.
+    # llvm-as does not run the C optimizer or introduce lifetime intrinsics,
+    # so this intentionally guarantees *eligible input*, NOT pass success.
+    # Real IR/object delta and 4096-vector parity gates remain mandatory.
+    mvo_template = (HERE / "mvo.ll").read_text(encoding="utf-8")
+    host_triple = command([clang, "-print-target-triple"]).strip()
     mvo_host_bc = out / "mvo-plain.bc"
     mvo_host_ir = out / "mvo-plain.ll"
     mvo_host_obj = out / "mvo-plain.o"
-    command([clang, *mvo_flags, "-isysroot", sdk_mac,
-             "-emit-llvm", "-c", fixture, "-o", str(mvo_host_bc)])
+    mvo_host_ir.write_text(
+        materialize_mvo_ir(mvo_template, host_triple), encoding="utf-8")
+    command([llvm_as, str(mvo_host_ir), "-o", str(mvo_host_bc)])
     command([dis, str(mvo_host_bc), "-o", str(mvo_host_ir)])
     mvo_text = mvo_host_ir.read_text(encoding="utf-8")
     validate_mvo_input_ir(mvo_text)
@@ -264,15 +298,18 @@ def run(*, llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
              "-o", str(mvo_host_exe)])
     mvo_host_log = out / "mvo-plain-native.log"
     mvo_host_log.write_text(command([str(mvo_host_exe)]), encoding="ascii")
-    if mvo_host_log.read_bytes() != plain_log.read_bytes():
-        raise AssertionError("K8 MVO O0 baseline mismatches O1 reference")
+    mvo_digest = validate_native_output(mvo_host_log.read_text("ascii"))
+    if mvo_digest != mvo_expected_checksum():
+        raise AssertionError("K8 MVO native baseline does not match independent "
+                             "4096-vector Python oracle")
 
     mvo_ios_bc = out / "mvo-ios-plain.bc"
     mvo_ios_ir = out / "mvo-ios-plain.ll"
     mvo_ios_obj = out / "mvo-ios-plain.o"
-    command([clang, *mvo_flags, "-target", "arm64-apple-ios15.0",
-             "-isysroot", sdk_ios, "-emit-llvm", "-c", fixture,
-             "-o", str(mvo_ios_bc)])
+    mvo_ios_ir.write_text(
+        materialize_mvo_ir(mvo_template, "arm64-apple-ios15.0"),
+        encoding="utf-8")
+    command([llvm_as, str(mvo_ios_ir), "-o", str(mvo_ios_bc)])
     command([dis, str(mvo_ios_bc), "-o", str(mvo_ios_ir)])
     validate_mvo_input_ir(mvo_ios_ir.read_text(encoding="utf-8"))
     command([clang, "-O0", "-target", "arm64-apple-ios15.0",
@@ -289,19 +326,23 @@ def run(*, llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
         "host_vectors_per_pass": VECTORS, "host_digest": digest,
         "baseline_object_sha256": sha(plain_obj),
         "ios_baseline_object_sha256": sha(ios_plain_obj),
-        "mvo_baseline_profile": "O0_DISABLE_OPTNONE_DIRECT_INTEGER_ALLOCA",
+        "mvo_baseline_profile": "EXPLICIT_LLVM_IR_DIRECT_INTEGER_ALLOCA",
+        "mvo_llvm_ir_template_sha256": sha(HERE / "mvo.ll"),
         "mvo_baseline_object_sha256": sha(mvo_host_obj),
         "mvo_ios_baseline_object_sha256": sha(mvo_ios_obj),
-        "mvo_baseline_parity_with_o1": "PASS",
+        "mvo_baseline_native_digest": mvo_digest,
+        "mvo_independent_python_oracle_digest": mvo_expected_checksum(),
+        "mvo_independent_canary": True,
         "iphone_runtime_executed": False, "arm64e_executed": False,
         "crane_production_modified": False,
         "performance_evaluated": False,
         "candidate_results": {},
     }
     for name, (kind, cls, pipeline) in CANDIDATES.items():
-        # All candidate comparisons are against their *own same-flags*
-        # plain module/object. Never compare transformed -O0 to plain -O1:
-        # that would fabricate an "IR/object changed" pass result.
+        # All candidates are compared with the unmodified version of
+        # their own input module. For MVO the fixture logic is deliberately
+        # distinct from the four -O1 C-fixture lanes and is never compared
+        # across different functions as evidence of obfuscation.
         host_input = mvo_host_bc if name == "mvo" else plain_bc
         host_before_ir = mvo_text if name == "mvo" else plain_text
         host_before_obj = mvo_host_obj if name == "mvo" else plain_obj
@@ -330,8 +371,11 @@ def run(*, llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
         command([*link, "-o", str(exe)], log=stage / "native-link.log")
         host_log = stage / "native.log"
         host_log.write_text(command([str(exe)]), encoding="ascii")
-        if host_log.read_bytes() != plain_log.read_bytes():
-            raise AssertionError(f"K8 {name}: native 4096-vector parity mismatch")
+        baseline_log = mvo_host_log if name == "mvo" else plain_log
+        if host_log.read_bytes() != baseline_log.read_bytes():
+            raise AssertionError(
+                f"K8 {name}: native 4096-vector parity mismatch vs "
+                "same-input unprotected executable")
         ios_bc = stage / "ios-protected.bc"
         ios_ir = stage / "ios-protected.ll"
         ios_obj = stage / "ios-protected.o"
@@ -351,13 +395,13 @@ def run(*, llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
             "registered_kind": kind, "llvm_pass_class": cls,
             "opt_pipeline": pipeline, "pass_invoked": True,
             "baseline_compiler_profile": (
-                "O0_DISABLE_OPTNONE_DIRECT_INTEGER_ALLOCA"
+                "EXPLICIT_LLVM_IR_DIRECT_INTEGER_ALLOCA"
                 if name == "mvo" else "O1"),
             "baseline_host_object_sha256": sha(host_before_obj),
             "baseline_ios_object_sha256": sha(ios_before_obj),
             "ir_and_native_object_changed": True,
             "native_4096_vector_parity": "PASS",
-            "native_digest": digest,
+            "native_digest": mvo_digest if name == "mvo" else digest,
             "ios_arm64_object": "BUILD_ONLY_NOT_EXECUTED",
             "host_object_sha256": sha(candidate_obj),
             "ios_object_sha256": sha(ios_obj),

@@ -21,7 +21,7 @@ không trộn với tên/semantics proprietary SLLVM:
 | Pass | Registry upstream | Điều kiện fixture | Kỳ vọng |
 | --- | --- | --- | --- |
 | `kagura-ibr` | function / `IndirectBranchPass` | gọi trực tiếp hàm **định nghĩa trong cùng module** | private `__kagura_fptr_*`, chuyển sang indirect call |
-| `kagura-mvo` | function / `MemoryValueObfuscationPass` | volatile integer local alloca/load/store (không escape) | XOR quanh store/load, biến `.mvo` |
+| `kagura-mvo` | function / `MemoryValueObfuscationPass` | **fixture LLVM IR riêng** `mvo.ll` có direct `alloca i64`, volatile store/load, không escape | XOR quanh store/load, biến `.mvo` |
 | `kagura-genc` | module / `GlobalEncryptionPass` | constant integer array private/internal được load bằng chỉ số runtime | initializer bị mã hóa và load decode `.dec` |
 | `kagura-fsplit` | module / `FunctionSplitPass` | hàm có ít nhất 5 basic block, có block không phải exit an toàn để tách | hàm helper mới, IR/object thay đổi |
 | `kagura-ci` | module / `CallIndirectionPass` | gọi external `strlen` (không để Clang thay built-in) | global thunk table, constructor, `kagura_rtld_default_handle` |
@@ -40,17 +40,21 @@ Workflow thủ công, **không có push/PR**:
 
 - macOS-14: tải/checkout đúng Kagura MIT commit pin, LLVM19, build plugin
   và native runtime; so `PassRegistry.def` với 5 kiểu module/function.
-- `fixture.c` thuần C, không có dữ liệu cá nhân, key/secret, PAC,
-  objc_msgSend, hooks, Crane/TrollStore identifiers; `runner.c` dùng
-  4096 vector đầu vào xác định và digest; baseline dùng **cùng LLVM19**.
-- Mỗi pass chạy **riêng** từ cùng `plain.bc` bằng
+- `fixture.c` thuần C dùng cho IBR/GENC/FSPLIT/CI; `mvo.ll` là
+  **IR riêng cho MVO**, tránh việc Clang tự tạo hoặc loại bỏ alloca.
+  Hai fixture chỉ chứa public canary, không có key/secret, PAC, hook,
+  Objective-C hay dữ liệu của Crane. `runner.c` chạy **4.096 vector
+  riêng cho mỗi baseline** và candidate theo cùng ABI.
+- Từng pass chạy **riêng** bằng
   `opt --load-pass-plugin ... -kagura-[name]`,
-  `-debug-pass-manager -passes=[correct-kind],verify`.
+  `-debug-pass-manager -passes=[correct-kind],verify`, so IR/object
+  candidate với **baseline của chính fixture đó**, không nhận
+  chênh lệch giữa hai fixture khác nhau là biến đổi pass.
   Kiểm tra exact pass class, thật sự đổi IR **và** object, dấu vết
   cấu trúc đặc thù như bảng fptr/thunk/alloca/global/decode/outline,
   và native executable chạy ra chính xác log 4096 vector như baseline.
   `ci` native linker bắt buộc có pinned Kagura runtime archive.
-- Cross-compile iOS15 `arm64` bằng LLVM19 trên cùng fixture cho từng pass
+- Cross-compile iOS15 `arm64` bằng LLVM19 trên đúng fixture của từng pass
   và audit Mach-O `MH_OBJECT`/raw subtype 0. **Không có link/install/IPA/
   thực thi iOS hay kiểm thử arm64e**, và không được gọi iPhone PASS.
 - Log native, `opt` của từng pass, IR, object và
@@ -76,21 +80,32 @@ có artifact `plain.ll` và `mvo/opt.log` riêng được gửi để xác
 định chính xác biến nào bị optimizer loại bỏ; nguyên nhân cụ thể
 trong LLVM IR cần quan sát ở lần CI kế tiếp.
 
-Cập nhật `pilot.py`: chỉ với **MVO**, biên dịch lại **cùng fixture**
-bằng LLVM19 `-O0 -Xclang -disable-O0-optnone`; xác minh một
-`alloca i64` có `store volatile` + `load volatile` trực tiếp,
-không có pointer use khác trên chính alloca đó. Nếu thiếu fixture
-đủ điều kiện, audit FAIL **trước khi chạy pass**. Các lifetime
-intrinsics của alloca *khác* không gây kết luận sai.
+**Lần chạy GitHub Actions kế tiếp cũng FAIL** tại
+`validate_mvo_input_ir(mvo_text)` (dòng 260): baseline C ở
+`-O0 -Xclang -disable-O0-optnone` không đáp ứng preflight
+nonescaping i64 alloca. Không có `mvo-plain.ll` gốc trong yêu cầu
+để xác định chi tiết cách Clang phát IR; không khẳng định upstream
+MVO bị lỗi. Do đó **không tiếp tục đoán cờ Clang**.
 
-**Chống PASS giả**: tạo và thực thi một baseline MVO riêng ở `-O0`,
-bắt buộc 4.096 vector giống hệt baseline `-O1`; sau đó so sánh
-**MVO transformed IR/object với chính baseline MVO `-O0`** trên
-cả macOS và iOS arm64. Bắt buộc MVO thay IR, object, có chỉ dấu
-XOR `.mvo`, giữ nguyên 4.096 kết quả; toàn bộ 4 pass còn lại
-không đổi baseline `-O1`. Không hạ mức audit, không bỏ pass.
-Đây là **bản sửa đã qua kiểm thử portable, chờ rerun macOS CI**;
-không tự nhận đã khắc phục xong trên LLVM19 native.
+**Cách sửa hiện tại:** bổ sung `scripts/custom_ollvm/kagura_k8/mvo.ll`
+là **fixture LLVM IR độc lập**, chứa một `alloca i64` có direct
+`store volatile i64` và `load volatile i64`, không có lifetime
+intrinsic, alias hay pointer escape. Chỉ `target triple` được thay
+theo macOS host/ios arm64; `llvm-as` LLVM19 assemble trực tiếp thành
+`mvo-plain.bc` và `mvo-ios-plain.bc`, không đi qua Clang
+frontend optimization. Chính văn bản IR sau `llvm-dis` vẫn phải qua
+`validate_mvo_input_ir()` nghiêm ngặt.
+
+**Chống PASS giả:** MVO baseline riêng chạy 4.096 vector trên macOS,
+bắt buộc bằng **checksum oracle Python độc lập**
+`64e61045bbc4a250` và qua schema kiểm tra log. MVO protected phải
+(1) gọi đúng `MemoryValueObfuscationPass`, (2) thay đổi IR **và**
+object so với chính `mvo.ll` baseline, (3) chứa XOR `.mvo`,
+(4) trả chính xác 4.096 kết quả baseline. iOS arm64 build-only cũng
+phải có IR/object delta với baseline cùng fixture. **Không được so
+hai hàm C và IR khác thuật toán để tạo ra PASS giả.** IBR/GENC/FSPLIT/CI
+vẫn giữ nguyên `-O1` và oracle/parity riêng. Chưa có bằng chứng
+native macOS cho bản sửa này cho tới khi GitHub Actions chạy lại.
 
 **Gia cố thêm GENC sau khi rà upstream:** cùng phiên bản Kagura,
 `GlobalEncryptionPass::collectEligibleGlobals()` chỉ nhận private/
