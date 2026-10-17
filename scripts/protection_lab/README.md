@@ -257,6 +257,26 @@ PAC runtime hay mức độ chống reverse engineering.
   runtime device proof trước khi người dùng thật sự chạy trên iPhone.
 - Hướng dẫn: [docs/PROTECTION_DEVICE_EVIDENCE.md](../../docs/PROTECTION_DEVICE_EVIDENCE.md).
 
+## Sprint chạy trên iPhone qua project Xcode riêng
+
+- Project mở trực tiếp:
+  `ios_xcode/ProtectionLab.xcodeproj`, shared scheme `ProtectionLab`.
+  Target **arm64 iPhoneOS iOS 15+** dùng đúng 12 source C/Objective-C
+  của ứng dụng canary, ARC + UIKit/Foundation; build phase sinh ba header
+  thử nghiệm vào Derived Files, không sửa mã trong repository.
+- Signing **Automatic** nhưng `DEVELOPMENT_TEAM` để trống; người dùng tự
+  chọn Apple Development team có quyền, Xcode ký/cài trên máy dự phòng.
+  Không commit credentials, profiles, Apple Team ID; build CI không ký.
+- `.github/workflows/protection-ios-app.yml` chạy thêm `plutil` và
+  `xcodebuild ... CODE_SIGNING_ALLOWED=NO`, xác minh Mach-O arm64.
+- `scripts/test_xcode_device_project.py` đối chiếu 12 source, scheme,
+  build phases, header dependencies, CI giới hạn không ký/cài.
+- `device_evidence.py verify-local` cho binary liên kết bằng Xcode trên
+  Mac; **không dùng UUID CI unsigned để so nhầm binary local**.
+- Project Xcode arm64 **không xác minh PAC arm64e** trên A12+; cặp binary
+  Apple Clang arm64e nghiên cứu và policy PAC nghiêm ngặt vẫn tách riêng.
+  Xem [PROTECTION_XCODE_DEVICE_TEST.md](../../docs/PROTECTION_XCODE_DEVICE_TEST.md).
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker

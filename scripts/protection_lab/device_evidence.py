@@ -149,6 +149,41 @@ def verify_bundle(*, manifest: Path, arch: str, identity: Path,
     return result
 
 
+def verify_local_binary(*, binary: Path, arch: str, identity: Path,
+                        parity: Path, output: Path,
+                        performance: Path | None = None) -> dict:
+    """Correlate an Xcode-built local app, not a different CI unsigned artifact.
+
+    The path must point to the same app executable used for the user's test.
+    Signing, provisioning, and text-log provenance are NOT authenticated.
+    """
+    details = device_audit.inspect_executable(binary, arch)
+    loaded_uuid = macho_uuid(binary)
+    declared = parse_evidence(identity, arch)
+    if declared["macho_uuid"] != loaded_uuid:
+        raise AssertionError("Device report LC_UUID differs from selected local Mach-O")
+    parity_result = device_audit.verify_run_log(parity, "IOS_DEVICE", arch)
+    perf_result = (perf_audit.verify(performance, "IOS_DEVICE", arch)
+                   if performance else None)
+    result = {
+        "schema": 1,
+        "gate": "LOCAL_XCODE_BINARY_AND_USER_REPORTS_CONSISTENT",
+        "source": "LOCALLY_BUILT_BINARY_NOT_CI_MANIFEST",
+        "arch_claimed": arch,
+        "local_binary": details,
+        "local_binary_macho_uuid": loaded_uuid,
+        "identity": declared,
+        "parity": parity_result,
+        "performance": perf_result,
+        "actual_device_execution_cryptographically_attested": False,
+        "note": "UUID equality is not code-signature verification or iPhone attestation",
+    }
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n",
+                      encoding="utf-8")
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="cmd", required=True)
@@ -163,6 +198,13 @@ def main() -> None:
     verify.add_argument("--parity", type=Path, required=True)
     verify.add_argument("--performance", type=Path)
     verify.add_argument("--out", type=Path, required=True)
+    local = commands.add_parser("verify-local", help="Match Xcode-built local app to logs")
+    local.add_argument("--binary", type=Path, required=True)
+    local.add_argument("--arch", choices=("arm64", "arm64e"), required=True)
+    local.add_argument("--identity", type=Path, required=True)
+    local.add_argument("--parity", type=Path, required=True)
+    local.add_argument("--performance", type=Path)
+    local.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     if args.cmd == "build":
         result = manifest_for_binaries(args.arm64, args.arm64e, args.out)
@@ -170,6 +212,12 @@ def main() -> None:
             f"{arch}={result['slices'][arch]['macho_uuid']}"
             for arch in ("arm64", "arm64e")
         ) + "; device runtime NOT_TESTED")
+    elif args.cmd == "verify-local":
+        verify_local_binary(binary=args.binary, arch=args.arch,
+                            identity=args.identity, parity=args.parity,
+                            performance=args.performance, output=args.out)
+        print("DD_LOCAL_XCODE_UUID_CONSISTENT: local binary and reported "
+              "parity/identity match; device provenance NOT_ATTESTED")
     else:
         verify_bundle(manifest=args.manifest, arch=args.arch,
                       identity=args.identity, parity=args.parity,

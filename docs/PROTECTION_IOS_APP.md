@@ -44,6 +44,17 @@ chia sẻ riêng, không gộp vào 7 dòng runtime. Chi tiết tại
 không chứng thực mật mã nguồn gốc thiết bị. Xem
 [PROTECTION_DEVICE_EVIDENCE.md](PROTECTION_DEVICE_EVIDENCE.md).
 
+## Chạy trực tiếp với Xcode trên iPhone thật
+
+Đã có project Xcode độc lập
+`scripts/protection_lab/ios_xcode/ProtectionLab.xcodeproj`, scheme
+`ProtectionLab`, **arm64** và automatic signing (chọn Apple Development
+team của bạn trên Mac). Nó cho phép bấm Run trên iPhone dự phòng, không
+cần thao tác ký thủ công bản ZIP unsigned. **arm64 chạy được trên A12+
+không đồng nghĩa arm64e PAC runtime được xác nhận**. Chi tiết về ký/cài,
+sinh header và lệnh kiểm tra UUID với binary Xcode *local*:
+[PROTECTION_XCODE_DEVICE_TEST.md](PROTECTION_XCODE_DEVICE_TEST.md).
+
 ## GitHub Actions
 
 Chạy thủ công **Protection Lab - iOS UIKit test app (Experimental)**,

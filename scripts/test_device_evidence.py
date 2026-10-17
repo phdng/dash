@@ -76,6 +76,50 @@ with tempfile.TemporaryDirectory() as folder:
     assert result["uuid_security_attestation"] is False
     assert result["runtime_on_iphone"] == "NOT_TESTED_BY_CI"
 
+    report = root / "identity.log"
+    parity = root / "functional.log"
+    perf = root / "performance.log"
+    # The locally signed Xcode arm64 app has a different LC_UUID from the
+    # separately linked CI unsigned-arm64 binary. Compare against the exact
+    # locally built executable, NOT against the CI two-architecture manifest.
+    write_text(report, identity_lines("arm64", A))
+    write_text(parity, device_audit.expected_lines("IOS_DEVICE", "arm64"))
+    write_text(perf, performance_lines("arm64"))
+    local = e.verify_local_binary(
+        binary=arm64, arch="arm64", identity=report,
+        parity=parity, performance=perf, output=root / "xcode-local.json"
+    )
+    assert local["source"] == "LOCALLY_BUILT_BINARY_NOT_CI_MANIFEST"
+    assert local["gate"] == "LOCAL_XCODE_BINARY_AND_USER_REPORTS_CONSISTENT"
+    assert local["local_binary_macho_uuid"] == A
+    assert local["actual_device_execution_cryptographically_attested"] is False
+    assert json.loads((root / "xcode-local.json").read_text(encoding="utf-8")) == local
+    # Optional performance is really optional.
+    assert e.verify_local_binary(
+        binary=arm64, arch="arm64", identity=report,
+        parity=parity, output=root / "xcode-local-minimal.json"
+    )["performance"] is None
+
+    def local_reject():
+        try:
+            e.verify_local_binary(
+                binary=arm64, arch="arm64", identity=report,
+                parity=parity, performance=perf, output=root / "xcode-local-rejected.json"
+            )
+        except (AssertionError, ValueError):
+            return
+        raise AssertionError("Corrupted Xcode local evidence was accepted")
+
+    write_text(report, identity_lines("arm64", E))
+    local_reject()
+    write_text(report, identity_lines("arm64", A))
+    write_text(parity, device_audit.expected_lines("IOS_DEVICE", "arm64e"))
+    local_reject()
+    write_text(parity, device_audit.expected_lines("IOS_DEVICE", "arm64"))
+    arm64.write_bytes(binary("arm64", E))
+    local_reject()
+    arm64.write_bytes(binary("arm64", A))
+
     # Invalid or incompatible Mach-O LC_UUID / load commands must fail closed.
     correct = arm64e.read_bytes()
     malformed = [

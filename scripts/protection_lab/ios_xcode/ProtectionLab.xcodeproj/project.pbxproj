@@ -1,0 +1,106 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+/* Begin PBXBuildFile section */
+		000000000000000000000031 /* canary.c in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000017 /* canary.c */; };
+		000000000000000000000032 /* vm.c in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000018 /* vm.c */; };
+		000000000000000000000033 /* sllvm_plain.c in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000019 /* sllvm_plain.c */; };
+		000000000000000000000034 /* sllvm_protected.c in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000020 /* sllvm_protected.c */; };
+		000000000000000000000035 /* igv_ibr_plain.c in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000021 /* igv_ibr_plain.c */; };
+		000000000000000000000036 /* igv_ibr_protected.c in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000022 /* igv_ibr_protected.c */; };
+		000000000000000000000037 /* device_suites.c in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000023 /* device_suites.c */; };
+		000000000000000000000038 /* perf_pilot.c in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000024 /* perf_pilot.c */; };
+		000000000000000000000039 /* perf_report.c in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000025 /* perf_report.c */; };
+		000000000000000000000040 /* objc_ce_plain.m in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000026 /* objc_ce_plain.m */; };
+		000000000000000000000041 /* objc_ce_protected.m in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000027 /* objc_ce_protected.m */; };
+		000000000000000000000042 /* ios_app_main.m in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000028 /* ios_app_main.m */; };
+		000000000000000000000043 /* UIKit.framework in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000029 /* UIKit.framework */; };
+		000000000000000000000044 /* Foundation.framework in Build */ = {isa = PBXBuildFile; fileRef = 000000000000000000000030 /* Foundation.framework */; };
+/* End PBXBuildFile section */
+/* Begin PBXFileReference section */
+		000000000000000000000017 /* canary.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = canary.c; sourceTree = "<group>"; };
+		000000000000000000000018 /* vm.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = vm.c; sourceTree = "<group>"; };
+		000000000000000000000019 /* sllvm_plain.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sllvm_plain.c; sourceTree = "<group>"; };
+		000000000000000000000020 /* sllvm_protected.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sllvm_protected.c; sourceTree = "<group>"; };
+		000000000000000000000021 /* igv_ibr_plain.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = igv_ibr_plain.c; sourceTree = "<group>"; };
+		000000000000000000000022 /* igv_ibr_protected.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = igv_ibr_protected.c; sourceTree = "<group>"; };
+		000000000000000000000023 /* device_suites.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = device_suites.c; sourceTree = "<group>"; };
+		000000000000000000000024 /* perf_pilot.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = perf_pilot.c; sourceTree = "<group>"; };
+		000000000000000000000025 /* perf_report.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = perf_report.c; sourceTree = "<group>"; };
+		000000000000000000000026 /* objc_ce_plain.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = objc_ce_plain.m; sourceTree = "<group>"; };
+		000000000000000000000027 /* objc_ce_protected.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = objc_ce_protected.m; sourceTree = "<group>"; };
+		000000000000000000000028 /* ios_app_main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ios_app_main.m; sourceTree = "<group>"; };
+		000000000000000000000029 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		000000000000000000000030 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		000000000000000000000006 /* ProtectionLab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProtectionLab.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+/* Begin PBXGroup section */
+		000000000000000000000003 = {isa = PBXGroup; children = (000000000000000000000004 /* Lab Sources */, 000000000000000000000005 /* Products */); sourceTree = "<group>"; };
+		000000000000000000000004 /* Lab Sources */ = {isa = PBXGroup; children = (
+			000000000000000000000017 /* canary.c */,
+			000000000000000000000018 /* vm.c */,
+			000000000000000000000019 /* sllvm_plain.c */,
+			000000000000000000000020 /* sllvm_protected.c */,
+			000000000000000000000021 /* igv_ibr_plain.c */,
+			000000000000000000000022 /* igv_ibr_protected.c */,
+			000000000000000000000023 /* device_suites.c */,
+			000000000000000000000024 /* perf_pilot.c */,
+			000000000000000000000025 /* perf_report.c */,
+			000000000000000000000026 /* objc_ce_plain.m */,
+			000000000000000000000027 /* objc_ce_protected.m */,
+			000000000000000000000028 /* ios_app_main.m */,
+			000000000000000000000029 /* UIKit.framework */,
+			000000000000000000000030 /* Foundation.framework */,
+		); name = "Lab Sources"; path = ..; sourceTree = "<group>"; };
+		000000000000000000000005 /* Products */ = {isa = PBXGroup; children = (000000000000000000000006 /* ProtectionLab.app */); name = Products; sourceTree = "<group>"; };
+/* End PBXGroup section */
+/* Begin PBXNativeTarget section */
+		000000000000000000000002 /* ProtectionLab */ = {isa = PBXNativeTarget; buildConfigurationList = 000000000000000000000012; buildPhases = (000000000000000000000008, 000000000000000000000007, 000000000000000000000009, 000000000000000000000010); buildRules = (); dependencies = (); name = ProtectionLab; productName = ProtectionLab; productReference = 000000000000000000000006; productType = "com.apple.product-type.application"; };
+/* End PBXNativeTarget section */
+/* Begin PBXProject section */
+		000000000000000000000001 /* Project object */ = {isa = PBXProject; attributes = { LastUpgradeCheck = 1500; TargetAttributes = { 000000000000000000000002 = { CreatedOnToolsVersion = 15.0; ProvisioningStyle = Automatic; }; }; }; buildConfigurationList = 000000000000000000000011; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base); mainGroup = 000000000000000000000003; productRefGroup = 000000000000000000000005; projectDirPath = ""; projectRoot = ""; targets = (000000000000000000000002); };
+/* End PBXProject section */
+/* Begin PBXFrameworksBuildPhase section */
+		000000000000000000000009 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (
+			000000000000000000000043 /* UIKit.framework in Frameworks */,
+			000000000000000000000044 /* Foundation.framework in Frameworks */,
+		); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+/* Begin PBXResourcesBuildPhase section */
+		000000000000000000000010 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+/* Begin PBXSourcesBuildPhase section */
+		000000000000000000000007 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
+			000000000000000000000031 /* canary.c in Sources */,
+			000000000000000000000032 /* vm.c in Sources */,
+			000000000000000000000033 /* sllvm_plain.c in Sources */,
+			000000000000000000000034 /* sllvm_protected.c in Sources */,
+			000000000000000000000035 /* igv_ibr_plain.c in Sources */,
+			000000000000000000000036 /* igv_ibr_protected.c in Sources */,
+			000000000000000000000037 /* device_suites.c in Sources */,
+			000000000000000000000038 /* perf_pilot.c in Sources */,
+			000000000000000000000039 /* perf_report.c in Sources */,
+			000000000000000000000040 /* objc_ce_plain.m in Sources */,
+			000000000000000000000041 /* objc_ce_protected.m in Sources */,
+			000000000000000000000042 /* ios_app_main.m in Sources */,
+		); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+/* Begin PBXShellScriptBuildPhase section */
+		000000000000000000000008 /* Generate Public Canary Headers */ = {isa = PBXShellScriptBuildPhase; buildActionMask = 2147483647; files = (); inputPaths = ("$(SRCROOT)/../program.py", "$(SRCROOT)/../sllvm_generator.py", "$(SRCROOT)/../objc_ce_generator.py"); name = "Generate Public Canary Headers"; outputPaths = ("$(DERIVED_FILE_DIR)/vm_program.h", "$(DERIVED_FILE_DIR)/sllvm_encoded.h", "$(DERIVED_FILE_DIR)/objc_ce_data.h"); runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/bash; shellScript = "set -eu\nlab=\"${SRCROOT}/..\"\nmkdir -p \"${DERIVED_FILE_DIR}\"\npython3 \"${lab}/program.py\" --out \"${DERIVED_FILE_DIR}/vm_program.h\"\npython3 \"${lab}/sllvm_generator.py\" --out \"${DERIVED_FILE_DIR}/sllvm_encoded.h\"\npython3 \"${lab}/objc_ce_generator.py\" --out \"${DERIVED_FILE_DIR}/objc_ce_data.h\"\n"; };
+/* End PBXShellScriptBuildPhase section */
+/* Begin XCBuildConfiguration section */
+		000000000000000000000013 /* Debug (Project) */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_OBJC_ARC = YES; CLANG_ENABLE_MODULES = YES; GCC_C_LANGUAGE_STANDARD = c11; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = iphoneos; SUPPORTS_MACCATALYST = NO; }; name = Debug; };
+		000000000000000000000014 /* Release (Project) */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_OBJC_ARC = YES; CLANG_ENABLE_MODULES = YES; GCC_C_LANGUAGE_STANDARD = c11; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = iphoneos; SUPPORTS_MACCATALYST = NO; }; name = Release; };
+		000000000000000000000015 /* Debug (Target) */ = {isa = XCBuildConfiguration; buildSettings = { ARCHS = arm64; CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = "../ios_app_Info.plist"; IPHONEOS_DEPLOYMENT_TARGET = 15.0; HEADER_SEARCH_PATHS = ("$(inherited)", "$(SRCROOT)/..", "$(DERIVED_FILE_DIR)"); PRODUCT_BUNDLE_IDENTIFIER = com.duodash.research.protectionlab; PRODUCT_NAME = ProtectionLab; TARGETED_DEVICE_FAMILY = 1; ENABLE_BITCODE = NO; GCC_OPTIMIZATION_LEVEL = 1; }; name = Debug; };
+		000000000000000000000016 /* Release (Target) */ = {isa = XCBuildConfiguration; buildSettings = { ARCHS = arm64; CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = "../ios_app_Info.plist"; IPHONEOS_DEPLOYMENT_TARGET = 15.0; HEADER_SEARCH_PATHS = ("$(inherited)", "$(SRCROOT)/..", "$(DERIVED_FILE_DIR)"); PRODUCT_BUNDLE_IDENTIFIER = com.duodash.research.protectionlab; PRODUCT_NAME = ProtectionLab; TARGETED_DEVICE_FAMILY = 1; ENABLE_BITCODE = NO; GCC_OPTIMIZATION_LEVEL = 1; }; name = Release; };
+/* End XCBuildConfiguration section */
+/* Begin XCConfigurationList section */
+		000000000000000000000011 = {isa = XCConfigurationList; buildConfigurations = (000000000000000000000013, 000000000000000000000014); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		000000000000000000000012 = {isa = XCConfigurationList; buildConfigurations = (000000000000000000000015, 000000000000000000000016); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = 000000000000000000000001 /* Project object */;
+}

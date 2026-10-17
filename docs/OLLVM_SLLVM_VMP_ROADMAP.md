@@ -75,7 +75,18 @@ Ngày cập nhật: 2026-10-16. Trạng thái: **Sprint P0/P1 prototype đã có
   và iOS version (không UDID). Parser buộc identity UUID khớp với
   artifact, 7 dòng PASS chức năng và tùy chọn 17 dòng perf; không
   có attestation mật mã, chưa xác minh provenance hay PAC trên máy thật.
-  Hướng dẫn [PROTECTION_DEVICE_EVIDENCE.md](PROTECTION_DEVICE_EVIDENCE.md).
+  Người dùng xác nhận workflow so LC_UUID đã build xanh. Hướng dẫn
+  [PROTECTION_DEVICE_EVIDENCE.md](PROTECTION_DEVICE_EVIDENCE.md).
+- **Sprint local Xcode signing/runtime (mới):** project
+  `scripts/protection_lab/ios_xcode/ProtectionLab.xcodeproj` với shared
+  scheme `ProtectionLab`, đúng 12 source C/ObjC, build phase sinh 3 header,
+  iPhoneOS target arm64, tự chọn Apple Development team ở Xcode. Workflow
+  UIKit chạy `xcodebuild` **không ký** trên macOS và kiểm tra MH_EXECUTE
+  của project bên cạnh cặp binary arm64/arm64e nghiên cứu hiện có.
+  Bổ sung `device_evidence.py verify-local` để khớp UUID của **binary Xcode
+  local**, không nhầm với CI unsigned. Chưa xác nhận chạy trên iPhone hay
+  `arm64e` PAC runtime. Xem
+  [PROTECTION_XCODE_DEVICE_TEST.md](PROTECTION_XCODE_DEVICE_TEST.md).
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 

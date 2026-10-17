@@ -62,6 +62,17 @@ hệ điều hành qua public `NSProcessInfo`, kiểu phần cứng qua `uname`.
 **Không lấy serial, UDID, ID quảng cáo, tên cá nhân hoặc identifierForVendor.**
 Không thu thập hay gửi lên dịch vụ; chỉ chia sẻ khi người thử bấm Share.
 
+## Bản app được Xcode build và ký trên máy Mac
+
+Nếu dùng project `ProtectionLab.xcodeproj` để ký/chạy arm64, Xcode sẽ
+**link binary mới với LC_UUID riêng**, không nhất thiết khớp
+`build-identity.json` của workflow CI unsigned. Khi đó dùng
+`device_evidence.py verify-local --binary <file ProtectionLab trong
+DerivedData> --arch arm64 --identity ... --parity ... --out ...` để đối
+chiếu đúng binary local đã build với log chia sẻ. Chế độ này cũng không
+chứng thực code signing hoặc tính xác thực log. Xem
+[PROTECTION_XCODE_DEVICE_TEST.md](PROTECTION_XCODE_DEVICE_TEST.md).
+
 ## Đối chiếu trên máy tính
 
 Từ root của repository (log phải giữ 7/7/17 dòng theo từng tệp UTF-8):

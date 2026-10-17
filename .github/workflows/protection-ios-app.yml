@@ -25,6 +25,7 @@ jobs:
           python3 scripts/test_ios_app_canary.py
           python3 scripts/test_protection_perf.py
           python3 scripts/test_device_evidence.py
+          python3 scripts/test_xcode_device_project.py
           python3 scripts/test_device_runtime_canary.py
           python3 scripts/test_objc_ce_pilot.py
           python3 scripts/test_igv_ibr_pilot.py
@@ -59,6 +60,25 @@ jobs:
           python3 "$lab/perf_audit.py" verify \
             --log "$out/host-performance.log" \
             --context MACOS_HOST --out "$out/host-performance-report.json"
+
+      - name: Validate local-signing Xcode project without credentials
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/ios-lab-app"
+          project="$lab/ios_xcode/ProtectionLab.xcodeproj"
+          plutil -lint "$project/project.pbxproj"
+          xcodebuild -project "$project" -scheme ProtectionLab \
+            -configuration Debug -destination 'generic/platform=iOS' \
+            -sdk iphoneos -derivedDataPath "$out/xcode-derived" \
+            CODE_SIGNING_ALLOWED=NO build > "$out/xcode-arm64-build.log" 2>&1 || {
+              tail -n 120 "$out/xcode-arm64-build.log"
+              exit 1
+            }
+          binary="$out/xcode-derived/Build/Products/Debug-iphoneos/ProtectionLab.app/ProtectionLab"
+          test -s "$binary"
+          python3 -c "import sys; sys.path.insert(0, '$lab'); from device_audit import inspect_executable; print(inspect_executable('$binary', 'arm64')['cpu_subtype_raw'])"
+          xcrun otool -hv "$binary" > "$out/xcode-arm64-macho.txt"
 
       - name: Build separate unsigned UIKit app bundles for iPhone
         run: |
@@ -107,6 +127,7 @@ jobs:
           echo '### UIKit on-device parity application — unsigned bundles' >> "$GITHUB_STEP_SUMMARY"
           echo 'Two Apple Clang iPhoneOS MH_EXECUTE app binaries ABI-validated.' >> "$GITHUB_STEP_SUMMARY"
           echo 'App requires legitimate local signing/provisioning before device install.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Unsigned standard arm64 Xcode project also passed xcodebuild; device signing remains manual.' >> "$GITHUB_STEP_SUMMARY"
           echo 'LC_UUID identity extracted per app; user logs must be checked separately.' >> "$GITHUB_STEP_SUMMARY"
           echo 'UUID is not device cryptographic attestation or proof of PAC enforcement.' >> "$GITHUB_STEP_SUMMARY"
           echo 'On-device ARC/function-pointer/PAC runtime: NOT TESTED in CI.' >> "$GITHUB_STEP_SUMMARY"
@@ -129,5 +150,7 @@ jobs:
             ${{ runner.temp }}/ios-lab-app/dependencies-arm64.txt
             ${{ runner.temp }}/ios-lab-app/dependencies-arm64e.txt
             ${{ runner.temp }}/ios-lab-app/apple-clang-version.txt
+            ${{ runner.temp }}/ios-lab-app/xcode-arm64-build.log
+            ${{ runner.temp }}/ios-lab-app/xcode-arm64-macho.txt
             ${{ runner.temp }}/ios-lab-app/host-performance.log
             ${{ runner.temp }}/ios-lab-app/host-performance-report.json
