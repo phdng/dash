@@ -324,6 +324,24 @@ nguồn kiểm chứng; arm64e vẫn build/audit-only.**
 
 Xem [docs/PROTECTION_ARM64_DEVICE_ACCEPTANCE.md](../../docs/PROTECTION_ARM64_DEVICE_ACCEPTANCE.md).
 
+## Sprint soak test thủ công: ổn định lặp lại trên iPhone arm64
+
+Đã xác minh file artifact CI người dùng gửi: IPA arm64 có binary
+`MH_EXECUTE` subtype `0x00000000`, SHA-256/LC_UUID khớp ba JSON CI;
+arm64e là `MH_EXECUTE` subtype `0x80000002` build/audit PASS, nhưng
+chưa có máy A12+ để thử runtime. Xem
+[PROTECTION_CI_ARTIFACT_REVIEW.md](../../docs/PROTECTION_CI_ARTIFACT_REVIEW.md).
+
+Ứng dụng UIKit thêm **Run stability test (5 rounds)**, chỉ bật sau
+4-suite parity PASS. Chạy lặp 5 vòng × 4 nhóm × 8.192 vector =
+**163.840 lần kiểm tra**, fail-fast và báo rõ nhóm/vòng khi lỗi;
+không có tác vụ nền, không ghi UDID. Kết quả riêng 12 dòng
+`DD_SOAK_*` được xác minh cú pháp/kiến trúc bằng `soak_audit.py`.
+Bài test `scripts/test_protection_soak.py` kiểm soát giao thức, UI
+opt-in, sai số vòng/ABI và chặn PASS giả; workflow UIKit chạy test trước
+khi build hai kiến trúc. Đây là **mã mới, chưa chạy trên thiết bị**.
+Xem [PROTECTION_ARM64_SOAK.md](../../docs/PROTECTION_ARM64_SOAK.md).
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker

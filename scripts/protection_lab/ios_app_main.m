@@ -172,6 +172,58 @@ static NSString *DDRunValidation(void (^progress)(NSString *)) {
     return [[lines componentsJoinedByString:@"\n"] stringByAppendingString:@"\n"];
 }
 
+/* Bounded, manual-only stability check: 5 rounds x 4 independent suites
+ * x 8192 synthetic vectors. This is NOT a PAC stress or crypto attestation.
+ * Fail immediately, never produce a COMPLETE=PASS on partial execution.
+ */
+enum { DD_SOAK_ROUNDS = 5 };
+
+static NSString *DDRunSoak(NSString *abi, void (^progress)(NSString *)) {
+    if (!abi || ![abi isEqualToString:DDRuntimeABI()])
+        return @"DD_SOAK_ERROR=ARCH_OR_PAC_ABI_MISMATCH\n";
+    for (unsigned round = 0; round < DD_SOAK_ROUNDS; ++round) {
+        @autoreleasepool {
+            const unsigned humanRound = round + 1U;
+            if (progress) progress([NSString stringWithFormat:
+                @"Soak %u/5 · VM", humanRound]);
+            if (!dd_device_test_vm())
+                return [NSString stringWithFormat:
+                    @"DD_SOAK_ERROR=VM:ROUND_%u\n", humanRound];
+
+            if (progress) progress([NSString stringWithFormat:
+                @"Soak %u/5 · CE/ICALL", humanRound]);
+            if (!dd_device_test_ce_icall())
+                return [NSString stringWithFormat:
+                    @"DD_SOAK_ERROR=CE_ICALL:ROUND_%u\n", humanRound];
+
+            if (progress) progress([NSString stringWithFormat:
+                @"Soak %u/5 · IGV/IBR", humanRound]);
+            if (!dd_device_test_igv_ibr())
+                return [NSString stringWithFormat:
+                    @"DD_SOAK_ERROR=IGV_IBR:ROUND_%u\n", humanRound];
+
+            if (progress) progress([NSString stringWithFormat:
+                @"Soak %u/5 · Objective-C/ARC", humanRound]);
+            if (!DDNSStringParity())
+                return [NSString stringWithFormat:
+                    @"DD_SOAK_ERROR=OBJC_CE:ROUND_%u\n", humanRound];
+        }
+    }
+    return [NSString stringWithFormat:
+        @"DD_SOAK_SCHEMA=1\n"
+         @"DD_SOAK_CONTEXT=IOS_DEVICE\n"
+         @"DD_SOAK_ABI=%@\n"
+         @"DD_SOAK_ROUNDS=5\n"
+         @"DD_SOAK_VECTORS_PER_SUITE_PER_ROUND=8192\n"
+         @"DD_SOAK_VM_ROUNDS_PASS=5\n"
+         @"DD_SOAK_CE_ICALL_ROUNDS_PASS=5\n"
+         @"DD_SOAK_IGV_IBR_ROUNDS_PASS=5\n"
+         @"DD_SOAK_OBJC_CE_ROUNDS_PASS=5\n"
+         @"DD_SOAK_TOTAL_VECTOR_CHECKS=163840\n"
+         @"DD_SOAK_NOTE=MANUAL_STRESS_NOT_SECURITY_ATTESTATION\n"
+         @"DD_SOAK_COMPLETE=PASS\n", abi];
+}
+
 static NSString *DDRunPerformance(NSString *abi) {
     if (!abi) return nil;
     dd_perf_results times;
@@ -188,9 +240,11 @@ static NSString *DDRunPerformance(NSString *abi) {
 @property(nonatomic, strong) UITextView *reportView;
 @property(nonatomic, strong) UIButton *runButton;
 @property(nonatomic, strong) UIButton *benchmarkButton;
+@property(nonatomic, strong) UIButton *soakButton;
 @property(nonatomic, strong) UIButton *shareButton;
 @property(nonatomic, copy) NSString *report;
 @property(nonatomic, copy) NSString *performanceReport;
+@property(nonatomic, copy) NSString *soakReport;
 @property(nonatomic, copy) NSString *evidenceReport;
 @property(nonatomic, assign) BOOL running;
 @end
@@ -232,6 +286,13 @@ static NSString *DDRunPerformance(NSString *abi) {
                     forControlEvents:UIControlEventTouchUpInside];
     self.benchmarkButton.enabled = NO;
 
+    self.soakButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [self.soakButton setTitle:@"Run stability test (5 rounds)"
+                    forState:UIControlStateNormal];
+    [self.soakButton addTarget:self action:@selector(startSoak)
+              forControlEvents:UIControlEventTouchUpInside];
+    self.soakButton.enabled = NO;
+
     self.shareButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [self.shareButton setTitle:@"Share result text" forState:UIControlStateNormal];
     [self.shareButton addTarget:self action:@selector(shareReport)
@@ -253,7 +314,7 @@ static NSString *DDRunPerformance(NSString *abi) {
     [self.view addSubview:scroll];
     UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:@[
         heading, note, self.runtimeStatusLabel, self.runButton, self.benchmarkButton,
-        self.shareButton, self.reportView
+        self.soakButton, self.shareButton, self.reportView
     ]];
     stack.axis = UILayoutConstraintAxisVertical;
     stack.spacing = 14;
@@ -279,9 +340,11 @@ static NSString *DDRunPerformance(NSString *abi) {
     self.running = YES;
     self.report = nil;
     self.performanceReport = nil;
+    self.soakReport = nil;
     self.evidenceReport = nil;
     self.runButton.enabled = NO;
     self.benchmarkButton.enabled = NO;
+    self.soakButton.enabled = NO;
     self.shareButton.enabled = NO;
     self.runtimeStatusLabel.text = @"Runtime: RUNNING (0/4)";
     self.runtimeStatusLabel.textColor = [UIColor secondaryLabelColor];
@@ -302,6 +365,7 @@ static NSString *DDRunPerformance(NSString *abi) {
             self.runButton.enabled = YES;
             self.shareButton.enabled = YES;
             self.benchmarkButton.enabled = passed;
+            self.soakButton.enabled = passed;
             self.runtimeStatusLabel.text = passed ?
                 @"Runtime: PASS (4/4)" : @"Runtime: FAILED / INCOMPLETE — see report";
             self.runtimeStatusLabel.textColor = passed ?
@@ -318,6 +382,7 @@ static NSString *DDRunPerformance(NSString *abi) {
     self.running = YES;
     self.runButton.enabled = NO;
     self.benchmarkButton.enabled = NO;
+    self.soakButton.enabled = NO;
     self.shareButton.enabled = NO;
     self.runtimeStatusLabel.text = @"Runtime: PASS (4/4) · Benchmark: RUNNING";
     self.reportView.text = @"MEASURING — five pairs, 20,000 calls x 5 repeats.\n"
@@ -330,6 +395,7 @@ static NSString *DDRunPerformance(NSString *abi) {
             self.runButton.enabled = YES;
             self.shareButton.enabled = YES;
             self.benchmarkButton.enabled = YES;
+            self.soakButton.enabled = YES;
             self.performanceReport = result;
             self.runtimeStatusLabel.text = result ?
                 @"Runtime: PASS (4/4) · Benchmark: RECORDED" :
@@ -339,6 +405,46 @@ static NSString *DDRunPerformance(NSString *abi) {
                                            self.report, result] :
                 @"DD_PERF_ERROR=MEASUREMENT_FAILED\nYou may retry. Previous functional PASS is still stored.";
             self.reportView.textColor = result ?
+                [UIColor labelColor] : [UIColor systemRedColor];
+        });
+    });
+}
+
+- (void)startSoak {
+    if (self.running || !self.soakButton.enabled ||
+        !DDValidationPassed(self.report)) return;
+    self.running = YES;
+    self.runButton.enabled = NO;
+    self.benchmarkButton.enabled = NO;
+    self.soakButton.enabled = NO;
+    self.shareButton.enabled = NO;
+    self.soakReport = nil;
+    self.runtimeStatusLabel.text = @"Runtime: PASS (4/4) · Soak: RUNNING";
+    self.reportView.text =
+        @"SOAK IN PROGRESS — 5 rounds × 4 suites × 8192 vectors.\n"
+         @"This is a bounded manual stability test, not a security proof.";
+    NSString *abi = DDRuntimeABI();
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSString *result = DDRunSoak(abi, ^(NSString *stage) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.runtimeStatusLabel.text = stage;
+            });
+        });
+        BOOL passed = [result hasSuffix:@"DD_SOAK_COMPLETE=PASS\n"];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.soakReport = result;
+            self.running = NO;
+            self.runButton.enabled = YES;
+            self.benchmarkButton.enabled = YES;
+            self.soakButton.enabled = YES;
+            self.shareButton.enabled = YES;
+            self.runtimeStatusLabel.text = passed ?
+                @"Runtime: PASS (4/4) · Soak: PASS (5/5)" :
+                @"Runtime: PASS (4/4) · Soak: FAILED / INCOMPLETE";
+            self.runtimeStatusLabel.textColor = passed ?
+                [UIColor labelColor] : [UIColor systemRedColor];
+            self.reportView.text = result;
+            self.reportView.textColor = passed ?
                 [UIColor labelColor] : [UIColor systemRedColor];
         });
     });
@@ -358,13 +464,14 @@ static NSString *DDRunPerformance(NSString *abi) {
 - (void)shareReport {
     if (self.running || self.report.length == 0) return;
     /* Never merge 7-line parity, 17-line perf or 7-line identity proof. */
-    if (!self.performanceReport.length && !self.evidenceReport.length) {
+    if (!self.performanceReport.length && !self.evidenceReport.length &&
+        !self.soakReport.length) {
         [self presentShareWithText:self.report];
         return;
     }
     UIAlertController *options = [UIAlertController
         alertControllerWithTitle:@"Choose evidence"
-                        message:@"Parity, binary identity and timing reports are separate."
+                        message:@"Parity, identity, timing and soak logs are separate."
                  preferredStyle:UIAlertControllerStyleActionSheet];
     [options addAction:[UIAlertAction
         actionWithTitle:@"Share functional PASS/failure"
@@ -389,6 +496,15 @@ static NSString *DDRunPerformance(NSString *abi) {
                     handler:^(UIAlertAction *action) {
                         (void)action;
                         [self presentShareWithText:self.performanceReport];
+                    }]];
+    }
+    if (self.soakReport.length) {
+        [options addAction:[UIAlertAction
+            actionWithTitle:@"Share stability/soak result"
+                      style:UIAlertActionStyleDefault
+                    handler:^(UIAlertAction *action) {
+                        (void)action;
+                        [self presentShareWithText:self.soakReport];
                     }]];
     }
     [options addAction:[UIAlertAction actionWithTitle:@"Cancel"

@@ -25,6 +25,7 @@ jobs:
           python3 scripts/test_ios_app_canary.py
           python3 scripts/test_ios_postinstall_ui.py
           python3 scripts/test_device_acceptance.py
+          python3 scripts/test_protection_soak.py
           python3 scripts/test_protection_perf.py
           python3 scripts/test_device_evidence.py
           python3 scripts/test_xcode_device_project.py

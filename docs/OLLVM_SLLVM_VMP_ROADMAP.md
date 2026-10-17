@@ -112,6 +112,16 @@ Ngày cập nhật: 2026-10-17. Trạng thái: **Sprint P0/P1 prototype đã có
   `device_acceptance.py`. Xem
   [PROTECTION_ARM64_DEVICE_ACCEPTANCE.md](PROTECTION_ARM64_DEVICE_ACCEPTANCE.md).
   Arm64e vẫn chỉ Apple Clang build+ABI/UUID, A12+ runtime hoãn.
+- **Soát artifact CI đính kèm + sprint soak trên arm64 (2026-10-17):**
+  đã kiểm tra thực tế IPA/binary trong ZIP do người dùng gửi: arm64
+  `MH_EXECUTE` subtype 0, arm64e `MH_EXECUTE` subtype `0x80000002`,
+  SHA-256 và LC_UUID của binary đối chiếu thành công với báo cáo CI.
+  [Chi tiết artifact](PROTECTION_CI_ARTIFACT_REVIEW.md). UI lab đã có
+  nút soak tự chọn (chỉ sau functional PASS): 5 vòng × 4 suite × 8.192
+  vector, fail-fast, báo cáo 12 dòng độc lập và parser
+  `soak_audit.py` với hồi quy âm tính. **Soak mới chưa chạy trên iPhone**;
+  arm64e tiếp tục build/audit-only. Xem
+  [PROTECTION_ARM64_SOAK.md](PROTECTION_ARM64_SOAK.md).
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 

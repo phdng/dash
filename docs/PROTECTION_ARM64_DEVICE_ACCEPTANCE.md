@@ -19,6 +19,18 @@ Ngày ghi nhận: **2026-10-17**.
   subtype, UUID audit PASS** ở CI; arm64e runtime vẫn
   `DEFERRED_NO_DEVICE`.
 
+## Artifact đã kiểm tra và bước ổn định tiếp theo
+
+Người dùng cũng gửi ZIP artifact CI. Đã soát binary arm64 và arm64e,
+đối chiếu hash/UUID với báo cáo build: arm64 IPA structure PASS;
+arm64e versioned PAC ABI **build/audit-only PASS**. Đây là kiểm tra
+binary CI, không phải log runtime từ thiết bị. Xem
+[PROTECTION_CI_ARTIFACT_REVIEW.md](PROTECTION_CI_ARTIFACT_REVIEW.md).
+
+Đã tạo soak test **5 vòng x 4 nhóm x 8192** tự chọn sau functional
+PASS, có báo cáo 12 dòng riêng. Chưa có kết quả soak on-device của bản
+mới: [PROTECTION_ARM64_SOAK.md](PROTECTION_ARM64_SOAK.md).
+
 ## Hai mức nghiệm thu minh bạch
 
 `scripts/protection_lab/device_acceptance.py` tạo receipt JSON

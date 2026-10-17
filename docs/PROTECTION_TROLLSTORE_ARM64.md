@@ -80,6 +80,16 @@ Khi có máy A12+, mở lại [PROTECTION_IOS_APP.md](PROTECTION_IOS_APP.md)
 và [PROTECTION_DEVICE_EVIDENCE.md](PROTECTION_DEVICE_EVIDENCE.md).
 Đến lúc đó mới thử việc ký/cài/chạy `arm64e` và thu log thật.
 
+## Bản build mới: kiểm tra độ ổn định 5 vòng
+
+Artifact CI người dùng gửi đã được kiểm tra cấu trúc IPA và đối chiếu
+Mach-O/UUID/SHA cho cả hai kiến trúc; xem
+[PROTECTION_CI_ARTIFACT_REVIEW.md](PROTECTION_CI_ARTIFACT_REVIEW.md).
+Bản app mới có nút **Run stability test (5 rounds)** (sau khi bài test
+chức năng PASS), chạy 5 x 4 x 8192 phép thử lặp và xuất log 12 dòng
+`DD_SOAK_*` riêng. Soak mới **chưa được chạy trên thiết bị**; xem
+[PROTECTION_ARM64_SOAK.md](PROTECTION_ARM64_SOAK.md).
+
 ## Phạm vi bảo vệ
 
 Đây là Protection Lab, không tích hợp SLLVM proprietary, VMProtect
