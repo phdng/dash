@@ -366,6 +366,8 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         ".github/workflows/kagura-k11-ios-ipa.yml" or
         kagura.get("k11_build") !=
         "scripts/custom_ollvm/kagura_k11/build_ipa.sh" or
+        kagura.get("k11_runtime_locator") !=
+        "scripts/custom_ollvm/kagura_k11/ci_runtime_resolver.py" or
         kagura.get("k11_packager") !=
         "scripts/custom_ollvm/kagura_k11/package_ipa.py" or
         kagura.get("k11_evidence") !=
@@ -396,8 +398,9 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k11_arm64e_pac") != "NOT_TESTED" or
         kagura.get("k11_security_attestation") is not False or
         any(not (root / kagura[field]).is_file() for field in
-            ("k11_workflow", "k11_build", "k11_packager", "k11_evidence",
-             "k11_device_audit", "k11_portable_test", "k11_doc")) or
+            ("k11_workflow", "k11_build", "k11_runtime_locator",
+             "k11_packager", "k11_evidence", "k11_device_audit",
+             "k11_portable_test", "k11_doc")) or
         any(not (root / "scripts/custom_ollvm/kagura_k11" / name).is_file()
             for name in ("ios_probe.c", "ios_app_main.m", "Info.plist"))):
         raise AssertionError(

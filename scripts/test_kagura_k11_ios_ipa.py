@@ -144,6 +144,45 @@ with tempfile.TemporaryDirectory(prefix="K11-synthetic-ipa-") as folder:
     rejects(lambda: logaudit.validate(log, wrong_report, evidence),
             "IPA binary SHA contradiction")
 
+# Regression: an upstream header/prototype/reference/comment must NOT
+# count as a resolver definition. Previous K11 text-only scan matched them.
+import ci_runtime_resolver as resolver
+with tempfile.TemporaryDirectory(prefix="K11-resolver-selection-") as temp_root:
+    upstream = Path(temp_root)
+    (upstream / "LICENSE").write_text("upstream fixture only\n", encoding="utf-8")
+    runtime = upstream / "runtime"
+    runtime.mkdir()
+    (runtime / "declaration.c").write_text(
+        "extern void *kagura_rtld_default_handle(void);\n"
+        "void *probe(void) { return kagura_rtld_default_handle(); }\n",
+        encoding="utf-8")
+    (runtime / "comment.c").write_text(
+        "/* void *kagura_rtld_default_handle(void) { fake } */\n"
+        'const char *note = "kagura_rtld_default_handle(void) { fake";\n',
+        encoding="utf-8")
+    actual = runtime / "real.c"
+    actual.write_text(
+        "void *kagura_rtld_default_handle(void) { return 0; }\n",
+        encoding="utf-8")
+    chosen = resolver.require_selected(upstream)
+    assert chosen["selected_source"] == "runtime/real.c"
+    assert chosen["source_files_scanned"] == 3
+    assert chosen["function_definitions"] == ["runtime/real.c"]
+    assert chosen["mention_candidates"] == [
+        "runtime/comment.c", "runtime/declaration.c", "runtime/real.c"]
+    assert chosen["selected_source_sha256"] == hashlib.sha256(
+        actual.read_bytes()).hexdigest()
+    (runtime / "another.c").write_text(
+        "void* kagura_rtld_default_handle(void) { return 0; }\n",
+        encoding="utf-8")
+    rejects(lambda: resolver.require_selected(upstream),
+            "multiple REAL upstream C definitions must fail")
+    (runtime / "another.c").unlink()
+    actual.write_text("void *another_function(void) { return 0; }\n",
+                      encoding="utf-8")
+    rejects(lambda: resolver.require_selected(upstream),
+            "upstream mentions with NO definition must fail")
+
 workflow = (ROOT / ".github/workflows/kagura-k11-ios-ipa.yml").read_text()
 build = (LAB / "build_ipa.sh").read_text()
 src = (LAB / "ios_probe.c").read_text()
@@ -161,17 +200,30 @@ for required in (
     assert required in workflow, required
 for required in (
     "05-ci/ios.o", "kagura_rtld_default_handle",
-    "exactly ONE pinned upstream C resolver source",
+    "ci_runtime_resolver.py", "ios-rtld-discovery.json",
+    "K11_FIND_REAL_UPSTREAM_CI_RESOLVER",
+    "K11_COMPILE_UPSTREAM_IOS_RESOLVER",
+    "Kagura-K11-BUILD-FAILURE.txt",
+    "ios-kagura-rtld-compile.log", "ipa-link.log",
+    "_kagura_rtld_default_handle",
     "-target arm64-apple-ios15.0",
     "ios-kagura-rtld.o", "ios_app_main.m", "ios_probe.c",
     "KaguraFiveLab-TrollStore-arm64.ipa",
     "package_ipa.py", "ipa_evidence.py",
 ):
     assert required in build, required
+assert workflow.index("Preflight real Kagura CI runtime resolver definition") < workflow.index("Rebuild K10 exact five sequential passes")
+assert "ios-rtld-discovery.json" in workflow
+assert "Kagura-K11-BUILD-FAILURE.txt" in build
+assert "ios-kagura-rtld-symbols.txt" in build
+assert " [Tt] _kagura_rtld_default_handle$" in build
 assert "kagura-k9-build/runtime/libkagura_runtime.a" not in build
 assert "kagura_vm" not in build
 assert "05-ci/ios.o" in evidence_source
 assert "k10.verify_report(report, out)" in evidence_source
+assert "ios-rtld-discovery.json" in evidence_source
+assert "ios-kagura-rtld-symbols.txt" in evidence_source
+assert "ios_upstream_resolver_source_sha256" in evidence_source
 for required in (
     "dd_k8_evaluate(n, salt)", "dd_k9_mvo_probe(n, salt)",
     "i < 4096U", "0x25a3318e3d7d6525", "0x64e61045bbc4a250",

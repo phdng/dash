@@ -44,6 +44,23 @@ Workflow riêng: `.github/workflows/kagura-k11-ios-ipa.yml`
    Nếu có 0 hoặc nhiều hơn 1 nguồn, hoặc lỗi compile/link symbol,
    **CI FAIL**. Tuyệt đối không dùng shim giả, host library hay
    bỏ pass CI để tránh lỗi.
+
+   **Gia cố hậu kiểm cho lần build K11 bị exit=1 sau K10 PASS:**
+   trước đây runner đếm bất kỳ `.c` có **chuỗi**
+   `kagura_rtld_default_handle`, gồm cả khai báo, lời gọi hoặc
+   comment. Đã thay bằng `ci_runtime_resolver.py`, chỉ chọn đúng
+   **một định nghĩa hàm C** thật, giữ `ios-rtld-discovery.json`
+   (cả các source chỉ nhắc tên, hash source được chọn) và xác minh
+   `xcrun nm -gU` cho symbol **được định nghĩa** trong object iOS.
+   Workflow thực hiện preflight trước khi chạy lại K10.
+   Script ghi `Kagura-K11-BUILD-FAILURE.txt` với stage, dòng và
+   lệnh bị lỗi; stderr compile/link giữ tại
+   `ios-kagura-rtld-compile.log`,
+   `ios-probe-compile.log`, `ios-app-main-compile.log`,
+   `ipa-link.log`. Các file này được upload `if: always()`.
+   Không được coi đây là bằng chứng đã sửa hoàn toàn: hiện chỉ
+   biết K10 serialized gate PASS rồi CI K11 exit 1, chưa có
+   stderr/ZIP đầy đủ xác định điểm lỗi chính xác.
 4. Build UIKit `ios_app_main.m` riêng và `ios_probe.c`. Link
    `05-ci/ios.o`, iOS resolver, probe và app bằng Apple iOS linker
    với undefined-symbol error. Lưu `ipa-link.log`,

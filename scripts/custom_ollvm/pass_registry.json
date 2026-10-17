@@ -261,6 +261,7 @@
     "k11_ios_ipa_status": "STAGED_MANUAL_IOS_IPA_CI_NOT_VERIFIED",
     "k11_workflow": ".github/workflows/kagura-k11-ios-ipa.yml",
     "k11_build": "scripts/custom_ollvm/kagura_k11/build_ipa.sh",
+    "k11_runtime_locator": "scripts/custom_ollvm/kagura_k11/ci_runtime_resolver.py",
     "k11_packager": "scripts/custom_ollvm/kagura_k11/package_ipa.py",
     "k11_evidence": "scripts/custom_ollvm/kagura_k11/ipa_evidence.py",
     "k11_device_audit": "scripts/custom_ollvm/kagura_k11/device_log_audit.py",

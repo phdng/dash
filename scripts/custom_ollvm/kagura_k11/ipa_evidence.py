@@ -51,6 +51,21 @@ def inspect(out: Path) -> dict:
     if (not re.fullmatch(r"runtime/[a-zA-Z0-9_./-]+\.c", runtime_source) or
             ".." in runtime_source):
         raise AssertionError("K11 runtime source must originate from pinned Kagura C")
+    locator = out / "ios-rtld-discovery.json"
+    symfile = out / "ios-kagura-rtld-symbols.txt"
+    if not (locator.is_file() and symfile.is_file()):
+        raise AssertionError("K11 missing actual upstream resolver definition audit")
+    discovery = json.loads(locator.read_text(encoding="utf-8"))
+    if (discovery.get("schema") != 1 or
+            discovery.get("symbol") != "kagura_rtld_default_handle" or
+            discovery.get("function_definitions") != [runtime_source] or
+            discovery.get("selected_source") != runtime_source or
+            not re.fullmatch("[a-f0-9]{64}",
+                             discovery.get("selected_source_sha256", ""))):
+        raise AssertionError("K11 claimed resolver source is not a unique C definition")
+    if not re.search(r"(?m)^\\S+ [Tt] _kagura_rtld_default_handle$",
+                     symfile.read_text(encoding="utf-8")):
+        raise AssertionError("K11 iOS runtime object did not define Kagura resolver")
     required = ("_dd_k8_evaluate", "_dd_k9_mvo_probe",
                 "_kagura_rtld_default_handle", "_dd_k11_ios_parity")
     lines = symbols.read_text(encoding="utf-8").splitlines()
@@ -77,6 +92,9 @@ def inspect(out: Path) -> dict:
         "k10_final_ci_ios_object_sha256": sha(ci),
         "ios_link_input_object_sha256": object_hashes,
         "ios_upstream_resolver_source_path": runtime_source,
+        "ios_upstream_resolver_source_sha256": discovery["selected_source_sha256"],
+        "ios_upstream_resolver_definition_verified_by_nm": True,
+        "ios_upstream_resolver_discovery_sha256": sha(locator),
         "native_checksums_from_k10": [
             k10.k9.K8_C_DIGEST, k10.k9.K8_MVO_DIGEST],
         "kagura_pinned_commit": k10.k9.UPSTREAM_PIN,

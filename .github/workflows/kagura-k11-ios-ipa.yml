@@ -52,6 +52,18 @@ jobs:
           echo "K11_SRC=$src" >> "$GITHUB_ENV"
           echo "K11_PLUGIN=$plugin" >> "$GITHUB_ENV"
 
+      - name: Preflight real Kagura CI runtime resolver definition before full K10 rerun
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K11-Five-IPA"
+          mkdir -p "$out"
+          python3 scripts/custom_ollvm/kagura_k11/ci_runtime_resolver.py \
+            --src "$K11_SRC" \
+            --report "$out/ios-rtld-discovery.json" \
+            --selected-path "$out/ios-rtld-source.txt"
+          test -s "$out/ios-rtld-source.txt"
+          echo "K11 real upstream resolver source: $(cat "$out/ios-rtld-source.txt")" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Rebuild K10 exact five sequential passes with native Mac and iOS arm64 gates
         run: |
           set -euo pipefail
