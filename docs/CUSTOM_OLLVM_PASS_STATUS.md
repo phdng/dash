@@ -43,6 +43,12 @@ K3 đã bổ sung benchmark **16 vòng cân bằng thứ tự**, 8 biến thể,
 176 mẫu/biến thể và parser kiểm tra log toàn vẹn; **chưa có native macOS
 artifact K3**. Xem [KAGURA_K3_INTERLEAVED_BENCH.md](KAGURA_K3_INTERLEAVED_BENCH.md).
 
+Đã thêm app **KaguraLab IPA arm64**, chứa một hàm baseline và một
+hàm có 7 pass Kagura thực, UI chạy 8192 parity trên iPhone và benchmark
+tùy chọn. Workflow có kiểm tra native pass trace/Object/IPA, nhưng
+**chưa có macOS build IPA hoặc on-device Kagura runtime PASS**.
+[Hướng dẫn KaguraLab/TrollStore](KAGURA_IOS_TROLLSTORE_PILOT.md).
+
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản
 custom merged/derived. Chưa được gọi là MAX production.

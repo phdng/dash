@@ -147,6 +147,19 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k3_balanced_rounds") != 16 or
         kagura.get("k3_samples_per_variant") != 176):
         raise AssertionError("K3 benchmark cannot claim native or device PASS yet")
+    if (kagura.get("ios_arm64_kagura_trollstore_pilot") !=
+        "STAGED_CI_BUILD_NOT_YET_VERIFIED" or
+        kagura.get("ios_arm64_kagura_pilot_workflow") !=
+        ".github/workflows/kagura-max-candidate.yml" or
+        kagura.get("ios_arm64_kagura_pilot_ipa") !=
+        "KaguraLab-TrollStore-arm64.ipa" or
+        kagura.get("ios_arm64_kagura_pilot_pipeline") !=
+        ["str", "fla", "bcf", "sub", "co", "bbr", "bbs"] or
+        kagura.get("ios_arm64_kagura_pilot_on_device") != "NOT_TESTED" or
+        not (root / "scripts/custom_ollvm/kagura_max/ios_app_main.m").is_file() or
+        not (root / "scripts/custom_ollvm/kagura_max/ios_canary.c").is_file() or
+        not (root / "scripts/custom_ollvm/kagura_max/package_ipa.py").is_file()):
+        raise AssertionError("Kagura iOS arm64 pilot is not verified yet")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

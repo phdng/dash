@@ -99,6 +99,19 @@ Với 176 mẫu, p95 nearest-rank không còn là mẫu lớn nhất như ở K2
 11 mẫu. Chưa có kết quả native macOS K3, cũng chưa thử Kagura runtime iPhone.
 Xem [KAGURA_K3_INTERLEAVED_BENCH.md](KAGURA_K3_INTERLEAVED_BENCH.md).
 
+**K4 — KaguraLab TrollStore arm64 IPA (mới có mã và CI, chưa có build/runtime KaguraLab PASS):**
+
+Đã tạo app UIKit riêng **KaguraLab**, biên dịch cùng `critical.c` thành
+`dd_kagura_plain` và `dd_kagura_protected` bằng LLVM19, rồi chạy
+**STR→FLA→BCF→SUB→CO→BBR→BBS** bằng `opt` thật trên bản protected.
+Hai object arm64 được link vào MH_EXECUTE và đóng gói IPA riêng để cài
+song song ProtectionLab trên máy TrollStore. UI có parity **8192 vector**,
+benchmark iPhone **5 cặp × 4096 calls** chỉ sau parity PASS, và chia sẻ
+text log. CI có audit pass trace, SHA-256/LC_UUID, chế độ từ chối
+nhầm `arm64e`; chỉ xác minh format ở Windows, **chưa có IPA macOS CI
+mới hoặc kết quả chạy trên iPhone**. Xem
+[KAGURA_IOS_TROLLSTORE_PILOT.md](KAGURA_IOS_TROLLSTORE_PILOT.md).
+
 **Pha K2b — MAX_VM_SELECTIVE** (chưa triển khai, không có PASS):
 
 Thử `kagura-vm` trên đúng **một hàm C thuần, nhỏ, hiếm gọi**

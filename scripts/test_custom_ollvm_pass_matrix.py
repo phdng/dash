@@ -32,6 +32,8 @@ assert status["separate_kagura_llvm_pipeline"] == "K1_NATIVE_7_STAGE_ARTIFACT_VE
 assert original["experimental_kagura_pipeline"]["k2_scope_and_benchmark_status"] == "MACOS_ARTIFACT_VERIFIED_HOST_ONLY"
 assert original["experimental_kagura_pipeline"]["k3_interleaved_benchmark_status"] == "STAGED_NOT_VERIFIED_MACOS_NATIVE"
 assert original["experimental_kagura_pipeline"]["k3_samples_per_variant"] == 176
+assert original["experimental_kagura_pipeline"]["ios_arm64_kagura_trollstore_pilot"] == "STAGED_CI_BUILD_NOT_YET_VERIFIED"
+assert original["experimental_kagura_pipeline"]["ios_arm64_kagura_pilot_on_device"] == "NOT_TESTED"
 assert len(status["registry_sha256"]) == 64
 
 negative_mutations = (
@@ -63,6 +65,9 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k3_interleaved_benchmark_status="MACOS_NATIVE_PASS_WITHOUT_ARTIFACT"),
     lambda x: x["experimental_kagura_pipeline"].update(k3_balanced_rounds=2),
     lambda x: x["experimental_kagura_pipeline"].update(k3_samples_per_variant=11),
+    lambda x: x["experimental_kagura_pipeline"].update(ios_arm64_kagura_trollstore_pilot="ON_DEVICE_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(ios_arm64_kagura_pilot_on_device="PASS_WITHOUT_LOG"),
+    lambda x: x["experimental_kagura_pipeline"]["ios_arm64_kagura_pilot_pipeline"].append("vm"),
 )
 for idx, change in enumerate(negative_mutations):
     data = copy.deepcopy(original)

@@ -40,6 +40,12 @@ K3 mới có workflow và regression portable cho **16 vòng chạy cân bằng
 thứ tự, 176 mẫu/biến thể**, để đánh giá lại BBR/BBS sau outlier K2a;
 **chưa chạy macOS native K3 hoặc iOS Kagura runtime**. Chi tiết
 [KAGURA_K3_INTERLEAVED_BENCH.md](KAGURA_K3_INTERLEAVED_BENCH.md).
+Đã nối **IPA KaguraLab arm64 thử trực tiếp** vào workflow Kagura
+manual-only: hai hàm baseline/protected từ cùng source, 7 LLVM IR pass,
+8192 vector parity trong UIKit, benchmark tùy chọn và log kiểm tra
+hợp lệ; CI tạo `KaguraLab-TrollStore-arm64.ipa` với pass-trace audit,
+LC_UUID và SHA-256. **Chưa chạy macOS CI bản IPA hoặc Kagura runtime
+trên iPhone**. Đọc [KAGURA_IOS_TROLLSTORE_PILOT.md](KAGURA_IOS_TROLLSTORE_PILOT.md).
 Đây không phải pass đã nhập vào OLLVM STRONG production.
 
 VM Kagura có mã chuyển LLVM IR thành bytecode thực nhưng chỉ dự kiến

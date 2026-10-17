@@ -21,6 +21,7 @@ jobs:
           python3 scripts/test_kagura_k1_stages.py
           python3 scripts/test_kagura_scope_bench.py
           python3 scripts/test_kagura_interleaved_bench.py
+          python3 scripts/test_kagura_ios_ipa.py
           python3 scripts/test_custom_ollvm_pass_matrix.py
 
       - name: Compile pinned MIT Kagura plugin with LLVM 19
@@ -154,6 +155,90 @@ jobs:
             --out "$KAGURA_OUT/audit.json"
           cat "$KAGURA_OUT/audit.json" >> "$GITHUB_STEP_SUMMARY"
           echo 'Kagura-only research; no Crane production pass merged.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build standalone Kagura arm64 UIKit IPA with actual seven LLVM passes
+        run: |
+          set -euo pipefail
+          dir="$GITHUB_WORKSPACE/scripts/custom_ollvm/kagura_max"
+          out="$KAGURA_OUT"
+          iphone="$out/ios-ondevice"
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          mkdir -p "$iphone/KaguraLab.app"
+          cp "$dir/ios_app_Info.plist" "$iphone/KaguraLab.app/Info.plist"
+          plutil -lint "$iphone/KaguraLab.app/Info.plist"
+
+          # SAME critical.c compiled twice. Untransformed baseline vs real
+          # seven-pass protected symbol. Do not import host .o or arm64e dylib.
+          for variant in plain protected; do
+            "$KAGURA_LLVM/bin/clang" -O1 -std=c11 -Wall -Wextra -Werror \
+              -target arm64-apple-ios15.0 -isysroot "$sdk" \
+              -DDD_KAGURA_ENTRY=dd_kagura_"$variant" \
+              -emit-llvm -c "$dir/critical.c" \
+              -o "$iphone/$variant-input.bc"
+          done
+          "$KAGURA_LLVM/bin/clang" -O0 -target arm64-apple-ios15.0 \
+            -isysroot "$sdk" -c "$iphone/plain-input.bc" \
+            -o "$iphone/plain.o"
+
+          current="$iphone/protected-input.bc"
+          for pass in str fla bcf sub co bbr bbs; do
+            if [ "$pass" = str ]; then
+              pipeline=kagura-str
+            else
+              pipeline="function(kagura-$pass)"
+            fi
+            "$KAGURA_LLVM/bin/opt" --load-pass-plugin="$KAGURA_PLUGIN" \
+              -kagura-seed=1234567 -debug-pass-manager \
+              -passes="$pipeline" "$current" \
+              -o "$iphone/protected-$pass.bc" \
+              2> "$iphone/pass-$pass.log"
+            test -s "$iphone/protected-$pass.bc"
+            grep -q 'Running pass:' "$iphone/pass-$pass.log"
+            current="$iphone/protected-$pass.bc"
+          done
+          "$KAGURA_LLVM/bin/clang" -O0 -target arm64-apple-ios15.0 \
+            -isysroot "$sdk" -c "$current" \
+            -o "$iphone/protected.o"
+          python3 - "$iphone/plain.o" "$iphone/protected.o" <<'PY'
+          import sys
+          from pathlib import Path
+          plain, candidate = [Path(s).read_bytes() for s in sys.argv[1:]]
+          marker = b"DD_KAGURA_PUBLIC_CANARY_CE_STRING_V1"
+          assert marker in plain, "baseline lacks public string marker"
+          assert marker not in candidate, "Kagura protected object still exposes marker"
+          assert plain != candidate, "Kagura failed to change the native object"
+          PY
+
+          xcrun clang -O1 -std=c11 -Wall -Wextra -Werror \
+            -target arm64-apple-ios15.0 -isysroot "$sdk" \
+            -c "$dir/ios_canary.c" -o "$iphone/ios_canary.o"
+          xcrun clang -O1 -fobjc-arc -fblocks -Wall -Wextra -Werror \
+            -target arm64-apple-ios15.0 -isysroot "$sdk" \
+            -c "$dir/ios_app_main.m" -o "$iphone/ios_app_main.o"
+          xcrun clang -target arm64-apple-ios15.0 -isysroot "$sdk" \
+            "$iphone/plain.o" "$iphone/protected.o" \
+            "$iphone/ios_canary.o" "$iphone/ios_app_main.o" \
+            -framework UIKit -framework Foundation \
+            -o "$iphone/KaguraLab.app/KaguraLab"
+          xcrun nm -gU "$iphone/KaguraLab.app/KaguraLab" > "$iphone/app-symbols.txt"
+          grep -q '_dd_kagura_plain$' "$iphone/app-symbols.txt"
+          grep -q '_dd_kagura_protected$' "$iphone/app-symbols.txt"
+          xcrun otool -hv "$iphone/KaguraLab.app/KaguraLab" > "$iphone/arm64-macho.txt"
+          python3 "$dir/package_ipa.py" \
+            --app "$iphone/KaguraLab.app" \
+            --ipa "$out/KaguraLab-TrollStore-arm64.ipa" \
+            --report "$out/KaguraLab-TrollStore-report.json"
+          python3 "$dir/ios_pipeline_audit.py" \
+            --plain "$iphone/plain.o" --protected "$iphone/protected.o" \
+            --app "$iphone/KaguraLab.app/KaguraLab" \
+            --ipa "$out/KaguraLab-TrollStore-arm64.ipa" \
+            --logs "$iphone" \
+            --out "$out/KaguraLab-seven-pass-evidence.json"
+          shasum -a 256 "$iphone/plain.o" "$iphone/protected.o" \
+            "$iphone/KaguraLab.app/KaguraLab" > "$iphone/binary-sha256.txt"
+          echo "Kagura iOS: unsigned arm64 MH_EXECUTE with plain + seven LLVM passes." >> "$GITHUB_STEP_SUMMARY"
+          echo "KaguraLab-TrollStore-arm64.ipa: manual TrollStore import; device runtime NOT TESTED BY CI." >> "$GITHUB_STEP_SUMMARY"
+          echo "arm64e: Apple Clang build/audit ONLY, no A12+ device runtime." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload isolated Kagura IR and Mach-O evidence
         if: always()

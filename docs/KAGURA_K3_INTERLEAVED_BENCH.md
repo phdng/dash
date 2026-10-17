@@ -73,5 +73,8 @@ allowlist strict bên trong Kagura.
 
 Khi artifact K3 đạt PASS, so sánh với [K2a artifact](KAGURA_K2_ARTIFACT_REVIEW.md)
 để nhận diện độ ổn định của BBR/BBS; sau đó mới xây IPA arm64 riêng để
-kiểm thử Kagura thực trên iPhone TrollStore. `arm64e` chỉ Apple Clang
+kiểm thử Kagura thực trên iPhone TrollStore. Đã chuẩn bị
+[IPA KaguraLab mới](KAGURA_IOS_TROLLSTORE_PILOT.md) để chạy sau khi
+CI biên dịch/link thành công; **chưa có Kagura on-device PASS**.
+`arm64e` chỉ Apple Clang
 build/link/ABI/UUID, không yêu cầu A12+ runtime tại giai đoạn này.

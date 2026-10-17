@@ -6,8 +6,17 @@
    literal removal can be measured in actual Mach-O objects. */
 static const char dd_public_marker[] = "DD_KAGURA_PUBLIC_CANARY_CE_STRING_V1";
 
+/* Compile the *same source* twice in the separate iOS IPA pilot:
+ * -DDD_KAGURA_ENTRY=dd_kagura_plain for baseline and
+ * -DDD_KAGURA_ENTRY=dd_kagura_protected before actual opt passes.
+ * The original K0/K1 benchmark symbol remains the default.
+ */
+#ifndef DD_KAGURA_ENTRY
+#define DD_KAGURA_ENTRY dd_kagura_critical
+#endif
+
 __attribute__((noinline, used))
-uint64_t dd_kagura_critical(uint64_t x, uint64_t salt) {
+uint64_t DD_KAGURA_ENTRY(uint64_t x, uint64_t salt) {
     const volatile unsigned char *bytes =
         (const volatile unsigned char *)dd_public_marker;
     uint64_t acc = x ^ salt ^ UINT64_C(0x6a09e667f3bcc909);

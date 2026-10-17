@@ -164,6 +164,11 @@
     "k3_interleaved_benchmark_status": "STAGED_NOT_VERIFIED_MACOS_NATIVE",
     "k3_balanced_rounds": 16,
     "k3_samples_per_variant": 176,
+    "ios_arm64_kagura_trollstore_pilot": "STAGED_CI_BUILD_NOT_YET_VERIFIED",
+    "ios_arm64_kagura_pilot_workflow": ".github/workflows/kagura-max-candidate.yml",
+    "ios_arm64_kagura_pilot_ipa": "KaguraLab-TrollStore-arm64.ipa",
+    "ios_arm64_kagura_pilot_pipeline": ["str", "fla", "bcf", "sub", "co", "bbr", "bbs"],
+    "ios_arm64_kagura_pilot_on_device": "NOT_TESTED",
     "production_merge": false,
     "arm64e_pac_runtime": "DEFERRED_NO_A12_DEVICE"
   },

@@ -1,0 +1,103 @@
+name: KaguraLab - Real LLVM19 arm64 TrollStore IPA (Experimental)
+
+# Standalone/manual-only: never changes Crane, signs or installs anything.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  kaguralab-ipa:
+    runs-on: macos-14
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify separate UIKit IPA, LLVM passes and negative contracts
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_ios_ipa.py
+          python3 scripts/test_kagura_max_candidate.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+
+      - name: Compile pinned MIT Kagura plugin using LLVM19
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          echo "KAGURA_LLVM=$llvm" >> "$GITHUB_ENV"
+          src="$RUNNER_TEMP/kagura-ipa-source"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          cmake -S "$src" -B "$RUNNER_TEMP/kagura-ipa-build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$RUNNER_TEMP/kagura-ipa-build" --parallel 3
+          plugin="$(find "$RUNNER_TEMP/kagura-ipa-build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          echo "KAGURA_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Build actual arm64 KaguraLab executable and TrollStore IPA
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/KaguraLab-IPA"
+          mkdir -p "$out"
+          echo "KAGURA_IPA_OUT=$out" >> "$GITHUB_ENV"
+          bash scripts/custom_ollvm/kagura_max/build_ipa.sh \
+            "$KAGURA_LLVM" "$KAGURA_PLUGIN" "$out"
+          test -s "$out/KaguraLab-TrollStore-arm64.ipa"
+          test -s "$out/KaguraLab-seven-pass-evidence.json"
+          echo 'KaguraLab arm64 IPA with seven actual LLVM passes: compiled and structurally audited.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'TrollStore import/on-device parity: NOT TESTED BY CI.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Audit independent Apple Clang arm64e build-only PAC userspace ABI
+        run: |
+          set -euo pipefail
+          dir="$GITHUB_WORKSPACE/scripts/custom_ollvm/kagura_max"
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          out="$KAGURA_IPA_OUT"
+          xcrun clang -std=c11 -O1 -target arm64e-apple-ios15.0 \
+            -isysroot "$sdk" -dynamiclib "$dir/critical.c" \
+            -o "$out/AppleClang-arm64e-BUILD-ONLY.dylib"
+          python3 - "$out/AppleClang-arm64e-BUILD-ONLY.dylib" <<'PY'
+          import struct, sys
+          from pathlib import Path
+          data = Path(sys.argv[1]).read_bytes()
+          assert len(data) >= 32
+          assert struct.unpack_from("<IIII", data) == (
+              0xFEEDFACF, 0x0100000C, 0x80000002, 6
+          ), "Invalid versioned userspace PAC ABI"
+          PY
+          xcrun dwarfdump --uuid "$out/AppleClang-arm64e-BUILD-ONLY.dylib" \
+            > "$out/arm64e-build-only-uuid.txt"
+          grep -q 'arm64e' "$out/arm64e-build-only-uuid.txt"
+          echo 'arm64e Apple Clang strict ABI+UUID build PASS, A12+ runtime DEFERRED.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload installable-format IPA and exact native pass evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: KaguraLab-TrollStore-arm64-LLVM19-SEVEN-PASSES
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/KaguraLab-IPA/KaguraLab-TrollStore-arm64.ipa
+            ${{ runner.temp }}/KaguraLab-IPA/KaguraLab-TrollStore-report.json
+            ${{ runner.temp }}/KaguraLab-IPA/KaguraLab-seven-pass-evidence.json
+            ${{ runner.temp }}/KaguraLab-IPA/plain.o
+            ${{ runner.temp }}/KaguraLab-IPA/protected.o
+            ${{ runner.temp }}/KaguraLab-IPA/pass-*.log
+            ${{ runner.temp }}/KaguraLab-IPA/object-binary-sha256.txt
+            ${{ runner.temp }}/KaguraLab-IPA/macho-arm64.txt
+            ${{ runner.temp }}/KaguraLab-IPA/app-symbols.txt
+            ${{ runner.temp }}/KaguraLab-IPA/AppleClang-arm64e-BUILD-ONLY.dylib
+            ${{ runner.temp }}/KaguraLab-IPA/arm64e-build-only-uuid.txt
