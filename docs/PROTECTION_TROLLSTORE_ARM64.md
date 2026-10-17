@@ -1,7 +1,9 @@
 # Protection Lab — TrollStore trên arm64; arm64e chỉ build/audit
 
 **Phạm vi đã thống nhất:** thiết bị hiện tại có TrollStore và chưa có
-thiết bị A12+. Vì vậy, **arm64 được phép thử cài IPA bằng TrollStore**;
+thiết bị A12+. Người dùng đã xác nhận **ứng dụng cài được và mở hoạt động
+ổn** trên máy hiện tại; điều này chưa đồng nghĩa 4 x 8.192 vector đã PASS.
+Vì vậy, **arm64 được phép thử cài IPA bằng TrollStore**;
 **arm64e chỉ cần Apple Clang compile/link PASS và kiểm tra Mach-O/UUID**
 trong CI. Không có điều kiện chạy thật trên A12+ cho workflow này.
 
@@ -38,11 +40,19 @@ tại phải chạy iOS 15 trở lên, và TrollStore phải tương thích đú
 bản iOS đang dùng. Nếu bạn sử dụng iOS 14, bản IPA này chưa phù hợp
 deployment target; không tự nhận là tương thích.
 
-Sau khi app mở, có thể bấm **Run 4 suites × 8192** để thử các hàm
-VM/CE/ICALL/IGV/IBR/ObjC trên `arm64`, và xuất ba báo cáo riêng
+Sau khi app mở, bấm **Run 4 suites × 8192** để thử các hàm
+VM/CE/ICALL/IGV/IBR/ObjC trên `arm64`. Bản UI mới báo lần lượt
+**VM (1/4), CE/ICALL (2/4), IGV/IBR (3/4), Objective-C/ARC (4/4)** và
+chỉ báo **Runtime: PASS (4/4)** khi toàn bộ bài thử thực sự hoàn tất.
+Sau đó có thể xuất ba báo cáo riêng
 (7 dòng chức năng, 7 dòng LC_UUID/model/iOS, tùy chọn 17 dòng benchmark).
 Các báo cáo chỉ có giá trị trên đúng thiết bị, binary và iOS được thử.
-Nếu chưa cài/chạy, trạng thái vẫn là `NOT_TESTED`.
+Nếu chưa bấm Run hoặc chưa có log, trạng thái test vẫn là `NOT TESTED`.
+**Đã sửa lỗi cũ:** nhánh xuất LC_UUID trước dùng chuỗi dấu xuống dòng
+bị escape hai lần nên có thể không tạo báo cáo identity dù chức năng
+PASS. Bản mới dùng một hàm kiểm tra PASS chung cho identity, UI và
+benchmark; báo cáo 7/7/17 dòng không đổi. CI kiểm thử nguồn mới,
+nhưng app sau sửa **chưa được build/cài lại** tại đây.
 
 ## Chính sách arm64e khi chưa có A12+
 

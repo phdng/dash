@@ -4,7 +4,10 @@
 
 ## Thứ mới triển khai
 
-- Giao diện UIKit có nút **Run 4 suites × 8192**, **Measure overhead
+- Giao diện UIKit có trạng thái **App launched · Runtime: NOT TESTED**,
+  tiến độ từng nhóm (1/4 đến 4/4) và trạng thái **PASS/FAILED** riêng.
+  **App mở được không được tính là các suite PASS.**
+- Giao diện có nút **Run 4 suites × 8192**, **Measure overhead
   (optional)** và **Share result text**; ban đầu hiển thị **NOT TESTED**,
   không tự chạy khi khởi động. Nút đo overhead **chỉ bật sau khi** bốn
   bộ kiểm tra chức năng PASS.
@@ -35,7 +38,12 @@ Benchmark tùy chọn đo 5 cặp native/protected, mỗi cặp 20.000 lời g�
 chia sẻ riêng, không gộp vào 7 dòng runtime. Chi tiết tại
 [PROTECTION_PERFORMANCE.md](PROTECTION_PERFORMANCE.md).
 
-**Sprint identity mới:** Sau khi chức năng PASS, nút Share có mục riêng
+**Đã sửa điều kiện xuất identity:** trước đây một nhánh dùng dấu xuống
+dòng `\\n` (hai dấu backslash ở source) nên không nhận ra báo cáo
+PASS hợp lệ. Bản mới dùng cùng hàm `DDValidationPassed` để quyết định
+identity share, benchmark và màu/trạng thái. Các báo cáo vẫn tách riêng.
+
+**Sprint identity:** Sau khi chức năng PASS, nút Share có mục riêng
 **Share binary identity / OS model**, tạo 7 dòng gồm UUID Mach-O đang
 được loader nạp, ABI, model và phiên bản iOS. CI còn xuất
 `build-identity.json` để so UUID arm64/arm64e đúng slice. UUID và log

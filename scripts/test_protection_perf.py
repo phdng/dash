@@ -143,7 +143,8 @@ for required in (
 ):
     assert required in ui, required
 assert ui.index("DD_RUNTIME_COMPLETE=PASS") < ui.index("startBenchmark")
-assert ui.index("DD_RUNTIME_ERROR=OBJC_CE") < ui.index("DD_RUNTIME_COMPLETE=PASS")
+validation = ui.split("static NSString *DDRunValidation(", 1)[1].split("static NSString *DDRunPerformance(", 1)[0]
+assert validation.index("DD_RUNTIME_ERROR=OBJC_CE") < validation.index("DD_RUNTIME_COMPLETE=PASS")
 assert "NSString *result = DDRunPerformance(abi);" in ui
 assert "if (self.running || !self.benchmarkButton.enabled ||" in ui
 

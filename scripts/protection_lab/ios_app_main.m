@@ -125,7 +125,14 @@ static BOOL DDNSStringParity(void) {
     return YES;
 }
 
-static NSString *DDRunValidation(void) {
+/* A launchable app is not a completed parity run. Emit only UI progress;
+ * the strict seven-line machine report remains unchanged.
+ */
+static BOOL DDValidationPassed(NSString *result) {
+    return [result hasSuffix:@"DD_RUNTIME_COMPLETE=PASS\n"];
+}
+
+static NSString *DDRunValidation(void (^progress)(NSString *)) {
     NSMutableArray<NSString *> *lines = [NSMutableArray array];
     [lines addObject:@"DD_RUNTIME_CONTEXT=IOS_DEVICE"];
     NSString *abi = DDRuntimeABI();
@@ -137,21 +144,25 @@ static NSString *DDRunValidation(void) {
 
     /* The existing suites print to stdout/stderr as well; only this
      * structured UI report is exported through the system share sheet. */
+    if (progress) progress(@"Testing VM (1/4)");
     if (!dd_device_test_vm()) {
         [lines addObject:@"DD_RUNTIME_ERROR=VM"];
         return [lines componentsJoinedByString:@"\n"];
     }
     [lines addObject:@"DD_RUNTIME_VM_PASS=8192"];
+    if (progress) progress(@"Testing CE/ICALL (2/4)");
     if (!dd_device_test_ce_icall()) {
         [lines addObject:@"DD_RUNTIME_ERROR=CE_ICALL"];
         return [lines componentsJoinedByString:@"\n"];
     }
     [lines addObject:@"DD_RUNTIME_CE_ICALL_PASS=8192"];
+    if (progress) progress(@"Testing IGV/IBR (3/4)");
     if (!dd_device_test_igv_ibr()) {
         [lines addObject:@"DD_RUNTIME_ERROR=IGV_IBR"];
         return [lines componentsJoinedByString:@"\n"];
     }
     [lines addObject:@"DD_RUNTIME_IGV_IBR_PASS=8192"];
+    if (progress) progress(@"Testing Objective-C/ARC (4/4)");
     if (!DDNSStringParity()) {
         [lines addObject:@"DD_RUNTIME_ERROR=OBJC_CE"];
         return [lines componentsJoinedByString:@"\n"];
@@ -173,6 +184,7 @@ static NSString *DDRunPerformance(NSString *abi) {
 }
 
 @interface DDProtectionLabViewController : UIViewController
+@property(nonatomic, strong) UILabel *runtimeStatusLabel;
 @property(nonatomic, strong) UITextView *reportView;
 @property(nonatomic, strong) UIButton *runButton;
 @property(nonatomic, strong) UIButton *benchmarkButton;
@@ -201,6 +213,12 @@ static NSString *DDRunPerformance(NSString *abi) {
     note.textColor = [UIColor secondaryLabelColor];
     note.numberOfLines = 0;
     note.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+
+    self.runtimeStatusLabel = [[UILabel alloc] init];
+    self.runtimeStatusLabel.text = @"App launched · Runtime: NOT TESTED";
+    self.runtimeStatusLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
+    self.runtimeStatusLabel.numberOfLines = 0;
+    self.runtimeStatusLabel.textColor = [UIColor secondaryLabelColor];
 
     self.runButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [self.runButton setTitle:@"Run 4 suites × 8192" forState:UIControlStateNormal];
@@ -234,7 +252,7 @@ static NSString *DDRunPerformance(NSString *abi) {
     scroll.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:scroll];
     UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:@[
-        heading, note, self.runButton, self.benchmarkButton,
+        heading, note, self.runtimeStatusLabel, self.runButton, self.benchmarkButton,
         self.shareButton, self.reportView
     ]];
     stack.axis = UILayoutConstraintAxisVertical;
@@ -265,11 +283,17 @@ static NSString *DDRunPerformance(NSString *abi) {
     self.runButton.enabled = NO;
     self.benchmarkButton.enabled = NO;
     self.shareButton.enabled = NO;
+    self.runtimeStatusLabel.text = @"Runtime: RUNNING (0/4)";
+    self.runtimeStatusLabel.textColor = [UIColor secondaryLabelColor];
     self.reportView.text = @"RUNNING — checking ABI, C/VM, CE/ICALL, IGV/IBR, NSString/ARC...";
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-        NSString *result = DDRunValidation();
-        NSString *identity = [result hasSuffix:@"DD_RUNTIME_COMPLETE=PASS\\n"] ?
-            DDRunEvidence(DDRuntimeABI()) : nil;
+        NSString *result = DDRunValidation(^(NSString *stage) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.runtimeStatusLabel.text = stage;
+            });
+        });
+        BOOL passed = DDValidationPassed(result);
+        NSString *identity = passed ? DDRunEvidence(DDRuntimeABI()) : nil;
         dispatch_async(dispatch_get_main_queue(), ^{
             self.evidenceReport = identity;
             self.report = result;
@@ -277,22 +301,25 @@ static NSString *DDRunPerformance(NSString *abi) {
             self.running = NO;
             self.runButton.enabled = YES;
             self.shareButton.enabled = YES;
-            self.benchmarkButton.enabled =
-                [result hasSuffix:@"DD_RUNTIME_COMPLETE=PASS\n"];
-            self.reportView.textColor =
-                [result hasSuffix:@"DD_RUNTIME_COMPLETE=PASS\n"] ?
-                    [UIColor labelColor] : [UIColor systemRedColor];
+            self.benchmarkButton.enabled = passed;
+            self.runtimeStatusLabel.text = passed ?
+                @"Runtime: PASS (4/4)" : @"Runtime: FAILED / INCOMPLETE — see report";
+            self.runtimeStatusLabel.textColor = passed ?
+                [UIColor labelColor] : [UIColor systemRedColor];
+            self.reportView.textColor = passed ?
+                [UIColor labelColor] : [UIColor systemRedColor];
         });
     });
 }
 
 - (void)startBenchmark {
     if (self.running || !self.benchmarkButton.enabled ||
-        ![self.report hasSuffix:@"DD_RUNTIME_COMPLETE=PASS\n"]) return;
+        !DDValidationPassed(self.report)) return;
     self.running = YES;
     self.runButton.enabled = NO;
     self.benchmarkButton.enabled = NO;
     self.shareButton.enabled = NO;
+    self.runtimeStatusLabel.text = @"Runtime: PASS (4/4) · Benchmark: RUNNING";
     self.reportView.text = @"MEASURING — five pairs, 20,000 calls x 5 repeats.\n"
                             @"Observational only; results vary with thermal state.";
     NSString *abi = DDRuntimeABI();
@@ -304,6 +331,9 @@ static NSString *DDRunPerformance(NSString *abi) {
             self.shareButton.enabled = YES;
             self.benchmarkButton.enabled = YES;
             self.performanceReport = result;
+            self.runtimeStatusLabel.text = result ?
+                @"Runtime: PASS (4/4) · Benchmark: RECORDED" :
+                @"Runtime: PASS (4/4) · Benchmark: FAILED";
             self.reportView.text = result ?
                 [NSString stringWithFormat:@"%@\n--- BENCHMARK (observation only) ---\n%@",
                                            self.report, result] :

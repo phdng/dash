@@ -65,9 +65,14 @@ stages = (
     "DD_RUNTIME_OBJC_CE_PASS=8192",
     "DD_RUNTIME_COMPLETE=PASS",
 )
-assert [src.index(x) for x in stages] == sorted(src.index(x) for x in stages)
-assert src.index("DD_RUNTIME_ERROR=ARCH_OR_PAC_ABI_MISMATCH") < src.index(stages[0])
-assert src.count("DD_RUNTIME_COMPLETE=PASS") >= 3  # proof + UI gates (includes opt-in benchmark)
+validation = src.split("static NSString *DDRunValidation(", 1)[1].split("static NSString *DDRunPerformance(", 1)[0]
+assert [validation.index(x) for x in stages] == sorted(validation.index(x) for x in stages)
+assert validation.index("DD_RUNTIME_ERROR=ARCH_OR_PAC_ABI_MISMATCH") < validation.index(stages[0])
+# One canonical PASS predicate and one actual success marker. The same
+# predicate must control identity export and the optional benchmark.
+assert src.count("DD_RUNTIME_COMPLETE=PASS") == 2
+assert "BOOL passed = DDValidationPassed(result);" in src
+assert "passed ? DDRunEvidence(DDRuntimeABI()) : nil;" in src
 assert src.index("DD_RUNTIME_COMPLETE=PASS") < src.index("UIActivityViewController")
 assert "NOT TESTED" in src
 for forbidden in (

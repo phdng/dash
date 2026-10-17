@@ -97,6 +97,15 @@ Ngày cập nhật: 2026-10-17. Trạng thái: **Sprint P0/P1 prototype đã có
   `a12_plus_device_runtime=DEFERRED_NO_DEVICE`. Khi có thiết bị mới quay
   lại kiểm tra arm64e runtime. Xem
   [PROTECTION_TROLLSTORE_ARM64.md](PROTECTION_TROLLSTORE_ARM64.md).
+- **Post-install QA trên TrollStore (2026-10-17):** người dùng xác nhận
+  app đã cài và mở hoạt động ổn trên thiết bị arm64, **chưa cung cấp log
+  chứng minh bốn suite x 8.192 PASS**. Đã sửa điều kiện export identity
+  sử dụng `DD_RUNTIME_COMPLETE=PASS` với newline sai thành helper chung
+  `DDValidationPassed`, thêm progress label thực tế VM→CE/ICALL→IGV/IBR
+  →ObjC/ARC và trạng thái NOT TESTED/RUNNING/PASS/FAILED. New
+  `scripts/test_ios_postinstall_ui.py` chặn regression newline escape đôi,
+  bảo vệ log 7/7/17 dòng; workflow UIKit chạy test này khi build.
+  Arm64e vẫn chỉ Apple Clang build+ABI/UUID, A12+ runtime hoãn.
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 

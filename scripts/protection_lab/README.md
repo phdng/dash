@@ -294,6 +294,21 @@ PAC runtime hay mức độ chống reverse engineering.
   traversal, SHA cross-report; CI vẫn độc lập Crane OLLVM STRONG.
 - Tài liệu: [PROTECTION_TROLLSTORE_ARM64.md](../../docs/PROTECTION_TROLLSTORE_ARM64.md).
 
+## Sprint post-install QA: test thực sự PASS khác với app mở được
+
+Người dùng xác nhận app đã cài được qua TrollStore và mở chạy ổn trên
+máy arm64 hiện tại. Điều này chưa xác minh toàn bộ 4 x 8.192 vector.
+UI mới có status `NOT TESTED`, `RUNNING` theo từng nhóm và `PASS (4/4)`
+hoặc `FAILED/INCOMPLETE` từ **cùng kết quả** làm nguồn cho log 7 dòng.
+Đã sửa điều kiện LC_UUID identity report bị kiểm tra chuỗi
+`DD_RUNTIME_COMPLETE=PASS\\\\n` sai (literal backslash + n), gom
+về `DDValidationPassed` dùng đúng một ký tự xuống dòng và tái sử dụng
+cho việc bật benchmark, màu UI và xuất report.
+Regression mới `scripts/test_ios_postinstall_ui.py` bắt lỗi escape đôi,
+kiểm tra thứ tự bốn stage, callback main queue và cách share tách biệt.
+**Chưa chạy lại build Xcode/iPhone của bản sửa trong phiên Windows**.
+`arm64e` vẫn chỉ build + ABI/UUID audit PASS, không có A12+ test.
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker
