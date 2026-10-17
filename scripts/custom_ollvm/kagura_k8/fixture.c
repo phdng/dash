@@ -12,6 +12,12 @@
 
 /* GENC requires a private/internal *constant* integer global with a load.
  * The indexing is runtime-variable so LLVM cannot fold away the load. */
+/* GENC's current collectEligibleGlobals() sees direct LoadInst users,
+ * not runtime-index GEP instructions. An explicitly volatile load from a
+ * PRIVATE constant scalar guarantees a direct load from the global in O1
+ * without weakening the optimizer for the other four passes. */
+static const uint64_t dd_k8_genc_scalar = UINT64_C(0x58d01a9f47e362bc);
+
 static const uint64_t dd_k8_table[8] = {
     UINT64_C(0x10939a2b377a5a03), UINT64_C(0xc35e91d487f0a217),
     UINT64_C(0x7f4a1d6652d9b188), UINT64_C(0xe91c3b025478fad1),
@@ -34,10 +40,16 @@ DD_NOINLINE uint64_t dd_k8_evaluate(uint64_t n, uint64_t salt) {
         (char)('a' + (salt & 7U)), 'Z', '\0'
     };
     const size_t length = strlen(token);
-    /* Volatile integer alloca preserves a genuine stack load/store at -O1
-     * for MVO, without forcing -O0/optnone on the whole module. */
+    /* Volatile local for MVO; on LLVM19 -O1 is NOT guaranteed to leave
+     * direct alloca/load/store-only users after optimizer passes.
+     * pilot.py recompiles this fixture ONLY for MVO at -O0 with
+     * -Xclang -disable-O0-optnone, and validates eligibility before opt.
+     * Its plain/protected object comparison uses this SAME O0 baseline. */
     volatile uint64_t box = dd_k8_internal(n ^ salt, (uint64_t)length);
-    uint64_t r = box ^ dd_k8_table[(n ^ (salt >> 3)) & 7U];
+    const uint64_t direct_global_load =
+        *(const volatile uint64_t *)&dd_k8_genc_scalar;
+    uint64_t r = box ^ dd_k8_table[(n ^ (salt >> 3)) & 7U] ^
+                 direct_global_load;
     /* Several control-flow blocks with safe direct calls for FSPLIT. */
     if (n & 1U) r ^= dd_k8_internal(r, n);
     if (n & 2U) r += dd_k8_internal(r, salt);

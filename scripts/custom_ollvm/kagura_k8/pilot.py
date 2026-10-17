@@ -80,12 +80,80 @@ def validate_delta(name: str, before_ir: str, after_ir: str,
         if ".mvo" not in after_ir or "store volatile" not in before_ir:
             raise AssertionError("K8 MVO needs real volatile alloca XOR")
     elif name == "genc":
-        if "@dd_k8_table" not in before_ir or ".dec" not in after_ir:
-            raise AssertionError("K8 GENC did not encrypt eligible private constant")
+        validate_genc_input_ir(before_ir)
+        if ".dec" not in after_ir:
+            raise AssertionError("K8 GENC did not decode encrypted constant")
     elif name == "fsplit":
         if len(functions(after_ir) - functions(before_ir)) < 1:
             raise AssertionError("K8 FSPLIT did not outline a new function")
     return {"new_functions": sorted(functions(after_ir) - functions(before_ir))}
+
+
+def validate_mvo_input_ir(ir: str) -> None:
+    """Require a direct integer alloca with only load/store users.
+
+    The pinned MVO transform skips escaped pointers (including ones passed
+    to llvm.lifetime). A lifetime intrinsic on an *unrelated* alloca is not
+    a reason to reject the entire module. This is a preflight; LLVM's pass
+    remains the final authority and IR + object deltas must still be real.
+    """
+    if "optnone" in ir:
+        raise AssertionError("K8 MVO O0 fixture accidentally has optnone")
+    lines = ir.splitlines()
+    allocas = re.findall(
+        r"(?m)^\s*(%[A-Za-z0-9_.$-]+) = alloca i64(?:,|$)", ir)
+    for ptr in allocas:
+        # Check uses of this exact alloca, not text from unrelated locals.
+        reference = re.compile(
+            r"(?<![A-Za-z0-9_.$-])" + re.escape(ptr) +
+            r"(?![A-Za-z0-9_.$-])")
+        definition = re.compile(
+            r"^\s*" + re.escape(ptr) + r" = alloca i64(?:,|$)")
+        store = re.compile(
+            r"^\s*store volatile i64 .+, ptr " +
+            re.escape(ptr) + r"(?:,|$)")
+        load = re.compile(
+            r"^\s*%[A-Za-z0-9_.$-]+ = load volatile i64, ptr " +
+            re.escape(ptr) + r"(?:,|$)")
+        stores = 0
+        loads = 0
+        escaped = False
+        for line in lines:
+            if definition.match(line) or not reference.search(line):
+                continue
+            if store.match(line):
+                stores += 1
+            elif load.match(line):
+                loads += 1
+            else:
+                escaped = True  # call/lifetime, GEP, alias or storing pointer
+                break
+        if stores and loads and not escaped:
+            return
+    raise AssertionError(
+        "K8 MVO input lacks eligible direct volatile i64 alloca/load/store; "
+        "no-op pass is not accepted")
+
+
+def validate_genc_input_ir(ir: str) -> None:
+    """GENC pinned compiler only finds a direct load of a private constant.
+
+    Runtime-indexed array GEPs at O1 can bypass the upstream
+    hasLoadUseInFunction() filter even if the array exists and is used.
+    A scalar read via a volatile-qualified lvalue guarantees a LoadInst
+    whose pointer operand is the constant global itself.
+    """
+    if not re.search(
+        r"(?m)^@dd_k8_genc_scalar = (?:private|internal)[^\n]*\bconstant i64\b",
+        ir
+    ) or not re.search(
+        r"(?m)^\s*%[A-Za-z0-9_.$-]+ = load volatile i64, "
+        r"ptr @dd_k8_genc_scalar(?:,|$)",
+        ir
+    ):
+        raise AssertionError(
+            "K8 GENC input lacks direct volatile LoadInst of private "
+            "constant integer global; no-op pass is not accepted")
 
 
 def validate_native_output(raw: str) -> str:
@@ -161,6 +229,7 @@ def run(*, llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
     plain_log.write_text(command([str(plain_exe)]), encoding="ascii")
     digest = validate_native_output(plain_log.read_text(encoding="ascii"))
     plain_text = plain_ir.read_text(encoding="utf-8")
+    validate_genc_input_ir(plain_text)
     ios_plain_bc = out / "ios-plain.bc"
     ios_plain_obj = out / "ios-plain.o"
     command([clang, *fixture_opts, "-target", "arm64-apple-ios15.0",
@@ -170,6 +239,46 @@ def run(*, llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
              "-isysroot", sdk_ios, "-c", str(ios_plain_bc),
              "-o", str(ios_plain_obj)])
     verify_apple_arm64_object(ios_plain_obj.read_bytes())
+    ios_plain_ir = out / "ios-plain.ll"
+    command([dis, str(ios_plain_bc), "-o", str(ios_plain_ir)])
+    validate_genc_input_ir(ios_plain_ir.read_text(encoding="utf-8"))
+
+    # MVO needs *direct* integer alloca users (load/store only). LLVM -O1
+    # can promote/remove that alloca or retain lifetime intrinsics that the
+    # pinned upstream conservatively treats as escaping the pointer.
+    # Compile only this fixture again at O0 with optnone explicitly disabled.
+    # Both MVO baseline and transformed module use identical LLVM19 flags.
+    mvo_flags = ["-O0", "-Xclang", "-disable-O0-optnone",
+                 *fixture_opts[1:]]
+    mvo_host_bc = out / "mvo-plain.bc"
+    mvo_host_ir = out / "mvo-plain.ll"
+    mvo_host_obj = out / "mvo-plain.o"
+    command([clang, *mvo_flags, "-isysroot", sdk_mac,
+             "-emit-llvm", "-c", fixture, "-o", str(mvo_host_bc)])
+    command([dis, str(mvo_host_bc), "-o", str(mvo_host_ir)])
+    mvo_text = mvo_host_ir.read_text(encoding="utf-8")
+    validate_mvo_input_ir(mvo_text)
+    emit_native(mvo_host_bc, mvo_host_obj)
+    mvo_host_exe = out / "mvo-plain"
+    command(["xcrun", "clang", str(mvo_host_obj), str(runner_obj),
+             "-o", str(mvo_host_exe)])
+    mvo_host_log = out / "mvo-plain-native.log"
+    mvo_host_log.write_text(command([str(mvo_host_exe)]), encoding="ascii")
+    if mvo_host_log.read_bytes() != plain_log.read_bytes():
+        raise AssertionError("K8 MVO O0 baseline mismatches O1 reference")
+
+    mvo_ios_bc = out / "mvo-ios-plain.bc"
+    mvo_ios_ir = out / "mvo-ios-plain.ll"
+    mvo_ios_obj = out / "mvo-ios-plain.o"
+    command([clang, *mvo_flags, "-target", "arm64-apple-ios15.0",
+             "-isysroot", sdk_ios, "-emit-llvm", "-c", fixture,
+             "-o", str(mvo_ios_bc)])
+    command([dis, str(mvo_ios_bc), "-o", str(mvo_ios_ir)])
+    validate_mvo_input_ir(mvo_ios_ir.read_text(encoding="utf-8"))
+    command([clang, "-O0", "-target", "arm64-apple-ios15.0",
+             "-isysroot", sdk_ios, "-c", str(mvo_ios_bc),
+             "-o", str(mvo_ios_obj)])
+    verify_apple_arm64_object(mvo_ios_obj.read_bytes())
     report = {
         "schema": 1, "scope": "K8_PINNED_KAGURA_FIVE_PASS_ISOLATED_CI",
         "pinned_commit": PIN, "pass_count": len(CANDIDATES),
@@ -180,12 +289,25 @@ def run(*, llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
         "host_vectors_per_pass": VECTORS, "host_digest": digest,
         "baseline_object_sha256": sha(plain_obj),
         "ios_baseline_object_sha256": sha(ios_plain_obj),
+        "mvo_baseline_profile": "O0_DISABLE_OPTNONE_DIRECT_INTEGER_ALLOCA",
+        "mvo_baseline_object_sha256": sha(mvo_host_obj),
+        "mvo_ios_baseline_object_sha256": sha(mvo_ios_obj),
+        "mvo_baseline_parity_with_o1": "PASS",
         "iphone_runtime_executed": False, "arm64e_executed": False,
         "crane_production_modified": False,
         "performance_evaluated": False,
         "candidate_results": {},
     }
     for name, (kind, cls, pipeline) in CANDIDATES.items():
+        # All candidate comparisons are against their *own same-flags*
+        # plain module/object. Never compare transformed -O0 to plain -O1:
+        # that would fabricate an "IR/object changed" pass result.
+        host_input = mvo_host_bc if name == "mvo" else plain_bc
+        host_before_ir = mvo_text if name == "mvo" else plain_text
+        host_before_obj = mvo_host_obj if name == "mvo" else plain_obj
+        ios_input = mvo_ios_bc if name == "mvo" else ios_plain_bc
+        ios_before_ir = mvo_ios_ir if name == "mvo" else ios_plain_ir
+        ios_before_obj = mvo_ios_obj if name == "mvo" else ios_plain_obj
         stage = out / name
         stage.mkdir(exist_ok=True)
         candidate_bc = stage / "protected.bc"
@@ -194,11 +316,12 @@ def run(*, llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
         trace = stage / "opt.log"
         command([opt, f"--load-pass-plugin={plugin}", f"-kagura-seed={SEED}",
                  f"-kagura-{name}", "-debug-pass-manager", f"-passes={pipeline},verify",
-                 str(plain_bc), "-o", str(candidate_bc)], log=trace)
+                 str(host_input), "-o", str(candidate_bc)], log=trace)
         command([dis, str(candidate_bc), "-o", str(candidate_ir)])
         emit_native(candidate_bc, candidate_obj)
         ir = candidate_ir.read_text(encoding="utf-8")
-        change = validate_delta(name, plain_text, ir, plain_obj.read_bytes(),
+        change = validate_delta(name, host_before_ir, ir,
+                                host_before_obj.read_bytes(),
                                 candidate_obj.read_bytes(), trace.read_text("utf-8"))
         exe = stage / "protected"
         link = ["xcrun", "clang", str(candidate_obj), str(runner_obj)]
@@ -215,18 +338,23 @@ def run(*, llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
         ios_trace = stage / "ios-opt.log"
         command([opt, f"--load-pass-plugin={plugin}", f"-kagura-seed={SEED}",
                  f"-kagura-{name}", "-debug-pass-manager", f"-passes={pipeline},verify",
-                 str(ios_plain_bc), "-o", str(ios_bc)], log=ios_trace)
+                 str(ios_input), "-o", str(ios_bc)], log=ios_trace)
         command([dis, str(ios_bc), "-o", str(ios_ir)])
         command([clang, "-O0", "-target", "arm64-apple-ios15.0",
                  "-isysroot", sdk_ios, "-c", str(ios_bc), "-o", str(ios_obj)])
         verify_apple_arm64_object(ios_obj.read_bytes())
         validate_delta(name,
-                       command([dis, str(ios_plain_bc), "-o", "-"]),
-                       ios_ir.read_text("utf-8"), ios_plain_obj.read_bytes(),
+                       ios_before_ir.read_text("utf-8"),
+                       ios_ir.read_text("utf-8"), ios_before_obj.read_bytes(),
                        ios_obj.read_bytes(), ios_trace.read_text("utf-8"))
         report["candidate_results"][name] = {
             "registered_kind": kind, "llvm_pass_class": cls,
             "opt_pipeline": pipeline, "pass_invoked": True,
+            "baseline_compiler_profile": (
+                "O0_DISABLE_OPTNONE_DIRECT_INTEGER_ALLOCA"
+                if name == "mvo" else "O1"),
+            "baseline_host_object_sha256": sha(host_before_obj),
+            "baseline_ios_object_sha256": sha(ios_before_obj),
             "ir_and_native_object_changed": True,
             "native_4096_vector_parity": "PASS",
             "native_digest": digest,

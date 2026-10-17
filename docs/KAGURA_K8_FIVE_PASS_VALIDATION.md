@@ -63,6 +63,51 @@ Workflow thủ công, **không có push/PR**:
   không còn đủ điều kiện cho FSPLIT), rồi mới thử matrix với
   giai đoạn/điều kiện rõ ràng.
 
+## Sửa lỗi CI K8 MVO no-op (2026-10-17)
+
+GitHub Actions báo:
+`AssertionError: K8 mvo: invoked pass but no real IR/object delta`.
+Đây là lỗi **fixture MVO không tạo được bằng chứng biến đổi**, không
+được gọi là MVO PASS. Mã nguồn Kagura upstream MVO chỉ chọn các
+`alloca i8/i16/i32/i64` có sử dụng trực tiếp trong `load/store`,
+không escape qua `llvm.lifetime`, call, GEP hoặc alias. Trong lần CI
+đã báo lỗi, `-O1` chưa cung cấp đầu vào MVO có tác dụng. Không
+có artifact `plain.ll` và `mvo/opt.log` riêng được gửi để xác
+định chính xác biến nào bị optimizer loại bỏ; nguyên nhân cụ thể
+trong LLVM IR cần quan sát ở lần CI kế tiếp.
+
+Cập nhật `pilot.py`: chỉ với **MVO**, biên dịch lại **cùng fixture**
+bằng LLVM19 `-O0 -Xclang -disable-O0-optnone`; xác minh một
+`alloca i64` có `store volatile` + `load volatile` trực tiếp,
+không có pointer use khác trên chính alloca đó. Nếu thiếu fixture
+đủ điều kiện, audit FAIL **trước khi chạy pass**. Các lifetime
+intrinsics của alloca *khác* không gây kết luận sai.
+
+**Chống PASS giả**: tạo và thực thi một baseline MVO riêng ở `-O0`,
+bắt buộc 4.096 vector giống hệt baseline `-O1`; sau đó so sánh
+**MVO transformed IR/object với chính baseline MVO `-O0`** trên
+cả macOS và iOS arm64. Bắt buộc MVO thay IR, object, có chỉ dấu
+XOR `.mvo`, giữ nguyên 4.096 kết quả; toàn bộ 4 pass còn lại
+không đổi baseline `-O1`. Không hạ mức audit, không bỏ pass.
+Đây là **bản sửa đã qua kiểm thử portable, chờ rerun macOS CI**;
+không tự nhận đã khắc phục xong trên LLVM19 native.
+
+**Gia cố thêm GENC sau khi rà upstream:** cùng phiên bản Kagura,
+`GlobalEncryptionPass::collectEligibleGlobals()` chỉ nhận private/
+internal constant có `LoadInst` trực tiếp (hoặc qua một số
+`ConstantExpr`). Một constant array truy cập bằng **GEP runtime**
+trong fixture `-O1` không đảm bảo có direct load của chính global.
+Vì vậy K8 bổ sung **`dd_k8_genc_scalar`** private constant và truy
+cập qua volatile-qualified lvalue để giữ một direct load có thể
+được pass biến đổi, không giảm `-O1` cho GENC. Bộ kiểm tra yêu cầu
+IR macOS và iOS đều chứa `internal/private constant i64` và
+`load volatile i64, ptr @dd_k8_genc_scalar`; chỉ gọi pass mà không
+mã hóa/thêm decode XOR hoặc không đổi object vẫn FAIL.
+
+Lưu ý: đây là **phòng lỗi no-op kế tiếp theo mã upstream**, không
+phải một lỗi GENC đã được quan sát trong log người dùng vừa gửi.
+Chỉ bản chạy mới của GitHub Actions mới xác nhận kết quả native thực.
+
 ## Lệnh kiểm tra cục bộ
 
 ```sh

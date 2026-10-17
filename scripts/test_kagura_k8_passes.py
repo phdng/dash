@@ -41,10 +41,12 @@ rejects(lambda: k8.validate_registry(registry + registry.split("\n")[0] + "\n"),
 
 base = ("define i64 @dd_k8_evaluate(i64 %n, i64 %salt) {\n"
         "entry:\n  %tmp = load i64, ptr @dd_k8_table\n"
+        "  %direct = load volatile i64, ptr @dd_k8_genc_scalar, align 8\n"
         "  store volatile i64 %n, ptr %local\n  ret i64 %n\n}\n"
         "define internal i64 @dd_k8_internal(i64 %n, i64 %salt) {\n"
         "entry:\n  ret i64 %n\n}\n"
-        "@dd_k8_table = internal constant [8 x i64] zeroinitializer\n")
+        "@dd_k8_table = internal constant [8 x i64] zeroinitializer\n"
+        "@dd_k8_genc_scalar = internal constant i64 123\n")
 for name, (_, cls, _) in k8.CANDIDATES.items():
     signature = {
         "ibr": "@__kagura_fptr_123 = private global ptr @dd_k8_internal\n",
@@ -68,9 +70,73 @@ for name, (_, cls, _) in k8.CANDIDATES.items():
                                       b"plain", b"other", trace),
             "pass called without required transform " + name)
 
+# GENC upstream only recognizes a direct load of a private constant
+# scalar, not a runtime-index GEP through an array at -O1.
+k8.validate_genc_input_ir(base)
+rejects(lambda: k8.validate_genc_input_ir(base.replace(
+    "@dd_k8_genc_scalar = internal constant i64 123\n", "")),
+    "GENC missing constant global")
+rejects(lambda: k8.validate_genc_input_ir(base.replace(
+    "  %direct = load volatile i64, ptr @dd_k8_genc_scalar, align 8\n",
+    "  %ptr = getelementptr i64, ptr @dd_k8_genc_scalar, i32 0\n"
+    "  %direct = load volatile i64, ptr %ptr, align 8\n")),
+    "GENC only GEP indirect global use not accepted")
+rejects(lambda: k8.validate_genc_input_ir(base.replace(
+    "internal constant i64 123", "internal global i64 123")),
+    "GENC mutable global not eligible")
+
+# MVO regression: -O1 can remove/promote the integer alloca. The K8
+# pilot MUST use a separate O0/no-optnone input and compare it against
+# the matching O0 baseline, not O1 (that would be fake IR/object delta).
+mvo_eligible = (
+    "define i64 @dd_k8_evaluate(i64 %n, i64 %salt) {\n"
+    "entry:\n"
+    "  %box = alloca i64, align 8\n"
+    "  store volatile i64 %n, ptr %box, align 8\n"
+    "  %loaded = load volatile i64, ptr %box, align 8\n"
+    "  ret i64 %loaded\n}\n"
+)
+k8.validate_mvo_input_ir(mvo_eligible)
+rejects(lambda: k8.validate_mvo_input_ir(mvo_eligible.replace(
+    "  %box = alloca i64, align 8\n", "")), "MVO missing alloca")
+rejects(lambda: k8.validate_mvo_input_ir(mvo_eligible.replace(
+    "store volatile", "store")), "MVO missing volatile store")
+rejects(lambda: k8.validate_mvo_input_ir(mvo_eligible.replace(
+    "load volatile", "load")), "MVO missing volatile load")
+rejects(lambda: k8.validate_mvo_input_ir(mvo_eligible +
+        "attributes #0 = { noinline optnone }\n"), "MVO optnone rejected")
+rejects(lambda: k8.validate_mvo_input_ir(mvo_eligible.replace(
+    "  %loaded = load volatile i64, ptr %box, align 8\n",
+    "  call void @llvm.lifetime.start.p0(i64 8, ptr %box)\n"
+    "  %loaded = load volatile i64, ptr %box, align 8\n")),
+    "MVO escaped address used by lifetime intrinsic rejected")
+# An unrelated lifetime call must NOT block a separate eligible alloca.
+k8.validate_mvo_input_ir(mvo_eligible.replace(
+    "  ret i64 %loaded\n",
+    "  %other = alloca i64, align 8\n"
+    "  call void @llvm.lifetime.start.p0(i64 8, ptr %other)\n"
+    "  ret i64 %loaded\n"))
+pilot_source = (BASE / "pilot.py").read_text(encoding="utf-8")
+for contract in (
+    '"-O0", "-Xclang", "-disable-O0-optnone"',
+    'mvo_host_bc if name == "mvo" else plain_bc',
+    'mvo_host_obj if name == "mvo" else plain_obj',
+    'mvo_ios_bc if name == "mvo" else ios_plain_bc',
+    'mvo_ios_obj if name == "mvo" else ios_plain_obj',
+    'mvo_host_log.read_bytes() != plain_log.read_bytes()',
+    'validate_mvo_input_ir(mvo_text)',
+    'validate_mvo_input_ir(mvo_ios_ir.read_text',
+    'host_before_obj.read_bytes()',
+    'ios_before_obj.read_bytes()',
+    'candidate_obj.read_bytes()',
+):
+    assert contract in pilot_source, contract
+
 # The C fixture must retain every pass trigger after O1 or fail on macOS.
 fixture = (BASE / "fixture.c").read_text(encoding="utf-8")
 assert "static const uint64_t dd_k8_table[8]" in fixture
+assert "static const uint64_t dd_k8_genc_scalar" in fixture
+assert "*(const volatile uint64_t *)&dd_k8_genc_scalar" in fixture
 assert "volatile uint64_t box" in fixture
 assert "strlen(token)" in fixture
 assert "DD_NOINLINE static uint64_t dd_k8_internal" in fixture
