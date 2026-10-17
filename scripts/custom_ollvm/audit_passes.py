@@ -220,6 +220,32 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         not (root / "scripts/custom_ollvm/kagura_max/ios_canary.c").is_file() or
         not (root / "scripts/custom_ollvm/kagura_max/package_ipa.py").is_file()):
         raise AssertionError("Kagura K5 artifact/K6 separate VM scope evidence drift")
+    if (kagura.get("k8_five_pass_status") !=
+        "STAGED_MACOS_CI_NOT_VERIFIED" or
+        kagura.get("k8_five_passes") !=
+        ["ibr", "mvo", "genc", "fsplit", "ci"] or
+        kagura.get("k8_pass_kinds") != {
+            "ibr": "function", "mvo": "function", "genc": "module",
+            "fsplit": "module", "ci": "module"
+        } or
+        kagura.get("k8_native_parity_vectors_per_pass") != 4096 or
+        kagura.get("k8_workflow") !=
+        ".github/workflows/kagura-k8-pass-coverage.yml" or
+        kagura.get("k8_runner") !=
+        "scripts/custom_ollvm/kagura_k8/pilot.py" or
+        kagura.get("k8_report") != "Kagura-K8-PASS-REPORT.json" or
+        kagura.get("k8_ios_arm64") != "BUILD_ONLY_NOT_EXECUTED" or
+        kagura.get("k8_combined_five_passes") !=
+        "DEFERRED_PENDING_ISOLATED_NATIVE_ARTIFACT" or
+        kagura.get("k8_review_doc") !=
+        "docs/KAGURA_K8_FIVE_PASS_VALIDATION.md" or
+        not (root / kagura["k8_runner"]).is_file() or
+        not (root / kagura["k8_workflow"]).is_file() or
+        not (root / kagura["k8_review_doc"]).is_file() or
+        not (root / "scripts/custom_ollvm/kagura_k8/fixture.c").is_file() or
+        not (root / "scripts/custom_ollvm/kagura_k8/runner.c").is_file() or
+        not (root / "scripts/test_kagura_k8_passes.py").is_file()):
+        raise AssertionError("K8 five candidate passes are staged-only, not native/device PASS")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

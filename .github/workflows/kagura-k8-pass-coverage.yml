@@ -1,0 +1,89 @@
+name: Kagura K8 - Five Remaining LLVM19 Passes (Experimental)
+
+# Isolated, manual-only native compiler truth test. NEVER touches Crane/K5/K7.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k8-five-isolated-passes:
+    runs-on: macos-14
+    timeout-minutes: 80
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate K8 negative gates and known-good compiler registry
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k8_passes.py
+          python3 scripts/test_kagura_vm_ios_ipa.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+
+      - name: Build exact MIT Kagura source/plugin and native runtime with LLVM19
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k8-source"
+          build="$RUNNER_TEMP/kagura-k8-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          test -s "$src/include/kagura/PassRegistry.def"
+          grep -q '"kagura-ibr"' "$src/include/kagura/PassRegistry.def"
+          grep -q '"kagura-ci"' "$src/include/kagura/PassRegistry.def"
+          grep -q '"kagura-mvo"' "$src/include/kagura/PassRegistry.def"
+          grep -q '"kagura-genc"' "$src/include/kagura/PassRegistry.def"
+          grep -q '"kagura-fsplit"' "$src/include/kagura/PassRegistry.def"
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          test -s "$build/runtime/libkagura_runtime.a"
+          echo "K8_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K8_SRC=$src" >> "$GITHUB_ENV"
+          echo "K8_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Real 4096 native vectors per isolated pass and iOS arm64 object-only ABI
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K8-five-passes"
+          mkdir -p "$out"
+          # Require actual LLVM19 debug traces, IR + object delta, identical
+          # execution checksum on each macOS variant; arm64 builds are NOT run.
+          python3 scripts/custom_ollvm/kagura_k8/pilot.py \
+            --llvm "$K8_LLVM" --plugin "$K8_PLUGIN" \
+            --src "$K8_SRC" --out "$out"
+          test -s "$out/Kagura-K8-PASS-REPORT.json"
+          python3 - "$out/Kagura-K8-PASS-REPORT.json" <<'PY'
+          import json,sys
+          r=json.load(open(sys.argv[1],encoding="utf-8"))
+          assert r["host_vectors_per_pass"]==4096
+          assert set(r["candidate_results"])=={"ibr","mvo","genc","fsplit","ci"}
+          assert all(x["native_4096_vector_parity"]=="PASS" for x in r["candidate_results"].values())
+          assert r["crane_production_modified"] is False
+          assert r["iphone_runtime_executed"] is False
+          PY
+          echo "K8: five isolated native source-level C fixtures: real Kagura LLVM19 IR/object transforms + 4096 native parity per pass." >> "$GITHUB_STEP_SUMMARY"
+          echo "iOS arm64 OBJECT BUILDS ONLY. No device pass, no performance claim, no production rollout." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload K8 failure diagnostics and candidate provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K8-FIVE-ISOLATED-PASSES-LLVM19-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K8-five-passes/

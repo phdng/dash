@@ -148,6 +148,12 @@ PASS hoặc Crane production**. Xem
 [KAGURA_K7_VM_TROLLSTORE.md](KAGURA_K7_VM_TROLLSTORE.md) và
 [KAGURA_K7_ARTIFACT_REVIEW.md](KAGURA_K7_ARTIFACT_REVIEW.md) và
 [KAGURA_K7_DEVICE_LOG_REVIEW.md](KAGURA_K7_DEVICE_LOG_REVIEW.md).
+**K8 — kiểm chứng 5 pass còn thiếu**: đã chuẩn bị CI manual-only
+cho `ibr`, `mvo`, `genc`, `fsplit`, `ci` với fixture phù hợp đúng registry
+Kagura commit pin, 4096 vector native mỗi pass, bắt buộc IR/object delta,
+và iOS arm64 build-only. **Chưa chạy macOS K8 native hoặc iPhone K8**;
+chưa bật kết hợp 5 pass, không đổi production. Xem
+[KAGURA_K8_FIVE_PASS_VALIDATION.md](KAGURA_K8_FIVE_PASS_VALIDATION.md).
 Tài liệu K6 gốc: [KAGURA_K6_VM_SELECTIVE.md](KAGURA_K6_VM_SELECTIVE.md).
 Không virtualize Objective-C methods, initializer, licensing
 storage hooks, selector dispatch, SpringBoard/CarPlay hostflow,
