@@ -58,13 +58,21 @@ CRC sạch, SHA và 92/92 phép kiểm chứng độc lập PASS. Chưa kiểm t
 pipeline kết hợp, Crane/arm64e PAC runtime hoặc hiệu năng K8.
 Xem [KAGURA_K8_ARTIFACT_REVIEW.md](KAGURA_K8_ARTIFACT_REVIEW.md) và
 [KAGURA_K8_FIVE_PASS_VALIDATION.md](KAGURA_K8_FIVE_PASS_VALIDATION.md).
-**K9 (mới chuẩn bị, chưa có kết quả native macOS):**
+**K9 (đã xác minh ZIP macOS LLVM19 phối hợp 5 pass):**
 workflow manual-only
 [KAGURA_K9_COMPOSITION.md](KAGURA_K9_COMPOSITION.md)
-ghép C + MVO IR vào **một LLVM19 module**, thử thứ tự
-`mvo,genc,fsplit,ibr,ci`; sau mỗi stage phải có IR/object delta
-và hai hàm × 4096 native parity cùng iOS arm64 object build-only.
-Không nhận là K9 combined PASS trước khi đọc artifact thật.
+ghép C + MVO IR vào **một LLVM19 module**, chạy nối tiếp
+`mvo,genc,fsplit,ibr,ci`; từng stage có IR/object delta thật,
+hai hàm × 4096 native parity và iOS arm64 object build-only.
+Artifact 75 entry CRC sạch, **179/179 kiểm tra độc lập PASS**.
+Lưu ý `llvm-link` cảnh báo datalayout MVO thiếu và host triple
+khác C module; chưa có IPA/runtime iPhone/arm64e/Crane production.
+Xem [KAGURA_K9_ARTIFACT_REVIEW.md](KAGURA_K9_ARTIFACT_REVIEW.md).
+**K10 (mới có code và kiểm thử portable, chưa có CI macOS):**
+[KAGURA_K10_LINK_METADATA.md](KAGURA_K10_LINK_METADATA.md) bổ sung
+metadata linker nghiêm ngặt cho C/MVO IR `llvm-link` của K9;
+yêu cầu zero warning và giữ nguyên hai checksum/IR+object delta
+mỗi stage. Không sửa Crane, K5/K7 hoặc ObjC hooks.
 K7 VM đã có log `a.txt` xác minh UUID/checksum với IPA thực, median
 paired iPhone overhead 71,5× (3 cặp, chưa phải chứng thực mật mã).
 

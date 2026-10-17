@@ -1,7 +1,10 @@
-# DuoDash K9 — ghép 5 pass Kagura thật vào một LLVM module (chưa có native CI)
+# DuoDash K9 — ghép 5 pass Kagura thật vào một LLVM module
 
-Ngày triển khai: **17/10/2026**. Trạng thái:
-**STAGED_MANUAL_COMPOSED_CI_NOT_VERIFIED**.
+Ngày triển khai: **17/10/2026**. Trạng thái sau khi kiểm ZIP thực:
+**MACOS_CI_ARTIFACT_VERIFIED_FIVE_COMPOSED_STAGES**. Đã đối chiếu
+179/179 bằng chứng độc lập; xem
+[KAGURA_K9_ARTIFACT_REVIEW.md](KAGURA_K9_ARTIFACT_REVIEW.md).
+iOS arm64 mới object build-only, chưa có runtime iPhone.
 
 ## Lý do phát triển K9
 
@@ -123,11 +126,17 @@ Regression tạo report `sort_keys=True` để **tái hiện lỗi cũ**,
 xác minh parser mới nhận đúng; đồng thời thử trường hợp sai index,
 thiếu stage, fake object, sai checksum và native FAIL đều bị từ chối.
 
-**Giới hạn bằng chứng:** chuỗi PASS mà người dùng cung cấp cho thấy
-runner K9 đã hoàn thành trong lần CI đó, nhưng chưa có artifact K9
-đính kèm để đối chiếu độc lập SHA/IR/object như K8. Vì vậy registry
-vẫn ở `STAGED_MANUAL_COMPOSED_CI_NOT_VERIFIED` cho đến khi nhận
-và xác minh artifact thật. Cần chạy lại workflow với hậu kiểm mới.
+**Bổ sung bằng chứng sau đó:** người dùng đã gửi ZIP K9 đầy đủ;
+đối chiếu trực tiếp **75 entry CRC sạch, 179/179 phép kiểm tra PASS**,
+cả năm stage thực hiện nối tiếp đúng thứ tự và hai checksum native
+khớp từng byte ở mọi bước. Vì vậy **giai đoạn chức năng K9 macOS
+đã xác minh từ artifact**; xem
+[KAGURA_K9_ARTIFACT_REVIEW.md](KAGURA_K9_ARTIFACT_REVIEW.md).
+Cảnh báo `llvm-link` về `target datalayout` thiếu và host triple
+không đồng nhất không ảnh hưởng parity canary đã kiểm. **K10**
+đang xử lý bằng metadata lấy trực tiếp từ C module LLVM19, có
+workflow manual-only mới, chưa có CI macOS thật:
+[KAGURA_K10_LINK_METADATA.md](KAGURA_K10_LINK_METADATA.md).
 
 ## Giới hạn cố ý
 

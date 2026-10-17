@@ -157,14 +157,24 @@ pipeline, chưa chạy K8 trên iPhone, không đổi Crane production.
 Xem [KAGURA_K8_ARTIFACT_REVIEW.md](KAGURA_K8_ARTIFACT_REVIEW.md) và
 [KAGURA_K8_FIVE_PASS_VALIDATION.md](KAGURA_K8_FIVE_PASS_VALIDATION.md).
 
-**K9 — pilot tổ hợp 5 pass (CHƯA chạy CI macOS):**
-tạo riêng [KAGURA_K9_COMPOSITION.md](KAGURA_K9_COMPOSITION.md) và
-workflow manual-only `.github/workflows/kagura-k9-composition.yml`.
-Kết hợp K8 C fixture + K8 MVO LLVM IR bằng `llvm-link` thành **một**
-module hai hàm, áp dụng tuần tự `mvo→genc→fsplit→ibr→ci` với
-IR/object delta, 2×4096 native parity và iOS arm64 build-only
-**sau từng pass**. K9 chỉ đang ở mức staged, chưa được nhận PASS
-thực, không thay Crane/K5/K7.
+**K9 — pilot tổ hợp 5 pass đã có artifact macOS LLVM19 thực,
+đối chiếu 179/179 phép kiểm tra PASS.**
+Workflow manual-only `.github/workflows/kagura-k9-composition.yml`
+ghép K8 C fixture + K8 MVO LLVM IR bằng `llvm-link` thành **một**
+module hai hàm, áp dụng nối tiếp `mvo→genc→fsplit→ibr→ci` với
+IR/object delta thật, 2×4096 native parity sau từng pass và object
+iOS arm64 build-only. **Không có iOS on-device, arm64e PAC hoặc Crane
+production.** `llvm-link` có cảnh báo thiếu datalayout MVO và
+khác host triple, cần xử lý trước thử nghiệm tiếp theo.
+Xem [KAGURA_K9_ARTIFACT_REVIEW.md](KAGURA_K9_ARTIFACT_REVIEW.md).
+
+**K10 — sửa căn chỉnh LLVM target metadata (staged, chưa có CI):**
+dùng đúng Clang19 module `target datalayout` và `target triple` cho
+MVO IR tạm cả macOS và iOS, bảo toàn template K8 pin; `llvm-link`
+warning bị chặn ngay, tiếp tục đúng năm stage với IR/object delta +
+hai checksum 4096 vector. Workflow manual-only
+`.github/workflows/kagura-k10-link-metadata.yml`. Không bật sản phẩm.
+Xem [KAGURA_K10_LINK_METADATA.md](KAGURA_K10_LINK_METADATA.md).
 
 Tài liệu K6 gốc: [KAGURA_K6_VM_SELECTIVE.md](KAGURA_K6_VM_SELECTIVE.md).
 Không virtualize Objective-C methods, initializer, licensing

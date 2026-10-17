@@ -72,6 +72,70 @@ def mvo_module(template: str, target: str) -> str:
     return source
 
 
+def get_target_metadata(ir: str, *, ios: bool) -> tuple[str, str]:
+    """Read authoritative target datalayout/triple from the Clang C IR.
+
+    LLVM 19 Clang's -print-target-triple can differ from the actual
+    deployment triple emitted into the compiled bitcode. Never guess
+    target metadata from the SDK path or copy the host triple to iOS.
+    """
+    layout_matches = re.findall(
+        r'(?m)^target datalayout = "([^"\n]+)"\s*$', ir)
+    triple_matches = re.findall(
+        r'(?m)^target triple = "([^"\n]+)"\s*$', ir)
+    if len(layout_matches) != 1 or len(triple_matches) != 1:
+        raise AssertionError("K10 C IR requires exactly one target datalayout/triple")
+    layout, triple = layout_matches[0], triple_matches[0]
+    if (not re.fullmatch(r"[A-Za-z0-9:._-]+", layout) or
+            not layout.startswith("e-m:o-") or
+            not re.fullmatch(r"[A-Za-z0-9._-]+", triple)):
+        raise AssertionError("K10 unexpected Darwin data layout or target syntax")
+    if ios:
+        if not re.fullmatch(r"arm64-apple-ios\d+(?:\.\d+)*", triple):
+            raise AssertionError("K10 iOS baseline must be genuine arm64 iOS")
+    elif not re.fullmatch(
+            r"(?:arm64|x86_64)-apple-macosx\d+(?:\.\d+)*", triple):
+        raise AssertionError("K10 host baseline must be Apple macOS")
+    return layout, triple
+
+
+def align_mvo_to_c_module(template: str, c_ir: str,
+                          *, ios: bool) -> str:
+    """K10 ONLY: set *generated* MVO IR target metadata exactly as C IR.
+
+    Never edit the K8 source fixture or replace C module metadata.
+    The probe body/alloca/load/store remains the same as K9.
+    """
+    layout, triple = get_target_metadata(c_ir, ios=ios)
+    source = mvo_module(template, triple)
+    if source.count(f'target triple = "{triple}"') != 1:
+        raise AssertionError("K10 missing generated MVO triple")
+    if "target datalayout" in source:
+        raise AssertionError("K10 MVO template unexpectedly already has datalayout")
+    source = source.replace(
+        f'target triple = "{triple}"',
+        f'target datalayout = "{layout}"\n'
+        f'target triple = "{triple}"')
+    if get_target_metadata(source, ios=ios) != (layout, triple):
+        raise AssertionError("K10 failed to normalize MVO target metadata")
+    k8.validate_mvo_input_ir(source)
+    return source
+
+
+def validate_llvm_link_metadata(c_ir: str, mvo_ir: str,
+                                merged_ir: str, log: str,
+                                *, ios: bool) -> dict:
+    """Treat llvm-link metadata warnings as hard failure in K10."""
+    expected = get_target_metadata(c_ir, ios=ios)
+    if (get_target_metadata(mvo_ir, ios=ios) != expected or
+            get_target_metadata(merged_ir, ios=ios) != expected):
+        raise AssertionError("K10 llvm-link altered/mismatched triple or datalayout")
+    if re.search(r"(?im)\b(?:warning|error):", log):
+        raise AssertionError("K10 llvm-link emitted warning/error; no silent pass")
+    return {"triple": expected[1], "datalayout": expected[0],
+            "llvm_link_warning_count": 0}
+
+
 def validate_merged(ir: str) -> None:
     defined = k8.functions(ir)
     if not {"dd_k8_evaluate", "dd_k9_mvo_probe"}.issubset(defined):
@@ -195,7 +259,8 @@ def verify_inputs(root: Path = ROOT) -> dict:
             "source_runner_sha256": registry[expected["runner.c"]]}
 
 
-def main_run(llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
+def main_run(llvm: Path, plugin: Path, src: Path, out: Path,
+             *, strict_link_metadata: bool = False) -> dict:
     provenance = verify_inputs()
     registry = src / "include/kagura/PassRegistry.def"
     k8.validate_registry(registry.read_text(encoding="utf-8"))
@@ -213,7 +278,8 @@ def main_run(llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
     opt = str(llvm / "bin/opt")
     sdk_host = run_command(["xcrun", "--sdk", "macosx", "--show-sdk-path"]).strip()
     sdk_ios = run_command(["xcrun", "--sdk", "iphoneos", "--show-sdk-path"]).strip()
-    host_triple = run_command([clang, "-print-target-triple"]).strip()
+    host_triple = (run_command([clang, "-print-target-triple"]).strip()
+                   if not strict_link_metadata else None)
     template = (K8 / "mvo.ll").read_text(encoding="utf-8")
     runner = out / "runner.o"
     run_command(["xcrun", "clang", "-std=c11", "-Wall", "-Wextra", "-Werror",
@@ -231,6 +297,7 @@ def main_run(llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
         folder = out / label
         folder.mkdir(exist_ok=True)
         c_bc = folder / "c.bc"
+        c_ir = folder / "c.ll"
         mvo_ir = folder / "mvo-source.ll"
         mvo_bc = folder / "mvo.bc"
         merged = folder / "merged.bc"
@@ -244,14 +311,33 @@ def main_run(llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
             flags += ["-isysroot", sdk_host]
         run_command([*flags, "-emit-llvm", "-c", str(K8 / "fixture.c"),
                      "-o", str(c_bc)])
-        mvo_ir.write_text(
-            mvo_module(template, "arm64-apple-ios15.0" if ios else host_triple),
-            encoding="utf-8")
+        # Strict K10 path reads the Clang-emitted *module header* instead
+        # of using -print-target-triple, which may spell macOS differently.
+        if strict_link_metadata:
+            run_command([dis, str(c_bc), "-o", str(c_ir)])
+            c_text = c_ir.read_text(encoding="utf-8")
+            generated = align_mvo_to_c_module(template, c_text, ios=ios)
+        else:
+            generated = mvo_module(
+                template, "arm64-apple-ios15.0" if ios else host_triple)
+        mvo_ir.write_text(generated, encoding="utf-8")
         run_command([assemble, str(mvo_ir), "-o", str(mvo_bc)])
+        link_log = folder / "llvm-link.log"
         run_command([link_ir, str(c_bc), str(mvo_bc), "-o", str(merged)],
-                    log=folder / "llvm-link.log")
+                    log=link_log)
         run_command([dis, str(merged), "-o", str(merged_ir)])
-        validate_merged(merged_ir.read_text(encoding="utf-8"))
+        merged_text = merged_ir.read_text(encoding="utf-8")
+        validate_merged(merged_text)
+        if strict_link_metadata:
+            evidence = validate_llvm_link_metadata(
+                c_text, generated, merged_text,
+                link_log.read_text(encoding="utf-8"), ios=ios)
+            (folder / "target-metadata.json").write_text(
+                json.dumps({**evidence,
+                            "c_ir_sha256": sh(c_ir),
+                            "mvo_ir_sha256": sh(mvo_ir),
+                            "merged_ir_sha256": sh(merged_ir)},
+                           indent=2, sort_keys=True) + "\n", encoding="utf-8")
         native_object(merged, obj, ios)
         return merged, merged_ir, obj
 
@@ -284,6 +370,11 @@ def main_run(llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
         "plain_host_object_sha256": sh(host_obj),
         "plain_ios_object_sha256": sh(ios_obj),
         "stages": {},
+        **({"link_metadata": {
+            target: json.loads(
+                (out / target / "target-metadata.json").read_text(encoding="utf-8"))
+            for target in ("macos", "ios")}
+           } if strict_link_metadata else {}),
     }
     report_path = out / "Kagura-K9-COMPOSITION-REPORT.json"
 

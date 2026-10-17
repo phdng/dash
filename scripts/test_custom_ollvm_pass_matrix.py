@@ -55,17 +55,30 @@ assert original["experimental_kagura_pipeline"]["k8_native_c_fixture_checksum"] 
 assert original["experimental_kagura_pipeline"]["k8_native_mvo_fixture_checksum"] == "64e61045bbc4a250"
 assert original["experimental_kagura_pipeline"]["k8_five_passes"] == ["ibr", "mvo", "genc", "fsplit", "ci"]
 assert original["experimental_kagura_pipeline"]["k8_ios_arm64"] == "BUILD_ONLY_NOT_EXECUTED"
-assert original["experimental_kagura_pipeline"]["k8_combined_five_passes"] == "NOT_TESTED_AFTER_ISOLATED_MACOS_NATIVE_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k8_combined_five_passes"] == "K9_FIVE_COMPOSED_STAGES_MACOS_ARTIFACT_VERIFIED"
 assert original["experimental_kagura_pipeline"]["k8_artifact_review"] == "docs/KAGURA_K8_ARTIFACT_REVIEW.md"
-assert original["experimental_kagura_pipeline"]["k9_composition_status"] == "STAGED_MANUAL_COMPOSED_CI_NOT_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k9_composition_status"] == "MACOS_CI_ARTIFACT_VERIFIED_FIVE_COMPOSED_STAGES"
+assert original["experimental_kagura_pipeline"]["k9_artifact_zip_sha256"] == "9925f6ae0f95f2ec52ae53e7416723cd134de2e2e6fafc2ce6a3b58db5f96cf5"
+assert original["experimental_kagura_pipeline"]["k9_artifact_entry_count"] == 75
+assert original["experimental_kagura_pipeline"]["k9_independent_artifact_checks_passed"] == 179
+assert original["experimental_kagura_pipeline"]["k9_artifact_review"] == "docs/KAGURA_K9_ARTIFACT_REVIEW.md"
+assert original["experimental_kagura_pipeline"]["k9_llvm_link_warnings"] == "NONFATAL_MVO_DATALAYOUT_AND_HOST_TRIPLE_MISMATCH"
 assert original["experimental_kagura_pipeline"]["k9_stage_order"] == ["mvo", "genc", "fsplit", "ibr", "ci"]
 assert original["experimental_kagura_pipeline"]["k9_merged_function_names"] == ["dd_k8_evaluate", "dd_k9_mvo_probe"]
 assert original["experimental_kagura_pipeline"]["k9_native_vectors_per_function"] == 4096
 assert original["experimental_kagura_pipeline"]["k9_c_checksum"] == "25a3318e3d7d6525"
 assert original["experimental_kagura_pipeline"]["k9_mvo_checksum"] == "64e61045bbc4a250"
 assert original["experimental_kagura_pipeline"]["k9_ios_arm64"] == "OBJECT_BUILD_ONLY_NOT_EXECUTED"
-assert original["experimental_kagura_pipeline"]["k9_composition_native"] == "NOT_VERIFIED_MACOS_CI"
+assert original["experimental_kagura_pipeline"]["k9_composition_native"] == "MACOS_NATIVE_FIVE_STAGES_TWO_FUNCTION_4096_PARITY_VERIFIED"
 assert original["experimental_kagura_pipeline"]["k9_performance"] == "NOT_EVALUATED"
+assert original["experimental_kagura_pipeline"]["k10_strict_link_metadata_status"] == "STAGED_MANUAL_STRICT_LLVM_LINK_CI_NOT_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k10_required_link_warning_count"] == 0
+assert original["experimental_kagura_pipeline"]["k10_required_metadata_source"] == "CLANG19_COMPILED_C_BITCODE_BOTH_TARGETS"
+assert original["experimental_kagura_pipeline"]["k10_pinned_mvo_template_sha256"] == original["experimental_kagura_pipeline"]["k8_source_mvo_ir_sha256"]
+assert original["experimental_kagura_pipeline"]["k10_stage_order"] == ["mvo", "genc", "fsplit", "ibr", "ci"]
+assert original["experimental_kagura_pipeline"]["k10_host_two_function_vectors"] == 4096
+assert original["experimental_kagura_pipeline"]["k10_ios_arm64"] == "OBJECT_BUILD_ONLY_NOT_EXECUTED"
+assert original["experimental_kagura_pipeline"]["k10_composition_native"] == "NOT_VERIFIED_MACOS_CI"
 assert len(status["registry_sha256"]) == 64
 
 negative_mutations = (
@@ -117,6 +130,12 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k8_ios_arm64="DEVICE_RUNTIME_VERIFIED"),
     lambda x: x["experimental_kagura_pipeline"].update(k8_combined_five_passes="COMBINED_PASS"),
     lambda x: x["experimental_kagura_pipeline"].update(k9_composition_status="FULL_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k9_artifact_zip_sha256="0" * 64),
+    lambda x: x["experimental_kagura_pipeline"].update(k9_artifact_entry_count=74),
+    lambda x: x["experimental_kagura_pipeline"].update(k9_independent_artifact_checks_passed=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k9_artifact_review="docs/no-k9-review.md"),
+    lambda x: x["experimental_kagura_pipeline"].update(k9_runner_sha256="0" * 64),
+    lambda x: x["experimental_kagura_pipeline"].update(k9_llvm_link_warnings="NONE"),
     lambda x: x["experimental_kagura_pipeline"].update(k9_composition_native="MACOS_PASS"),
     lambda x: x["experimental_kagura_pipeline"].update(k9_stage_order=["ci", "ibr", "mvo", "genc", "fsplit"]),
     lambda x: x["experimental_kagura_pipeline"]["k9_stage_order"].append("vm"),
@@ -126,6 +145,18 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k9_mvo_checksum="0" * 16),
     lambda x: x["experimental_kagura_pipeline"].update(k9_ios_arm64="RUN_ON_IPHONE"),
     lambda x: x["experimental_kagura_pipeline"].update(k9_performance="OPTIMIZED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_strict_link_metadata_status="MACOS_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_composition_native="IOS_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_required_link_warning_count=1),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_required_metadata_source="HOST_TRIPLE_GUESSED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_pinned_mvo_template_sha256="0" * 64),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_stage_order=["ci", "mvo"]),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_host_two_function_vectors=128),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_ios_arm64="DEVICE_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_on_device="PASS_NO_LOG"),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_workflow=".github/workflows/build.yml"),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_runner="scripts/custom_ollvm/kagura_k9/pilot.py"),
+    lambda x: x["experimental_kagura_pipeline"].update(k10_doc="docs/KAGURA_K9_COMPOSITION.md"),
     lambda x: x["experimental_kagura_pipeline"].update(k9_workflow=".github/workflows/build.yml"),
     lambda x: x["experimental_kagura_pipeline"].update(k9_runner="scripts/test_custom_ollvm_pass_matrix.py"),
     lambda x: x["experimental_kagura_pipeline"].update(k9_doc="docs/KAGURA_K8_ARTIFACT_REVIEW.md"),

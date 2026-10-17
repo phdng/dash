@@ -254,7 +254,7 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k8_report") != "Kagura-K8-PASS-REPORT.json" or
         kagura.get("k8_ios_arm64") != "BUILD_ONLY_NOT_EXECUTED" or
         kagura.get("k8_combined_five_passes") !=
-        "NOT_TESTED_AFTER_ISOLATED_MACOS_NATIVE_VERIFIED" or
+        "K9_FIVE_COMPOSED_STAGES_MACOS_ARTIFACT_VERIFIED" or
         kagura.get("k8_review_doc") !=
         "docs/KAGURA_K8_FIVE_PASS_VALIDATION.md" or
         not (root / kagura["k8_runner"]).is_file() or
@@ -276,7 +276,17 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         if hashlib.sha256((root / source).read_bytes()).hexdigest() != kagura[digest_key]:
             raise AssertionError("K8 pinned CI source no longer matches verified artifact")
     if (kagura.get("k9_composition_status") !=
-        "STAGED_MANUAL_COMPOSED_CI_NOT_VERIFIED" or
+        "MACOS_CI_ARTIFACT_VERIFIED_FIVE_COMPOSED_STAGES" or
+        kagura.get("k9_artifact_zip_sha256") !=
+        "9925f6ae0f95f2ec52ae53e7416723cd134de2e2e6fafc2ce6a3b58db5f96cf5" or
+        kagura.get("k9_artifact_entry_count") != 75 or
+        kagura.get("k9_independent_artifact_checks_passed") != 179 or
+        kagura.get("k9_artifact_review") !=
+        "docs/KAGURA_K9_ARTIFACT_REVIEW.md" or
+        kagura.get("k9_runner_sha256") !=
+        "b10fafa96bbe4e23aea2a5460fce86db8244a8b9a81314f2abe608b17e6afefc" or
+        kagura.get("k9_llvm_link_warnings") !=
+        "NONFATAL_MVO_DATALAYOUT_AND_HOST_TRIPLE_MISMATCH" or
         kagura.get("k9_workflow") !=
         ".github/workflows/kagura-k9-composition.yml" or
         kagura.get("k9_runner") !=
@@ -295,16 +305,47 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k9_ios_arm64") !=
         "OBJECT_BUILD_ONLY_NOT_EXECUTED" or
         kagura.get("k9_composition_native") !=
-        "NOT_VERIFIED_MACOS_CI" or
+        "MACOS_NATIVE_FIVE_STAGES_TWO_FUNCTION_4096_PARITY_VERIFIED" or
         kagura.get("k9_performance") != "NOT_EVALUATED" or
         any(not (root / kagura[path_key]).is_file()
             for path_key in (
-                "k9_workflow", "k9_runner", "k9_portable_test", "k9_doc"
+                "k9_workflow", "k9_runner", "k9_portable_test", "k9_doc",
+                "k9_artifact_review"
             )) or
         not (root / "scripts/custom_ollvm/kagura_k9/runner.c").is_file()):
         raise AssertionError(
-            "K9 composed 5-pass real LLVM19 run has NOT been verified; "
-            "manual CI+paired native evidence is mandatory")
+            "K9 five-pass composed artifact provenance or scope invalid")
+    if hashlib.sha256(
+            (root / "scripts/custom_ollvm/kagura_k9/runner.c").read_bytes()
+    ).hexdigest() != kagura["k9_runner_sha256"]:
+        raise AssertionError("K9 native CI runner no longer matches verified artifact")
+    if (kagura.get("k10_strict_link_metadata_status") !=
+        "STAGED_MANUAL_STRICT_LLVM_LINK_CI_NOT_VERIFIED" or
+        kagura.get("k10_workflow") !=
+        ".github/workflows/kagura-k10-link-metadata.yml" or
+        kagura.get("k10_runner") !=
+        "scripts/custom_ollvm/kagura_k10/pilot.py" or
+        kagura.get("k10_test") !=
+        "scripts/test_kagura_k10_link_metadata.py" or
+        kagura.get("k10_doc") !=
+        "docs/KAGURA_K10_LINK_METADATA.md" or
+        kagura.get("k10_pinned_mvo_template_sha256") !=
+        kagura["k8_source_mvo_ir_sha256"] or
+        kagura.get("k10_stage_order") !=
+        ["mvo", "genc", "fsplit", "ibr", "ci"] or
+        kagura.get("k10_required_link_warning_count") != 0 or
+        kagura.get("k10_required_metadata_source") !=
+        "CLANG19_COMPILED_C_BITCODE_BOTH_TARGETS" or
+        kagura.get("k10_host_two_function_vectors") != 4096 or
+        kagura.get("k10_ios_arm64") !=
+        "OBJECT_BUILD_ONLY_NOT_EXECUTED" or
+        kagura.get("k10_on_device") != "NOT_TESTED" or
+        kagura.get("k10_composition_native") !=
+        "NOT_VERIFIED_MACOS_CI" or
+        any(not (root / kagura[field]).is_file() for field in
+            ("k10_workflow", "k10_runner", "k10_test", "k10_doc"))):
+        raise AssertionError(
+            "K10 strict LLVM-link metadata CI is staged only, never native/device PASS")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

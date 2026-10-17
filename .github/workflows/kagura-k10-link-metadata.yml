@@ -1,0 +1,83 @@
+name: Kagura K10 - Strict LLVM Link Target Metadata (Experimental)
+
+# Manual-only regression of Kagura K9 composed five-pass module, no Crane.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k10-strict-metadata:
+    runs-on: macos-14
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify K10 target metadata negative gates and K9/K8 provenance
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k10_link_metadata.py
+          python3 scripts/test_kagura_k9_composition.py
+          python3 scripts/test_kagura_k8_passes.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+
+      - name: Build exact pinned Kagura LLVM19 plugin and runtime
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k10-source"
+          build="$RUNNER_TEMP/kagura-k9-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          test -s "$src/include/kagura/PassRegistry.def"
+          for pass in ibr mvo genc fsplit ci; do
+            grep -q "\"kagura-$pass\"" "$src/include/kagura/PassRegistry.def"
+          done
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          test -s "$build/runtime/libkagura_runtime.a"
+          test -x "$llvm/bin/llvm-link" && test -x "$llvm/bin/llvm-as"
+          echo "K10_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K10_SRC=$src" >> "$GITHUB_ENV"
+          echo "K10_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Exact Clang target metadata alignment and sequential native+arm64 object gates
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K10-strict-metadata"
+          mkdir -p "$out"
+          python3 scripts/custom_ollvm/kagura_k10/pilot.py \
+            --llvm "$K10_LLVM" --plugin "$K10_PLUGIN" \
+            --src "$K10_SRC" --out "$out"
+          # Second read of serialized reports and real files; neither
+          # ordered dictionary keys nor status flags alone are proof.
+          python3 scripts/custom_ollvm/kagura_k10/pilot.py \
+            --out "$out" --verify-report
+          test -s "$out/Kagura-K10-METADATA-REPORT.json"
+          echo "K10: zero llvm-link warnings after exact Clang C metadata transfer to transient MVO IR." >> "$GITHUB_STEP_SUMMARY"
+          echo "K10: five real consecutive Kagura LLVM19 passes, IR/object delta + two 4096-vector native checksums at EVERY stage." >> "$GITHUB_STEP_SUMMARY"
+          echo "iOS arm64 MH_OBJECT build-only; no IPA, no iPhone, no arm64e PAC, no Crane deployment or speed claims." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve K10 raw link diagnostics even if the strict gate fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K10-STRICT-LLVM-LINK-METADATA-LLVM19-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K10-strict-metadata/
