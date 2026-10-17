@@ -39,6 +39,46 @@ Không ghi lại hoặc yêu cầu UDID.
 UUID** trong artifact được gửi. A12+ runtime là
 `DEFERRED_NO_DEVICE`; Crane OLLVM STRONG production không bị thay đổi.
 
+
+## Artifact CI mới `(4).zip` và kết quả soak do người dùng xác nhận
+
+Đã kiểm tra trực tiếp ZIP người dùng gửi ngày 17/10/2026,
+`ProtectionLab-UIKit-OnDevice-UNSIGNED-arm64-arm64e (4).zip`.
+Nó chứa 17 mục gồm IPA arm64, hai app ZIP, log `xcodebuild`, ba báo
+cáo ABI/UUID/gate, report IPA và host performance. Trong
+`xcode-arm64-build.log` có `** BUILD SUCCEEDED **`; **cả hai binary
+đều chứa mã soak test mới** (marker `DD_SOAK_SCHEMA=1`,
+`DD_SOAK_COMPLETE=PASS` và nút chạy 5 vòng).
+
+| Kiểm tra thật trong artifact mới | arm64 | arm64e |
+|---|---|---|
+| Mach-O filetype | `MH_EXECUTE` | `MH_EXECUTE` |
+| Raw CPU subtype | `0x00000000` | `0x80000002` |
+| Kích thước binary | 116.336 bytes | 116.336 bytes |
+| SHA-256 binary | `e082d29608779b6beb1b18fa14ca1908a839fed62c3bcb66adcfb1554cb5eb02` | `f6d58930c788216e1417576b91d3528ee97d0a11ad0c0dc2052bf6f9981dcd9f` |
+| LC_UUID | `919f30eb-1629-3658-86fc-cc7da188a483` | `29654d8f-ab31-39fc-9a14-2eecc618e851` |
+
+SHA-256 của IPA arm64 là
+`5be6197265883db48575a93ba93f6d64e752c9ed9a3be204b1349aa2bcadcfa2`
+và SHA-256 của ZIP tổng là
+`99b0be3c56cf0186d9c1d522890844a436b72c96976febee8b975624521d7eb8`.
+Binary arm64 trong IPA trùng byte với binary trong
+`ProtectionLab-UNSIGNED-arm64.zip`, hash khớp
+`build-report.json`, `build-identity.json`, `build-gates.json`.
+`macho-arm64e.txt` cho `ARM64 E USR00`.
+
+**Người dùng xác nhận tất cả bài test trong bản mới PASS trên iPhone.**
+Điều này được lưu dưới dạng **USER_REPORTED_PASS** cho functional
+suite và soak 5 vòng; chưa có tệp log `DD_SOAK_*` 12 dòng hoặc
+`DD_RUNTIME_*` từ iPhone trong artifact để kiểm tra độc lập.
+Không ghi UDID hoặc thông tin định danh thiết bị.
+
+Receipt không chứa UDID:
+[PROTECTION_ARM64_USER_REPORTED_ACCEPTANCE_2026-10-17.json](PROTECTION_ARM64_USER_REPORTED_ACCEPTANCE_2026-10-17.json).
+**Soak runtime chưa được chứng thực bằng log**, và **arm64e chỉ
+BUILD/AUDIT PASS, không có A12+ runtime**. Crane OLLVM STRONG
+production giữ nguyên.
+
 ## Sprint kế tiếp
 
 Đã bổ sung bài **soak thủ công** trong Protection Lab: 5 vòng liên

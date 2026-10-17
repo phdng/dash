@@ -122,6 +122,15 @@ Ngày cập nhật: 2026-10-17. Trạng thái: **Sprint P0/P1 prototype đã có
   `soak_audit.py` với hồi quy âm tính. **Soak mới chưa chạy trên iPhone**;
   arm64e tiếp tục build/audit-only. Xem
   [PROTECTION_ARM64_SOAK.md](PROTECTION_ARM64_SOAK.md).
+- **Nghiệm thu bản soak trên thiết bị và artifact CI `(4)` (17/10/2026):**
+  người dùng xác nhận tất cả test trên iPhone arm64 đã PASS. Đã đối chiếu
+  byte thật IPA arm64 và MH_EXECUTE arm64e, hash và LC_UUID với ba báo
+  cáo CI; hai binary có mã soak. `device_acceptance.py` có thêm mức
+  `soak.status=USER_REPORTED_PASS` khi được xác nhận, hoặc xác minh
+  định dạng log thật bằng `--soak` nếu có. **Không có log soak trong ZIP,
+  không có chứng thực cryptographic, không lưu UDID**. Xem
+  [PROTECTION_CI_ARTIFACT_REVIEW.md](PROTECTION_CI_ARTIFACT_REVIEW.md).
+  Arm64e vẫn chỉ build/audit; PAC runtime chờ A12+.
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 

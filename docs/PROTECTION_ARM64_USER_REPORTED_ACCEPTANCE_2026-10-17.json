@@ -1,0 +1,32 @@
+{
+  "architecture": "arm64",
+  "arm64e": {
+    "a12_plus_runtime": "DEFERRED_NO_DEVICE",
+    "acceptance_target": "BUILD_LINK_MACHO_ABI_AND_UUID_ONLY",
+    "pac_runtime": "NOT_TESTED"
+  },
+  "cryptographic_device_attestation": false,
+  "delivery": "TROLLSTORE_USER_REPORTED_INSTALLED_AND_LAUNCHED",
+  "device_recognition_status": "USER_REPORTED_CORRECT",
+  "evidence_validation": "NOT_PERFORMED_NO_LOGS",
+  "expected_vectors_per_suite": 8192,
+  "product_crane_protection_verified": false,
+  "raw_device_identifier_required": false,
+  "schema": 1,
+  "scope": "STANDALONE_PROTECTION_LAB_ONLY",
+  "soak": {
+    "device_execution_attested": false,
+    "evidence_validation": "NOT_PERFORMED_NO_LOGS",
+    "rounds": 5,
+    "status": "USER_REPORTED_PASS",
+    "total_suite_vector_checks": 163840
+  },
+  "suite_names": [
+    "VM",
+    "CE_ICALL",
+    "IGV_IBR",
+    "OBJC_CE"
+  ],
+  "suite_status": "USER_REPORTED_PASS",
+  "unique_device_identifier_recorded": false
+}

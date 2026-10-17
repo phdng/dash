@@ -342,6 +342,21 @@ opt-in, sai số vòng/ABI và chặn PASS giả; workflow UIKit chạy test tr�
 khi build hai kiến trúc. Đây là **mã mới, chưa chạy trên thiết bị**.
 Xem [PROTECTION_ARM64_SOAK.md](../../docs/PROTECTION_ARM64_SOAK.md).
 
+## Kết quả artifact (4) và soak trên TrollStore — 17/10/2026
+
+Đã phân tích binary thực trong ZIP CI mới `(4)`: IPA arm64 và binary
+arm64e có đúng Mach-O subtype, UUID và SHA-256 khớp báo cáo CI. Hai
+binary chứa mã soak 5 vòng. Người dùng xác nhận **tất cả test đã PASS
+trên iPhone**; chưa có log soak 12 dòng được chia sẻ, vì vậy mốc soak
+được lưu `USER_REPORTED_PASS`, không phải cryptographic device
+attestation. Xem
+[PROTECTION_CI_ARTIFACT_REVIEW.md](../../docs/PROTECTION_CI_ARTIFACT_REVIEW.md).
+
+`device_acceptance.py` nhận thêm `--user-confirmed-soak-pass` và tùy
+chọn `--soak <log>`; parser `soak_audit.py` nghiêm ngặt với arm64, sai
+kiến trúc / thiếu vòng bị từ chối; receipt không chứa UDID. Vẫn giữ
+`arm64e` ở mức BUILD/ABI/UUID PASS, không cần thiết bị A12+.
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker

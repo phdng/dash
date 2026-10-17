@@ -1,0 +1,149 @@
+{
+  "schema": 1,
+  "snapshot": "2026-10-17",
+  "compiler": "LLVM 19",
+  "upstream_repository": "lich4/ollvm-pass",
+  "pinned_commit": "592f215f852e3957da01b2b15024dc63713a462e",
+  "production_policy": "policy.json",
+  "demo_policy": "scripts/demo_ollvm/policy.json",
+  "production_pass_families": [
+    "split",
+    "bcf",
+    "fla",
+    "sub"
+  ],
+  "demo_arm64_profile": {
+    "split_n": 4,
+    "bcf_prob": 100,
+    "bcf_times": 2,
+    "fla": true,
+    "sub_times": 3
+  },
+  "production_cpu_scope": "arm64",
+  "arm64e_production_route": "Apple Clang; OLLVM plugin bypassed, no new pass runtime claim",
+  "separate_llvm_plugin_experiments": [
+    {
+      "pass": "strcry",
+      "feature": "string encoding/encryption",
+      "provider": "Hikari",
+      "plugin": "hikari",
+      "scope": "manual CI source + Objective-C pilot",
+      "state": "experimental_separate_plugin"
+    },
+    {
+      "pass": "constenc",
+      "feature": "integer constant encoding",
+      "provider": "Hikari",
+      "plugin": "hikari",
+      "scope": "manual CI source + Objective-C pilot",
+      "state": "experimental_separate_plugin"
+    }
+  ],
+  "source_level_only": [
+    {
+      "technique": "CE",
+      "path": "scripts/protection_lab/sllvm_protected.c",
+      "status": "source_canary_not_llvm_pass"
+    },
+    {
+      "technique": "ICALL",
+      "path": "scripts/protection_lab/sllvm_protected.c",
+      "status": "source_canary_not_llvm_pass"
+    },
+    {
+      "technique": "IGV",
+      "path": "scripts/protection_lab/igv_ibr_protected.c",
+      "status": "source_canary_not_llvm_pass"
+    },
+    {
+      "technique": "IBR",
+      "path": "scripts/protection_lab/igv_ibr_protected.c",
+      "status": "source_canary_not_llvm_pass"
+    },
+    {
+      "technique": "VM",
+      "path": "scripts/protection_lab/vm.c",
+      "status": "bytecode_interpreter_not_llvm_pass"
+    },
+    {
+      "technique": "ObjC_CE",
+      "path": "scripts/protection_lab/objc_ce_protected.m",
+      "status": "source_canary_not_llvm_pass"
+    }
+  ],
+  "next_llvm_pass_candidates": [
+    {
+      "pass": "string_ce",
+      "priority": 1,
+      "state": "not_implemented_in_custom_obfuscator",
+      "prerequisites": [
+        "isolated LLVM19 plugin or Hikari-only test",
+        "native plaintext delta audit",
+        "ARC/NSString parity",
+        "arm64 device smoke"
+      ],
+      "risk": "Objective-C selectors and CFString lifetime"
+    },
+    {
+      "pass": "constant_encoding",
+      "priority": 2,
+      "state": "not_implemented_in_custom_obfuscator",
+      "prerequisites": [
+        "isolated LLVM19 pass",
+        "native 8192+ parity",
+        "object comparison after -O1",
+        "arm64 iPhone smoke"
+      ],
+      "risk": "optimizer folding; no security-strength claim"
+    },
+    {
+      "pass": "indirect_branch",
+      "priority": 3,
+      "state": "not_implemented_in_custom_obfuscator",
+      "prerequisites": [
+        "C-only canary",
+        "typed handler control flow",
+        "native result parity",
+        "device smoke"
+      ],
+      "risk": "PAC/callback and control-flow integrity"
+    },
+    {
+      "pass": "indirect_call",
+      "priority": 4,
+      "state": "not_implemented_in_custom_obfuscator",
+      "prerequisites": [
+        "C-only canary",
+        "typed pointer dispatch",
+        "runtime parity",
+        "arm64e ABI build-only audit"
+      ],
+      "risk": "PAC function pointer signature, hooks"
+    },
+    {
+      "pass": "global_indirection",
+      "priority": 5,
+      "state": "not_implemented_in_custom_obfuscator",
+      "prerequisites": [
+        "C-only canary",
+        "native global access parity",
+        "runtime parity"
+      ],
+      "risk": "thread safety and lifetime"
+    },
+    {
+      "pass": "virtualization",
+      "priority": 6,
+      "state": "not_implemented_in_custom_obfuscator",
+      "prerequisites": [
+        "native VM reference",
+        "IR conversion implementation",
+        "CI verifier; overhead gate",
+        "device rollback"
+      ],
+      "risk": "high runtime overhead and Objective-C ABI"
+    }
+  ],
+  "rollout": "manual-only separate CI; no changes to production Crane OLLVM STRONG",
+  "security_claim": "pass logs + function behavior do not prove obfuscation strength or anti-tamper"
+}

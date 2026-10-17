@@ -17,6 +17,7 @@ import device_acceptance as acc
 import device_audit as audit
 import device_evidence as evidence
 import perf_audit as perf
+import soak_audit as soak_audit
 
 UUID_ARM64 = "11111111-1111-4111-8111-111111111111"
 UUID_ARM64E = "22222222-2222-4222-8222-222222222222"
@@ -67,6 +68,48 @@ with tempfile.TemporaryDirectory() as temp:
     assert result["raw_device_identifier_required"] is False
     assert result["cryptographic_device_attestation"] is False
     assert result["arm64e"]["a12_plus_runtime"] == "DEFERRED_NO_DEVICE"
+    assert result["soak"]["status"] == "NOT_REPORTED"
+    user_soak = acc.generate(output=receipt, user_confirmed=True,
+                             soak_user_confirmed=True)
+    assert user_soak["soak"]["status"] == "USER_REPORTED_PASS"
+    assert user_soak["soak"]["rounds"] == 5
+    assert user_soak["soak"]["total_suite_vector_checks"] == 163840
+    assert user_soak["soak"]["evidence_validation"] == "NOT_PERFORMED_NO_LOGS"
+    assert user_soak["soak"]["device_execution_attested"] is False
+    assert "log_sha256" not in user_soak["soak"]
+    soak_log = root / "soak.txt"
+    put(soak_log, soak_audit.expected_lines("arm64"))
+    checked_soak = acc.generate(output=receipt, user_confirmed=True,
+                                soak_user_confirmed=True, soak=soak_log)
+    assert checked_soak["soak"]["evidence_validation"] == "SHARED_SOAK_LOG_TEXT_CONSISTENT"
+    assert len(checked_soak["soak"]["log_sha256"]) == 64
+    assert checked_soak["cryptographic_device_attestation"] is False
+    assert "UDID" not in json.dumps(checked_soak).upper()
+    # Supplying soak bytes without explicit confirmation must not pass.
+    try:
+        acc.generate(output=receipt, user_confirmed=True, soak=soak_log)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Unconfirmed soak report accepted")
+    put(soak_log, soak_audit.expected_lines("arm64e"))
+    try:
+        acc.generate(output=receipt, user_confirmed=True,
+                     soak_user_confirmed=True, soak=soak_log)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("arm64e log accepted as arm64 soak")
+    put(soak_log, soak_audit.expected_lines("arm64")[:-1])
+    try:
+        acc.generate(output=receipt, user_confirmed=True,
+                     soak_user_confirmed=True, soak=soak_log)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("Incomplete soak rounds accepted")
+    # The failed validations must not overwrite the accepted receipt.
+    assert json.loads(receipt.read_text(encoding="utf-8")) == checked_soak
     assert not any(x in receipt.read_text(encoding="utf-8").lower()
                    for x in ("udid=", "serial=", "deviceid=", "device_id="))
 

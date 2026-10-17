@@ -31,6 +31,22 @@ binary CI, không phải log runtime từ thiết bị. Xem
 PASS, có báo cáo 12 dòng riêng. Chưa có kết quả soak on-device của bản
 mới: [PROTECTION_ARM64_SOAK.md](PROTECTION_ARM64_SOAK.md).
 
+## Bản IPA cập nhật và xác nhận soak trên thiết bị
+
+Đã kiểm tra artifact `(4).zip` mới: binary arm64 có mã soak 5 vòng;
+SHA-256, LC_UUID và subtype của hai binary khớp báo cáo CI. Người dùng
+xác nhận **tất cả bài test trên bản này đều PASS trên thiết bị thật**.
+Do chưa gửi log 12 dòng `DD_SOAK_*`, trạng thái được ghi nhận là
+`soak.status=USER_REPORTED_PASS` và
+`soak.evidence_validation=NOT_PERFORMED_NO_LOGS`, không giả lập bằng
+chứng. Xem [kết quả soát artifact](PROTECTION_CI_ARTIFACT_REVIEW.md)
+và [receipt 2026-10-17](PROTECTION_ARM64_USER_REPORTED_ACCEPTANCE_2026-10-17.json).
+
+Dùng `device_acceptance.py --user-confirmed-pass --user-confirmed-soak-pass`
+để tạo receipt tương đương; thêm `--soak iphone-arm64-soak.txt` **chỉ khi
+đã xuất log thật** để kiểm tra định dạng/kiến trúc, không chứng thực
+mật mã hay định danh thiết bị. UDID không được lưu.
+
 ## Hai mức nghiệm thu minh bạch
 
 `scripts/protection_lab/device_acceptance.py` tạo receipt JSON

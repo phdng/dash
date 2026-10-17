@@ -15,11 +15,14 @@ from pathlib import Path
 
 import device_audit
 import device_evidence
+import soak_audit
 
 
 def generate(*, output: Path, user_confirmed: bool,
              parity: Path | None = None, identity: Path | None = None,
-             manifest: Path | None = None, performance: Path | None = None) -> dict:
+             manifest: Path | None = None, performance: Path | None = None,
+             soak_user_confirmed: bool = False,
+             soak: Path | None = None) -> dict:
     if not user_confirmed:
         raise AssertionError("Receipt requires explicit user-reported device PASS")
     provided = (parity is not None, identity is not None, manifest is not None)
@@ -27,6 +30,8 @@ def generate(*, output: Path, user_confirmed: bool,
         raise ValueError("Parity, identity and CI manifest must be supplied together")
     if performance is not None and not all(provided):
         raise ValueError("Benchmark alone cannot elevate functional test evidence")
+    if soak is not None and not soak_user_confirmed:
+        raise ValueError("Soak log requires a separate user confirmation")
 
     result = {
         "schema": 1,
@@ -42,6 +47,13 @@ def generate(*, output: Path, user_confirmed: bool,
         "evidence_validation": "NOT_PERFORMED_NO_LOGS",
         "cryptographic_device_attestation": False,
         "product_crane_protection_verified": False,
+        "soak": {
+            "status": "USER_REPORTED_PASS" if soak_user_confirmed else "NOT_REPORTED",
+            "rounds": soak_audit.ROUNDS,
+            "total_suite_vector_checks": soak_audit.TOTAL_VECTOR_CHECKS,
+            "evidence_validation": "NOT_PERFORMED_NO_LOGS",
+            "device_execution_attested": False,
+        },
         "arm64e": {
             "acceptance_target": "BUILD_LINK_MACHO_ABI_AND_UUID_ONLY",
             "a12_plus_runtime": "DEFERRED_NO_DEVICE",
@@ -67,6 +79,12 @@ def generate(*, output: Path, user_confirmed: bool,
             result["performance_log_sha256"] = checked["performance"]["log_sha256"]
         # Use only hashes and a non-personal Mach-O identifier in receipt.
 
+    if soak is not None:
+        # Strictly parse user-provided text; never synthesize a runtime PASS.
+        soak_result = soak_audit.validate(soak, "arm64")
+        result["soak"]["evidence_validation"] = "SHARED_SOAK_LOG_TEXT_CONSISTENT"
+        result["soak"]["log_sha256"] = soak_result["log_sha256"]
+
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n",
                       encoding="utf-8")
@@ -83,11 +101,15 @@ def main() -> None:
     p.add_argument("--identity", type=Path)
     p.add_argument("--manifest", type=Path)
     p.add_argument("--performance", type=Path)
+    p.add_argument("--user-confirmed-soak-pass", action="store_true")
+    p.add_argument("--soak", type=Path)
     p.add_argument("--out", type=Path, required=True)
     args = p.parse_args()
     generate(output=args.out, user_confirmed=args.user_confirmed_pass,
              parity=args.parity, identity=args.identity,
-             manifest=args.manifest, performance=args.performance)
+             manifest=args.manifest, performance=args.performance,
+             soak_user_confirmed=args.user_confirmed_soak_pass,
+             soak=args.soak)
 
 
 if __name__ == "__main__":

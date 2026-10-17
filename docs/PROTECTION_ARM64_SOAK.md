@@ -70,9 +70,13 @@ Dùng workflow thủ công
 Mach-O/UUID/SHA của cả `arm64` và `arm64e`. Sau khi CI xanh, có thể
 cập nhật IPA arm64 bằng TrollStore trên máy hiện tại.
 
-**Chưa chạy bản soak mới trên iPhone tại đây**. Artifact người dùng
-đã gửi xác nhận bản build trước; xem
-[PROTECTION_CI_ARTIFACT_REVIEW.md](PROTECTION_CI_ARTIFACT_REVIEW.md).
+**Cập nhật 17/10/2026:** người dùng đã gửi artifact CI mới `(4).zip`
+chứa đúng mã soak và xác nhận **tất cả bài test trên iPhone PASS**.
+Đã kiểm tra SHA-256/LC_UUID/ABI của binary thật trong ZIP. Soak được ghi
+nhận là **USER_REPORTED_PASS**; chưa có log soak 12 dòng để xác minh nội
+dung hoặc nguồn gốc độc lập. Xem
+[PROTECTION_CI_ARTIFACT_REVIEW.md](PROTECTION_CI_ARTIFACT_REVIEW.md)
+và [receipt không chứa UDID](PROTECTION_ARM64_USER_REPORTED_ACCEPTANCE_2026-10-17.json).
 Cả hai workflow CI và soak này không sửa package/hook/daemon của Crane.
 
 ## Khi nào đủ điều kiện tiếp theo
