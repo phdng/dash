@@ -1,0 +1,87 @@
+name: Kagura K9 - Five Pass Single Module Composition (Experimental)
+
+# Strictly isolated LLVM19 functional staging; no production build or K8 mutation.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k9-compose-five:
+    runs-on: macos-14
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject fake K9 composition and verify known K8 evidence
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k9_composition.py
+          python3 scripts/test_kagura_k8_passes.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+
+      - name: Build exact Kagura compiler plugin + runtime with LLVM19
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k9-source"
+          build="$RUNNER_TEMP/kagura-k9-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          test -s "$src/include/kagura/PassRegistry.def"
+          for pass in ibr mvo genc fsplit ci; do
+            grep -q "\"kagura-$pass\"" "$src/include/kagura/PassRegistry.def"
+          done
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          test -s "$build/runtime/libkagura_runtime.a"
+          test -x "$llvm/bin/llvm-link" && test -x "$llvm/bin/llvm-as"
+          echo "K9_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K9_SRC=$src" >> "$GITHUB_ENV"
+          echo "K9_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: LLVM-link C and explicit MVO IR then apply 5 real passes in sequence
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K9-composed"
+          mkdir -p "$out"
+          python3 scripts/custom_ollvm/kagura_k9/pilot.py \
+            --llvm "$K9_LLVM" --plugin "$K9_PLUGIN" \
+            --src "$K9_SRC" --out "$out"
+          python3 - "$out/Kagura-K9-COMPOSITION-REPORT.json" <<'PY'
+          import json,sys
+          r=json.load(open(sys.argv[1],encoding="utf-8"))
+          assert r["status"]=="MACOS_NATIVE_ALL_FIVE_COMPOSED_STAGES_PASS_IOS_BUILD_ONLY"
+          assert list(r["stages"])==["mvo","genc","fsplit","ibr","ci"]
+          assert r["native_vectors_per_function"]==4096
+          assert r["ios_arm64"]=="OBJECT_BUILD_ONLY_NOT_EXECUTED"
+          assert not r["iphone_runtime_executed"]
+          assert not r["crane_production_modified"]
+          assert all(s["macos_native_4096_per_function"]=="PASS" for s in r["stages"].values())
+          PY
+          echo "K9: one merged module, five sequential Kagura LLVM19 stages, real IR/object delta + 2×4096 native parity after EACH stage." >> "$GITHUB_STEP_SUMMARY"
+          echo "iOS arm64: MH_OBJECT build-only after each stage. No device, no arm64e, no production, no performance claim." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve K9 failure evidence and compiler provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K9-FIVE-PASS-COMPOSED-LLVM19-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K9-composed/

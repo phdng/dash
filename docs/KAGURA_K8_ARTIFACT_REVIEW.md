@@ -54,7 +54,11 @@ trong artifact K8 này.**
 PAC pointer, ObjC selector, Substrate hoặc dylib Crane.
 Không có thời gian benchmark K8 và không xác nhận security strength.
 
-Chỉ sau khi kiểm tra cặp/thứ tự phối hợp với gates IR/object/parity
+K9 đã được chuẩn bị **manual-only, chưa có macOS artifact**:
+[KAGURA_K9_COMPOSITION.md](KAGURA_K9_COMPOSITION.md) ghép hai fixture
+K8 vào một module và yêu cầu delta + hai oracle native sau mỗi pass
+trong một thứ tự chọn trước; **K8 verified không tự tạo kết quả K9**.
+Chỉ sau khi kiểm tra pipeline phối hợp với gates IR/object/parity
 tương tự mới xét pipeline chung; còn iOS runtime cần IPA lab mới, log
 checksum/build UUID, trên thiết bị dự phòng. K5/K7 và Crane production
 không thay đổi.

@@ -1,0 +1,311 @@
+#!/usr/bin/env python3
+"""Kagura K9 manual LLVM19 *composition* truth test (never production).
+
+The source K8 canaries intentionally exercise different eligibility:
+- C fixture: four independently proven K8 passes, compile at LLVM19 -O1.
+- explicit IR MVO fixture: direct nonescaping i64 alloca with store/load.
+
+K9 renames only the MVO entry and llvm-links BOTH into one module. It
+applies five real upstream Kagura passes IN SEQUENCE, requiring each
+stage to change IR AND object and run 4096 native vectors for BOTH
+functions. iOS arm64 emits real Mach-O objects only; NO IPA/device claim.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.util
+import json
+import re
+import shutil
+import subprocess
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[2]
+K8 = ROOT / "scripts/custom_ollvm/kagura_k8"
+UPSTREAM_PIN = "ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+SEED = "82712"
+STAGES = ("mvo", "genc", "fsplit", "ibr", "ci")
+K8_C_DIGEST = "25a3318e3d7d6525"
+K8_MVO_DIGEST = "64e61045bbc4a250"
+LOG_PATTERN = re.compile(
+    r"\ADD_K9_SCHEMA=1\n"
+    r"DD_K9_VECTORS_PER_FUNCTION=4096\n"
+    r"DD_K9_C_CHECKSUM=([0-9a-f]{16})\n"
+    r"DD_K9_MVO_CHECKSUM=([0-9a-f]{16})\n"
+    r"DD_K9_COMPLETE=PASS\n\Z"
+)
+
+spec = importlib.util.spec_from_file_location("k9_k8_reused_auditor", K8 / "pilot.py")
+if spec is None or spec.loader is None:
+    raise RuntimeError("Missing the pinned K8 compiler audit implementation")
+k8 = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(k8)
+
+
+def sh(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def run_command(args: list[str], log: Path | None = None) -> str:
+    proc = subprocess.run(args, text=True, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE, check=False)
+    if log is not None:
+        log.write_text(proc.stdout + proc.stderr, encoding="utf-8")
+    if proc.returncode:
+        raise RuntimeError(
+            f"K9 command exit={proc.returncode}: {args[0]} "
+            f"details={proc.stderr[-1100:]}")
+    return proc.stdout
+
+
+def mvo_module(template: str, target: str) -> str:
+    source = k8.materialize_mvo_ir(template, target)
+    if source.count("define i64 @dd_k8_evaluate(") != 1:
+        raise AssertionError("K9 MVO template not exactly one known ABI function")
+    source = source.replace(
+        "define i64 @dd_k8_evaluate(", "define i64 @dd_k9_mvo_probe(")
+    if "define i64 @dd_k8_evaluate(" in source:
+        raise AssertionError("K9 duplicate unrenamed MVO entry")
+    k8.validate_mvo_input_ir(source)
+    return source
+
+
+def validate_merged(ir: str) -> None:
+    defined = k8.functions(ir)
+    if not {"dd_k8_evaluate", "dd_k9_mvo_probe"}.issubset(defined):
+        raise AssertionError("K9 both public canary ABI entries must survive llvm-link")
+    if "dd_k8_genc_scalar" not in ir:
+        raise AssertionError("K9 C constant global disappeared before GENC")
+    k8.validate_mvo_input_ir(ir)
+    k8.validate_genc_input_ir(ir)
+
+
+def validate_logs(content: str) -> tuple[str, str]:
+    match = LOG_PATTERN.fullmatch(content)
+    if not match:
+        raise AssertionError("K9 malformed or incomplete native 2-function log")
+    c, mvo = match.groups()
+    if (c, mvo) != (K8_C_DIGEST, K8_MVO_DIGEST):
+        raise AssertionError(
+            "K9 native divergence from independently verified K8 source + MVO oracle")
+    return c, mvo
+
+
+def validate_stage(pass_name: str, previous_ir: str, current_ir: str,
+                   previous_obj: bytes, current_obj: bytes, opt_trace: str
+                   ) -> dict:
+    if pass_name not in STAGES:
+        raise AssertionError("K9 unexpected pass in five-stage allowlist")
+    # Use the exact pass-specific K8 gates, unchanged in strength.
+    evidence = k8.validate_delta(
+        pass_name, previous_ir, current_ir,
+        previous_obj, current_obj, opt_trace)
+    public = k8.functions(current_ir)
+    if not {"dd_k8_evaluate", "dd_k9_mvo_probe"}.issubset(public):
+        raise AssertionError("K9 pipeline discarded a public function")
+    if pass_name == "mvo":
+        # Avoid accidental success from transformed C only:
+        # both explicit MVO alloca XOR names must be present.
+        if not (re.search(r"%mixed\.mvo\b", current_ir) and
+                re.search(r"%value\.mvo\b", current_ir)):
+            raise AssertionError("K9 MVO failed to transform explicit IR probe")
+    return evidence
+
+
+def verify_inputs(root: Path = ROOT) -> dict:
+    registry = json.loads(
+        (root / "scripts/custom_ollvm/pass_registry.json").read_text(encoding="utf-8")
+    )["experimental_kagura_pipeline"]
+    if registry.get("k8_five_pass_status") != "MACOS_CI_ARTIFACT_VERIFIED_ISOLATED_FIVE_PASS":
+        raise AssertionError("K9 requires independently verified K8 upstream sources")
+    expected = {
+        "fixture.c": "k8_source_fixture_sha256",
+        "runner.c": "k8_source_runner_sha256",
+        "mvo.ll": "k8_source_mvo_ir_sha256",
+    }
+    for filename, field in expected.items():
+        actual = sh(root / "scripts/custom_ollvm/kagura_k8" / filename)
+        if actual != registry[field]:
+            raise AssertionError("K9 K8 source changed without revalidating artifact: " + filename)
+    if tuple(registry.get("k8_five_passes", [])) != ("ibr", "mvo", "genc", "fsplit", "ci"):
+        raise AssertionError("K9 pinned K8 pass inventory changed")
+    if k8.mvo_expected_checksum() != K8_MVO_DIGEST:
+        raise AssertionError("K9 MVO independent oracle unexpectedly drifted")
+    return {"source_fixture_sha256": registry[expected["fixture.c"]],
+            "source_mvo_sha256": registry[expected["mvo.ll"]],
+            "source_runner_sha256": registry[expected["runner.c"]]}
+
+
+def main_run(llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
+    provenance = verify_inputs()
+    registry = src / "include/kagura/PassRegistry.def"
+    k8.validate_registry(registry.read_text(encoding="utf-8"))
+    if not plugin.is_file() or not (src / "LICENSE").is_file():
+        raise AssertionError("K9 pinned Kagura plugin/license unavailable")
+    runtime = src.parent / "kagura-k9-build/runtime/libkagura_runtime.a"
+    if not runtime.is_file():
+        raise AssertionError("K9 pinned runtime library missing (CI resolver)")
+    out.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(src / "LICENSE", out / "KAGURA-UPSTREAM-LICENSE")
+    clang = str(llvm / "bin/clang")
+    dis = str(llvm / "bin/llvm-dis")
+    assemble = str(llvm / "bin/llvm-as")
+    link_ir = str(llvm / "bin/llvm-link")
+    opt = str(llvm / "bin/opt")
+    sdk_host = run_command(["xcrun", "--sdk", "macosx", "--show-sdk-path"]).strip()
+    sdk_ios = run_command(["xcrun", "--sdk", "iphoneos", "--show-sdk-path"]).strip()
+    host_triple = run_command([clang, "-print-target-triple"]).strip()
+    template = (K8 / "mvo.ll").read_text(encoding="utf-8")
+    runner = out / "runner.o"
+    run_command(["xcrun", "clang", "-std=c11", "-Wall", "-Wextra", "-Werror",
+                 "-O1", "-c", str(HERE / "runner.c"), "-o", str(runner)])
+
+    def native_object(bc: Path, dest: Path, ios: bool) -> None:
+        args = [clang, "-O0"]
+        if ios:
+            args += ["-target", "arm64-apple-ios15.0", "-isysroot", sdk_ios]
+        run_command([*args, "-c", str(bc), "-o", str(dest)])
+        if ios:
+            k8.verify_apple_arm64_object(dest.read_bytes())
+
+    def build_merged(label: str, ios: bool) -> tuple[Path, Path, Path]:
+        folder = out / label
+        folder.mkdir(exist_ok=True)
+        c_bc = folder / "c.bc"
+        mvo_ir = folder / "mvo-source.ll"
+        mvo_bc = folder / "mvo.bc"
+        merged = folder / "merged.bc"
+        merged_ir = folder / "merged.ll"
+        obj = folder / "merged.o"
+        flags = [clang, "-O1", "-std=c11", "-Wall", "-Wextra",
+                 "-Werror", "-fno-builtin-strlen"]
+        if ios:
+            flags += ["-target", "arm64-apple-ios15.0", "-isysroot", sdk_ios]
+        else:
+            flags += ["-isysroot", sdk_host]
+        run_command([*flags, "-emit-llvm", "-c", str(K8 / "fixture.c"),
+                     "-o", str(c_bc)])
+        mvo_ir.write_text(
+            mvo_module(template, "arm64-apple-ios15.0" if ios else host_triple),
+            encoding="utf-8")
+        run_command([assemble, str(mvo_ir), "-o", str(mvo_bc)])
+        run_command([link_ir, str(c_bc), str(mvo_bc), "-o", str(merged)],
+                    log=folder / "llvm-link.log")
+        run_command([dis, str(merged), "-o", str(merged_ir)])
+        validate_merged(merged_ir.read_text(encoding="utf-8"))
+        native_object(merged, obj, ios)
+        return merged, merged_ir, obj
+
+    host_bc, host_ir, host_obj = build_merged("macos", ios=False)
+    ios_bc, ios_ir, ios_obj = build_merged("ios", ios=True)
+    plain_exe = out / "plain"
+    run_command(["xcrun", "clang", str(host_obj), str(runner), "-o", str(plain_exe)],
+                log=out / "plain-link.log")
+    plain_log = out / "plain-native.log"
+    plain_log.write_text(run_command([str(plain_exe)]), encoding="ascii")
+    validate_logs(plain_log.read_text(encoding="ascii"))
+
+    report = {
+        "schema": 1, "scope": "K9_PINNED_KAGURA_FIVE_PASS_ONE_MODULE_COMPOSITION",
+        "status": "INCOMPLETE_UNTIL_ALL_STAGES_PASS",
+        "pinned_commit": UPSTREAM_PIN, "stage_order": list(STAGES),
+        "source_scope": "K8_C_PLUS_MVO_IR_SINGLE_LLVM_LINKED_MODULE",
+        "native_vectors_per_function": 4096,
+        "native_digest_c": K8_C_DIGEST,
+        "native_digest_mvo": K8_MVO_DIGEST,
+        "mvo_independent_oracle": k8.mvo_expected_checksum(),
+        "ios_arm64": "OBJECT_BUILD_ONLY_NOT_EXECUTED",
+        "iphone_runtime_executed": False,
+        "arm64e_pac_runtime_executed": False,
+        "performance_evaluated": False,
+        "crane_production_modified": False,
+        "k8_provenance": provenance,
+        "k9_runner_sha256": sh(HERE / "runner.c"),
+        "registry_sha256": sh(registry),
+        "plain_host_object_sha256": sh(host_obj),
+        "plain_ios_object_sha256": sh(ios_obj),
+        "stages": {},
+    }
+    report_path = out / "Kagura-K9-COMPOSITION-REPORT.json"
+
+    def save() -> None:
+        report_path.write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    save()
+    previous = {
+        "macos": (host_bc, host_ir, host_obj),
+        "ios": (ios_bc, ios_ir, ios_obj),
+    }
+    for index, name in enumerate(STAGES, start=1):
+        folder = out / f"{index:02d}-{name}"
+        folder.mkdir(exist_ok=True)
+        evidence: dict[str, object] = {"pass": name, "index": index}
+        for target in ("macos", "ios"):
+            prev_bc, prev_ir, prev_obj = previous[target]
+            tagged_bc = folder / f"{target}.bc"
+            tagged_ir = folder / f"{target}.ll"
+            tagged_obj = folder / f"{target}.o"
+            trace = folder / f"{target}-opt.log"
+            kind, cls, pipeline = k8.CANDIDATES[name]
+            run_command([opt, f"--load-pass-plugin={plugin}",
+                         f"-kagura-seed={SEED}", f"-kagura-{name}",
+                         "-debug-pass-manager", f"-passes={pipeline},verify",
+                         str(prev_bc), "-o", str(tagged_bc)], log=trace)
+            run_command([dis, str(tagged_bc), "-o", str(tagged_ir)])
+            native_object(tagged_bc, tagged_obj, ios=(target == "ios"))
+            audit = validate_stage(
+                name, prev_ir.read_text(encoding="utf-8"),
+                tagged_ir.read_text(encoding="utf-8"),
+                prev_obj.read_bytes(), tagged_obj.read_bytes(),
+                trace.read_text(encoding="utf-8"))
+            evidence[target] = {
+                "class": cls, "kind": kind,
+                "previous_object_sha256": sh(prev_obj),
+                "object_sha256": sh(tagged_obj),
+                "opt_log_sha256": sh(trace),
+                "ir_sha256": sh(tagged_ir),
+                "ir_and_object_changed": True, **audit,
+            }
+            previous[target] = tagged_bc, tagged_ir, tagged_obj
+        host_candidate = previous["macos"][2]
+        candidate_exe = folder / "native"
+        linker = ["xcrun", "clang", str(host_candidate), str(runner)]
+        if name == "ci":
+            linker.append(str(runtime))
+        # Crucial: once CI constructor/dlsym has been added it MUST link
+        # with pinned upstream runtime; no missing-symbol workaround.
+        run_command([*linker, "-o", str(candidate_exe)],
+                    log=folder / "link.log")
+        native_log = folder / "native.log"
+        native_log.write_text(run_command([str(candidate_exe)]), encoding="ascii")
+        validate_logs(native_log.read_text(encoding="ascii"))
+        if native_log.read_bytes() != plain_log.read_bytes():
+            raise AssertionError(f"K9 {name}: two-function parity mismatch")
+        evidence["macos_native_4096_per_function"] = "PASS"
+        evidence["native_log_sha256"] = sh(native_log)
+        report["stages"][name] = evidence
+        save()
+    if tuple(report["stages"]) != STAGES:
+        raise AssertionError("K9 missing combined pass stage")
+    report["status"] = "MACOS_NATIVE_ALL_FIVE_COMPOSED_STAGES_PASS_IOS_BUILD_ONLY"
+    save()
+    return report
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--llvm", type=Path, required=True)
+    p.add_argument("--plugin", type=Path, required=True)
+    p.add_argument("--src", type=Path, required=True)
+    p.add_argument("--out", type=Path, required=True)
+    a = p.parse_args()
+    result = main_run(a.llvm, a.plugin, a.src, a.out)
+    assert tuple(result["stages"]) == STAGES
+    print("KAGURA_K9_COMPOSED_FIVE_STAGE_MACOS_NATIVE_AND_ARM64_OBJECTS_PASS")
+
+
+if __name__ == "__main__":
+    main()

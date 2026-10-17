@@ -275,6 +275,36 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
     ):
         if hashlib.sha256((root / source).read_bytes()).hexdigest() != kagura[digest_key]:
             raise AssertionError("K8 pinned CI source no longer matches verified artifact")
+    if (kagura.get("k9_composition_status") !=
+        "STAGED_MANUAL_COMPOSED_CI_NOT_VERIFIED" or
+        kagura.get("k9_workflow") !=
+        ".github/workflows/kagura-k9-composition.yml" or
+        kagura.get("k9_runner") !=
+        "scripts/custom_ollvm/kagura_k9/pilot.py" or
+        kagura.get("k9_portable_test") !=
+        "scripts/test_kagura_k9_composition.py" or
+        kagura.get("k9_doc") !=
+        "docs/KAGURA_K9_COMPOSITION.md" or
+        kagura.get("k9_stage_order") !=
+        ["mvo", "genc", "fsplit", "ibr", "ci"] or
+        kagura.get("k9_merged_function_names") !=
+        ["dd_k8_evaluate", "dd_k9_mvo_probe"] or
+        kagura.get("k9_native_vectors_per_function") != 4096 or
+        kagura.get("k9_c_checksum") != "25a3318e3d7d6525" or
+        kagura.get("k9_mvo_checksum") != "64e61045bbc4a250" or
+        kagura.get("k9_ios_arm64") !=
+        "OBJECT_BUILD_ONLY_NOT_EXECUTED" or
+        kagura.get("k9_composition_native") !=
+        "NOT_VERIFIED_MACOS_CI" or
+        kagura.get("k9_performance") != "NOT_EVALUATED" or
+        any(not (root / kagura[path_key]).is_file()
+            for path_key in (
+                "k9_workflow", "k9_runner", "k9_portable_test", "k9_doc"
+            )) or
+        not (root / "scripts/custom_ollvm/kagura_k9/runner.c").is_file()):
+        raise AssertionError(
+            "K9 composed 5-pass real LLVM19 run has NOT been verified; "
+            "manual CI+paired native evidence is mandatory")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

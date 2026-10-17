@@ -58,6 +58,13 @@ CRC sạch, SHA và 92/92 phép kiểm chứng độc lập PASS. Chưa kiểm t
 pipeline kết hợp, Crane/arm64e PAC runtime hoặc hiệu năng K8.
 Xem [KAGURA_K8_ARTIFACT_REVIEW.md](KAGURA_K8_ARTIFACT_REVIEW.md) và
 [KAGURA_K8_FIVE_PASS_VALIDATION.md](KAGURA_K8_FIVE_PASS_VALIDATION.md).
+**K9 (mới chuẩn bị, chưa có kết quả native macOS):**
+workflow manual-only
+[KAGURA_K9_COMPOSITION.md](KAGURA_K9_COMPOSITION.md)
+ghép C + MVO IR vào **một LLVM19 module**, thử thứ tự
+`mvo,genc,fsplit,ibr,ci`; sau mỗi stage phải có IR/object delta
+và hai hàm × 4096 native parity cùng iOS arm64 object build-only.
+Không nhận là K9 combined PASS trước khi đọc artifact thật.
 K7 VM đã có log `a.txt` xác minh UUID/checksum với IPA thực, median
 paired iPhone overhead 71,5× (3 cặp, chưa phải chứng thực mật mã).
 
