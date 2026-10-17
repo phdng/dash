@@ -55,6 +55,15 @@ chạy trên tất cả hàm phù hợp trong module; cần function selection
 không chứng minh một pass cải thiện chống reverse engineering bao
 nhiêu, hay có thể chặn phân tích tĩnh tuyệt đối.
 
+## K2a: bước tiếp theo đã triển khai
+
+Đã bổ sung [KAGURA_K2_SCOPE_BENCH.md](KAGURA_K2_SCOPE_BENCH.md):
+TU `critical.c` đi qua Kagura, object sentinel độc lập không đi qua pass;
+công cụ kiểm tra scope cho từng stage và benchmark native 11 mẫu × 32.768
+calls, xuất median/p95 và ratio so baseline. **Đây không phải xác minh
+function allowlist nghiêm ngặt** vì `kagura_decrypt_*` có thể nhận pass.
+Bộ kiểm thử K2a hiện mới PASS cục bộ, chưa có kết quả macOS CI.
+
 ## ABI và thiết bị
 
 `audit.json` K0 vẫn báo:

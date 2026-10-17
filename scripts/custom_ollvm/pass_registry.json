@@ -156,6 +156,10 @@
     "k1_stepwise_runner": "scripts/custom_ollvm/kagura_max/stage_pipeline.py",
     "k1_extra_passes": ["kagura-bbr", "kagura-bbs"],
     "k1_native_ci_status": "VERIFIED_FROM_USER_CI_ARTIFACT",
+    "k2_scope_type": "TRANSLATION_UNIT_ONLY_NOT_LLVM_FUNCTION_ALLOWLIST",
+    "k2_scope_and_benchmark_status": "STAGED_NOT_VERIFIED_MACOS",
+    "k2_native_runner": "scripts/custom_ollvm/kagura_max/benchmark_audit.py",
+    "k2_ios_device_runtime": "NOT_TESTED",
     "production_merge": false,
     "arm64e_pac_runtime": "DEFERRED_NO_A12_DEVICE"
   },

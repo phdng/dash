@@ -19,6 +19,7 @@ jobs:
           set -euo pipefail
           python3 scripts/test_kagura_max_candidate.py
           python3 scripts/test_kagura_k1_stages.py
+          python3 scripts/test_kagura_scope_bench.py
           python3 scripts/test_custom_ollvm_pass_matrix.py
 
       - name: Compile pinned MIT Kagura plugin with LLVM 19
@@ -67,6 +68,10 @@ jobs:
           "$KAGURA_LLVM/bin/clang" -O0 -c "$out/host-candidate.bc" -o "$out/host-candidate.o"
           xcrun clang -O1 -std=c11 -Wall -Wextra -Werror \
             -c "$dir/runner.c" -o "$out/runner.o"
+          "$KAGURA_LLVM/bin/clang" -O1 -std=c11 -Wall -Wextra -Werror \
+            -isysroot "$sdk" -c "$dir/sentinel.c" -o "$out/sentinel-plain.o"
+          xcrun clang -O2 -std=c11 -Wall -Wextra -Werror \
+            -c "$dir/bench_runner.c" -o "$out/bench-runner.o"
           xcrun clang "$out/host-plain.o" "$out/runner.o" -o "$out/host-plain"
           xcrun clang "$out/host-candidate.o" "$out/runner.o" -o "$out/host-candidate"
           "$out/host-plain" > "$out/host-plain.log"
@@ -82,7 +87,13 @@ jobs:
             --plain-bc "$KAGURA_OUT/host-plain.bc" \
             --baseline-log "$KAGURA_OUT/host-plain.log" \
             --runner-obj "$KAGURA_OUT/runner.o" \
+            --sentinel-obj "$KAGURA_OUT/sentinel-plain.o" \
+            --benchmark-obj "$KAGURA_OUT/bench-runner.o" \
             --out "$KAGURA_OUT/stages"
+          python3 scripts/custom_ollvm/kagura_max/benchmark_audit.py \
+            --baseline "$KAGURA_OUT/stages/stage00-baseline-bench.log" \
+            --stages "$KAGURA_OUT/stages" \
+            --out "$KAGURA_OUT/stages/kagura-k1-host-benchmark.json"
           cat "$KAGURA_OUT/stages/kagura-k1-stage-report.json" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Cross-compile iOS arm64 and independently check Apple arm64e ABI

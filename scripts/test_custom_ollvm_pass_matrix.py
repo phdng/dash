@@ -55,6 +55,8 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"]["passes"].append("kagura-vm"),
     lambda x: x["experimental_kagura_pipeline"].update(k1_native_ci_status="PASS_WITHOUT_RUN"),
     lambda x: x["experimental_kagura_pipeline"]["k1_extra_passes"].append("kagura-vm"),
+    lambda x: x["experimental_kagura_pipeline"].update(k2_scope_type="STRICT_FUNCTION_WHITELIST_VERIFIED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k2_scope_and_benchmark_status="IOS_DEVICE_PASS"),
 )
 for idx, change in enumerate(negative_mutations):
     data = copy.deepcopy(original)

@@ -124,7 +124,10 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("production_merge") is not False or
         kagura.get("vm_state") != "DISABLED_PENDING_SEPARATE_OVERHEAD_AND_ABI_TEST" or
         kagura.get("arm64e_pac_runtime") != "DEFERRED_NO_A12_DEVICE" or
-        kagura.get("k1_native_ci_status") != "VERIFIED_FROM_USER_CI_ARTIFACT"):
+        kagura.get("k1_native_ci_status") != "VERIFIED_FROM_USER_CI_ARTIFACT" or
+        kagura.get("k2_scope_type") != "TRANSLATION_UNIT_ONLY_NOT_LLVM_FUNCTION_ALLOWLIST" or
+        kagura.get("k2_scope_and_benchmark_status") != "STAGED_NOT_VERIFIED_MACOS" or
+        kagura.get("k2_ios_device_runtime") != "NOT_TESTED"):
         raise AssertionError("Kagura must remain independent/experimental")
     if kagura.get("profile_file") != "scripts/custom_ollvm/kagura_max/profile.json" or (
         kagura.get("workflow") != ".github/workflows/kagura-max-candidate.yml"
@@ -132,6 +135,10 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "kagura-str", "kagura-fla", "kagura-bcf", "kagura-sub", "kagura-co"
     ]:
         raise AssertionError("Experimental Kagura compiler-pipeline drift")
+    if (kagura.get("k2_native_runner") !=
+        "scripts/custom_ollvm/kagura_max/benchmark_audit.py" or
+        not (root / kagura["k2_native_runner"]).is_file()):
+        raise AssertionError("K2 benchmark scope must stay experimental")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

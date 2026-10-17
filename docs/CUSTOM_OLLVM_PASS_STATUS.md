@@ -36,6 +36,10 @@ khác biệt, mỗi giai đoạn giữ 8.192 vector native parity; xem
 [KAGURA_K1_ARTIFACT_REVIEW.md](KAGURA_K1_ARTIFACT_REVIEW.md).
 **Chưa kiểm thử Kagura K1 runtime iPhone hay tích hợp Crane**.
 
+K2a đã thêm **TU scope isolation** và benchmark native 11 mẫu × 32.768
+calls theo từng stage; chưa có số đo macOS thực.
+Chi tiết [KAGURA_K2_SCOPE_BENCH.md](KAGURA_K2_SCOPE_BENCH.md).
+
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản
 custom merged/derived. Chưa được gọi là MAX production.

@@ -32,6 +32,10 @@ trùng, IR/object thay đổi, public plaintext canary biến mất). K1
 loại delta cho từng giai đoạn; **K1 đã có artifact macOS thực, bảy pass đều tạo IR/object delta,
 8.192 vector native parity/pass**, nhưng chưa có runtime iOS; xem
 [KAGURA_K1_ARTIFACT_REVIEW.md](KAGURA_K1_ARTIFACT_REVIEW.md).
+K2a bổ sung kiểm tra **scope theo TU**, sentinel object không qua
+Kagura, benchmark native median/p95 theo stage và checksum; đây **chưa phải
+function allowlist đầy đủ**, không thể bảo vệ tùy ý các method ObjC/hook.
+Xem [KAGURA_K2_SCOPE_BENCH.md](KAGURA_K2_SCOPE_BENCH.md).
 Đây không phải pass đã nhập vào OLLVM STRONG production.
 
 VM Kagura có mã chuyển LLVM IR thành bytecode thực nhưng chỉ dự kiến

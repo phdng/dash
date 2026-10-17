@@ -79,7 +79,18 @@ phù hợp. Bắt buộc kiểm tra ngoại lệ/ARC, lỗi và overhead trướ
 xét composite. `ci`/`ibr` chỉ áp
 dụng C-only với ABI typed, tránh ObjC selectors và callback/ptrauth.
 
-**Pha K2 — MAX_VM_SELECTIVE** (chưa triển khai, không có PASS):
+**Pha K2a — TU scope + native overhead** (đã có mã CI độc lập, chưa được macOS CI xác nhận):
+
+Đã tạo `sentinel.c` làm object không qua Kagura; chỉ TU `critical.c`
+được chạy qua LLVM19 `opt`. Test kiểm tra function definitions đầu vào,
+chỉ cho phép helper `kagura_decrypt_*` được sinh thêm, và xác minh
+sentinel không xuất hiện trong pass debug log. Đây là **TU isolation**, chưa
+phải compiler-pass function allowlist; helper vẫn có thể nhận pass.
+Benchmark macOS có 11 mẫu × 32.768 calls ở mỗi stage,
+so median/p95 với cùng LLVM19 baseline và verify checksum parity.
+Xem [KAGURA_K2_SCOPE_BENCH.md](KAGURA_K2_SCOPE_BENCH.md).
+
+**Pha K2b — MAX_VM_SELECTIVE** (chưa triển khai, không có PASS):
 
 Thử `kagura-vm` trên đúng **một hàm C thuần, nhỏ, hiếm gọi**
 (như một thuật toán xác nhận kết quả công khai) kèm runtime
@@ -133,6 +144,7 @@ kết quả khi CI và bài thử thật tương ứng PASS.
    Không sao chép binary proprietary của SLLVM hoặc ép load cùng lúc
    Hikari/Kagura/OLLVM nếu chưa test được ordering/incompatibility.
 
-Mốc hiện tại: **K0 Kagura LLVM19 plugin thực đã PASS CI/artifact do người dùng cung cấp**; K1 7 pass tăng dần đã viết và local regression PASS,
-**K1 đã PASS trên macOS theo artifact người dùng cung cấp; chưa có kết quả Kagura trên iPhone**. Crane OLLVM STRONG
+Mốc hiện tại: **K0 và K1 Kagura LLVM19 đều có artifact CI thực đã kiểm tra**;
+K2a cách ly theo TU và benchmark native đã có mã/regression portable,
+**chưa chạy macOS CI K2a hoặc Kagura runtime trên iPhone**. Crane OLLVM STRONG
 hiện hành **không bị sửa**.

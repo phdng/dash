@@ -27,6 +27,36 @@ PASS_STAGES = (
 )
 MAIN_SYMBOL = "dd_kagura_critical"
 RANDOM_SEED = "1234567"
+SENTINEL_SYMBOL = "dd_kagura_unprotected_sentinel"
+
+
+def defined_functions(ir: str) -> set[str]:
+    """Reject extra pre-existing functions inside the protected module."""
+    pattern = r'(?m)^define\b[^\n]*@(?:"([^"]+)"|([A-Za-z0-9_.$-]+))\('
+    return {quoted or plain for quoted, plain in re.findall(pattern, ir)}
+
+
+def scope_report(original: str, stage: str, pass_debug: str) -> dict:
+    before = defined_functions(original)
+    after = defined_functions(stage)
+    if before != {MAIN_SYMBOL}:
+        raise AssertionError("Kagura input includes non-allowlisted function")
+    if MAIN_SYMBOL not in after or SENTINEL_SYMBOL in after:
+        raise AssertionError("Protected module lost critical function or gained sentinel")
+    generated = after - before
+    if any(not name.startswith("kagura_decrypt_") for name in generated):
+        raise AssertionError("Unexpected helper definition in protected module")
+    if SENTINEL_SYMBOL in pass_debug:
+        raise AssertionError("Kagura pass-manager attempted unprotected sentinel")
+    return {
+        "scope": "ISOLATED_TRANSLATION_UNIT_NOT_FUNCTION_PASS_ALLOWLIST",
+        "protected_input_definitions": sorted(before),
+        "generated_decryption_helpers": sorted(generated),
+        "generated_helpers_may_receive_kagura_function_passes": True,
+        "unprotected_sentinel_in_protected_ir": False,
+        "unprotected_sentinel_pass_invoked": False,
+        "strict_single_function_pass_filter_verified": False,
+    }
 
 
 def sha(path: Path) -> str:
@@ -90,8 +120,10 @@ def checked(cmd: list[str], log: Path | None = None, *, output: Path | None = No
 
 
 def build(*, llvm: Path, plugin: Path, plain_bc: Path, baseline_log: Path,
-          runner_obj: Path, destination: Path) -> dict:
-    for file in (plugin, plain_bc, baseline_log, runner_obj):
+          runner_obj: Path, sentinel_obj: Path, benchmark_obj: Path,
+          destination: Path) -> dict:
+    for file in (plugin, plain_bc, baseline_log, runner_obj,
+                 sentinel_obj, benchmark_obj):
         if not file.is_file():
             raise FileNotFoundError(file)
     opt = llvm / "bin" / "opt"
@@ -104,6 +136,10 @@ def build(*, llvm: Path, plugin: Path, plain_bc: Path, baseline_log: Path,
     baseline_ll = destination / "baseline.ll"
     checked([str(llvm_dis), str(plain_bc), "-o", str(baseline_ll)],
             output=baseline_ll)
+    baseline_ir = baseline_ll.read_text(encoding="utf-8")
+    if defined_functions(baseline_ir) != {MAIN_SYMBOL}:
+        raise AssertionError("Protected module has extra pre-existing functions")
+    sentinel_hash = sha(sentinel_obj)
     current_bc = plain_bc
     current_ll = baseline_ll
     # Compile original .bc using precisely the same LLVM19 clang flags
@@ -111,6 +147,16 @@ def build(*, llvm: Path, plugin: Path, plain_bc: Path, baseline_log: Path,
     previous_object = destination / "stage00-baseline.o"
     checked([str(clang), "-O0", "-c", str(plain_bc), "-o", str(previous_object)],
             output=previous_object)
+    # A real native sentinel object is never sent to opt, and is linked
+    # unchanged into every candidate. This is TU isolation, NOT a true
+    # Kagura per-function allowlist for compiler-generated helpers.
+    baseline_bench = destination / "stage00-baseline-bench"
+    baseline_bench_log = destination / "stage00-baseline-bench.log"
+    checked(["xcrun", "clang", str(previous_object), str(sentinel_obj),
+             str(benchmark_obj), "-o", str(baseline_bench)],
+            output=baseline_bench)
+    checked([str(baseline_bench)], baseline_bench_log)
+
     stages = []
     for index, (name, pipeline) in enumerate(PASS_STAGES, start=1):
         prefix = destination / f"stage{index:02d}-{name}"
@@ -130,14 +176,28 @@ def build(*, llvm: Path, plugin: Path, plain_bc: Path, baseline_log: Path,
                 output=next_ll)
         checked([str(clang), "-O0", "-c", str(next_bc), "-o", str(obj)],
                 output=obj)
-        checked(["xcrun", "clang", str(obj), str(runner_obj), "-o",
-                 str(executable)], output=executable)
+        checked(["xcrun", "clang", str(obj), str(sentinel_obj),
+                 str(runner_obj), "-o", str(executable)], output=executable)
         with output_log.open("wb") as handle:
             subprocess.run([str(executable)], stdout=handle, check=True)
         parity = verify_host(baseline_log, output_log)
+        stage_ir = next_ll.read_text(encoding="utf-8")
         delta = analyze_delta(current_ll.read_text(encoding="utf-8"),
-                              next_ll.read_text(encoding="utf-8"),
-                              previous_object.read_bytes(), obj.read_bytes(), name)
+                              stage_ir, previous_object.read_bytes(),
+                              obj.read_bytes(), name)
+        scope = scope_report(baseline_ir, stage_ir,
+                             pass_log.read_text(encoding="utf-8"))
+        if sha(sentinel_obj) != sentinel_hash:
+            raise AssertionError("Unprotected sentinel object bytes changed")
+        bench_executable = destination / f"stage{index:02d}-{name}-bench"
+        bench_log = destination / f"stage{index:02d}-{name}-bench.log"
+        checked(["xcrun", "clang", str(obj), str(sentinel_obj),
+                 str(benchmark_obj), "-o", str(bench_executable)],
+                output=bench_executable)
+        checked([str(bench_executable)], bench_log)
+        delta.update({"scope_evidence": scope,
+                      "unprotected_sentinel_object_sha256": sentinel_hash,
+                      "host_benchmark_log_sha256": sha(bench_log)})
         if index == 1 and MARKER in obj.read_bytes():
             raise AssertionError("Kagura string pass left plaintext in stage1 object")
         if MARKER in obj.read_bytes():
@@ -164,6 +224,9 @@ def build(*, llvm: Path, plugin: Path, plain_bc: Path, baseline_log: Path,
         "validated_host_vectors_each": 8192,
         "first_stage_string_marker_removed": True,
         "llvm19_same_compiler_per_stage": True,
+        "unprotected_sentinel_separate_object_sha256": sentinel_hash,
+        "function_scope": "TU_ONLY_GENERATED_HELPERS_NOT_EXEMPT",
+        "native_host_benchmarks": "STAGED_LOGS_REQUIRE_POST_RUN_AUDIT",
         "arm64_ios_device_runtime": "NOT_TESTED_IN_K1_WORKFLOW",
         "arm64e": "APPLE_CLANG_BUILD_ONLY_NO_KAGURA",
         "production_crane_unchanged": True,
@@ -185,10 +248,13 @@ def main() -> None:
     parser.add_argument("--plain-bc", type=Path, required=True)
     parser.add_argument("--baseline-log", type=Path, required=True)
     parser.add_argument("--runner-obj", type=Path, required=True)
+    parser.add_argument("--sentinel-obj", type=Path, required=True)
+    parser.add_argument("--benchmark-obj", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     build(llvm=args.llvm, plugin=args.plugin, plain_bc=args.plain_bc,
           baseline_log=args.baseline_log, runner_obj=args.runner_obj,
+          sentinel_obj=args.sentinel_obj, benchmark_obj=args.benchmark_obj,
           destination=args.out)
 
 
