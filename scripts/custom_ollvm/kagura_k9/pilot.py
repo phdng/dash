@@ -114,6 +114,63 @@ def validate_stage(pass_name: str, previous_ir: str, current_ir: str,
     return evidence
 
 
+def validate_composition_report(report: dict) -> None:
+    """Fail-closed post-CI report gate independent of JSON dictionary ordering.
+
+    The writer serializes with sort_keys=True. Reconstruct pass chronology
+    using stage.index instead of list(report["stages"]) insertion order.
+    """
+    if not isinstance(report, dict):
+        raise AssertionError("K9 report must be a JSON object")
+    if (report.get("status") !=
+            "MACOS_NATIVE_ALL_FIVE_COMPOSED_STAGES_PASS_IOS_BUILD_ONLY" or
+            report.get("schema") != 1 or
+            report.get("stage_order") != list(STAGES) or
+            report.get("native_vectors_per_function") != 4096 or
+            report.get("native_digest_c") != K8_C_DIGEST or
+            report.get("native_digest_mvo") != K8_MVO_DIGEST or
+            report.get("mvo_independent_oracle") != K8_MVO_DIGEST or
+            report.get("ios_arm64") != "OBJECT_BUILD_ONLY_NOT_EXECUTED" or
+            report.get("iphone_runtime_executed") is not False or
+            report.get("arm64e_pac_runtime_executed") is not False or
+            report.get("crane_production_modified") is not False or
+            report.get("performance_evaluated") is not False):
+        raise AssertionError("K9 final report status, independent checksums or scope invalid")
+    stages = report.get("stages")
+    if not isinstance(stages, dict) or set(stages) != set(STAGES):
+        raise AssertionError("K9 final report missing/duplicated/extra stage")
+    observed_order: list[str] = []
+    for index, name in enumerate(STAGES, 1):
+        stage = stages[name]
+        kind, cls, _ = k8.CANDIDATES[name]
+        if (not isinstance(stage, dict) or
+                type(stage.get("index")) is not int or
+                stage["index"] != index or
+                stage.get("pass") != name or
+                stage.get("macos_native_4096_per_function") != "PASS" or
+                not re.fullmatch(
+                    r"[a-f0-9]{64}", stage.get("native_log_sha256", ""))):
+            raise AssertionError(f"K9 corrupted order/native evidence for {name}")
+        observed_order.append(stage["pass"])
+        for target in ("macos", "ios"):
+            entry = stage.get(target)
+            if (not isinstance(entry, dict) or
+                    entry.get("class") != cls or
+                    entry.get("kind") != kind or
+                    entry.get("ir_and_object_changed") is not True or
+                    any(not isinstance(entry.get(field), str) or
+                        not re.fullmatch(r"[a-f0-9]{64}", entry[field])
+                        for field in (
+                            "previous_object_sha256", "object_sha256",
+                            "opt_log_sha256", "ir_sha256")) or
+                    entry.get("previous_object_sha256") ==
+                    entry.get("object_sha256")):
+                raise AssertionError(
+                    f"K9 {name}/{target}: fake pass class or IR/object evidence")
+    if observed_order != list(STAGES):
+        raise AssertionError("K9 report stage indices not chronological")
+
+
 def verify_inputs(root: Path = ROOT) -> dict:
     registry = json.loads(
         (root / "scripts/custom_ollvm/pass_registry.json").read_text(encoding="utf-8")
@@ -291,19 +348,31 @@ def main_run(llvm: Path, plugin: Path, src: Path, out: Path) -> dict:
     if tuple(report["stages"]) != STAGES:
         raise AssertionError("K9 missing combined pass stage")
     report["status"] = "MACOS_NATIVE_ALL_FIVE_COMPOSED_STAGES_PASS_IOS_BUILD_ONLY"
+    validate_composition_report(report)
     save()
     return report
 
 
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--llvm", type=Path, required=True)
-    p.add_argument("--plugin", type=Path, required=True)
-    p.add_argument("--src", type=Path, required=True)
-    p.add_argument("--out", type=Path, required=True)
+    p.add_argument("--llvm", type=Path)
+    p.add_argument("--plugin", type=Path)
+    p.add_argument("--src", type=Path)
+    p.add_argument("--out", type=Path)
+    p.add_argument("--verify-report", type=Path,
+                   help="Independently validate a serialized K9 JSON report")
     a = p.parse_args()
+    if a.verify_report is not None:
+        if any(v is not None for v in (a.llvm, a.plugin, a.src, a.out)):
+            p.error("--verify-report cannot run a compiler build")
+        validate_composition_report(json.loads(
+            a.verify_report.read_text(encoding="utf-8")))
+        print("KAGURA_K9_SERIALIZED_REPORT_ORDER_AND_NATIVE_EVIDENCE_PASS")
+        return
+    if any(v is None for v in (a.llvm, a.plugin, a.src, a.out)):
+        p.error("--llvm, --plugin, --src and --out are required for build")
     result = main_run(a.llvm, a.plugin, a.src, a.out)
-    assert tuple(result["stages"]) == STAGES
+    validate_composition_report(result)
     print("KAGURA_K9_COMPOSED_FIVE_STAGE_MACOS_NATIVE_AND_ARM64_OBJECTS_PASS")
 
 

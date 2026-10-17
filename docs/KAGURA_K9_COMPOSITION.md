@@ -85,6 +85,50 @@ Chỉ khi báo cáo đủ 5 stage và tất cả gates native + object thành c�
 mới xuất `MACOS_NATIVE_ALL_FIVE_COMPOSED_STAGES_PASS_IOS_BUILD_ONLY`.
 Trước khi chạy CI, **không được** đổi trạng thái lên PASS.
 
+## Sửa lỗi hậu kiểm JSON sau native PASS (17/10/2026)
+
+GitHub Actions được người dùng báo đã in
+`KAGURA_K9_COMPOSED_FIVE_STAGE_MACOS_NATIVE_AND_ARM64_OBJECTS_PASS`,
+sau đó **thất bại ở lệnh Python ngắn trong workflow**, cụ thể
+`<stdin>` dòng 4 với `AssertionError`. Đó là dòng cũ:
+
+```python
+assert list(r["stages"]) == ["mvo", "genc", "fsplit", "ibr", "ci"]
+```
+
+Trong `pilot.py`, report được xuất bằng `json.dumps(...,
+sort_keys=True)`: trường `stages` bị sắp xếp tên alphabet
+`ci,fsplit,genc,ibr,mvo` khi đọc lại JSON. **Trình tự thực thi
+không bị thay đổi**; `report["stage_order"]` và
+`stages[name]["index"]` vẫn ghi đúng thứ tự. Đây là lỗi giả định
+thứ tự dictionary trong hậu kiểm, không phải bằng chứng no-op hay
+native checksum sai.
+
+Đã sửa workflow để chạy
+`python3 scripts/custom_ollvm/kagura_k9/pilot.py --verify-report <JSON>`
+trên **bản JSON đã serialize ra đĩa**. Hàm kiểm tra nghiêm ngặt
+`validate_composition_report()` yêu cầu:
+
+- `stage_order` đúng `mvo,genc,fsplit,ibr,ci`, đủ năm khóa không
+  thiếu/thừa, mỗi `pass` + `index` chính xác (1..5); không
+  sử dụng thứ tự `dict` của JSON để suy ra thứ tự thực thi;
+- mỗi stage phải có `macos_native_4096_per_function=PASS`;
+  dấu chứng IR/object delta cho cả `macos` và `ios`, pass class,
+  SHA-256 object trước/sau khác nhau và SHA-256 log hợp lệ;
+- hai checksum độc lập theo K8 (`25a3318e3d7d6525`,
+  `64e61045bbc4a250`), `4096` vector mỗi hàm, không có
+  claim iOS runtime/arm64e/Crane production/performance.
+
+Regression tạo report `sort_keys=True` để **tái hiện lỗi cũ**,
+xác minh parser mới nhận đúng; đồng thời thử trường hợp sai index,
+thiếu stage, fake object, sai checksum và native FAIL đều bị từ chối.
+
+**Giới hạn bằng chứng:** chuỗi PASS mà người dùng cung cấp cho thấy
+runner K9 đã hoàn thành trong lần CI đó, nhưng chưa có artifact K9
+đính kèm để đối chiếu độc lập SHA/IR/object như K8. Vì vậy registry
+vẫn ở `STAGED_MANUAL_COMPOSED_CI_NOT_VERIFIED` cho đến khi nhận
+và xác minh artifact thật. Cần chạy lại workflow với hậu kiểm mới.
+
 ## Giới hạn cố ý
 
 - K9 mới chứng minh **một thứ tự hợp nhất** trên C + LLVM IR canary,

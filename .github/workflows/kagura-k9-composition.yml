@@ -63,17 +63,11 @@ jobs:
           python3 scripts/custom_ollvm/kagura_k9/pilot.py \
             --llvm "$K9_LLVM" --plugin "$K9_PLUGIN" \
             --src "$K9_SRC" --out "$out"
-          python3 - "$out/Kagura-K9-COMPOSITION-REPORT.json" <<'PY'
-          import json,sys
-          r=json.load(open(sys.argv[1],encoding="utf-8"))
-          assert r["status"]=="MACOS_NATIVE_ALL_FIVE_COMPOSED_STAGES_PASS_IOS_BUILD_ONLY"
-          assert list(r["stages"])==["mvo","genc","fsplit","ibr","ci"]
-          assert r["native_vectors_per_function"]==4096
-          assert r["ios_arm64"]=="OBJECT_BUILD_ONLY_NOT_EXECUTED"
-          assert not r["iphone_runtime_executed"]
-          assert not r["crane_production_modified"]
-          assert all(s["macos_native_4096_per_function"]=="PASS" for s in r["stages"].values())
-          PY
+          # JSON is serialized with sort_keys=True: dictionary-key order
+          # is NOT the execution chronology. Validate each stage.index and
+          # every native/IR/object gate through the same strict parser.
+          python3 scripts/custom_ollvm/kagura_k9/pilot.py \
+            --verify-report "$out/Kagura-K9-COMPOSITION-REPORT.json"
           echo "K9: one merged module, five sequential Kagura LLVM19 stages, real IR/object delta + 2×4096 native parity after EACH stage." >> "$GITHUB_STEP_SUMMARY"
           echo "iOS arm64: MH_OBJECT build-only after each stage. No device, no arm64e, no production, no performance claim." >> "$GITHUB_STEP_SUMMARY"
 

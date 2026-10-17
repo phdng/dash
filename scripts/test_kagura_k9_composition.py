@@ -109,7 +109,7 @@ for required in (
     "Kagura-K9-COMPOSITION-REPORT.json",
     "DuoDash-Kagura-K9-FIVE-PASS-COMPOSED-LLVM19-EXPERIMENTAL",
     "kagura-k9-build", "libkagura_runtime.a",
-    "if: always()", "macos_native_4096_per_function",
+    "if: always()", "--verify-report",
 ):
     assert required in wf, required
 for forbidden in (
@@ -120,6 +120,100 @@ for forbidden in (
     assert forbidden not in wf, forbidden
 for prod in ("Makefile", "policy.json", ".github/workflows/build.yml"):
     assert "kagura_k9" not in (ROOT / prod).read_text(encoding="utf-8"), prod
+# Regression: K9 CI emitted native PASS but GitHub Actions failed at
+# list(r["stages"]) after JSON serialization with sort_keys=True.
+# A proof must check explicit stage.index AND each stage's native/IR/
+# object evidence; dictionary key iteration order is not chronology.
+mock = {
+    "schema": 1,
+    "status": "MACOS_NATIVE_ALL_FIVE_COMPOSED_STAGES_PASS_IOS_BUILD_ONLY",
+    "stage_order": list(mod.STAGES),
+    "native_vectors_per_function": 4096,
+    "native_digest_c": mod.K8_C_DIGEST,
+    "native_digest_mvo": mod.K8_MVO_DIGEST,
+    "mvo_independent_oracle": mod.K8_MVO_DIGEST,
+    "ios_arm64": "OBJECT_BUILD_ONLY_NOT_EXECUTED",
+    "iphone_runtime_executed": False,
+    "arm64e_pac_runtime_executed": False,
+    "crane_production_modified": False,
+    "performance_evaluated": False,
+    "stages": {},
+}
+for index, name in enumerate(mod.STAGES, 1):
+    kind, cls, _ = mod.k8.CANDIDATES[name]
+    proof = {
+        "class": cls,
+        "kind": kind,
+        "ir_and_object_changed": True,
+        "previous_object_sha256": "a" * 64,
+        "object_sha256": "b" * 64,
+        "opt_log_sha256": "c" * 64,
+        "ir_sha256": "d" * 64,
+    }
+    mock["stages"][name] = {
+        "index": index,
+        "pass": name,
+        "macos_native_4096_per_function": "PASS",
+        "native_log_sha256": "e" * 64,
+        "macos": dict(proof),
+        "ios": dict(proof),
+    }
+serialized = json.loads(json.dumps(mock, sort_keys=True))
+assert list(serialized["stages"]) != list(mod.STAGES), (
+    "The original CI bug must be reproduced by sorted-key JSON")
+mod.validate_composition_report(mock)
+mod.validate_composition_report(serialized)
+
+import copy
+
+
+def reject_modified_report(mutator, label: str) -> None:
+    report = copy.deepcopy(serialized)
+    mutator(report)
+    rejects(lambda: mod.validate_composition_report(report), label)
+
+
+reject_modified_report(
+    lambda r: r["stages"]["ci"].update(index=1),
+    "duplicate/misordered index despite all stages present")
+reject_modified_report(
+    lambda r: r["stages"]["ibr"].update(index=4.0),
+    "stage index must be exact integer")
+reject_modified_report(
+    lambda r: r["stages"]["fsplit"].update(**{"pass": "mvo"}),
+    "stage report body has wrong pass")
+reject_modified_report(
+    lambda r: r["stages"].pop("genc"),
+    "missing actual pass from K9 report")
+reject_modified_report(
+    lambda r: r["stages"]["ci"]["macos"].update(ir_and_object_changed=False),
+    "fake IR/object delta")
+reject_modified_report(
+    lambda r: r["stages"]["mvo"]["ios"].update(
+        object_sha256=r["stages"]["mvo"]["ios"]["previous_object_sha256"]),
+    "iOS object no-op")
+reject_modified_report(
+    lambda r: r["stages"]["ibr"]["ios"].update(**{"class": "FakePass"}),
+    "fake pass-class trace")
+reject_modified_report(
+    lambda r: r["stages"]["ci"].update(
+        macos_native_4096_per_function="FAIL"),
+    "stage parity failure")
+reject_modified_report(
+    lambda r: r.update(native_digest_mvo="0" * 16),
+    "wrong independent MVO checksum")
+reject_modified_report(
+    lambda r: r.update(iphone_runtime_executed=True),
+    "false device runtime claim")
+reject_modified_report(
+    lambda r: r.update(stage_order=list(reversed(mod.STAGES))),
+    "false advertised stage order")
+reject_modified_report(
+    lambda r: r.update(status="INCOMPLETE_UNTIL_ALL_STAGES_PASS"),
+    "incomplete report marked success")
+assert "--verify-report" in wf
+assert 'assert list(r["stages"])' not in wf
+
 print("KAGURA_K9_PORTABLE_COMPOSITION_PASS: merged module, 5 stages, "
       "two independent 4096-vector oracles, delta/ABI/trace neg tests; "
       "real LLVM19 macOS K9 NOT TESTED")
