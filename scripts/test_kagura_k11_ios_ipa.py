@@ -187,6 +187,18 @@ with tempfile.TemporaryDirectory(prefix="K11-resolver-selection-") as temp_root:
 # nm must resolve both undefined symbols from actual ARM64 definitions,
 # even when one provider TU defines two names and another is a decoy.
 import ci_runtime_closure as closure
+# Original CI bug: Apple nm -u emits bare names, not "U _name".
+assert closure.parse_undefined_names(
+    "_kagura_image_list_contains\n_kagura_suspicious_image_patterns\n"
+) == {"_kagura_image_list_contains", "_kagura_suspicious_image_patterns"}
+assert closure.parse_undefined_names("    _kagura_image_list_contains   \n") == {
+    "_kagura_image_list_contains"}
+assert closure.parse_undefined_names("") == set()
+rejects(lambda: closure.parse_undefined_names(
+    "                 U _kagura_image_list_contains\n"),
+    "nm -u -j should fail malformed typed output instead of silently empty")
+rejects(lambda: closure.parse_undefined_names(
+    "a-random-nm-header\n"), "unknown nm format must fail")
 assert closure.parse_nm(
     "                 U _kagura_image_list_contains\n"
     "00000000 T _kagura_rtld_default_handle\n", defined=False
@@ -266,8 +278,8 @@ with tempfile.TemporaryDirectory(prefix="K11-synthetic-link-closure-") as temp:
                     "00000000 " +
                     ("D" if x == "_kagura_suspicious_image_patterns" else "T") +
                     " " + x + "\n" for x in sorted(defs))
-            return "".join("                 U " + x + "\n"
-                           for x in sorted(undefs))
+            assert args[2:4] == ["-u", "-j"], args
+            return "".join(x + "\n" for x in sorted(undefs))
         raise AssertionError("synthetic nm/clang argv unexpected")
     closure.run = fake_run
     try:
@@ -280,6 +292,11 @@ with tempfile.TemporaryDirectory(prefix="K11-synthetic-link-closure-") as temp:
             "_kagura_suspicious_image_patterns": "runtime/provider.c",
         }
         assert len(verified["selected_provider_sources"]) == 1
+        assert (out / "ios-runtime-initial-nm.json").is_file()
+        raw_samples = json.loads(
+            (out / "ios-runtime-initial-nm.json").read_text())
+        assert raw_samples["ios-kagura-rtld.o"]["parsed_kagura_symbols"] == [
+            "_kagura_image_list_contains", "_kagura_suspicious_image_patterns"]
         assert (out / "ios-runtime-closure.json").is_file()
         assert len((out / "ios-runtime-extra-objects.txt").read_text().splitlines()) == 1
         recursive_probe[0] = True

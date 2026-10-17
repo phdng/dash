@@ -18,6 +18,9 @@ import subprocess
 from pathlib import Path
 
 NM_LINE = re.compile(r"^\s*(?:(?:[0-9A-Fa-f]+)\s+)?([A-Za-z])\s+(_[A-Za-z0-9_.$]+)\s*$")
+# Apple 'nm -u' may output ONLY the symbol names, without a "U" column.
+# Request -j explicitly so parsing does not depend on nm output style.
+NM_SYMBOL = re.compile(r"_[A-Za-z0-9_.$]+")
 MAX_SOURCES = 12
 MAX_CANDIDATES = 72
 
@@ -38,6 +41,20 @@ def parse_nm(content: str, *, defined: bool) -> set[str]:
     return result
 
 
+def parse_undefined_names(content: str) -> set[str]:
+    """Consume Apple nm -u -j *names only*; reject malformed/mixed output."""
+    result: set[str] = set()
+    for raw in content.splitlines():
+        name = raw.strip()
+        if not name:
+            continue
+        if not NM_SYMBOL.fullmatch(name):
+            raise AssertionError(
+                "K11 unexpected Apple nm -u -j symbol line: " + repr(raw))
+        result.add(name)
+    return result
+
+
 def run(args: list[str], *, log: Path | None = None) -> str:
     p = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                        text=True, check=False)
@@ -52,7 +69,10 @@ def run(args: list[str], *, log: Path | None = None) -> str:
 
 
 def undefined_of(obj: Path) -> set[str]:
-    return parse_nm(run(["xcrun", "nm", "-u", str(obj)]), defined=False)
+    # 'nm -u' is not consistently 'U _name' across Apple toolchains;
+    # '-j' gives exactly one symbol NAME per line by contract.
+    return parse_undefined_names(
+        run(["xcrun", "nm", "-u", "-j", str(obj)]))
 
 
 def defined_of(obj: Path) -> set[str]:
@@ -84,6 +104,23 @@ def make_closure(src: Path, out: Path, sdk: str,
         raise AssertionError("K11 resolver provenance invalid")
     from ci_runtime_resolver import without_comments
 
+    # Preserve exact unfiltered raw Apple nm stdout per original iOS object:
+    # when the fail-closed check fires, artifact should show whether the
+    # linker input or symbol parsing disagreed with the observed ld error.
+    raw_nm = {}
+    for obj in originals:
+        if not obj.is_file() or not obj.stat().st_size:
+            raise AssertionError("K11 missing original iOS object " + str(obj))
+        raw = run(["xcrun", "nm", "-u", "-j", str(obj)])
+        raw_nm[obj.relative_to(out).as_posix()] = {
+            "nm_command": "xcrun nm -u -j",
+            "raw_stdout": raw,
+            "parsed_kagura_symbols": sorted(
+                symbol for symbol in parse_undefined_names(raw)
+                if symbol.startswith("_kagura_")),
+        }
+    (out / "ios-runtime-initial-nm.json").write_text(
+        json.dumps(raw_nm, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     initial = required_symbols(originals)
     # The preceding real CI anti_debug object MUST have these two missing
     # providers in this pinned K11 revision. Future changes need review.
