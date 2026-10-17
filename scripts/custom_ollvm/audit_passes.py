@@ -165,11 +165,28 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         ".github/workflows/kagura-ios-ipa.yml" or
         not (root / "docs/KAGURA_K5_ARTIFACT_REVIEW.md").is_file() or
         kagura.get("k6_selective_vm_status") !=
-        "STAGED_CI_NOT_YET_VERIFIED" or
+        "MACOS_CI_ARTIFACT_VERIFIED_HOST_ONLY" or
         kagura.get("k6_vm_workflow") !=
         ".github/workflows/kagura-vm-selective.yml" or
         kagura.get("k6_vm_target") != "dd_vm_protected" or
         kagura.get("k6_vm_device_runtime") != "NOT_TESTED" or
+        kagura.get("k6_artifact_review") !=
+        "docs/KAGURA_K6_ARTIFACT_REVIEW.md" or
+        kagura.get("k6_vm_native_parity_vectors") != 4096 or
+        kagura.get("k6_vm_macos_median_paired_overhead_ratio") != 48.0 or
+        kagura.get("k7_vm_trollstore_ipa_status") !=
+        "STAGED_CI_BUILD_NOT_YET_VERIFIED" or
+        kagura.get("k7_vm_ipa_workflow") !=
+        ".github/workflows/kagura-vm-ios-ipa.yml" or
+        kagura.get("k7_vm_ipa_name") !=
+        "KaguraVMLab-TrollStore-arm64.ipa" or
+        kagura.get("k7_vm_bundle_id") !=
+        "com.duodash.research.kaguravmlab" or
+        kagura.get("k7_vm_on_device") != "NOT_TESTED" or
+        not (root / "docs/KAGURA_K6_ARTIFACT_REVIEW.md").is_file() or
+        not (root / "docs/KAGURA_K7_VM_TROLLSTORE.md").is_file() or
+        not (root / ".github/workflows/kagura-vm-ios-ipa.yml").is_file() or
+        not (root / "scripts/custom_ollvm/kagura_vm/package_ipa.py").is_file() or
         not (root / ".github/workflows/kagura-vm-selective.yml").is_file() or
         not (root / "scripts/custom_ollvm/kagura_vm/vm_canary.c").is_file() or
         not (root / "scripts/custom_ollvm/kagura_max/ios_app_main.m").is_file() or

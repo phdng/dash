@@ -1,0 +1,94 @@
+name: Kagura K7 - Real VM iPhone arm64 TrollStore IPA (Experimental)
+
+# Dedicated manual-only research application; never touches Crane or K5 IPA.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  kagura-k7-vm-ipa:
+    runs-on: macos-14
+    timeout-minutes: 75
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check isolated K6/K7 IPA and negative contracts
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_vm_selective.py
+          python3 scripts/test_kagura_vm_ios_ipa.py
+          python3 scripts/test_kagura_ios_ipa.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+
+      - name: Build pinned MIT Kagura real LLVM19 plugin/runtime
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k7-source"
+          build="$RUNNER_TEMP/kagura-vm-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          test -s "$src/runtime/core/vm_interpreter.c"
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          test -s "$build/runtime/libkagura_runtime.a"
+          echo "K7_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K7_PLUGIN=$plugin" >> "$GITHUB_ENV"
+          echo "K7_SRC=$src" >> "$GITHUB_ENV"
+
+      - name: Re-run K6 real VM native parity and iOS arm64 build gates
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K7-VM"
+          mkdir -p "$out"
+          echo "K7_OUT=$out" >> "$GITHUB_ENV"
+          bash scripts/custom_ollvm/kagura_vm/build.sh \
+            "$K7_LLVM" "$K7_PLUGIN" "$K7_SRC" "$out"
+          test -s "$out/Kagura-K6-VM-REPORT.json"
+          test -s "$out/KaguraVM-arm64-BUILD-ONLY.dylib"
+
+      - name: Package separate unsigned arm64 KaguraVMLab app with exact VM evidence
+        run: |
+          set -euo pipefail
+          bash scripts/custom_ollvm/kagura_vm/build_ios_ipa.sh "$K7_LLVM" "$K7_OUT"
+          test -s "$K7_OUT/KaguraVMLab-TrollStore-arm64.ipa"
+          test -s "$K7_OUT/Kagura-K7-IPA-EVIDENCE.json"
+          echo "K7: real pinned Kagura LLVM19 VM bytecode, baseline/VM parity macOS host," >> "$GITHUB_STEP_SUMMARY"
+          echo "standalone arm64 MH_EXECUTE IPA; unsigned for manual TrollStore import only." >> "$GITHUB_STEP_SUMMARY"
+          echo "Device VM runtime NOT TESTED BY CI, arm64e PAC runtime NOT TESTED." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload isolated Kagura K7 VM experimental IPA and exact evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: KaguraVMLab-K7-TrollStore-arm64-REAL-LLVM19-VM-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K7-VM/KaguraVMLab-TrollStore-arm64.ipa
+            ${{ runner.temp }}/Kagura-K7-VM/KaguraVMLab-IPA-report.json
+            ${{ runner.temp }}/Kagura-K7-VM/Kagura-K7-IPA-EVIDENCE.json
+            ${{ runner.temp }}/Kagura-K7-VM/Kagura-K6-VM-REPORT.json
+            ${{ runner.temp }}/Kagura-K7-VM/KAGURA-UPSTREAM-LICENSE
+            ${{ runner.temp }}/Kagura-K7-VM/vm-native.log
+            ${{ runner.temp }}/Kagura-K7-VM/ios-plain.ll
+            ${{ runner.temp }}/Kagura-K7-VM/ios-vm.ll
+            ${{ runner.temp }}/Kagura-K7-VM/ios-vm-opt.log
+            ${{ runner.temp }}/Kagura-K7-VM/ipa-app-symbols.txt
+            ${{ runner.temp }}/Kagura-K7-VM/ipa-macho-arm64.txt

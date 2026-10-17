@@ -1,6 +1,6 @@
 # Kagura K6 — selective real LLVM19 VM canary
 
-Status: **portable parser/negative tests PASS; real Kagura VM macOS CI and iPhone runtime NOT YET TESTED** (2026-10-17). This is a **separate**
+Status: **real Kagura K6 LLVM19 VM macOS CI artifact independently verified; 4,096 host native parity PASS, iOS arm64 MH_DYLIB build-only PASS; iPhone VM runtime NOT TESTED** (2026-10-17). See [K6 artifact review](KAGURA_K6_ARTIFACT_REVIEW.md). This is a **separate**
 research workflow and does **not** change the K5 iPhone IPA already reported
 PASS by the user, nor Crane OLLVM STRONG production.
 
@@ -47,10 +47,11 @@ failure** to diagnose, not a reason to downgrade a strict check.
 Never add VM to `policy.json`, root `Makefile`, Crane hook/daemon,
 Objective-C callbacks, iOS launch lifecycle, arm64e PAC or the existing
 `KaguraLab-TrollStore-arm64.ipa` production-style acceptance lab.
-The user must first share the actual K6 macOS artifact for audit. Only
-after every host/ABI gate is verified should a **distinct** manually
-installable-format VM IPA be designed for iPhone validation, including
-strict rollback to K5. Upstream VM performance guidance is an estimate,
+The actual K6 macOS artifact has been inspected; all required host/ABI
+gates match. A distinct K7 manual-only VM IPA workflow is now staged at
+[KAGURA_K7_VM_TROLLSTORE.md](KAGURA_K7_VM_TROLLSTORE.md) to validate on
+iPhone while preserving the K5 application as a rollback. K7 has not yet
+been built or executed on a device. Upstream VM performance guidance is an estimate,
 not project evidence.
 
 `scripts/test_kagura_vm_selective.py` currently uses *synthetic*

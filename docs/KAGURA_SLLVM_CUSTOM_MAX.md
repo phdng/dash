@@ -109,8 +109,8 @@ song song ProtectionLab trên máy TrollStore. UI có parity **8192 vector**,
 benchmark iPhone **5 cặp × 4096 calls** chỉ sau parity PASS, và chia sẻ
 text log. CI có audit pass trace, SHA-256/LC_UUID, chế độ từ chối
 nhầm `arm64e`; đã có hồi quy portable trên Windows. Người dùng báo IPA chạy PASS trên
-iPhone, nhưng chưa có log thật để kiểm tra độc lập và bản K5 mới chưa
-được build lại trên macOS CI. Xem
+iPhone; K5 đã có artifact macOS CI thực được kiểm tra hash, nhưng chưa
+có log text thật từ thiết bị để xác minh UUID do app báo. Xem
 [KAGURA_IOS_TROLLSTORE_PILOT.md](KAGURA_IOS_TROLLSTORE_PILOT.md).
 
 **K5 — iOS checksum oracle + build UUID correlation** (đã kiểm tra artifact macOS CI; người dùng báo iPhone PASS, chưa có text log để đối chiếu UUID thực tế):
@@ -125,7 +125,7 @@ chạm Crane production. Artifact K5 thực đã được kiểm tra hash 7 pass
 bản executable IPA: [KAGURA_K5_ARTIFACT_REVIEW.md](KAGURA_K5_ARTIFACT_REVIEW.md).
 Xem [KAGURA_IOS_TROLLSTORE_PILOT.md](KAGURA_IOS_TROLLSTORE_PILOT.md).
 
-**K6 / Pha K2b — MAX_VM_SELECTIVE** (mã K6 và regression portable đã có; chưa có CI real VM/thiết bị PASS):
+**K6 / Pha K2b — MAX_VM_SELECTIVE** (đã có artifact CI thật, macOS native parity PASS + iOS arm64 build-only; chưa thử iPhone VM):
 
 Thử `kagura-vm` trên đúng **một hàm C thuần, nhỏ, hiếm gọi**
 (như một thuật toán xác nhận kết quả công khai) kèm runtime
@@ -135,8 +135,19 @@ boundary và interface ABI. Tài liệu Kagura cảnh báo VM có thể chậm
 DuoDash. Workflow thủ công riêng `.github/workflows/kagura-vm-selective.yml`
 đã được thêm để kiểm thử Kagura VM thực, allowlist một hàm C và guard
 cùng TU, 4096 parity/3 cặp thời gian trên macOS và iOS arm64 ABI build-only.
-**Không đưa VM vào IPA K5 đã PASS**. Xem
-[KAGURA_K6_VM_SELECTIVE.md](KAGURA_K6_VM_SELECTIVE.md).
+Artifact thực kiểm tra được blob bytecode 171 byte, checksum parity, guard,
+Mach-O UUID và VM overhead theo 3 cặp là khoảng 48–64× baseline. Xem
+[KAGURA_K6_ARTIFACT_REVIEW.md](KAGURA_K6_ARTIFACT_REVIEW.md).
+
+**K7 — KaguraVMLab real VM iPhone IPA** (đã chuẩn bị mã/workflow và portable
+tests, chưa build macOS CI): sử dụng một ứng dụng iPhone arm64 riêng với
+bundle ID `com.duodash.research.kaguravmlab` để kiểm thử VM thật trên 4096
+vector, optional benchmark và chia sẻ log UUID. Workflow manual-only
+`.github/workflows/kagura-vm-ios-ipa.yml` chỉ xuất IPA khi pass evidence,
+real macOS VM parity và Mach-O/IPA SHA đều khớp. **Không đưa VM vào IPA K5 đã
+PASS hoặc Crane production**. Xem
+[KAGURA_K7_VM_TROLLSTORE.md](KAGURA_K7_VM_TROLLSTORE.md).
+Tài liệu K6 gốc: [KAGURA_K6_VM_SELECTIVE.md](KAGURA_K6_VM_SELECTIVE.md).
 Không virtualize Objective-C methods, initializer, licensing
 storage hooks, selector dispatch, SpringBoard/CarPlay hostflow,
 XPC callbacks hoặc function pointer PAC paths trong pha này.

@@ -34,7 +34,9 @@ assert original["experimental_kagura_pipeline"]["k3_interleaved_benchmark_status
 assert original["experimental_kagura_pipeline"]["k3_samples_per_variant"] == 176
 assert original["experimental_kagura_pipeline"]["ios_arm64_kagura_trollstore_pilot"] == "CI_ARTIFACT_HASHES_VERIFIED"
 assert original["experimental_kagura_pipeline"]["ios_arm64_kagura_pilot_on_device"] == "USER_REPORTED_PASS_NO_SHARED_DEVICE_LOG"
-assert original["experimental_kagura_pipeline"]["k6_selective_vm_status"] == "STAGED_CI_NOT_YET_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k6_selective_vm_status"] == "MACOS_CI_ARTIFACT_VERIFIED_HOST_ONLY"
+assert original["experimental_kagura_pipeline"]["k7_vm_trollstore_ipa_status"] == "STAGED_CI_BUILD_NOT_YET_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k7_vm_on_device"] == "NOT_TESTED"
 assert original["experimental_kagura_pipeline"]["k6_vm_device_runtime"] == "NOT_TESTED"
 assert len(status["registry_sha256"]) == 64
 
@@ -71,6 +73,9 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k6_selective_vm_status="PASS_WITHOUT_MACOS_CI"),
     lambda x: x["experimental_kagura_pipeline"].update(k6_vm_device_runtime="IOS_PASS"),
     lambda x: x["experimental_kagura_pipeline"].update(k6_vm_target="dd_vm_guard_protected"),
+    lambda x: x["experimental_kagura_pipeline"].update(k7_vm_trollstore_ipa_status="IOS_DEVICE_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k7_vm_on_device="PASS_WITHOUT_LOG"),
+    lambda x: x["experimental_kagura_pipeline"].update(k7_vm_bundle_id="com.duodash.research.kaguralab"),
     lambda x: x["experimental_kagura_pipeline"].update(ios_arm64_kagura_pilot_on_device="PASS_WITHOUT_LOG"),
     lambda x: x["experimental_kagura_pipeline"]["ios_arm64_kagura_pilot_pipeline"].append("vm"),
 )
