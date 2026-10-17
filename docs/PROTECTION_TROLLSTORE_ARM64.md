@@ -2,7 +2,10 @@
 
 **Phạm vi đã thống nhất:** thiết bị hiện tại có TrollStore và chưa có
 thiết bị A12+. Người dùng đã xác nhận **ứng dụng cài được và mở hoạt động
-ổn** trên máy hiện tại; điều này chưa đồng nghĩa 4 x 8.192 vector đã PASS.
+ổn, cả bốn nhóm kiểm tra đều PASS khi thao tác thực tế**, và việc nhận
+UDID đúng theo quan sát của người dùng. Chưa có log chi tiết trong workspace;
+không ghi hay chia sẻ giá trị UDID. Nghiệm thu được ghi tại
+[PROTECTION_ARM64_DEVICE_ACCEPTANCE.md](PROTECTION_ARM64_DEVICE_ACCEPTANCE.md).
 Vì vậy, **arm64 được phép thử cài IPA bằng TrollStore**;
 **arm64e chỉ cần Apple Clang compile/link PASS và kiểm tra Mach-O/UUID**
 trong CI. Không có điều kiện chạy thật trên A12+ cho workflow này.

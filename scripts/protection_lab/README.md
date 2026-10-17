@@ -309,6 +309,21 @@ kiểm tra thứ tự bốn stage, callback main queue và cách share tách bi�
 **Chưa chạy lại build Xcode/iPhone của bản sửa trong phiên Windows**.
 `arm64e` vẫn chỉ build + ABI/UUID audit PASS, không có A12+ test.
 
+## Nghiệm thu thủ công trên arm64 (TrollStore)
+
+Người dùng xác nhận ứng dụng đã cài, mở và **bốn nhóm test đều PASS trên
+thiết bị**; UDID nhận đúng theo quan sát, **không lưu UDID**. Chưa nhận
+được log parity hoặc identity để xác minh nội dung. Dùng
+`device_acceptance.py --user-confirmed-pass --out ...` để tạo receipt
+`USER_REPORTED_PASS` trung thực, hoặc thêm `--manifest`, `--parity`,
+`--identity` và tùy chọn `--performance` (chỉ dùng log thực) để tạo
+`SHARED_LOG_TEXT_AND_CI_UUID_CONSISTENT`. Test portable
+`scripts/test_device_acceptance.py` chặn host logs, sai ABI, sai UUID,
+báo cáo thiếu dòng và lưu UDID. **Không nâng mức nghiệm thu nếu thiếu
+nguồn kiểm chứng; arm64e vẫn build/audit-only.**
+
+Xem [docs/PROTECTION_ARM64_DEVICE_ACCEPTANCE.md](../../docs/PROTECTION_ARM64_DEVICE_ACCEPTANCE.md).
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker

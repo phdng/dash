@@ -105,6 +105,12 @@ Ngày cập nhật: 2026-10-17. Trạng thái: **Sprint P0/P1 prototype đã có
   →ObjC/ARC và trạng thái NOT TESTED/RUNNING/PASS/FAILED. New
   `scripts/test_ios_postinstall_ui.py` chặn regression newline escape đôi,
   bảo vệ log 7/7/17 dòng; workflow UIKit chạy test này khi build.
+  Người dùng tiếp tục xác nhận **4 nhóm test arm64 trên thiết bị đã PASS**,
+  nhận diện UDID đúng theo quan sát của họ. Đã ghi nhận dưới dạng
+  `USER_REPORTED_PASS`, không thu/lưu UDID hay giả lập log; khi có 7 dòng
+  chức năng và identity có thể xác minh nhất quán qua
+  `device_acceptance.py`. Xem
+  [PROTECTION_ARM64_DEVICE_ACCEPTANCE.md](PROTECTION_ARM64_DEVICE_ACCEPTANCE.md).
   Arm64e vẫn chỉ Apple Clang build+ABI/UUID, A12+ runtime hoãn.
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.

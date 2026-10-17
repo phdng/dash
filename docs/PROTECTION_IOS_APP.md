@@ -1,6 +1,6 @@
 # Protection Lab — ứng dụng UIKit để kiểm chứng trên iPhone thật
 
-**Trạng thái:** ứng dụng nghiên cứu riêng; workflow tạo **IPA arm64 thử với TrollStore** cùng binary nghiên cứu arm64e **chỉ build/audit**. Không phải bản cập nhật Crane hay package jailbreak. IPA chưa được CI ký hoặc thử cài; build xanh không chứng minh ứng dụng chạy trên thiết bị. Xem [PROTECTION_TROLLSTORE_ARM64.md](PROTECTION_TROLLSTORE_ARM64.md).
+**Trạng thái:** người dùng xác nhận **IPA arm64 đã cài/mở và mọi phép thử trên máy thực đều PASS**, UDID được nhận đúng theo báo cáo (không lưu giá trị). Chưa có log/UUID đối chiếu độc lập; ghi tại [PROTECTION_ARM64_DEVICE_ACCEPTANCE.md](PROTECTION_ARM64_DEVICE_ACCEPTANCE.md). Workflow tạo **IPA arm64 thử với TrollStore** cùng binary nghiên cứu arm64e **chỉ build/audit**. Không phải bản cập nhật Crane hay package jailbreak. IPA chưa được CI ký hoặc thử cài; build xanh không chứng minh ứng dụng chạy trên thiết bị. Xem [PROTECTION_TROLLSTORE_ARM64.md](PROTECTION_TROLLSTORE_ARM64.md).
 
 ## Thứ mới triển khai
 
