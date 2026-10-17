@@ -26,8 +26,12 @@ với những ý tưởng chọn lọc trong SLLVM, không sao chép binary SLLV
 proprietary. Đã có `MAX_CANDIDATE` tách biệt để chạy **LLVM19 opt**
 với `kagura-str,fla,bcf,sub,co`, native host parity 8.192 vector,
 IR/object plaintext audit, iOS arm64 build-only và arm64e Apple Clang
-ABI audit. Đây là **workflow chưa được xác minh trên macOS**,
-không phải pass đã nhập vào OLLVM STRONG production.
+ABI audit. K0 đã được xác minh từ artifact macOS người dùng gửi (8.192 native vector
+trùng, IR/object thay đổi, public plaintext canary biến mất). K1
+đã bổ sung 7 giai đoạn pass tăng dần, hai ứng viên mới BBR/BBS và phân
+loại delta cho từng giai đoạn; **K1 chưa chạy macOS CI**. Xem
+[KAGURA_K0_ARTIFACT_REVIEW.md](KAGURA_K0_ARTIFACT_REVIEW.md).
+Đây không phải pass đã nhập vào OLLVM STRONG production.
 
 VM Kagura có mã chuyển LLVM IR thành bytecode thực nhưng chỉ dự kiến
 thử sau vì overhead cao, không bật trên ObjC callback/hook/daemon.

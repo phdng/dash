@@ -29,8 +29,12 @@ mã C++ **Kagura LLVM IR pass thật** được tải ở SHA cố định, buil
 LLVM19 trên macOS, chạy pipeline thử `str,fla,bcf,sub,co` qua
 `opt --load-pass-plugin` trên một hàm C synthetic, so native 8.192
 vector, quan sát IR/object/Mach-O và compile-only iOS arm64/arm64e.
-Đã PASS **portable fixture audit**, nhưng chưa có kết quả native CI
-macOS hay iPhone cho chính pass Kagura này.
+K0 đã có **artifact CI macOS thực** (8.192 vector native parity, IR/object
+thay đổi, marker biến mất), được đối chiếu tại
+[KAGURA_K0_ARTIFACT_REVIEW.md](KAGURA_K0_ARTIFACT_REVIEW.md). K1
+đã được bổ sung runner 7 pass tăng dần kèm phân loại IR/object delta
+và 8.192 vector/pass; **K1 chưa được chạy CI macOS và Kagura chưa
+được kiểm thử runtime iPhone**.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản
