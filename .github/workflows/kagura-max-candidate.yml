@@ -20,6 +20,7 @@ jobs:
           python3 scripts/test_kagura_max_candidate.py
           python3 scripts/test_kagura_k1_stages.py
           python3 scripts/test_kagura_scope_bench.py
+          python3 scripts/test_kagura_interleaved_bench.py
           python3 scripts/test_custom_ollvm_pass_matrix.py
 
       - name: Compile pinned MIT Kagura plugin with LLVM 19
@@ -95,6 +96,20 @@ jobs:
             --stages "$KAGURA_OUT/stages" \
             --out "$KAGURA_OUT/stages/kagura-k1-host-benchmark.json"
           cat "$KAGURA_OUT/stages/kagura-k1-stage-report.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: K3 counterbalanced host performance across all Kagura stages
+        run: |
+          set -euo pipefail
+          python3 scripts/custom_ollvm/kagura_max/interleaved_benchmark.py \
+            --stages "$KAGURA_OUT/stages" \
+            --logs "$KAGURA_OUT/stages/interleaved" \
+            --out "$KAGURA_OUT/stages/kagura-k3-host-interleaved.json"
+          python3 scripts/custom_ollvm/kagura_max/interleaved_benchmark.py \
+            --verify-only \
+            --logs "$KAGURA_OUT/stages/interleaved" \
+            --out "$KAGURA_OUT/stages/kagura-k3-host-reverified.json"
+          python3 -c 'import json,os; from pathlib import Path; p=Path(os.environ["KAGURA_OUT"])/"stages"; a=json.loads((p/"kagura-k3-host-interleaved.json").read_text()); b=json.loads((p/"kagura-k3-host-reverified.json").read_text()); assert a["raw_rounds"] == b["raw_rounds"] and a["variants"][0]["pooled_median_ns_per_call"] == b["variants"][0]["pooled_median_ns_per_call"]'
+          echo "Kagura K3 host counterbalanced 16 rounds: parsed; results in artifact." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Cross-compile iOS arm64 and independently check Apple arm64e ABI
         run: |

@@ -126,7 +126,7 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("arm64e_pac_runtime") != "DEFERRED_NO_A12_DEVICE" or
         kagura.get("k1_native_ci_status") != "VERIFIED_FROM_USER_CI_ARTIFACT" or
         kagura.get("k2_scope_type") != "TRANSLATION_UNIT_ONLY_NOT_LLVM_FUNCTION_ALLOWLIST" or
-        kagura.get("k2_scope_and_benchmark_status") != "STAGED_NOT_VERIFIED_MACOS" or
+        kagura.get("k2_scope_and_benchmark_status") != "MACOS_ARTIFACT_VERIFIED_HOST_ONLY" or
         kagura.get("k2_ios_device_runtime") != "NOT_TESTED"):
         raise AssertionError("Kagura must remain independent/experimental")
     if kagura.get("profile_file") != "scripts/custom_ollvm/kagura_max/profile.json" or (
@@ -139,6 +139,14 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "scripts/custom_ollvm/kagura_max/benchmark_audit.py" or
         not (root / kagura["k2_native_runner"]).is_file()):
         raise AssertionError("K2 benchmark scope must stay experimental")
+    if (kagura.get("k3_interleaved_benchmark_runner") !=
+        "scripts/custom_ollvm/kagura_max/interleaved_benchmark.py" or
+        not (root / kagura["k3_interleaved_benchmark_runner"]).is_file() or
+        kagura.get("k3_interleaved_benchmark_status") !=
+        "STAGED_NOT_VERIFIED_MACOS_NATIVE" or
+        kagura.get("k3_balanced_rounds") != 16 or
+        kagura.get("k3_samples_per_variant") != 176):
+        raise AssertionError("K3 benchmark cannot claim native or device PASS yet")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

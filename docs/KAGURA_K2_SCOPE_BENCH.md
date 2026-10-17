@@ -1,7 +1,6 @@
 # Kagura K2 — scope isolation và benchmark trên macOS
 
-Cập nhật: 2026-10-17. **Trạng thái: mã và kiểm thử portable đã PASS,
-native macOS CI của K2 CHƯA ĐƯỢC CHẠY.**
+Cập nhật: 2026-10-17. **Trạng thái: K2a đã được kiểm chứng từ artifact CI native macOS và log benchmark thực**, xem [KAGURA_K2_ARTIFACT_REVIEW.md](KAGURA_K2_ARTIFACT_REVIEW.md). Kiểm thử Kagura iPhone chưa thực hiện.
 
 ## Lý do phải có bước này
 
@@ -78,8 +77,7 @@ Output nằm trong `out/stages/kagura-k1-stage-report.json`,
 Có regression portable `scripts/test_kagura_scope_bench.py`
 được chạy trước native build.
 
-**Chưa có bằng chứng macOS native của bước K2**, cũng chưa thử Kagura
-trên iPhone. Nếu các bước trên PASS, bước tiếp theo là so sánh
+**Đã có artifact native macOS của bước K2a**, báo cáo median/p95 và checksum khớp log thô; benchmark BBR biến thiên lớn (một mẫu 144 ns) và p95 nearest rank của 11 mẫu chính là max. **Chưa thử Kagura trên iPhone.** Nếu các bước trên PASS, bước tiếp theo là so sánh
 code size/startup chi tiết và tạo **app lab arm64 dùng TrollStore**
 để thử Kagura thực tế trên thiết bị hiện tại. `arm64e` chỉ
 AppleClang build+ABI v2, không có thiết bị A12+ và không giả lập

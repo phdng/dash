@@ -36,6 +36,10 @@ K2a bổ sung kiểm tra **scope theo TU**, sentinel object không qua
 Kagura, benchmark native median/p95 theo stage và checksum; đây **chưa phải
 function allowlist đầy đủ**, không thể bảo vệ tùy ý các method ObjC/hook.
 Xem [KAGURA_K2_SCOPE_BENCH.md](KAGURA_K2_SCOPE_BENCH.md).
+K3 mới có workflow và regression portable cho **16 vòng chạy cân bằng
+thứ tự, 176 mẫu/biến thể**, để đánh giá lại BBR/BBS sau outlier K2a;
+**chưa chạy macOS native K3 hoặc iOS Kagura runtime**. Chi tiết
+[KAGURA_K3_INTERLEAVED_BENCH.md](KAGURA_K3_INTERLEAVED_BENCH.md).
 Đây không phải pass đã nhập vào OLLVM STRONG production.
 
 VM Kagura có mã chuyển LLVM IR thành bytecode thực nhưng chỉ dự kiến

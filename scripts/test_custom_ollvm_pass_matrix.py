@@ -29,6 +29,9 @@ assert status["arm64e_production_llvm_passes"] == []
 assert status["compiler_native_new_pass_build_verified_this_run"] is False
 assert status["custom_ollvm_strong_modified"] is False
 assert status["separate_kagura_llvm_pipeline"] == "K1_NATIVE_7_STAGE_ARTIFACT_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k2_scope_and_benchmark_status"] == "MACOS_ARTIFACT_VERIFIED_HOST_ONLY"
+assert original["experimental_kagura_pipeline"]["k3_interleaved_benchmark_status"] == "STAGED_NOT_VERIFIED_MACOS_NATIVE"
+assert original["experimental_kagura_pipeline"]["k3_samples_per_variant"] == 176
 assert len(status["registry_sha256"]) == 64
 
 negative_mutations = (
@@ -57,6 +60,9 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"]["k1_extra_passes"].append("kagura-vm"),
     lambda x: x["experimental_kagura_pipeline"].update(k2_scope_type="STRICT_FUNCTION_WHITELIST_VERIFIED"),
     lambda x: x["experimental_kagura_pipeline"].update(k2_scope_and_benchmark_status="IOS_DEVICE_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k3_interleaved_benchmark_status="MACOS_NATIVE_PASS_WITHOUT_ARTIFACT"),
+    lambda x: x["experimental_kagura_pipeline"].update(k3_balanced_rounds=2),
+    lambda x: x["experimental_kagura_pipeline"].update(k3_samples_per_variant=11),
 )
 for idx, change in enumerate(negative_mutations):
     data = copy.deepcopy(original)

@@ -79,7 +79,7 @@ phù hợp. Bắt buộc kiểm tra ngoại lệ/ARC, lỗi và overhead trướ
 xét composite. `ci`/`ibr` chỉ áp
 dụng C-only với ABI typed, tránh ObjC selectors và callback/ptrauth.
 
-**Pha K2a — TU scope + native overhead** (đã có mã CI độc lập, chưa được macOS CI xác nhận):
+**Pha K2a — TU scope + native overhead** (đã kiểm tra artifact macOS CI và benchmark thật; xem [KAGURA_K2_ARTIFACT_REVIEW.md](KAGURA_K2_ARTIFACT_REVIEW.md)):
 
 Đã tạo `sentinel.c` làm object không qua Kagura; chỉ TU `critical.c`
 được chạy qua LLVM19 `opt`. Test kiểm tra function definitions đầu vào,
@@ -89,6 +89,15 @@ phải compiler-pass function allowlist; helper vẫn có thể nhận pass.
 Benchmark macOS có 11 mẫu × 32.768 calls ở mỗi stage,
 so median/p95 với cùng LLVM19 baseline và verify checksum parity.
 Xem [KAGURA_K2_SCOPE_BENCH.md](KAGURA_K2_SCOPE_BENCH.md).
+
+**Pha K3 — COUNTERBALANCED HOST BENCHMARK** (mới có mã và regression portable, chưa có native macOS CI):
+
+Đã bổ sung 16 vòng chạy cân bằng cho 8 biến thể (baseline + 7 giai đoạn),
+thứ tự đảo chiều ở nửa sau, thu 176 mẫu/biến thể. Mỗi vòng kiểm tra
+checksum; báo cáo median/p95 pooled và tỷ lệ median ghép cặp theo vòng.
+Với 176 mẫu, p95 nearest-rank không còn là mẫu lớn nhất như ở K2a
+11 mẫu. Chưa có kết quả native macOS K3, cũng chưa thử Kagura runtime iPhone.
+Xem [KAGURA_K3_INTERLEAVED_BENCH.md](KAGURA_K3_INTERLEAVED_BENCH.md).
 
 **Pha K2b — MAX_VM_SELECTIVE** (chưa triển khai, không có PASS):
 
@@ -145,6 +154,5 @@ kết quả khi CI và bài thử thật tương ứng PASS.
    Hikari/Kagura/OLLVM nếu chưa test được ordering/incompatibility.
 
 Mốc hiện tại: **K0 và K1 Kagura LLVM19 đều có artifact CI thực đã kiểm tra**;
-K2a cách ly theo TU và benchmark native đã có mã/regression portable,
-**chưa chạy macOS CI K2a hoặc Kagura runtime trên iPhone**. Crane OLLVM STRONG
+K2a cách ly TU và benchmark native **đã có artifact macOS thật được kiểm chứng** (7 pass có native parity, median BBS 82 ns/call = 5,467× baseline); **chưa chạy Kagura runtime trên iPhone, chưa có strict per-function allowlist hoặc bằng chứng MAX production**. Crane OLLVM STRONG
 hiện hành **không bị sửa**.
