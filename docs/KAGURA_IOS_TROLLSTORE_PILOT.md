@@ -133,7 +133,7 @@ và không xuất `DD_KAGURA_COMPLETE=PASS`.
 
 ## Giới hạn nghiệm thu
 
-Người dùng đã báo IPA trước chạy PASS trên iPhone; chưa có log thực tế được đối chiếu nên không biến xác nhận này thành chứng thực mã hóa. Mọi thay đổi K5 mới chỉ kiểm tra portable trên workspace; build LLVM19/macOS CI và thử lại thiết bị cho bản mới **chưa xác nhận**. Không tự điền `IOS_DEVICE_PASS` vào registry từ log giả định.
+Người dùng đã xác nhận IPA K5 chạy PASS trên thiết bị. Artifact macOS CI K5 thực tế đã được kiểm tra ZIP CRC, bảy pass log hash, object hash, executable SHA/LC_UUID và checksum host độc lập. Xem [báo cáo review K5](KAGURA_K5_ARTIFACT_REVIEW.md). Chưa có text log schema 2 thực tế lấy từ thiết bị trong artifact CI, nên trạng thái hiện tại là **USER_REPORTED_PASS_NO_SHARED_DEVICE_LOG**, không phải chứng thực thực thi bằng mật mã. Pha VM K6 được giữ ở workflow [riêng](KAGURA_K6_VM_SELECTIVE.md), không sửa IPA K5 PASS.
 
 Sự tương đương kết quả trên hàm thử nghiệm không chứng minh hiệu quả
 trên tất cả hàm Objective-C hoặc khả năng ngăn dịch ngược. Kagura

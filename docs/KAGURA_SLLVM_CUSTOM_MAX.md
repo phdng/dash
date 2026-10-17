@@ -113,7 +113,7 @@ iPhone, nhưng chưa có log thật để kiểm tra độc lập và bản K5 m
 được build lại trên macOS CI. Xem
 [KAGURA_IOS_TROLLSTORE_PILOT.md](KAGURA_IOS_TROLLSTORE_PILOT.md).
 
-**K5 — iOS checksum oracle + build UUID correlation** (đã có mã, chờ CI/device retest):
+**K5 — iOS checksum oracle + build UUID correlation** (đã kiểm tra artifact macOS CI; người dùng báo iPhone PASS, chưa có text log để đối chiếu UUID thực tế):
 
 KaguraLab báo cáo schema 2 ghi LC_UUID của Mach-O đang chạy, và log
 benchmark phải ghi cùng UUID. Trình audit tương thích schema 1 cũ nhưng
@@ -121,16 +121,23 @@ chỉ ghép schema 2 với cả hai báo cáo IPA/7-pass của CI. Thêm mô hì
 Python độc lập tính lại checksum parity/benchmark C (số liệu công khai),
 reject checksum sai/UUID chéo/pass evidence thiếu. Tất cả chỉ là phép
 so log người dùng gửi, **không chứng thực thực thi bằng mật mã**; chưa
-chạm Crane production. Xem [KAGURA_IOS_TROLLSTORE_PILOT.md](KAGURA_IOS_TROLLSTORE_PILOT.md).
+chạm Crane production. Artifact K5 thực đã được kiểm tra hash 7 pass và
+bản executable IPA: [KAGURA_K5_ARTIFACT_REVIEW.md](KAGURA_K5_ARTIFACT_REVIEW.md).
+Xem [KAGURA_IOS_TROLLSTORE_PILOT.md](KAGURA_IOS_TROLLSTORE_PILOT.md).
 
-**Pha K2b — MAX_VM_SELECTIVE** (chưa triển khai, không có PASS):
+**K6 / Pha K2b — MAX_VM_SELECTIVE** (mã K6 và regression portable đã có; chưa có CI real VM/thiết bị PASS):
 
 Thử `kagura-vm` trên đúng **một hàm C thuần, nhỏ, hiếm gọi**
 (như một thuật toán xác nhận kết quả công khai) kèm runtime
 `libkagura_runtime.a`, so sánh kết quả với bản native; giữ function
 boundary và interface ABI. Tài liệu Kagura cảnh báo VM có thể chậm
 **10–50 lần** — chỉ số từ tài liệu upstream, không phải benchmark
-DuoDash. Không virtualize Objective-C methods, initializer, licensing
+DuoDash. Workflow thủ công riêng `.github/workflows/kagura-vm-selective.yml`
+đã được thêm để kiểm thử Kagura VM thực, allowlist một hàm C và guard
+cùng TU, 4096 parity/3 cặp thời gian trên macOS và iOS arm64 ABI build-only.
+**Không đưa VM vào IPA K5 đã PASS**. Xem
+[KAGURA_K6_VM_SELECTIVE.md](KAGURA_K6_VM_SELECTIVE.md).
+Không virtualize Objective-C methods, initializer, licensing
 storage hooks, selector dispatch, SpringBoard/CarPlay hostflow,
 XPC callbacks hoặc function pointer PAC paths trong pha này.
 

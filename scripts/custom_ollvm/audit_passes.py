@@ -148,18 +148,34 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k3_samples_per_variant") != 176):
         raise AssertionError("K3 benchmark cannot claim native or device PASS yet")
     if (kagura.get("ios_arm64_kagura_trollstore_pilot") !=
-        "STAGED_CI_BUILD_NOT_YET_VERIFIED" or
+        "CI_ARTIFACT_HASHES_VERIFIED" or
         kagura.get("ios_arm64_kagura_pilot_workflow") !=
         ".github/workflows/kagura-max-candidate.yml" or
         kagura.get("ios_arm64_kagura_pilot_ipa") !=
         "KaguraLab-TrollStore-arm64.ipa" or
         kagura.get("ios_arm64_kagura_pilot_pipeline") !=
         ["str", "fla", "bcf", "sub", "co", "bbr", "bbs"] or
-        kagura.get("ios_arm64_kagura_pilot_on_device") != "NOT_TESTED" or
+        kagura.get("ios_arm64_kagura_pilot_on_device") !=
+        "USER_REPORTED_PASS_NO_SHARED_DEVICE_LOG" or
+        kagura.get("k5_artifact_ipa_sha256") !=
+        "7233235c60c9843c8e342c81f63dff326f2bdbfdfc39197db4d07d5c398d9ccd" or
+        kagura.get("k5_artifact_review") !=
+        "docs/KAGURA_K5_ARTIFACT_REVIEW.md" or
+        kagura.get("k5_fast_workflow") !=
+        ".github/workflows/kagura-ios-ipa.yml" or
+        not (root / "docs/KAGURA_K5_ARTIFACT_REVIEW.md").is_file() or
+        kagura.get("k6_selective_vm_status") !=
+        "STAGED_CI_NOT_YET_VERIFIED" or
+        kagura.get("k6_vm_workflow") !=
+        ".github/workflows/kagura-vm-selective.yml" or
+        kagura.get("k6_vm_target") != "dd_vm_protected" or
+        kagura.get("k6_vm_device_runtime") != "NOT_TESTED" or
+        not (root / ".github/workflows/kagura-vm-selective.yml").is_file() or
+        not (root / "scripts/custom_ollvm/kagura_vm/vm_canary.c").is_file() or
         not (root / "scripts/custom_ollvm/kagura_max/ios_app_main.m").is_file() or
         not (root / "scripts/custom_ollvm/kagura_max/ios_canary.c").is_file() or
         not (root / "scripts/custom_ollvm/kagura_max/package_ipa.py").is_file()):
-        raise AssertionError("Kagura iOS arm64 pilot is not verified yet")
+        raise AssertionError("Kagura K5 artifact/K6 separate VM scope evidence drift")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

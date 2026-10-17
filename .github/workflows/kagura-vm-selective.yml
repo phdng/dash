@@ -1,0 +1,84 @@
+name: Kagura K6 - Selective Real VM Canary (Experimental)
+
+# Manual research ONLY. No automatic push/PR build, install or IPA mutation.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  kagura-k6-vm:
+    runs-on: macos-14
+    timeout-minutes: 70
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify isolated VM K6 contracts and test failures
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_vm_selective.py
+          python3 scripts/test_kagura_ios_ipa.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+
+      - name: Build pinned MIT Kagura LLVM19 plugin and real VM interpreter
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-vm-source"
+          build="$RUNNER_TEMP/kagura-vm-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          test -s "$src/runtime/core/vm_interpreter.c"
+          test -s "$src/include/kagura/VMOpcodes.def"
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          test -s "$build/runtime/libkagura_runtime.a"
+          echo "K6_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K6_PLUGIN=$plugin" >> "$GITHUB_ENV"
+          echo "K6_SRC=$src" >> "$GITHUB_ENV"
+
+      - name: Evaluate real allowlisted VM and native host parity, compile arm64 build-only
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K6-VM"
+          mkdir -p "$out"
+          echo "K6_OUT=$out" >> "$GITHUB_ENV"
+          bash scripts/custom_ollvm/kagura_vm/build.sh \
+            "$K6_LLVM" "$K6_PLUGIN" "$K6_SRC" "$out"
+          test -s "$out/Kagura-K6-VM-REPORT.json"
+          test -s "$out/KaguraVM-arm64-BUILD-ONLY.dylib"
+          echo 'K6 selective VM: actual LLVM19 pass, native host parity, iOS arm64 Mach-O build-only.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'NO Kagura K5 IPA change, iPhone VM execution or arm64e PAC runtime claimed.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload isolated K6 native and arm64 VM evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K6-VM-SELECTIVE-LLVM19-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K6-VM/Kagura-K6-VM-REPORT.json
+            ${{ runner.temp }}/Kagura-K6-VM/KAGURA-UPSTREAM-LICENSE
+            ${{ runner.temp }}/Kagura-K6-VM/plain.ll
+            ${{ runner.temp }}/Kagura-K6-VM/vm.ll
+            ${{ runner.temp }}/Kagura-K6-VM/ios-vm.ll
+            ${{ runner.temp }}/Kagura-K6-VM/vm-opt.log
+            ${{ runner.temp }}/Kagura-K6-VM/ios-vm-opt.log
+            ${{ runner.temp }}/Kagura-K6-VM/vm-native.log
+            ${{ runner.temp }}/Kagura-K6-VM/ios-symbols.txt
+            ${{ runner.temp }}/Kagura-K6-VM/KaguraVM-arm64-BUILD-ONLY.dylib
