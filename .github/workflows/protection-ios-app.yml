@@ -23,6 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/test_ios_app_canary.py
+          python3 scripts/test_protection_perf.py
           python3 scripts/test_device_runtime_canary.py
           python3 scripts/test_objc_ce_pilot.py
           python3 scripts/test_igv_ibr_pilot.py
@@ -41,6 +42,23 @@ jobs:
           plutil -lint "$lab/ios_app_Info.plist"
           xcrun clang --version > "$out/apple-clang-version.txt"
 
+      - name: Verify macOS host timing protocol (not iOS performance)
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/ios-lab-app"
+          xcrun clang -std=c11 -O1 -Wall -Wextra -Werror \
+            -I "$lab" -I "$out" \
+            "$lab/canary.c" "$lab/vm.c" \
+            "$lab/sllvm_plain.c" "$lab/sllvm_protected.c" \
+            "$lab/igv_ibr_plain.c" "$lab/igv_ibr_protected.c" \
+            "$lab/perf_pilot.c" "$lab/perf_report.c" \
+            "$lab/perf_host_runner.c" -o "$out/perf-host"
+          "$out/perf-host" | tee "$out/host-performance.log"
+          python3 "$lab/perf_audit.py" verify \
+            --log "$out/host-performance.log" \
+            --context MACOS_HOST --out "$out/host-performance-report.json"
+
       - name: Build separate unsigned UIKit app bundles for iPhone
         run: |
           set -euo pipefail
@@ -53,7 +71,7 @@ jobs:
             app="$out/ProtectionLab-$arch.app"
             mkdir -p "$app"
             cp "$lab/ios_app_Info.plist" "$app/Info.plist"
-            for name in canary vm sllvm_plain sllvm_protected igv_ibr_plain igv_ibr_protected device_suites; do
+            for name in canary vm sllvm_plain sllvm_protected igv_ibr_plain igv_ibr_protected device_suites perf_pilot perf_report; do
               "$clang" -std=c11 -arch "$arch" -isysroot "$sdk" \
                 -miphoneos-version-min=15.0 -O1 -Wall -Wextra -Werror \
                 -I "$lab" -I "$out" -c "$lab/$name.c" \
@@ -85,6 +103,7 @@ jobs:
           echo 'Two Apple Clang iPhoneOS MH_EXECUTE app binaries ABI-validated.' >> "$GITHUB_STEP_SUMMARY"
           echo 'App requires legitimate local signing/provisioning before device install.' >> "$GITHUB_STEP_SUMMARY"
           echo 'On-device ARC/function-pointer/PAC runtime: NOT TESTED in CI.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Optional timed samples are observations, not iOS measurements or acceptance gates.' >> "$GITHUB_STEP_SUMMARY"
           echo 'No signing, app installation, jailbreaking, or Crane modification.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload unsigned test-app bundles and Mach-O proof
@@ -102,3 +121,5 @@ jobs:
             ${{ runner.temp }}/ios-lab-app/dependencies-arm64.txt
             ${{ runner.temp }}/ios-lab-app/dependencies-arm64e.txt
             ${{ runner.temp }}/ios-lab-app/apple-clang-version.txt
+            ${{ runner.temp }}/ios-lab-app/host-performance.log
+            ${{ runner.temp }}/ios-lab-app/host-performance-report.json

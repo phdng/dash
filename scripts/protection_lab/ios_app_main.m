@@ -9,6 +9,8 @@
 #import <TargetConditionals.h>
 #include "device_suites.h"
 #include "objc_ce.h"
+#include "perf_pilot.h"
+#include "perf_report.h"
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>
 #include <mach/machine.h>
@@ -90,11 +92,24 @@ static NSString *DDRunValidation(void) {
     return [[lines componentsJoinedByString:@"\n"] stringByAppendingString:@"\n"];
 }
 
+static NSString *DDRunPerformance(NSString *abi) {
+    if (!abi) return nil;
+    dd_perf_results times;
+    char encoded[2048];
+    if (!dd_perf_run(&times) ||
+        !dd_perf_render(encoded, sizeof(encoded), &times,
+                        "IOS_DEVICE", abi.UTF8String))
+        return nil;
+    return [NSString stringWithUTF8String:encoded];
+}
+
 @interface DDProtectionLabViewController : UIViewController
 @property(nonatomic, strong) UITextView *reportView;
 @property(nonatomic, strong) UIButton *runButton;
+@property(nonatomic, strong) UIButton *benchmarkButton;
 @property(nonatomic, strong) UIButton *shareButton;
 @property(nonatomic, copy) NSString *report;
+@property(nonatomic, copy) NSString *performanceReport;
 @property(nonatomic, assign) BOOL running;
 @end
 
@@ -122,6 +137,13 @@ static NSString *DDRunValidation(void) {
     [self.runButton addTarget:self action:@selector(startValidation)
              forControlEvents:UIControlEventTouchUpInside];
 
+    self.benchmarkButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [self.benchmarkButton setTitle:@"Measure overhead (optional)"
+                              forState:UIControlStateNormal];
+    [self.benchmarkButton addTarget:self action:@selector(startBenchmark)
+                    forControlEvents:UIControlEventTouchUpInside];
+    self.benchmarkButton.enabled = NO;
+
     self.shareButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [self.shareButton setTitle:@"Share result text" forState:UIControlStateNormal];
     [self.shareButton addTarget:self action:@selector(shareReport)
@@ -137,20 +159,30 @@ static NSString *DDRunValidation(void) {
     self.reportView.layer.cornerRadius = 10;
     self.reportView.textContainerInset = UIEdgeInsetsMake(12, 8, 12, 8);
 
+    /* Keep every control reachable on small iPhone displays. */
+    UIScrollView *scroll = [[UIScrollView alloc] init];
+    scroll.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:scroll];
     UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:@[
-        heading, note, self.runButton, self.shareButton, self.reportView
+        heading, note, self.runButton, self.benchmarkButton,
+        self.shareButton, self.reportView
     ]];
     stack.axis = UILayoutConstraintAxisVertical;
     stack.spacing = 14;
     stack.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:stack];
+    [scroll addSubview:stack];
     UILayoutGuide *safe = self.view.safeAreaLayoutGuide;
     [NSLayoutConstraint activateConstraints:@[
-        [stack.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor constant:20],
-        [stack.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor constant:-20],
-        [stack.topAnchor constraintEqualToAnchor:safe.topAnchor constant:22],
-        [stack.bottomAnchor constraintEqualToAnchor:safe.bottomAnchor constant:-20],
-        [self.reportView.heightAnchor constraintGreaterThanOrEqualToConstant:210]
+        [scroll.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor],
+        [scroll.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor],
+        [scroll.topAnchor constraintEqualToAnchor:safe.topAnchor],
+        [scroll.bottomAnchor constraintEqualToAnchor:safe.bottomAnchor],
+        [stack.leadingAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.leadingAnchor constant:20],
+        [stack.trailingAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.trailingAnchor constant:-20],
+        [stack.topAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.topAnchor constant:22],
+        [stack.bottomAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.bottomAnchor constant:-20],
+        [stack.widthAnchor constraintEqualToAnchor:scroll.frameLayoutGuide.widthAnchor constant:-40],
+        [self.reportView.heightAnchor constraintEqualToConstant:270]
     ]];
 }
 
@@ -158,7 +190,9 @@ static NSString *DDRunValidation(void) {
     if (self.running) return;
     self.running = YES;
     self.report = nil;
+    self.performanceReport = nil;
     self.runButton.enabled = NO;
+    self.benchmarkButton.enabled = NO;
     self.shareButton.enabled = NO;
     self.reportView.text = @"RUNNING — checking ABI, C/VM, CE/ICALL, IGV/IBR, NSString/ARC...";
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
@@ -169,6 +203,8 @@ static NSString *DDRunValidation(void) {
             self.running = NO;
             self.runButton.enabled = YES;
             self.shareButton.enabled = YES;
+            self.benchmarkButton.enabled =
+                [result hasSuffix:@"DD_RUNTIME_COMPLETE=PASS\n"];
             self.reportView.textColor =
                 [result hasSuffix:@"DD_RUNTIME_COMPLETE=PASS\n"] ?
                     [UIColor labelColor] : [UIColor systemRedColor];
@@ -176,16 +212,78 @@ static NSString *DDRunValidation(void) {
     });
 }
 
-- (void)shareReport {
-    if (self.running || self.report.length == 0) return;
+- (void)startBenchmark {
+    if (self.running || !self.benchmarkButton.enabled ||
+        ![self.report hasSuffix:@"DD_RUNTIME_COMPLETE=PASS\n"]) return;
+    self.running = YES;
+    self.runButton.enabled = NO;
+    self.benchmarkButton.enabled = NO;
+    self.shareButton.enabled = NO;
+    self.reportView.text = @"MEASURING — five pairs, 20,000 calls x 5 repeats.\n"
+                            @"Observational only; results vary with thermal state.";
+    NSString *abi = DDRuntimeABI();
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSString *result = DDRunPerformance(abi);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.running = NO;
+            self.runButton.enabled = YES;
+            self.shareButton.enabled = YES;
+            self.benchmarkButton.enabled = YES;
+            self.performanceReport = result;
+            self.reportView.text = result ?
+                [NSString stringWithFormat:@"%@\n--- BENCHMARK (observation only) ---\n%@",
+                                           self.report, result] :
+                @"DD_PERF_ERROR=MEASUREMENT_FAILED\nYou may retry. Previous functional PASS is still stored.";
+            self.reportView.textColor = result ?
+                [UIColor labelColor] : [UIColor systemRedColor];
+        });
+    });
+}
+
+- (void)presentShareWithText:(NSString *)text {
     UIActivityViewController *share = [[UIActivityViewController alloc]
-        initWithActivityItems:@[self.report] applicationActivities:nil];
+        initWithActivityItems:@[text] applicationActivities:nil];
     UIPopoverPresentationController *pop = share.popoverPresentationController;
     if (pop) {
         pop.sourceView = self.shareButton;
         pop.sourceRect = self.shareButton.bounds;
     }
     [self presentViewController:share animated:YES completion:nil];
+}
+
+- (void)shareReport {
+    if (self.running || self.report.length == 0) return;
+    /* Never merge the 7-line parity proof and optional performance log. */
+    if (!self.performanceReport.length) {
+        [self presentShareWithText:self.report];
+        return;
+    }
+    UIAlertController *options = [UIAlertController
+        alertControllerWithTitle:@"Choose evidence"
+                        message:@"Parity and performance reports are separate."
+                 preferredStyle:UIAlertControllerStyleActionSheet];
+    [options addAction:[UIAlertAction
+        actionWithTitle:@"Share functional PASS/failure"
+                  style:UIAlertActionStyleDefault
+                handler:^(UIAlertAction *action) {
+                    (void)action;
+                    [self presentShareWithText:self.report];
+                }]];
+    [options addAction:[UIAlertAction
+        actionWithTitle:@"Share observational benchmark"
+                  style:UIAlertActionStyleDefault
+                handler:^(UIAlertAction *action) {
+                    (void)action;
+                    [self presentShareWithText:self.performanceReport];
+                }]];
+    [options addAction:[UIAlertAction actionWithTitle:@"Cancel"
+                      style:UIAlertActionStyleCancel handler:nil]];
+    UIPopoverPresentationController *pop = options.popoverPresentationController;
+    if (pop) {
+        pop.sourceView = self.shareButton;
+        pop.sourceRect = self.shareButton.bounds;
+    }
+    [self presentViewController:options animated:YES completion:nil];
 }
 @end
 

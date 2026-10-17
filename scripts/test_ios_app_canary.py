@@ -67,7 +67,7 @@ stages = (
 )
 assert [src.index(x) for x in stages] == sorted(src.index(x) for x in stages)
 assert src.index("DD_RUNTIME_ERROR=ARCH_OR_PAC_ABI_MISMATCH") < src.index(stages[0])
-assert src.count("DD_RUNTIME_COMPLETE=PASS") == 2  # output + final UI predicate
+assert src.count("DD_RUNTIME_COMPLETE=PASS") >= 3  # proof + UI gates (includes opt-in benchmark)
 assert src.index("DD_RUNTIME_COMPLETE=PASS") < src.index("UIActivityViewController")
 assert "NOT TESTED" in src
 for forbidden in (

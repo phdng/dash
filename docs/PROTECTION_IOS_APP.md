@@ -6,8 +6,10 @@ CI có thể build iOS app mà **không chạy bất cứ kiểm tra nào trên 
 
 ## Thứ mới triển khai
 
-- Giao diện UIKit có nút **Run 4 suites × 8192** và **Share result text**;
-  ban đầu hiển thị **NOT TESTED**, không tự chạy khi khởi động.
+- Giao diện UIKit có nút **Run 4 suites × 8192**, **Measure overhead
+  (optional)** và **Share result text**; ban đầu hiển thị **NOT TESTED**,
+  không tự chạy khi khởi động. Nút đo overhead **chỉ bật sau khi** bốn
+  bộ kiểm tra chức năng PASS.
 - Nút Run kiểm tra actual loaded Mach-O qua `_dyld_get_image_header(0)`,
   subtype `arm64=0` hoặc `arm64e=2` + ABI PAC phiên bản userspace;
   sau đó gọi đúng những hàm C đã có của VM / CE-ICALL / IGV-IBR
@@ -29,6 +31,11 @@ DD_RUNTIME_COMPLETE=PASS
 
 Trên `arm64` dòng ABI phải là `arm64:0x00000000`. Kết quả
 `MACOS_HOST` không được chấp nhận như kết quả iPhone.
+
+Benchmark tùy chọn đo 5 cặp native/protected, mỗi cặp 20.000 lời gọi x
+5 lần lặp, trung vị nanoseconds. Bản report benchmark **17 dòng** luôn
+chia sẻ riêng, không gộp vào 7 dòng runtime. Chi tiết tại
+[PROTECTION_PERFORMANCE.md](PROTECTION_PERFORMANCE.md).
 
 ## GitHub Actions
 

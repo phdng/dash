@@ -59,8 +59,15 @@ Ngày cập nhật: 2026-10-16. Trạng thái: **Sprint P0/P1 prototype đã có
   cùng các C/ObjC canary đã thử và nút Run tự kiểm tra ABI/PAC đang được
   loader nạp, so sánh 4 x 8.192 vector. Kết quả có thể chia sẻ dưới dạng
   7 dòng để chạy `device_audit.py verify-log`. CI kiểm tra Mach-O và
-  đóng gói riêng, **không ký/cài/chạy iPhone**. Hướng dẫn
-  [PROTECTION_IOS_APP.md](PROTECTION_IOS_APP.md).
+  đóng gói riêng, **không ký/cài/chạy iPhone**. Người dùng xác nhận
+  workflow UIKit trước đã **build xanh**, chưa có log on-device A12+.
+  Hướng dẫn [PROTECTION_IOS_APP.md](PROTECTION_IOS_APP.md).
+- **Sprint benchmark on-device tùy chọn:** thêm `perf_pilot.c/.h` đo
+  5 cặp VM/CE/ICALL/IGV/IBR (20.000 calls x 5 repeats, median monotonic
+  elapsed ns) sau khi chức năng PASS, log 17 dòng riêng với parser
+  `perf_audit.py`, host CI kiểm thử giao thức, không có security/perf
+  gate trên iPhone. Xem
+  [PROTECTION_PERFORMANCE.md](PROTECTION_PERFORMANCE.md).
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 

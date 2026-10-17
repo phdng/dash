@@ -205,6 +205,42 @@ cài máy; không tự động cài hay thay thế Crane.
 **Không được gọi app có bản ký hợp lệ hoặc device runtime PASS chỉ vì
 workflow này build xanh.**
 
+
+## Sprint đo overhead trực tiếp (tùy chọn, chưa chứng thực trên thiết bị)
+
+UIKit app tiếp tục giữ nút **Run 4 suites × 8192** kiểm chứng chức
+năng. Khi và chỉ khi xuất được `DD_RUNTIME_COMPLETE=PASS`, nút
+**Measure overhead (optional)** mới bật. Benchmark là một công việc
+riêng trên background queue, không thay thế 7 dòng `DD_RUNTIME_*`
+và không thể biến kết quả fail chức năng thành PASS.
+
+- `perf_pilot.c/.h`: đo **5 cặp** VM/native, CE/plain, ICALL/direct,
+  IGV/plain, IBR/plain bằng đồng hồ đơn điệu `CLOCK_MONOTONIC`, mỗi
+  biến thể **20.000 lời gọi x 5 lần lặp**, lấy trung vị nanosecond.
+  Luân phiên thứ tự đo và giữ checksum qua `volatile` để tránh tối ưu
+  loại bỏ kết quả; không benchmark Objective-C allocation/ARC trong bước
+  này.
+- `perf_report.c/.h`: tạo log **17 dòng** cố định, tách biệt tuyệt đối
+  với log chức năng 7 dòng; trường `DD_PERF_NOTE` bắt buộc bằng
+  `OBSERVATIONAL_NOT_SECURITY_PROOF`.
+- `perf_audit.py`: parse log nghiêm ngặt, chỉ tính tỷ số
+  protected/native quan sát được, không có giới hạn tỷ số PASS/FAIL, không
+  tuyên bố benchmark host macOS là benchmark iOS.
+- `perf_host_runner.c`: CI chạy benchmark trên **macOS host** như một
+  kiểm thử compiler + định dạng log. Chỉ log chia sẻ từ iPhone thật mới
+  có thể là quan sát hiệu năng thiết bị, và parser không thể chứng
+  thực nguồn gốc log.
+- `scripts/test_protection_perf.py`: 1.000 bộ thời gian mô phỏng,
+  negative tests context/kiến trúc, thứ tự cặp, ngưỡng/NaN/định dạng,
+  cùng guard app chỉ bật benchmark sau khi chức năng PASS.
+
+Hướng dẫn chi tiết và lệnh kiểm tra báo cáo:
+[docs/PROTECTION_PERFORMANCE.md](../../docs/PROTECTION_PERFORMANCE.md).
+
+**Quan trọng:** kết quả timing phụ thuộc máy, CPU frequency, thermal và
+load; chỉ xem là thông tin quyết định overhead, không chứng minh an toàn,
+PAC runtime hay mức độ chống reverse engineering.
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker
