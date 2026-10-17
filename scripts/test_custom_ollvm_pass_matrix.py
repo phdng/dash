@@ -46,10 +46,17 @@ assert original["experimental_kagura_pipeline"]["k7_device_vm_samples_ns"] == [3
 assert original["experimental_kagura_pipeline"]["k7_app_macho_uuid"] == "15a45d46-f0da-37ff-855d-5e6ea078be8e"
 assert original["experimental_kagura_pipeline"]["k7_macos_median_paired_overhead_ratio"] == 47.0
 assert original["experimental_kagura_pipeline"]["k6_vm_device_runtime"] == "NOT_TESTED"
-assert original["experimental_kagura_pipeline"]["k8_five_pass_status"] == "STAGED_MACOS_CI_NOT_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k8_five_pass_status"] == "MACOS_CI_ARTIFACT_VERIFIED_ISOLATED_FIVE_PASS"
+assert original["experimental_kagura_pipeline"]["k8_artifact_zip_sha256"] == "a1bc3b5bf0057e082ff4109c93925e39758f7fd861fb336d3655ffe4c6049dea"
+assert original["experimental_kagura_pipeline"]["k8_artifact_entry_count"] == 74
+assert original["experimental_kagura_pipeline"]["k8_independent_artifact_checks_passed"] == 92
+assert original["experimental_kagura_pipeline"]["k8_native_parity_status"] == "FIVE_ISOLATED_4096_VECTORS_PASS"
+assert original["experimental_kagura_pipeline"]["k8_native_c_fixture_checksum"] == "25a3318e3d7d6525"
+assert original["experimental_kagura_pipeline"]["k8_native_mvo_fixture_checksum"] == "64e61045bbc4a250"
 assert original["experimental_kagura_pipeline"]["k8_five_passes"] == ["ibr", "mvo", "genc", "fsplit", "ci"]
 assert original["experimental_kagura_pipeline"]["k8_ios_arm64"] == "BUILD_ONLY_NOT_EXECUTED"
-assert original["experimental_kagura_pipeline"]["k8_combined_five_passes"] == "DEFERRED_PENDING_ISOLATED_NATIVE_ARTIFACT"
+assert original["experimental_kagura_pipeline"]["k8_combined_five_passes"] == "NOT_TESTED_AFTER_ISOLATED_MACOS_NATIVE_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k8_artifact_review"] == "docs/KAGURA_K8_ARTIFACT_REVIEW.md"
 assert len(status["registry_sha256"]) == 64
 
 negative_mutations = (
@@ -87,6 +94,17 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k6_vm_target="dd_vm_guard_protected"),
     lambda x: x["experimental_kagura_pipeline"].update(k7_vm_trollstore_ipa_status="IOS_DEVICE_PASS"),
     lambda x: x["experimental_kagura_pipeline"].update(k8_five_pass_status="IOS_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k8_five_pass_status="STAGED_MACOS_CI_NOT_VERIFIED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k8_artifact_zip_sha256="0" * 64),
+    lambda x: x["experimental_kagura_pipeline"].update(k8_artifact_entry_count=73),
+    lambda x: x["experimental_kagura_pipeline"].update(k8_independent_artifact_checks_passed=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k8_native_parity_status="PASS_WITHOUT_LOG"),
+    lambda x: x["experimental_kagura_pipeline"].update(k8_native_c_fixture_checksum="0" * 16),
+    lambda x: x["experimental_kagura_pipeline"].update(k8_native_mvo_fixture_checksum="0" * 16),
+    lambda x: x["experimental_kagura_pipeline"].update(k8_source_fixture_sha256="0" * 64),
+    lambda x: x["experimental_kagura_pipeline"].update(k8_source_runner_sha256="0" * 64),
+    lambda x: x["experimental_kagura_pipeline"].update(k8_source_mvo_ir_sha256="0" * 64),
+    lambda x: x["experimental_kagura_pipeline"].update(k8_artifact_review="docs/no-such-K8-artifact.md"),
     lambda x: x["experimental_kagura_pipeline"].update(k8_ios_arm64="DEVICE_RUNTIME_VERIFIED"),
     lambda x: x["experimental_kagura_pipeline"].update(k8_combined_five_passes="COMBINED_PASS"),
     lambda x: x["experimental_kagura_pipeline"]["k8_five_passes"].append("vm"),

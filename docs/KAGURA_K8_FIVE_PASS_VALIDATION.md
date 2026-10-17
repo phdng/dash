@@ -1,10 +1,13 @@
 # Kagura K8 — xác minh 5 pass bổ sung trước khi đánh giá hiệu năng
 
-Ngày tạo: **2026-10-17**. Trạng thái:
-**STAGED_MACOS_CI_NOT_VERIFIED**. Bộ kiểm thử portable/negative cục bộ có thể
-PASS trên Windows, nhưng **chưa chứng minh** Kagura LLVM19 thực sự chạy
-đủ 5 pass K8 trên macOS hoặc iPhone. K0/K1/K5 (7 structural passes) và
-K6/K7 (VM pass) vẫn là bằng chứng riêng đã có từ artifact/log thật.
+Ngày tạo: **2026-10-17**. Trạng thái hiện tại:
+**MACOS_CI_ARTIFACT_VERIFIED_ISOLATED_FIVE_PASS**. Đã đối chiếu độc lập
+ZIP CI LLVM19 macOS: 5/5 pass riêng có thay đổi IR/object thật và
+4.096 native vector khớp baseline, 92/92 bằng chứng kiểm tra PASS.
+**Chưa chạy K8 trên iPhone hoặc kết hợp năm pass**. Xem
+[KAGURA_K8_ARTIFACT_REVIEW.md](KAGURA_K8_ARTIFACT_REVIEW.md).
+K0/K1/K5 (7 structural passes) và K6/K7 (VM pass) có
+bằng chứng CI/thiết bị riêng, không tự động chứng minh K8 trên Crane.
 
 ## Mục tiêu
 
@@ -104,8 +107,10 @@ object so với chính `mvo.ll` baseline, (3) chứa XOR `.mvo`,
 (4) trả chính xác 4.096 kết quả baseline. iOS arm64 build-only cũng
 phải có IR/object delta với baseline cùng fixture. **Không được so
 hai hàm C và IR khác thuật toán để tạo ra PASS giả.** IBR/GENC/FSPLIT/CI
-vẫn giữ nguyên `-O1` và oracle/parity riêng. Chưa có bằng chứng
-native macOS cho bản sửa này cho tới khi GitHub Actions chạy lại.
+vẫn giữ nguyên `-O1` và oracle/parity riêng. **Bản GitHub Actions
+mới đã chạy và xác minh độc lập:** MVO IR thực chứa XOR cả store/load,
+object macOS+iOS có delta, 4.096 vector/native checksum đúng. Chi tiết
+[artifact review K8](KAGURA_K8_ARTIFACT_REVIEW.md).
 
 **Gia cố thêm GENC sau khi rà upstream:** cùng phiên bản Kagura,
 `GlobalEncryptionPass::collectEligibleGlobals()` chỉ nhận private/
@@ -119,9 +124,10 @@ IR macOS và iOS đều chứa `internal/private constant i64` và
 `load volatile i64, ptr @dd_k8_genc_scalar`; chỉ gọi pass mà không
 mã hóa/thêm decode XOR hoặc không đổi object vẫn FAIL.
 
-Lưu ý: đây là **phòng lỗi no-op kế tiếp theo mã upstream**, không
-phải một lỗi GENC đã được quan sát trong log người dùng vừa gửi.
-Chỉ bản chạy mới của GitHub Actions mới xác nhận kết quả native thực.
+Lưu ý: đây là **phòng lỗi no-op theo mã upstream**, không phải lỗi GENC
+trong log lần trước. **Artifact K8 mới đã chứng minh** GENC thay đổi
+IR/object macOS+iOS và giữ đúng 4.096 native vector trên canary; chưa
+thử iPhone runtime.
 
 ## Lệnh kiểm tra cục bộ
 
@@ -135,11 +141,13 @@ python3 scripts/verify_reconstruction.py
 
 ## Điều kiện nghiệm thu
 
-Sau khi commit/push K8 và run thủ công, chỉ đổi state lên
-`MACOS_CI_ARTIFACT_VERIFIED` sau khi đọc trực tiếp ZIP, xác minh từng
-`*.ll`, `*.o`, `opt.log`, `native.log` so với báo cáo và
-không có bản no-op. Nếu fail, giữ `STAGED...` và khắc phục nguyên nhân
-thực, không giảm yêu cầu audit để làm xanh CI.
+Điều kiện xác minh **5 pass riêng** đã đạt theo ZIP K8 vừa đối chiếu:
+`MACOS_CI_ARTIFACT_VERIFIED_ISOLATED_FIVE_PASS`, hash nguồn của ba
+fixture khớp báo cáo, 74 entry/CRC sạch, 92/92 checks PASS.
+Bước tiếp theo phải duy trì đúng chuẩn: thử tương tác/từng thứ tự
+pipeline trước rồi mới cân nhắc IPA iPhone riêng. Nếu phép thử phối hợp
+FAIL, **không thay đổi** trạng thái 5 pass riêng thành
+`COMBINED_PASS` hay hạ điều kiện parity/IR/object.
 
 **Không đổi** `policy.json`, `Makefile`, `.github/workflows/build.yml`,
 Hikari/Kagura K5/K7, Objective-C hooks, dylibs/debs Crane. Giữ

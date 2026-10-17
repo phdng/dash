@@ -221,7 +221,25 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         not (root / "scripts/custom_ollvm/kagura_max/package_ipa.py").is_file()):
         raise AssertionError("Kagura K5 artifact/K6 separate VM scope evidence drift")
     if (kagura.get("k8_five_pass_status") !=
-        "STAGED_MACOS_CI_NOT_VERIFIED" or
+        "MACOS_CI_ARTIFACT_VERIFIED_ISOLATED_FIVE_PASS" or
+        kagura.get("k8_artifact_zip_sha256") !=
+        "a1bc3b5bf0057e082ff4109c93925e39758f7fd861fb336d3655ffe4c6049dea" or
+        kagura.get("k8_artifact_entry_count") != 74 or
+        kagura.get("k8_independent_artifact_checks_passed") != 92 or
+        kagura.get("k8_native_parity_status") !=
+        "FIVE_ISOLATED_4096_VECTORS_PASS" or
+        kagura.get("k8_native_c_fixture_checksum") !=
+        "25a3318e3d7d6525" or
+        kagura.get("k8_native_mvo_fixture_checksum") !=
+        "64e61045bbc4a250" or
+        kagura.get("k8_source_fixture_sha256") !=
+        "39e0b833ab8574bf2e8abb2a66dc440d06424a82d6a0f371297e313bc91992fc" or
+        kagura.get("k8_source_runner_sha256") !=
+        "4c1929802af256c6a7130e8f010e26f517f887a5b8dcbaad53434c6eb5bc2d6e" or
+        kagura.get("k8_source_mvo_ir_sha256") !=
+        "abbe02b364571b77fb94fff673111bf381f694211cca148d18a73650a8343e50" or
+        kagura.get("k8_artifact_review") !=
+        "docs/KAGURA_K8_ARTIFACT_REVIEW.md" or
         kagura.get("k8_five_passes") !=
         ["ibr", "mvo", "genc", "fsplit", "ci"] or
         kagura.get("k8_pass_kinds") != {
@@ -236,7 +254,7 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k8_report") != "Kagura-K8-PASS-REPORT.json" or
         kagura.get("k8_ios_arm64") != "BUILD_ONLY_NOT_EXECUTED" or
         kagura.get("k8_combined_five_passes") !=
-        "DEFERRED_PENDING_ISOLATED_NATIVE_ARTIFACT" or
+        "NOT_TESTED_AFTER_ISOLATED_MACOS_NATIVE_VERIFIED" or
         kagura.get("k8_review_doc") !=
         "docs/KAGURA_K8_FIVE_PASS_VALIDATION.md" or
         not (root / kagura["k8_runner"]).is_file() or
@@ -244,8 +262,19 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         not (root / kagura["k8_review_doc"]).is_file() or
         not (root / "scripts/custom_ollvm/kagura_k8/fixture.c").is_file() or
         not (root / "scripts/custom_ollvm/kagura_k8/runner.c").is_file() or
-        not (root / "scripts/test_kagura_k8_passes.py").is_file()):
-        raise AssertionError("K8 five candidate passes are staged-only, not native/device PASS")
+        not (root / "scripts/custom_ollvm/kagura_k8/mvo.ll").is_file() or
+        not (root / "scripts/test_kagura_k8_passes.py").is_file() or
+        not (root / kagura["k8_artifact_review"]).is_file()):
+        raise AssertionError("K8 isolated CI evidence incorrectly claimed or missing")
+    # Pin all source bytes used by the *actual user-provided* CI artifact.
+    # These are verified source identities, not a new native execution.
+    for source, digest_key in (
+        ("scripts/custom_ollvm/kagura_k8/fixture.c", "k8_source_fixture_sha256"),
+        ("scripts/custom_ollvm/kagura_k8/runner.c", "k8_source_runner_sha256"),
+        ("scripts/custom_ollvm/kagura_k8/mvo.ll", "k8_source_mvo_ir_sha256"),
+    ):
+        if hashlib.sha256((root / source).read_bytes()).hexdigest() != kagura[digest_key]:
+            raise AssertionError("K8 pinned CI source no longer matches verified artifact")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

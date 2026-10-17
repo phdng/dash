@@ -49,11 +49,15 @@ tùy chọn. Workflow có kiểm tra native pass trace/Object/IPA, nhưng
 **chưa có macOS build IPA hoặc on-device Kagura runtime PASS**.
 [Hướng dẫn KaguraLab/TrollStore](KAGURA_IOS_TROLLSTORE_PILOT.md).
 
-**K8 (đã chuẩn bị, chưa có CI macOS artifact):** workflow manual-only
-`.github/workflows/kagura-k8-pass-coverage.yml` cho 5 pass Kagura khác
-`ibr/mvo/genc/fsplit/ci` (2 function + 3 module), kiểm tra IR/object
-delta và 4096 vector native mỗi pass trên pinned LLVM19; iOS arm64
-object build-only. Xem [KAGURA_K8_FIVE_PASS_VALIDATION.md](KAGURA_K8_FIVE_PASS_VALIDATION.md).
+**K8 (đã có macOS LLVM19 CI artifact, đối chiếu độc lập):** workflow
+manual-only `.github/workflows/kagura-k8-pass-coverage.yml` đã thực
+thi đủ 5 pass Kagura `ibr/mvo/genc/fsplit/ci` (2 function + 3 module).
+IR/object đều có delta thật, native parity 4096 vector từng pass PASS,
+iOS arm64 MH_OBJECT build-only (chưa chạy trên iPhone). ZIP 74 entry
+CRC sạch, SHA và 92/92 phép kiểm chứng độc lập PASS. Chưa kiểm thử
+pipeline kết hợp, Crane/arm64e PAC runtime hoặc hiệu năng K8.
+Xem [KAGURA_K8_ARTIFACT_REVIEW.md](KAGURA_K8_ARTIFACT_REVIEW.md) và
+[KAGURA_K8_FIVE_PASS_VALIDATION.md](KAGURA_K8_FIVE_PASS_VALIDATION.md).
 K7 VM đã có log `a.txt` xác minh UUID/checksum với IPA thực, median
 paired iPhone overhead 71,5× (3 cặp, chưa phải chứng thực mật mã).
 

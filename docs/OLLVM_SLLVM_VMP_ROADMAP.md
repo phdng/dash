@@ -51,11 +51,12 @@ trên iPhone**. Đọc [KAGURA_IOS_TROLLSTORE_PILOT.md](KAGURA_IOS_TROLLSTORE_PI
 VM Kagura có mã chuyển LLVM IR thành bytecode thực nhưng chỉ dự kiến
 thử sau vì overhead cao, không bật trên ObjC callback/hook/daemon.
 Các kiểu indirect branch/call/global của Kagura có semantics khác
-SLLVM: K8 đã chuẩn bị workflow manual-only kiểm chứng 5 pass
-`ibr,mvo,genc,fsplit,ci` qua LLVM19 native parity và iOS arm64
-build-only, **chưa có artifact K8 PASS**. CI gọi runtime resolver;
-không gọi test xây dựng này là thử trên iPhone. Xem
-[KAGURA_K8_FIVE_PASS_VALIDATION.md](KAGURA_K8_FIVE_PASS_VALIDATION.md).
+SLLVM: K8 đã có **artifact macOS CI LLVM19 xác minh độc lập**, đủ 5 pass
+`ibr,mvo,genc,fsplit,ci`, mỗi pass có IR/object delta thực và 4.096
+native parity khớp baseline; iOS arm64 build-only. CI gọi runtime resolver
+cho `ci`. Chưa thử năm pass kết hợp hay trên iPhone; không nhận
+tương đương SLLVM proprietary. Xem
+[KAGURA_K8_ARTIFACT_REVIEW.md](KAGURA_K8_ARTIFACT_REVIEW.md).
 K7 VM riêng đã đối chiếu log iPhone `a.txt`: 4096 parity PASS,
 median paired overhead 71,5× trong 3 cặp. Chỉ dùng nghiên cứu,
 chưa bật VM trên Crane. Đọc
