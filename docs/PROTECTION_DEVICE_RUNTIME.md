@@ -1,6 +1,9 @@
 # Protection Lab — kiểm thử runtime độc lập trên thiết bị iOS
 
-Trạng thái: **đã viết source + workflow compile, chưa chạy trên iPhone trong phiên này**.
+Trạng thái: **workflow runtime CLI đã được người dùng xác nhận build xanh;
+chưa có chứng cứ chạy trực tiếp trên iPhone trong phiên này**.
+Để thử bằng giao diện UIKit thay cho terminal CLI, xem
+[PROTECTION_IOS_APP.md](PROTECTION_IOS_APP.md).
 Người dùng xác nhận các workflow Protection Lab trước đã build xanh; điều đó
 **không chứng minh** arm64e/PAC đã được thực thi trên iPhone A12+.
 

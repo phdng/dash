@@ -50,7 +50,17 @@ Ngày cập nhật: 2026-10-16. Trạng thái: **Sprint P0/P1 prototype đã có
   Workflow tuyệt đối không ký/cài/chạy vào iPhone, không tạo `.deb`; người
   dùng cần ký và chạy riêng trên máy dự phòng A12+ để có runtime evidence.
   `device_audit.py verify-log` kiểm tra 7 dòng log nhưng không thể chứng
-  thực nguồn log. Hướng dẫn [PROTECTION_DEVICE_RUNTIME.md](PROTECTION_DEVICE_RUNTIME.md).
+  thực nguồn log. Người dùng xác nhận workflow device-runtime CLI đã **build
+  xanh**, chưa có kết quả runtime thực trên máy A12+.
+  Hướng dẫn [PROTECTION_DEVICE_RUNTIME.md](PROTECTION_DEVICE_RUNTIME.md).
+- **Sprint UIKit on-device app (mới):** workflow
+  `.github/workflows/protection-ios-app.yml` tạo hai bundle `.app` UIKit
+  chưa được provisioning cho Apple Clang iPhoneOS arm64 và arm64e, dùng
+  cùng các C/ObjC canary đã thử và nút Run tự kiểm tra ABI/PAC đang được
+  loader nạp, so sánh 4 x 8.192 vector. Kết quả có thể chia sẻ dưới dạng
+  7 dòng để chạy `device_audit.py verify-log`. CI kiểm tra Mach-O và
+  đóng gói riêng, **không ký/cài/chạy iPhone**. Hướng dẫn
+  [PROTECTION_IOS_APP.md](PROTECTION_IOS_APP.md).
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 

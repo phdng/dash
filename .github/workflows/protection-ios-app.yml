@@ -1,0 +1,104 @@
+name: Protection Lab - iOS UIKit test app (Experimental)
+
+# Standalone unsigned .app archives only. No signing, provisioning, jailbreak,
+# installation, or production Crane modification is performed by this job.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unsigned-app:
+    name: Build independent physical-iPhone test app (arm64 + arm64e)
+    runs-on: macos-14
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run test app and prior protection lab contracts
+        run: |
+          set -euo pipefail
+          python3 scripts/test_ios_app_canary.py
+          python3 scripts/test_device_runtime_canary.py
+          python3 scripts/test_objc_ce_pilot.py
+          python3 scripts/test_igv_ibr_pilot.py
+          python3 scripts/test_sllvm_pilot.py
+          python3 scripts/test_protection_lab.py
+
+      - name: Generate public bytecode and CE fixture headers
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/ios-lab-app"
+          mkdir -p "$out"
+          python3 "$lab/program.py" --out "$out/vm_program.h"
+          python3 "$lab/sllvm_generator.py" --out "$out/sllvm_encoded.h"
+          python3 "$lab/objc_ce_generator.py" --out "$out/objc_ce_data.h"
+          plutil -lint "$lab/ios_app_Info.plist"
+          xcrun clang --version > "$out/apple-clang-version.txt"
+
+      - name: Build separate unsigned UIKit app bundles for iPhone
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/ios-lab-app"
+          clang="$(xcrun --sdk iphoneos --find clang)"
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          for arch in arm64 arm64e; do
+            mkdir -p "$out/$arch/objs"
+            app="$out/ProtectionLab-$arch.app"
+            mkdir -p "$app"
+            cp "$lab/ios_app_Info.plist" "$app/Info.plist"
+            for name in canary vm sllvm_plain sllvm_protected igv_ibr_plain igv_ibr_protected device_suites; do
+              "$clang" -std=c11 -arch "$arch" -isysroot "$sdk" \
+                -miphoneos-version-min=15.0 -O1 -Wall -Wextra -Werror \
+                -I "$lab" -I "$out" -c "$lab/$name.c" \
+                -o "$out/$arch/objs/$name.o"
+            done
+            for name in objc_ce_plain objc_ce_protected ios_app_main; do
+              "$clang" -fobjc-arc -arch "$arch" -isysroot "$sdk" \
+                -miphoneos-version-min=15.0 -O1 -Wall -Wextra -Werror \
+                -I "$lab" -I "$out" -c "$lab/$name.m" \
+                -o "$out/$arch/objs/$name.o"
+            done
+            "$clang" -arch "$arch" -isysroot "$sdk" \
+              -miphoneos-version-min=15.0 "$out/$arch/objs/"*.o \
+              -framework UIKit -framework Foundation -o "$app/ProtectionLab"
+            test -s "$app/ProtectionLab"
+            xcrun otool -hv "$app/ProtectionLab" > "$out/macho-$arch.txt"
+            xcrun otool -L "$app/ProtectionLab" > "$out/dependencies-$arch.txt"
+            plutil -lint "$app/Info.plist"
+            shasum -a 256 "$app/ProtectionLab" >> "$out/binary-sha256.txt"
+            ditto -c -k --sequesterRsrc --keepParent "$app" \
+              "$out/ProtectionLab-UNSIGNED-$arch.zip"
+            test -s "$out/ProtectionLab-UNSIGNED-$arch.zip"
+          done
+          python3 "$lab/device_audit.py" build \
+            --arm64 "$out/ProtectionLab-arm64.app/ProtectionLab" \
+            --arm64e "$out/ProtectionLab-arm64e.app/ProtectionLab" \
+            --out "$out/build-report.json"
+          echo '### UIKit on-device parity application — unsigned bundles' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Two Apple Clang iPhoneOS MH_EXECUTE app binaries ABI-validated.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'App requires legitimate local signing/provisioning before device install.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'On-device ARC/function-pointer/PAC runtime: NOT TESTED in CI.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No signing, app installation, jailbreaking, or Crane modification.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload unsigned test-app bundles and Mach-O proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProtectionLab-UIKit-OnDevice-UNSIGNED-arm64-arm64e
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/ios-lab-app/ProtectionLab-UNSIGNED-arm64.zip
+            ${{ runner.temp }}/ios-lab-app/ProtectionLab-UNSIGNED-arm64e.zip
+            ${{ runner.temp }}/ios-lab-app/build-report.json
+            ${{ runner.temp }}/ios-lab-app/binary-sha256.txt
+            ${{ runner.temp }}/ios-lab-app/macho-arm64.txt
+            ${{ runner.temp }}/ios-lab-app/macho-arm64e.txt
+            ${{ runner.temp }}/ios-lab-app/dependencies-arm64.txt
+            ${{ runner.temp }}/ios-lab-app/dependencies-arm64e.txt
+            ${{ runner.temp }}/ios-lab-app/apple-clang-version.txt

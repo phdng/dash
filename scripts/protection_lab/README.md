@@ -184,6 +184,27 @@ thiết bị, không chạm đến package/hook/daemon Crane.
 **Lưu ý:** build xanh ở CI mới chỉ kiểm chứng build và macOS host parity;
 đến khi có iPhone A12+ và log thật, `arm64e` runtime vẫn `NOT_TESTED`.
 
+## Sprint UIKit app: chạy canary bằng giao diện trên iPhone thật
+
+Workflow `.github/workflows/protection-ios-app.yml` (chạy thủ công)
+tạo **hai bundle iPhoneOS chưa được provisioning** cho `arm64` và `arm64e`.
+Nguồn `ios_app_main.m` + `ios_app_Info.plist` sử dụng UIKit, cùng
+`device_suites.c` và các canary C/Objective-C đang có. Người thử nghiệm
+phải bấm **Run 4 suites × 8192**; app kiểm tra loaded Mach-O ABI/PAC rồi
+so sánh 4 x 8.192 vector. Nút Share chỉ cho chia sẻ report **sau khi**
+test đã hoàn tất, report chứa đúng 7 dòng khi mọi bước PASS, dùng được với
+`device_audit.py verify-log`. Các bundle chưa được provision/sign để
+cài máy; không tự động cài hay thay thế Crane.
+
+- Portable regression: `python scripts/test_ios_app_canary.py`
+  (UIKit nguồn, Info.plist, workflow, arm64/arm64e và log âm tính).
+- Hướng dẫn: [docs/PROTECTION_IOS_APP.md](../../docs/PROTECTION_IOS_APP.md).
+- Lưu ý: người dùng đã xác nhận workflow device-runtime CLI trước **build
+  xanh**, nhưng chưa có nhật ký thiết bị A12+ đã chạy `arm64e` thật.
+
+**Không được gọi app có bản ký hợp lệ hoặc device runtime PASS chỉ vì
+workflow này build xanh.**
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker
