@@ -90,10 +90,11 @@ cross-compile `arm64 MH_OBJECT`, **không** IPA/on-device runtime.
 Chưa benchmark/đánh giá slowdown K9. K5/K7 và OLLVM STRONG hiện
 hành được giữ nguyên.
 
-Bước tiếp theo đã triển khai **riêng dưới dạng K10 staged**:
-[KAGURA_K10_LINK_METADATA.md](KAGURA_K10_LINK_METADATA.md) đọc
-`target datalayout` và `target triple` trực tiếp từ C bitcode
-do Clang19 phát, gắn vào IR MVO tạm, rồi yêu cầu `llvm-link`
-**không có cảnh báo** và chạy lại cả năm stage 2×4096 native.
-Chưa có K10 macOS CI artifact, **không đổi kết quả K9 đã xác minh**;
-sau đó mới xét ma trận thứ tự hoặc IPA lab riêng.
+**K10 đã có CI artifact riêng, được xác minh độc lập 277/277:**
+[KAGURA_K10_ARTIFACT_REVIEW.md](KAGURA_K10_ARTIFACT_REVIEW.md).
+K10 đọc `target datalayout` và `target triple` trực tiếp từ C
+bitcode do Clang19 phát, gắn vào IR MVO tạm; cả hai `llvm-link.log`
+đều **0 warning**, năm stage vẫn khớp hai checksum 4096 vector.
+Lịch sử artifact K9 vẫn có cảnh báo metadata đúng như đã ghi;
+**K10 là bằng chứng mới, không xóa/sửa artifact K9 cũ**.
+Sau đó mới xét ma trận thứ tự hoặc IPA lab riêng.

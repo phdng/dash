@@ -168,13 +168,25 @@ production.** `llvm-link` có cảnh báo thiếu datalayout MVO và
 khác host triple, cần xử lý trước thử nghiệm tiếp theo.
 Xem [KAGURA_K9_ARTIFACT_REVIEW.md](KAGURA_K9_ARTIFACT_REVIEW.md).
 
-**K10 — sửa căn chỉnh LLVM target metadata (staged, chưa có CI):**
-dùng đúng Clang19 module `target datalayout` và `target triple` cho
-MVO IR tạm cả macOS và iOS, bảo toàn template K8 pin; `llvm-link`
-warning bị chặn ngay, tiếp tục đúng năm stage với IR/object delta +
-hai checksum 4096 vector. Workflow manual-only
-`.github/workflows/kagura-k10-link-metadata.yml`. Không bật sản phẩm.
-Xem [KAGURA_K10_LINK_METADATA.md](KAGURA_K10_LINK_METADATA.md).
+**K10 — đã xác minh artifact macOS LLVM19 strict target metadata:**
+ZIP 80 entry CRC sạch, **277/277 phép kiểm tra độc lập PASS**.
+Đọc trực tiếp Clang19 module `target datalayout` và `target triple`
+cho MVO IR tạm cả macOS và iOS, bảo toàn template K8 pin;
+hai `llvm-link.log` **0 warning**, tiếp tục đúng năm stage có IR/object
+delta và native hai hàm × 4096 vector khớp checksum.
+iOS mới `MH_OBJECT` build-only, **không có runtime iPhone/Crane
+production/arm64e PAC**. Workflow manual-only
+`.github/workflows/kagura-k10-link-metadata.yml`.
+Xem [KAGURA_K10_ARTIFACT_REVIEW.md](KAGURA_K10_ARTIFACT_REVIEW.md).
+
+**K11 — IPA lab iOS arm64 độc lập (staged, CHƯA có IPA CI thật):**
+[KAGURA_K11_IOS_IPA_LAB.md](KAGURA_K11_IOS_IPA_LAB.md)
+thêm workflow thủ công `.github/workflows/kagura-k11-ios-ipa.yml`,
+dùng duy nhất `05-ci/ios.o` sau đúng năm Kagura pass, cross-compile
+resolver `kagura_rtld_default_handle` từ nguồn Kagura pin cho iOS
+arm64, gói `KaguraFiveLab-TrollStore-arm64.ipa` unsigned,
+bảo toàn UUID/SHA và log 2×4096 checksum. CI K11/chạy thiết bị
+**chưa xác minh**; không chỉnh K5/K7 hay Crane production.
 
 Tài liệu K6 gốc: [KAGURA_K6_VM_SELECTIVE.md](KAGURA_K6_VM_SELECTIVE.md).
 Không virtualize Objective-C methods, initializer, licensing

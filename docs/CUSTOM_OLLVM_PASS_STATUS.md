@@ -68,11 +68,20 @@ Artifact 75 entry CRC sạch, **179/179 kiểm tra độc lập PASS**.
 Lưu ý `llvm-link` cảnh báo datalayout MVO thiếu và host triple
 khác C module; chưa có IPA/runtime iPhone/arm64e/Crane production.
 Xem [KAGURA_K9_ARTIFACT_REVIEW.md](KAGURA_K9_ARTIFACT_REVIEW.md).
-**K10 (mới có code và kiểm thử portable, chưa có CI macOS):**
-[KAGURA_K10_LINK_METADATA.md](KAGURA_K10_LINK_METADATA.md) bổ sung
-metadata linker nghiêm ngặt cho C/MVO IR `llvm-link` của K9;
-yêu cầu zero warning và giữ nguyên hai checksum/IR+object delta
-mỗi stage. Không sửa Crane, K5/K7 hoặc ObjC hooks.
+**K10 (artifact macOS LLVM19 đã xác minh độc lập):**
+[KAGURA_K10_ARTIFACT_REVIEW.md](KAGURA_K10_ARTIFACT_REVIEW.md):
+ZIP 80 entry, CRC sạch, **277/277 PASS**. C/MVO/merged có
+target datalayout+triple trùng nhau cả macOS và iOS,
+`llvm-link` **0 warning**, sau từng stage năm pass IR/object
+đổi thật và native hai checksum ×4096 vector giữ nguyên.
+iOS arm64 object build-only; chưa chạy trên iPhone/arm64e/PAC,
+không sửa Crane, K5/K7 hoặc ObjC hooks.
+**K11 (staged, chưa xác minh CI IPA):**
+[KAGURA_K11_IOS_IPA_LAB.md](KAGURA_K11_IOS_IPA_LAB.md) dựng ứng dụng
+UIKit riêng `KaguraFiveLab`, liên kết `05-ci/ios.o` K10 với
+upstream CI resolver biên dịch lại cho iOS arm64, so SHA/UUID và
+tạo log hai checksum ×4096 vector để chia sẻ trên iPhone.
+Chưa có artifact K11 hoặc log thiết bị; không thay production.
 K7 VM đã có log `a.txt` xác minh UUID/checksum với IPA thực, median
 paired iPhone overhead 71,5× (3 cặp, chưa phải chứng thực mật mã).
 

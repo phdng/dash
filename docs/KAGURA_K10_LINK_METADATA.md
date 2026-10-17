@@ -1,6 +1,10 @@
 # DuoDash K10 — sửa metadata LLVM linker trên pipeline K9
 
-Ngày triển khai **17/10/2026**. Trạng thái: **STAGED_MANUAL_STRICT_LLVM_LINK_CI_NOT_VERIFIED**.
+Ngày triển khai **17/10/2026**. Trạng thái sau kiểm chứng ZIP thực:
+**MACOS_CI_ARTIFACT_VERIFIED_STRICT_LLVM_METADATA**.
+80 entry CRC sạch, **277/277 kiểm tra độc lập PASS**; xem
+[KAGURA_K10_ARTIFACT_REVIEW.md](KAGURA_K10_ARTIFACT_REVIEW.md).
+iOS vẫn chỉ arm64 object build-only.
 
 ## Bằng chứng K9 và lỗi metadata cần giải quyết
 
@@ -24,6 +28,15 @@ K10 `--verify-report` **đọc lại file thực**: so hash C/MVO/merged IR, `ll
 
 Workflow thủ công **Kagura K10 - Strict LLVM Link Target Metadata (Experimental)** ở `.github/workflows/kagura-k10-link-metadata.yml`; build Kagura MIT đúng SHA `ac2136ee0408677cf7cdee55307e9b16edd5f4d5` bằng LLVM19/macOS-14. Upload artifact **kể cả khi FAIL**: `DuoDash-Kagura-K10-STRICT-LLVM-LINK-METADATA-LLVM19-EXPERIMENTAL`.
 
-Portable test `scripts/test_kagura_k10_link_metadata.py` phải từ chối C/MVO triple/layout sai, metadata thiếu/lặp, warning `llvm-link` và sai CPU. Các kiểm thử local không chứng minh macOS native K10. Chỉ khi **CI artifact thật** có zero warning và audit raw IR/object/native sau tất cả stage thì mới nâng status K10.
+Portable test `scripts/test_kagura_k10_link_metadata.py` từ chối C/MVO triple/layout sai, metadata thiếu/lặp, warning `llvm-link` và sai CPU. Các kiểm thử local **không tự chứng minh macOS native K10**.
+
+**Đã nhận CI artifact thật và kiểm riêng:** ZIP 80 entry, SHA-256
+`3567fca73c11aaea0b30e50ca8eb9cda6491ff32cb7832893ffd104725f59383`,
+277/277 phép đối chiếu raw IR/object/link log/native checksum PASS.
+Hai `llvm-link.log` đều **0 byte**, metadata hai target nhất quán
+C/MVO/merged và giữ nguyên suốt năm stage. Native macOS hai hàm ×
+4.096 vector đúng checksum K8/K9 sau mỗi stage. Trạng thái K10 nay
+được nâng từ **staged** lên **verified from user CI artifact**.
+Chi tiết: [KAGURA_K10_ARTIFACT_REVIEW.md](KAGURA_K10_ARTIFACT_REVIEW.md).
 
 **Ranh giới:** K9 đã verified nhưng giữ nguyên lịch sử cảnh báo cũ. K10 chưa thử iPhone IPA/runtime, Objective-C hooks, arm64e PAC, benchmark hoặc Crane production. K5/K7, `policy.json`, `Makefile`, production workflow không đổi.

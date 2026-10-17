@@ -1,0 +1,85 @@
+name: Kagura K11 - Five Composed Passes iOS arm64 Lab IPA (Experimental)
+
+# Separate experimental iOS IPA, never Crane/production or device install.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k11-five-pass-ipa:
+    runs-on: macos-14
+    timeout-minutes: 100
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Portable K11 IPA and K10 provenance fail-closed regression
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k11_ios_ipa.py
+          python3 scripts/test_kagura_k10_link_metadata.py
+          python3 scripts/test_kagura_k9_composition.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+
+      - name: Build pinned Kagura LLVM19 real five-pass compiler plugin
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k11-source"
+          build="$RUNNER_TEMP/kagura-k9-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          test -s "$src/include/kagura/PassRegistry.def"
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          test -s "$build/runtime/libkagura_runtime.a"
+          echo "K11_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K11_SRC=$src" >> "$GITHUB_ENV"
+          echo "K11_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Rebuild K10 exact five sequential passes with native Mac and iOS arm64 gates
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K11-Five-IPA"
+          mkdir -p "$out"
+          echo "K11_OUT=$out" >> "$GITHUB_ENV"
+          python3 scripts/custom_ollvm/kagura_k10/pilot.py \
+            --llvm "$K11_LLVM" --plugin "$K11_PLUGIN" \
+            --src "$K11_SRC" --out "$out"
+          python3 scripts/custom_ollvm/kagura_k10/pilot.py \
+            --out "$out" --verify-report
+
+      - name: Link final real five-pass ios.o and pinned upstream iOS CI resolver into separate IPA
+        run: |
+          set -euo pipefail
+          bash scripts/custom_ollvm/kagura_k11/build_ipa.sh \
+            "$K11_LLVM" "$K11_SRC" "$K11_OUT"
+          test -s "$K11_OUT/KaguraFiveLab-TrollStore-arm64.ipa"
+          test -s "$K11_OUT/Kagura-K11-IPA-EVIDENCE.json"
+          echo "K11: pinned Kagura MVO→GENC→FSPLIT→IBR→CI, IR+object delta, two 4096-vector host oracles, strict LLVM target metadata." >> "$GITHUB_STEP_SUMMARY"
+          echo "K11: final arm64 ios.o + real upstream iOS-built CI resolver linked into standalone unsigned KaguraFiveLab IPA; exact UUID/SHA audited." >> "$GITHUB_STEP_SUMMARY"
+          echo "No iPhone execution or signing is performed by CI; no arm64e PAC, no Crane, no performance claim." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save separate K11 IPA and raw evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K11-FIVE-COMPOSED-PASSES-IOS-ARM64-IPA-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K11-Five-IPA/

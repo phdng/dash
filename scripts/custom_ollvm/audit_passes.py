@@ -320,7 +320,20 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
     ).hexdigest() != kagura["k9_runner_sha256"]:
         raise AssertionError("K9 native CI runner no longer matches verified artifact")
     if (kagura.get("k10_strict_link_metadata_status") !=
-        "STAGED_MANUAL_STRICT_LLVM_LINK_CI_NOT_VERIFIED" or
+        "MACOS_CI_ARTIFACT_VERIFIED_STRICT_LLVM_METADATA" or
+        kagura.get("k10_artifact_zip_sha256") !=
+        "3567fca73c11aaea0b30e50ca8eb9cda6491ff32cb7832893ffd104725f59383" or
+        kagura.get("k10_artifact_entry_count") != 80 or
+        kagura.get("k10_independent_artifact_checks_passed") != 277 or
+        kagura.get("k10_artifact_review") !=
+        "docs/KAGURA_K10_ARTIFACT_REVIEW.md" or
+        kagura.get("k10_host_target_triple") !=
+        "arm64-apple-macosx14.0.0" or
+        kagura.get("k10_ios_target_triple") !=
+        "arm64-apple-ios15.0.0" or
+        kagura.get("k10_both_target_datalayout") !=
+        "e-m:o-i64:64-i128:128-n32:64-S128-Fn32" or
+        kagura.get("k10_actual_llvm_link_warning_count") != 0 or
         kagura.get("k10_workflow") !=
         ".github/workflows/kagura-k10-link-metadata.yml" or
         kagura.get("k10_runner") !=
@@ -341,11 +354,55 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "OBJECT_BUILD_ONLY_NOT_EXECUTED" or
         kagura.get("k10_on_device") != "NOT_TESTED" or
         kagura.get("k10_composition_native") !=
-        "NOT_VERIFIED_MACOS_CI" or
+        "MACOS_NATIVE_FIVE_COMPOSED_STAGES_ZERO_LINK_WARNINGS_VERIFIED" or
         any(not (root / kagura[field]).is_file() for field in
-            ("k10_workflow", "k10_runner", "k10_test", "k10_doc"))):
+            ("k10_workflow", "k10_runner", "k10_test", "k10_doc",
+             "k10_artifact_review"))):
         raise AssertionError(
-            "K10 strict LLVM-link metadata CI is staged only, never native/device PASS")
+            "K10 strict LLVM-link artifact provenance or scope invalid")
+    if (kagura.get("k11_ios_ipa_status") !=
+        "STAGED_MANUAL_IOS_IPA_CI_NOT_VERIFIED" or
+        kagura.get("k11_workflow") !=
+        ".github/workflows/kagura-k11-ios-ipa.yml" or
+        kagura.get("k11_build") !=
+        "scripts/custom_ollvm/kagura_k11/build_ipa.sh" or
+        kagura.get("k11_packager") !=
+        "scripts/custom_ollvm/kagura_k11/package_ipa.py" or
+        kagura.get("k11_evidence") !=
+        "scripts/custom_ollvm/kagura_k11/ipa_evidence.py" or
+        kagura.get("k11_device_audit") !=
+        "scripts/custom_ollvm/kagura_k11/device_log_audit.py" or
+        kagura.get("k11_portable_test") !=
+        "scripts/test_kagura_k11_ios_ipa.py" or
+        kagura.get("k11_doc") != "docs/KAGURA_K11_IOS_IPA_LAB.md" or
+        kagura.get("k11_bundle_id") !=
+        "com.duodash.research.kagurafivelab" or
+        kagura.get("k11_ipa_name") !=
+        "KaguraFiveLab-TrollStore-arm64.ipa" or
+        kagura.get("k11_pinned_upstream_commit") !=
+        "ac2136ee0408677cf7cdee55307e9b16edd5f4d5" or
+        kagura.get("k11_final_pass_order") !=
+        ["mvo", "genc", "fsplit", "ibr", "ci"] or
+        kagura.get("k11_expected_c_checksum") !=
+        "25a3318e3d7d6525" or
+        kagura.get("k11_expected_mvo_checksum") !=
+        "64e61045bbc4a250" or
+        kagura.get("k11_vectors_per_function") != 4096 or
+        kagura.get("k11_upstream_ios_ci_runtime") !=
+        "PINNED_C_SOURCE_CROSS_COMPILED_FAIL_CLOSED" or
+        kagura.get("k11_macho_arch") !=
+        "arm64_SUBTYPE0_MH_EXECUTE_LC_UUID" or
+        kagura.get("k11_device_runtime") != "NOT_TESTED" or
+        kagura.get("k11_arm64e_pac") != "NOT_TESTED" or
+        kagura.get("k11_security_attestation") is not False or
+        any(not (root / kagura[field]).is_file() for field in
+            ("k11_workflow", "k11_build", "k11_packager", "k11_evidence",
+             "k11_device_audit", "k11_portable_test", "k11_doc")) or
+        any(not (root / "scripts/custom_ollvm/kagura_k11" / name).is_file()
+            for name in ("ios_probe.c", "ios_app_main.m", "Info.plist"))):
+        raise AssertionError(
+            "K11 standalone unsigned five-pass IPA remains manual staged;"
+            " no native/device/Crane success without exact artifact")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or
