@@ -1,7 +1,6 @@
 # K7 — KaguraVMLab real Kagura VM iPhone arm64 IPA pilot
 
-State on 2026-10-17: **source/workflow and portable regression PASS;
-macOS CI K7 IPA build and iPhone runtime NOT YET VERIFIED.**
+State on 2026-10-17: **real K7 macOS CI IPA independently inspected and original device text attachment `a.txt` now strictly validated against exact executable UUID, 4096-vector checksums and 3 iPhone timing pairs**. Earlier pasted text was truncated/rejected, but the new 809-byte attachment has complete 9+14 canonical lines. Device text is user-shared evidence, **not cryptographic device attestation**. The observed median paired VM overhead is **71.5×** on this single iPhone fixture; no VM production rollout. See [K7 artifact review](KAGURA_K7_ARTIFACT_REVIEW.md) and [device text review](KAGURA_K7_DEVICE_LOG_REVIEW.md).
 
 ## Rationale and isolation
 
@@ -43,8 +42,9 @@ From the GitHub Actions **Actions** tab, manually run
 
 `Kagura K7 - Real VM iPhone arm64 TrollStore IPA (Experimental)`
 
-Expected artifact:
+Artifact thực đã được cung cấp và đối chiếu:
 `KaguraVMLab-K7-TrollStore-arm64-REAL-LLVM19-VM-EXPERIMENTAL`.
+Kết quả device PASS do người dùng báo: trước đây không có log trong CI ZIP và đoạn text dán bị lỗi, nhưng sau đó đã nhận tệp `a.txt` nguyên vẹn, UUID/checksum và benchmark 3 cặp đều qua kiểm tra. Đây là kiểm chứng tính nhất quán từ text người dùng chia sẻ, không phải attestation thiết bị. Xem [kiểm tra log](KAGURA_K7_DEVICE_LOG_REVIEW.md).
 
 Only if the job is green and the artifact contains exact evidence JSON,
 download `KaguraVMLab-TrollStore-arm64.ipa`. Import through TrollStore

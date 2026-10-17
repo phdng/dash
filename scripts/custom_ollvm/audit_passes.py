@@ -122,7 +122,7 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("profile") != "MAX_CANDIDATE" or
         kagura.get("status") != "K1_NATIVE_7_STAGE_ARTIFACT_VERIFIED" or
         kagura.get("production_merge") is not False or
-        kagura.get("vm_state") != "DISABLED_PENDING_SEPARATE_OVERHEAD_AND_ABI_TEST" or
+        kagura.get("vm_state") != "PRODUCTION_DISABLED_K6_K7_ISOLATED_VALIDATION_ONLY" or
         kagura.get("arm64e_pac_runtime") != "DEFERRED_NO_A12_DEVICE" or
         kagura.get("k1_native_ci_status") != "VERIFIED_FROM_USER_CI_ARTIFACT" or
         kagura.get("k2_scope_type") != "TRANSLATION_UNIT_ONLY_NOT_LLVM_FUNCTION_ALLOWLIST" or
@@ -175,14 +175,41 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k6_vm_native_parity_vectors") != 4096 or
         kagura.get("k6_vm_macos_median_paired_overhead_ratio") != 48.0 or
         kagura.get("k7_vm_trollstore_ipa_status") !=
-        "STAGED_CI_BUILD_NOT_YET_VERIFIED" or
+        "CI_ARTIFACT_HASHES_VERIFIED" or
         kagura.get("k7_vm_ipa_workflow") !=
         ".github/workflows/kagura-vm-ios-ipa.yml" or
         kagura.get("k7_vm_ipa_name") !=
         "KaguraVMLab-TrollStore-arm64.ipa" or
         kagura.get("k7_vm_bundle_id") !=
         "com.duodash.research.kaguravmlab" or
-        kagura.get("k7_vm_on_device") != "NOT_TESTED" or
+        kagura.get("k7_vm_on_device") !=
+        "USER_SHARED_TEXT_PARITY_AND_PERF_VALIDATED_NOT_ATTESTED" or
+        kagura.get("k7_shared_device_log_status") !=
+        "VALIDATED_EXACT_SCHEMA_UUID_CHECKSUM_VS_CI" or
+        kagura.get("k7_prior_pasted_log_status") !=
+        "REJECTED_MALFORMED_TRANSPORT_TEXT" or
+        kagura.get("k7_device_benchmark_status") !=
+        "USER_SHARED_THREE_PAIRS_OBSERVATIONAL" or
+        kagura.get("k7_device_median_paired_overhead_ratio") != 71.5 or
+        kagura.get("k7_device_plain_samples_ns") != [46, 32, 30] or
+        kagura.get("k7_device_vm_samples_ns") != [3742, 1918, 2145] or
+        kagura.get("k7_device_log_sha256") !=
+        "355ecf8be195c9c925ce8d56fe1b78dd63f9e1dc2aa7f543d67d4bfbfefbc763" or
+        kagura.get("k7_device_log_review") !=
+        "docs/KAGURA_K7_DEVICE_LOG_REVIEW.md" or
+        not (root / "docs/KAGURA_K7_DEVICE_LOG_REVIEW.md").is_file() or
+        kagura.get("k7_artifact_review") !=
+        "docs/KAGURA_K7_ARTIFACT_REVIEW.md" or
+        kagura.get("k7_artifact_zip_sha256") !=
+        "fdaed5005fd5b3ccefa5bd9db1bcb12cc27a411c586c0afc144ac1d42e5f5a9f" or
+        kagura.get("k7_ipa_sha256") !=
+        "ab5a6d21bd676e06585e95f61f9295207c55679a89502d8f2198df6dc605f6e5" or
+        kagura.get("k7_app_binary_sha256") !=
+        "03d5aa93901cb03b5ffe7f8c3e754ee4bd21b13bb353bfb832d75e43bb40904d" or
+        kagura.get("k7_app_macho_uuid") !=
+        "15a45d46-f0da-37ff-855d-5e6ea078be8e" or
+        kagura.get("k7_macos_median_paired_overhead_ratio") != 47.0 or
+        not (root / "docs/KAGURA_K7_ARTIFACT_REVIEW.md").is_file() or
         not (root / "docs/KAGURA_K6_ARTIFACT_REVIEW.md").is_file() or
         not (root / "docs/KAGURA_K7_VM_TROLLSTORE.md").is_file() or
         not (root / ".github/workflows/kagura-vm-ios-ipa.yml").is_file() or

@@ -139,14 +139,15 @@ Artifact thực kiểm tra được blob bytecode 171 byte, checksum parity, gua
 Mach-O UUID và VM overhead theo 3 cặp là khoảng 48–64× baseline. Xem
 [KAGURA_K6_ARTIFACT_REVIEW.md](KAGURA_K6_ARTIFACT_REVIEW.md).
 
-**K7 — KaguraVMLab real VM iPhone IPA** (đã chuẩn bị mã/workflow và portable
-tests, chưa build macOS CI): sử dụng một ứng dụng iPhone arm64 riêng với
+**K7 — KaguraVMLab real VM iPhone IPA** (artifact macOS CI SHA/UUID/IR đã kiểm chứng; `a.txt` nguyên bản từ iPhone đã qua kiểm tra schema 9+14 dòng, UUID, checksum 4096 vector và ba cặp benchmark; VM chậm median ghép cặp **71,5×**. Đây là user-shared device text, không phải chứng thực mật mã): sử dụng một ứng dụng iPhone arm64 riêng với
 bundle ID `com.duodash.research.kaguravmlab` để kiểm thử VM thật trên 4096
 vector, optional benchmark và chia sẻ log UUID. Workflow manual-only
 `.github/workflows/kagura-vm-ios-ipa.yml` chỉ xuất IPA khi pass evidence,
 real macOS VM parity và Mach-O/IPA SHA đều khớp. **Không đưa VM vào IPA K5 đã
 PASS hoặc Crane production**. Xem
-[KAGURA_K7_VM_TROLLSTORE.md](KAGURA_K7_VM_TROLLSTORE.md).
+[KAGURA_K7_VM_TROLLSTORE.md](KAGURA_K7_VM_TROLLSTORE.md) và
+[KAGURA_K7_ARTIFACT_REVIEW.md](KAGURA_K7_ARTIFACT_REVIEW.md) và
+[KAGURA_K7_DEVICE_LOG_REVIEW.md](KAGURA_K7_DEVICE_LOG_REVIEW.md).
 Tài liệu K6 gốc: [KAGURA_K6_VM_SELECTIVE.md](KAGURA_K6_VM_SELECTIVE.md).
 Không virtualize Objective-C methods, initializer, licensing
 storage hooks, selector dispatch, SpringBoard/CarPlay hostflow,

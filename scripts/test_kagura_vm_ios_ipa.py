@@ -204,6 +204,34 @@ with tempfile.TemporaryDirectory(prefix="synthetic K7 IPA ") as folder:
     assert parsed["ci_build_correlation"]["claimed_uuid_matches_ipa_evidence"]
     assert parsed["cryptographic_device_attestation"] is False
     assert parsed["optional_benchmark"]["pairs_ns_per_call"][0] == [3, 111]
+    assert parsed["optional_benchmark"]["median_paired_overhead_ratio"] == 37.0
+    assert parsed["optional_benchmark"]["not_security_attestation"] is True
+    assert parsed["optional_benchmark"]["not_stable_performance_characterization"] is True
+    # Regression of the complete 3-pair timing format observed in the
+    # user-provided text (synthetic test fixture; no device execution).
+    measured_fixture = raw
+    for needle, replacement in (
+        ("DD_VM_IOS_PERF_PLAIN_NS_0=3", "DD_VM_IOS_PERF_PLAIN_NS_0=46"),
+        ("DD_VM_IOS_PERF_PROTECTED_NS_0=111",
+         "DD_VM_IOS_PERF_PROTECTED_NS_0=3742"),
+        ("DD_VM_IOS_PERF_PLAIN_NS_1=4", "DD_VM_IOS_PERF_PLAIN_NS_1=32"),
+        ("DD_VM_IOS_PERF_PROTECTED_NS_1=110",
+         "DD_VM_IOS_PERF_PROTECTED_NS_1=1918"),
+        ("DD_VM_IOS_PERF_PLAIN_NS_2=3", "DD_VM_IOS_PERF_PLAIN_NS_2=30"),
+        ("DD_VM_IOS_PERF_PROTECTED_NS_2=112",
+         "DD_VM_IOS_PERF_PROTECTED_NS_2=2145"),
+    ):
+        assert needle in measured_fixture
+        measured_fixture = measured_fixture.replace(needle, replacement)
+    log.write_text(measured_fixture, encoding="ascii")
+    obs = device_log.validate(log)
+    assert obs["optional_benchmark"]["pairs_ns_per_call"] == [
+        [46, 3742], [32, 1918], [30, 2145],
+    ]
+    assert obs["optional_benchmark"]["median_paired_overhead_ratio"] == 71.5
+    assert obs["optional_benchmark"]["plain_median_ns_per_call"] == 32
+    assert obs["optional_benchmark"]["protected_median_ns_per_call"] == 2145
+    log.write_text(raw, encoding="ascii")
     def badlog(text: str):
         log.write_text(text, encoding="ascii")
         reject(lambda: device_log.validate(log), "device text")
@@ -213,6 +241,26 @@ with tempfile.TemporaryDirectory(prefix="synthetic K7 IPA ") as folder:
     badlog(raw.replace("DD_VM_IOS_PERF_APP_UUID=" + UUID,
                        "DD_VM_IOS_PERF_APP_UUID=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
     badlog(raw[:-1])
+    # Real user chat relay on 2026-10-17 visibly fractured/truncated:
+    # neither a PASS token nor a nearly-matching UUID can override an
+    # incomplete fixed-width checksum or missing ns/call sample.
+    badlog(raw.replace("DD_VM_IOS_APP_UUID=" + UUID,
+                       "DD_VM_IOS_APP_UUID=15a45d46-foda-37ff-855d-5e6ea078be8e"))
+    badlog(raw.replace("KAGURA_VM_SELECTIVE", "KAGURA_VM_S VE"))
+    badlog(raw.replace(parity, "96 12f59c3"))
+    badlog(raw.replace(guard, "0 df189ce7"))
+    badlog(raw.replace("DD_VM_IOS_PERF_CALLS_PER_SAMPLE=1024",
+                       "DD_VM_IOS_PERF_CALLS_PER_SAMPLE=10" + chr(10) + "4"))
+    badlog(raw.replace("DD_VM_IOS_PERF_PROTECTED_NS_2=112",
+                       "DD_VM_IOS_PERF_PROTECTED_NS_2="))
+    badlog(raw.replace("DD_VM_IOS_PERF_NOTE=OBSERVATIONAL_NOT_SECURITY_ATTESTATION",
+                       "DD_VM_IOS_PERF_NOTE=NOTE" + chr(10) + "NOT_SECURITY_ATTESTATION"))
+    badlog(raw.replace("DD_VM_IOS_PERF_ARCH=arm64:0x00000000",
+                       "DD_VM_IOS_PERF_ARCH=arm64:0x0000000 0"))
+    badlog(raw.replace("DD_VM_IOS_APP_UUID=" + UUID,
+                       "DD_VM_IOS_APP_UUID=15a45d46-" + chr(10) +
+                       "foda-37ff-855d-5e6ea078be8e"))
+    badlog(raw.replace("DD_VM_IOS_COMPLETE=PASS", "DD_VM_IOS_COMPLETE=PASS\\n\\n"))
     log.write_text(raw, encoding="ascii")
     reject(lambda: device_log.validate(log, ipa_report=badrep,
                                        evidence=evidence), "CI mismatch")

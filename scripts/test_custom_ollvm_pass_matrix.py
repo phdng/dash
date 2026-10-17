@@ -35,8 +35,16 @@ assert original["experimental_kagura_pipeline"]["k3_samples_per_variant"] == 176
 assert original["experimental_kagura_pipeline"]["ios_arm64_kagura_trollstore_pilot"] == "CI_ARTIFACT_HASHES_VERIFIED"
 assert original["experimental_kagura_pipeline"]["ios_arm64_kagura_pilot_on_device"] == "USER_REPORTED_PASS_NO_SHARED_DEVICE_LOG"
 assert original["experimental_kagura_pipeline"]["k6_selective_vm_status"] == "MACOS_CI_ARTIFACT_VERIFIED_HOST_ONLY"
-assert original["experimental_kagura_pipeline"]["k7_vm_trollstore_ipa_status"] == "STAGED_CI_BUILD_NOT_YET_VERIFIED"
-assert original["experimental_kagura_pipeline"]["k7_vm_on_device"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k7_vm_trollstore_ipa_status"] == "CI_ARTIFACT_HASHES_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k7_vm_on_device"] == "USER_SHARED_TEXT_PARITY_AND_PERF_VALIDATED_NOT_ATTESTED"
+assert original["experimental_kagura_pipeline"]["k7_shared_device_log_status"] == "VALIDATED_EXACT_SCHEMA_UUID_CHECKSUM_VS_CI"
+assert original["experimental_kagura_pipeline"]["k7_prior_pasted_log_status"] == "REJECTED_MALFORMED_TRANSPORT_TEXT"
+assert original["experimental_kagura_pipeline"]["k7_device_benchmark_status"] == "USER_SHARED_THREE_PAIRS_OBSERVATIONAL"
+assert original["experimental_kagura_pipeline"]["k7_device_median_paired_overhead_ratio"] == 71.5
+assert original["experimental_kagura_pipeline"]["k7_device_plain_samples_ns"] == [46, 32, 30]
+assert original["experimental_kagura_pipeline"]["k7_device_vm_samples_ns"] == [3742, 1918, 2145]
+assert original["experimental_kagura_pipeline"]["k7_app_macho_uuid"] == "15a45d46-f0da-37ff-855d-5e6ea078be8e"
+assert original["experimental_kagura_pipeline"]["k7_macos_median_paired_overhead_ratio"] == 47.0
 assert original["experimental_kagura_pipeline"]["k6_vm_device_runtime"] == "NOT_TESTED"
 assert len(status["registry_sha256"]) == 64
 
@@ -75,7 +83,14 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k6_vm_target="dd_vm_guard_protected"),
     lambda x: x["experimental_kagura_pipeline"].update(k7_vm_trollstore_ipa_status="IOS_DEVICE_PASS"),
     lambda x: x["experimental_kagura_pipeline"].update(k7_vm_on_device="PASS_WITHOUT_LOG"),
+    lambda x: x["experimental_kagura_pipeline"].update(k7_shared_device_log_status="IOS_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k7_device_benchmark_status="VERIFIED_FROM_FRAGMENT"),
+    lambda x: x["experimental_kagura_pipeline"].update(k7_device_median_paired_overhead_ratio=1.0),
+    lambda x: x["experimental_kagura_pipeline"].update(k7_device_log_sha256="0" * 64),
     lambda x: x["experimental_kagura_pipeline"].update(k7_vm_bundle_id="com.duodash.research.kaguralab"),
+    lambda x: x["experimental_kagura_pipeline"].update(k7_app_macho_uuid="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+    lambda x: x["experimental_kagura_pipeline"].update(k7_ipa_sha256="0" * 64),
+    lambda x: x["experimental_kagura_pipeline"].update(k7_macos_median_paired_overhead_ratio=1.0),
     lambda x: x["experimental_kagura_pipeline"].update(ios_arm64_kagura_pilot_on_device="PASS_WITHOUT_LOG"),
     lambda x: x["experimental_kagura_pipeline"]["ios_arm64_kagura_pilot_pipeline"].append("vm"),
 )

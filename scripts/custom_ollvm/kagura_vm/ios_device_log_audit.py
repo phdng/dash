@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import re
+import statistics
 from pathlib import Path
 
 from oracle import checksums
@@ -87,9 +88,17 @@ def validate(log: Path, *, ipa_report: Path | None = None,
                     raise AssertionError("Invalid K7 iPhone performance sample")
                 pair.append(int(m.group(1)))
             pairs.append(pair)
+        paired_ratios = [protected / plain for plain, protected in pairs]
         result["optional_benchmark"] = {
             "pairs_ns_per_call": pairs,
+            "paired_overhead_ratios": [round(x, 6) for x in paired_ratios],
+            "median_paired_overhead_ratio": round(
+                statistics.median(paired_ratios), 6),
+            "plain_median_ns_per_call": statistics.median(x[0] for x in pairs),
+            "protected_median_ns_per_call": statistics.median(x[1] for x in pairs),
             "observational_only": True,
+            "not_security_attestation": True,
+            "not_stable_performance_characterization": True,
         }
 
     if ipa_report is not None:
