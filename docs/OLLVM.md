@@ -7,6 +7,10 @@ with Homebrew LLVM 19, producing `DuoDashReconstruction-OLLVM`.
 
 **This is LLVM control-flow/instruction obfuscation, not literal encryption
 of the dylib or its functions.** It does not encrypt string constants.
+For the **new-pass status** (CE, ICALL, IGV, IBR, VM and Hikari experiments),
+see [CUSTOM_OLLVM_PASS_STATUS.md](CUSTOM_OLLVM_PASS_STATUS.md): none of
+these source-level canaries has been merged into the pinned Obfuscator.
+
 The four passes below are all supported by this pinned `obfuscator` plugin;
 "full-strength" here means an aggressive evaluation profile for these four
 passes, **not** that every function is obfuscated or that reverse engineering

@@ -1,0 +1,108 @@
+# DuoDash — trạng thái pass thực trong custom OLLVM
+
+Cập nhật: 2026-10-17 · Áp dụng cho nhánh nghiên cứu `chore/reconstruction-build-ci`.
+
+## Phân biệt các phạm vi thực thi
+
+**Không có compiler pass mới được nhập vào plugin `Obfuscator` ở thời
+điểm lập báo cáo này.** `scripts/protection_lab` chứa các mẫu C/ObjC
+được biến đổi ở mức **source**, không thể tự động trở thành LLVM IR pass.
+Các bài kiểm thử TrollStore arm64 (functional/soak) được người dùng xác
+nhận PASS, nhưng chúng chạy **ProtectionLab**, không phải chứng cứ
+plugin compiler đã thêm CE/ICALL/IGV/IBR.
+
+| Nhóm | Tên cụ thể | Đã được compiler thực thi trong phạm vi nào? |
+|---|---|---|
+| **Custom OLLVM đang dùng** | SPLIT, BCF, FLA, SUB | LLVM 19 + `obfuscator/Obfuscator`; có log pass trên probe/CranePrefs arm64 |
+| **LLVM pass thật nhưng plugin riêng** | Hikari `strcry`, `constenc` | Pilot Hikari độc lập, mã nguồn có ở cùng repo upstream; không gộp `Obfuscator` |
+| **Mã thử nghiệm, không phải LLVM pass** | CE, ICALL, IGV, IBR, ObjC CE, VM | `scripts/protection_lab/` (C/ObjC, static bytecode); app arm64 đã PASS theo báo cáo người dùng |
+| **Đề xuất pass mới chưa triển khai** | string CE, constant encoding, indirect branch, indirect call, global indirection, virtualization | Chưa có code LLVM pass tương ứng trong custom `Obfuscator` của DuoDash |
+
+Đọc chính xác machine-readable:
+`scripts/custom_ollvm/pass_registry.json`.
+
+## OLLVM STRONG hiện có
+
+`policy.json` và `scripts/demo_ollvm/policy.json` hiện chỉ có
+`enable_split`, `enable_bcf`, `enable_fla`, `enable_sub` với các
+tham số lặp/xác suất; không có `enable_ce` hoặc các SLLVM flags.
+
+Profile demo STRONG: **SPLIT4 + BCF100% × 2 + FLA + SUB × 3** chỉ áp
+dụng cho `CRCreditsOpenTwitter` và `CRCreditsLocalizedRows` của
+`CRCredits.m`. Trong build DuoDash Reconstruction, các hàm helper
+allowlist nhận cùng tập bốn pass; `scripts/verify_ollvm_log.py`
+kiểm tra log `>>>> run <pass> on <function>` chính xác.
+
+Nguồn plugin: `lich4/ollvm-pass`,
+commit `592f215f852e3957da01b2b15024dc63713a462e`;
+compiler: **LLVM 19**. Xác minh qua
+`.github/workflows/build.yml` và
+`.github/workflows/demo-ollvm-evaluation.yml`.
+
+**Giới hạn**: phiên bản hiện tại chỉ đưa Obfuscator lên **Mach-O arm64**.
+Apple-Clang riêng được dùng cho `arm64e` để giữ versioned user-space PAC
+ABI; không gọi bản arm64e là OLLVM protected, không đổi subtype.
+`iphoneos-arm64e` là kiến trúc gói roothide, không tương đương CPU
+Mach-O `arm64e`.
+
+## Các pass mới cần triển khai thật
+
+Đây là lộ trình ưu tiên **chứ không phải danh sách đã có trong
+Obfuscator**:
+
+| Ưu tiên | Pass mục tiêu | Bài kiểm tra bắt buộc |
+|---|---|---|
+| P1 | **String CE** | Native LLVM19 plaintext-marker baseline/after, NSString/ARC lifetime, 8.192 vector, iPhone arm64 |
+| P2 | **Constant Encoding** | Chứng minh object/IR sau `-O1` biến đổi; native parity và kiểm soát optimizer folding |
+| P3 | **Indirect Branch** | C-only function, branch target type, parity, không đụng hook/ObjC selector |
+| P4 | **Indirect Call** | Typed function pointers, bảo toàn ABI/PAC, kiểm tra điều hướng |
+| P5 | **Global Indirection** | Native parity, thread-safety và lifetime |
+| P6 | **IR Virtualization** | Compiler chuyển LLVM IR thật sang VM model, không chỉ interpreter được viết thủ công; overhead và rollback |
+
+Các pass như **FW / ECF** có thể xếp sau các thử nghiệm trên.
+**FCC / SVC / SEC / anti-debug** không tự bật cho Objective-C
+constructor, SpringBoard, Substrate callback, securityd hoặc CarPlay;
+cần điều kiện ABI và vận hành riêng. Đặc biệt không nhận tính tương
+đương với pass proprietary SLLVM chỉ vì cùng tên.
+
+## Quy trình đưa một pass mới thành tính năng thật
+
+1. **LLVM IR pass source thực**: có `.cpp`/plugin biên dịch bằng LLVM
+   19, policy và callback pass pipeline hoạt động. Không dùng
+   `source_canary_not_llvm_pass` làm bằng chứng triển khai.
+2. **CI isolated manual-only**: build plugin từ source đã pin/kiểm giấy
+   phép, compile **cùng Clang19/cùng flags** baseline và candidate; log
+   đúng pass/hàm, kiểm tra IR/object native thật sự biến đổi. Thiếu
+   invocation hoặc không khác biệt phải FAIL.
+3. **Parity & overhead**: host native vectors trước, iOS arm64 build
+   + ký/cài trên thiết bị thử qua quy trình hiện có, test chức năng và
+   soak; chỉ kết luận runtime theo log thiết bị. Không ghi UDID.
+4. **Đánh giá bằng IDA/Ghidra**: quan sát sự thay đổi trên disassembly
+   thực, không dùng tăng size/instruction count làm điểm bảo mật.
+5. **Rollback riêng**: giữ Obfuscator STRONG hiện hành làm baseline;
+   không tự động trộn Hikari + Obfuscator cùng một compilation và
+   không thay đổi Makefile/workflow production khi chưa có điều kiện
+   tương thích được xác minh.
+
+**Ưu tiên thực tế kế tiếp:** thử **String CE hoặc Constant Encoding như
+LLVM pass trên một fixture C/Objective-C riêng**, dùng Hikari nếu phù
+hợp giấy phép và provenance; sau đó mới cân nhắc viết/đưa pass vào
+custom `Obfuscator`. Bản thân workflow Hikari hiện có mới là plugin
+**riêng**. Không tuyên bố nó đã gộp vào OLLVM.
+
+## Kiểm tra fail-closed
+
+```sh
+python scripts/custom_ollvm/audit_passes.py
+python scripts/test_custom_ollvm_pass_matrix.py
+```
+
+Bộ audit đọc đúng chính sách sản phẩm/demo, hai bộ log-checker OLLVM,
+pin SHA/upstream, đường compiler arm64/arm64e và Hikari policy.
+Nó FAIL nếu thêm flag `enable_ce` chưa được plugin hỗ trợ, gắn nhãn
+Hikari là production Obfuscator hoặc nhận source-level canary làm pass
+LLVM thật. Audit là **bằng chứng cấu hình**, không tự nhận đã chạy LLVM
+native. Được nối vào hai workflow nghiên cứu manual-only:
+`demo-ollvm-evaluation.yml` và `hikari-evaluation.yml`.
+
+Crane OLLVM STRONG production vẫn giữ nguyên.

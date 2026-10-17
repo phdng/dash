@@ -2,6 +2,23 @@
 
 Ngày cập nhật: 2026-10-17. Trạng thái: **Sprint P0/P1 prototype đã có mã và CI thủ công, native iOS chưa xác minh; SLLVM và VMProtect thương mại chưa tích hợp**.
 
+## Kiểm kê các LLVM pass mới và pass thật trong custom OLLVM
+
+Đã bổ sung [CUSTOM_OLLVM_PASS_STATUS.md](CUSTOM_OLLVM_PASS_STATUS.md)
+và machine registry `scripts/custom_ollvm/pass_registry.json` để tránh
+nhầm CE/ICALL/IGV/IBR/VM source-level canary đã PASS trên iPhone
+với **LLVM IR pass** đã tích hợp vào compiler. Hiện `Obfuscator` production
+và demo STRONG vẫn chỉ chạy **SPLIT, BCF, FLA, SUB trên arm64**.
+Hikari `strcry`/`constenc` là LLVM passes **thuộc plugin riêng**;
+chưa được gộp vào custom Obfuscator. Các hướng string CE,
+constant encoding, indirect branch/call, global indirection và
+virtualization vẫn là **pass candidates chưa triển khai trong OLLVM**.
+
+Hai workflow nghiên cứu manual-only có thêm
+`scripts/test_custom_ollvm_pass_matrix.py` để chặn flag/pass ảo, nhầm
+LLVM source-level canary và nhầm arm64e PAC ABI. **Crane OLLVM STRONG
+production không thay đổi.**
+
 ## Sprint P0/P1 đã được hiện thực hóa trong workspace
 
 - Có lab riêng ở [`scripts/protection_lab/README.md`](../scripts/protection_lab/README.md):

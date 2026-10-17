@@ -26,7 +26,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate isolated Hikari policy and tests
-        run: python3 ../test_hikari_integration.py
+        run: |
+          python3 ../test_hikari_integration.py
+          python3 ../test_custom_ollvm_pass_matrix.py
 
       - name: Compile pinned Hikari pass for LLVM 19
         run: |

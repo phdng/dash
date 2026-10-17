@@ -55,6 +55,13 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
     strong = policy["policy_map"].get("full_strength_eval")
     if strong != expected_demo:
         raise AssertionError("Production STRONG evaluation flags drifted")
+    expected_coverage = {
+        "enable_split": True, "split_n": 2,
+        "enable_bcf": True, "bcf_prob": 30, "bcf_times": 1,
+        "enable_fla": True, "enable_sub": True, "sub_times": 1,
+    }
+    if policy["policy_map"].get("existing_coverage") != expected_coverage:
+        raise AssertionError("Production existing coverage flags drifted")
     if (root / "scripts/verify_ollvm_log.py").read_text(encoding="utf-8").find(
         'PASSES = ("split", "bcf", "fla", "sub")'
     ) < 0:
@@ -105,9 +112,9 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
     }:
         raise AssertionError("Incomplete standalone Protection Lab inventory")
     for entry in sources:
-        if not (root / entry["path"]).is_file() or (
-            "llvm_pass" in entry["status"] and not entry["status"].endswith("not_llvm_pass")
-        ):
+        expected = ("bytecode_interpreter_not_llvm_pass" if entry["technique"] == "VM"
+                    else "source_canary_not_llvm_pass")
+        if entry["status"] != expected or not (root / entry["path"]).is_file():
             raise AssertionError("Source canary wrongly promoted to LLVM pass")
 
     next_passes = registry.get("next_llvm_pass_candidates", [])

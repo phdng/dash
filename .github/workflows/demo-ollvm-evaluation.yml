@@ -39,6 +39,7 @@ jobs:
             exit 1
           }
           python3 scripts/test_demo_ollvm.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
 
       - name: Install Theos and the demo's build prerequisites
         uses: waruhachi/theos-action@v2.6.3
