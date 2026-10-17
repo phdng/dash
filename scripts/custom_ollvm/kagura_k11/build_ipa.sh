@@ -74,14 +74,35 @@ if ! xcrun clang -fobjc-arc -fblocks -O1 -Wall -Wextra -Werror \
   false
 fi
 
+# anti_debug.c contains the genuine resolver, but also calls other
+# Kagura runtime functions. Discover the complete iOS arm64 C source/object
+# symbol closure with nm, never inject fake stubs or a host-built archive.
+stage="K11_RESOLVE_PINNED_IOS_RUNTIME_C_DEPENDENCY_CLOSURE"
+python3 "$dir/ci_runtime_closure.py" \
+  --src "$src" --out "$out" --sdk "$sdk"
+test -s "$out/ios-runtime-closure.json"
+test -s "$out/ios-runtime-extra-objects.txt"
+# macos-14 /bin/bash is 3.2: do not use Bash 4 'mapfile'.
+runtime_extra_objects=()
+while IFS= read -r object_path; do
+  test -s "$object_path"
+  runtime_extra_objects+=("$object_path")
+done < "$out/ios-runtime-extra-objects.txt"
+if (( ${#runtime_extra_objects[@]} < 1 )); then
+  echo "K11 expected nonempty real pinned iOS Kagura dependency objects" >&2
+  false
+fi
+
 stage="K11_LINK_REAL_FIVE_PASS_IOS_EXECUTABLE"
 app="$out/KaguraFiveLab.app"
 mkdir -p "$app"
 cp "$dir/Info.plist" "$app/Info.plist"
+# Apple ld defaults to rejecting unresolved MH_EXECUTE symbols;
+# avoid obsolete undefined-symbol linker option (warning on Xcode).
 if ! xcrun clang -target arm64-apple-ios15.0 -isysroot "$sdk" \
-   -Wl,-undefined,error \
    "$out/ios-app-main.o" "$out/ios-probe.o" \
    "$out/05-ci/ios.o" "$out/ios-kagura-rtld.o" \
+   "${runtime_extra_objects[@]}" \
    -framework Foundation -framework UIKit \
    -o "$app/KaguraFiveLab" > "$out/ipa-link.log" 2>&1; then
   cat "$out/ipa-link.log" >&2

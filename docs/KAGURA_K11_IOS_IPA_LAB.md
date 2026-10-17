@@ -58,9 +58,38 @@ Workflow riêng: `.github/workflows/kagura-k11-ios-ipa.yml`
    `ios-kagura-rtld-compile.log`,
    `ios-probe-compile.log`, `ios-app-main-compile.log`,
    `ipa-link.log`. Các file này được upload `if: always()`.
-   Không được coi đây là bằng chứng đã sửa hoàn toàn: hiện chỉ
-   biết K10 serialized gate PASS rồi CI K11 exit 1, chưa có
-   stderr/ZIP đầy đủ xác định điểm lỗi chính xác.
+   **Log mới (17/10/2026) đã định vị đúng lỗi thực:**
+   `KAGURA_K10_SERIALIZED_METADATA_AND_NATIVE_EVIDENCE_PASS`;
+   `K11_UPSTREAM_CI_RESOLVER_SOURCE_DEFINED=runtime/anti_debug/anti_debug.c`;
+   iOS linker báo thiếu **hai external Kagura symbol**
+   `_kagura_image_list_contains` và
+   `_kagura_suspicious_image_patterns` khi
+   `kagura_check_loaded_dylibs` trong `ios-kagura-rtld.o`
+   tham chiếu. Đây là lỗi **thiếu transitive runtime objects** ở
+   `K11_LINK_REAL_FIVE_PASS_IOS_EXECUTABLE`, không phải lỗi K10.
+
+   **Sửa K11 tiếp theo:** script mới
+   `ci_runtime_closure.py` dùng `xcrun nm -u` đọc các Kagura
+   symbols thật chưa được giải trên object iOS đầu vào; tìm ứng
+   viên chỉ trong C `runtime/` của Kagura pinned, compile bằng
+   `xcrun clang -target arm64-apple-ios15.0`, rồi đòi hỏi đúng
+   **một object định nghĩa symbol bằng `nm -gU`**. Nếu tệp
+   nguồn ấy tạo ra Kagura unresolved khác thì tiếp tục giải đệ quy
+   có giới hạn; nếu không tìm được hoặc phát hiện trùng symbol,
+   CI FAIL. `ios-runtime-closure.json` và
+   `ios-runtime-extra-objects.txt` ghi các source object, SHA256,
+   tên symbol, log build; mỗi object được đưa vào lệnh link iOS
+   chỉ khi nó chứa **định nghĩa Kagura thực**. Không dùng
+   macOS `libkagura_runtime.a`, không thêm stub. Bỏ tùy chọn
+   linker macOS đã deprecated `-Wl,-undefined,error`;
+   Apple linker vẫn bắt undefined `MH_EXECUTE` mặc định.
+
+   **Chưa có kết quả run workflow sau sửa này**; giữ
+   `k11_ios_ipa_status=STAGED_MANUAL_IOS_IPA_CI_NOT_VERIFIED`
+   cho đến khi ZIP artifact thật qua kiểm chứng. Nếu lỗi tái hiện,
+   thu `Kagura-K11-BUILD-FAILURE.txt`,
+   `ios-runtime-closure.json` và `ipa-link.log`
+   để truy tiếp theo tên symbol chứ không nới kiểm tra.
 4. Build UIKit `ios_app_main.m` riêng và `ios_probe.c`. Link
    `05-ci/ios.o`, iOS resolver, probe và app bằng Apple iOS linker
    với undefined-symbol error. Lưu `ipa-link.log`,

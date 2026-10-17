@@ -392,6 +392,12 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k11_vectors_per_function") != 4096 or
         kagura.get("k11_upstream_ios_ci_runtime") !=
         "PINNED_C_SOURCE_CROSS_COMPILED_FAIL_CLOSED" or
+        kagura.get("k11_ios_runtime_dependency_closure") !=
+        "RECURSIVE_REAL_PINNED_C_IOS_ARM64_NM_DEFINITIONS_NO_SHIMS" or
+        kagura.get("k11_runtime_closure_script") !=
+        "scripts/custom_ollvm/kagura_k11/ci_runtime_closure.py" or
+        kagura.get("k11_last_observed_ci_failure") !=
+        "IOS_LD_UNDEFINED_KAGURA_IMAGE_LIST_CONTAINS_AND_SUSPICIOUS_IMAGE_PATTERNS" or
         kagura.get("k11_macho_arch") !=
         "arm64_SUBTYPE0_MH_EXECUTE_LC_UUID" or
         kagura.get("k11_device_runtime") != "NOT_TESTED" or
@@ -399,8 +405,8 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k11_security_attestation") is not False or
         any(not (root / kagura[field]).is_file() for field in
             ("k11_workflow", "k11_build", "k11_runtime_locator",
-             "k11_packager", "k11_evidence", "k11_device_audit",
-             "k11_portable_test", "k11_doc")) or
+             "k11_runtime_closure_script", "k11_packager", "k11_evidence",
+             "k11_device_audit", "k11_portable_test", "k11_doc")) or
         any(not (root / "scripts/custom_ollvm/kagura_k11" / name).is_file()
             for name in ("ios_probe.c", "ios_app_main.m", "Info.plist"))):
         raise AssertionError(

@@ -183,6 +183,125 @@ with tempfile.TemporaryDirectory(prefix="K11-resolver-selection-") as temp_root:
     rejects(lambda: resolver.require_selected(upstream),
             "upstream mentions with NO definition must fail")
 
+# K11 anti_debug link regression: on a pinned iOS runtime source tree,
+# nm must resolve both undefined symbols from actual ARM64 definitions,
+# even when one provider TU defines two names and another is a decoy.
+import ci_runtime_closure as closure
+assert closure.parse_nm(
+    "                 U _kagura_image_list_contains\n"
+    "00000000 T _kagura_rtld_default_handle\n", defined=False
+) == {"_kagura_image_list_contains"}
+assert closure.parse_nm(
+    "                 U _kagura_image_list_contains\n"
+    "00000000 T _kagura_rtld_default_handle\n"
+    "00000000 D _kagura_suspicious_image_patterns\n", defined=True
+) == {"_kagura_rtld_default_handle", "_kagura_suspicious_image_patterns"}
+assert closure.contains_token("int kagura_image_list_contains(void) { return 1; }",
+                              "kagura_image_list_contains")
+assert not closure.contains_token("kagura_image_list_contains2()",
+                                  "kagura_image_list_contains")
+
+with tempfile.TemporaryDirectory(prefix="K11-synthetic-link-closure-") as temp:
+    srcdir = Path(temp) / "kagura"
+    out = Path(temp) / "out"
+    runtime = srcdir / "runtime"
+    runtime.mkdir(parents=True)
+    out.mkdir()
+    (srcdir / "LICENSE").write_text("pinned fake upstream\n")
+    (runtime / "anti_debug.c").write_text(
+        "void *kagura_rtld_default_handle(void) {return 0;}\n")
+    (runtime / "prototypes.c").write_text(
+        "extern void kagura_image_list_contains(void);\n")
+    (runtime / "provider.c").write_text(
+        "int kagura_image_list_contains(void) { return 1; }\n"
+        "const char *kagura_suspicious_image_patterns[] = {0};\n")
+    ci = out / "05-ci"
+    ci.mkdir()
+    originals = [ci / "ios.o", out / "ios-kagura-rtld.o",
+                 out / "ios-probe.o", out / "ios-app-main.o"]
+    for obj in originals:
+        obj.write_bytes(b"MOCK_IOS_ARM64_OBJECT_TEST_ONLY")
+    nm_map = {
+        str(originals[0]): (set(), {"_kagura_rtld_default_handle"}),
+        str(originals[1]): (
+            {"_kagura_rtld_default_handle"},
+            {"_kagura_image_list_contains", "_kagura_suspicious_image_patterns"}),
+        str(originals[2]): ({"_dd_k11_ios_parity"}, set()),
+        str(originals[3]): (set(), set()),
+    }
+    genuine_run = closure.run
+    recursive_probe = [False]
+    def fake_run(args, *, log=None):
+        if args[0:2] == ["xcrun", "clang"]:
+            path = Path(args[args.index("-c") + 1])
+            obj = Path(args[args.index("-o") + 1])
+            obj.write_bytes(b"FAKE_CROSS_COMPILED_" + path.name.encode("ascii"))
+            if path.name == "provider.c":
+                nm_map[str(obj)] = (
+                    {"_kagura_image_list_contains",
+                     "_kagura_suspicious_image_patterns"},
+                    {"_kagura_followup"} if recursive_probe[0] else set())
+            elif path.name == "followup.c":
+                nm_map[str(obj)] = ({"_kagura_followup"}, set())
+            elif path.name == "duplicate.c":
+                nm_map[str(obj)] = ({"_kagura_image_list_contains"}, set())
+            else:
+                nm_map[str(obj)] = (set(), set())
+            if log is not None:
+                log.write_text("")
+            return ""
+        if args[0:2] == ["xcrun", "nm"]:
+            queried = str(Path(args[-1]))
+            if Path(queried).name.startswith("ios-kagura-dependency-"):
+                is_followup = b"followup.c" in Path(queried).read_bytes()
+                nm_map[queried] = (
+                    {"_kagura_followup"} if is_followup else
+                    {"_kagura_image_list_contains",
+                     "_kagura_suspicious_image_patterns"},
+                    set() if is_followup or not recursive_probe[0] else
+                    {"_kagura_followup"})
+            defs, undefs = nm_map[queried]
+            if args[2] == "-gU":
+                return "".join(
+                    "00000000 " +
+                    ("D" if x == "_kagura_suspicious_image_patterns" else "T") +
+                    " " + x + "\n" for x in sorted(defs))
+            return "".join("                 U " + x + "\n"
+                           for x in sorted(undefs))
+        raise AssertionError("synthetic nm/clang argv unexpected")
+    closure.run = fake_run
+    try:
+        verified = closure.make_closure(
+            srcdir, out, "/fake/iPhoneOS.sdk", originals,
+            "runtime/anti_debug.c")
+        assert verified["final_unresolved_kagura_symbols"] == []
+        assert verified["providers_by_undefined_symbol"] == {
+            "_kagura_image_list_contains": "runtime/provider.c",
+            "_kagura_suspicious_image_patterns": "runtime/provider.c",
+        }
+        assert len(verified["selected_provider_sources"]) == 1
+        assert (out / "ios-runtime-closure.json").is_file()
+        assert len((out / "ios-runtime-extra-objects.txt").read_text().splitlines()) == 1
+        recursive_probe[0] = True
+        (runtime / "followup.c").write_text(
+            "int kagura_followup(void) { return 3; }\n")
+        (runtime / "provider.c").write_text(
+            "extern int kagura_followup(void);\n"
+            "int kagura_image_list_contains(void) {return kagura_followup();}\n"
+            "const char *kagura_suspicious_image_patterns[] = {0};\n")
+        recursive = closure.make_closure(
+            srcdir, out, "/fake/iPhoneOS.sdk", originals,
+            "runtime/anti_debug.c")
+        assert recursive["providers_by_undefined_symbol"]["_kagura_followup"] == "runtime/followup.c"
+        assert len(recursive["selected_provider_sources"]) == 2
+        (runtime / "duplicate.c").write_text(
+            "int kagura_image_list_contains(void) {return 2;}\n")
+        rejects(lambda: closure.make_closure(
+            srcdir, out, "/fake/iPhoneOS.sdk", originals,
+            "runtime/anti_debug.c"), "duplicate pinned C definition")
+    finally:
+        closure.run = genuine_run
+
 workflow = (ROOT / ".github/workflows/kagura-k11-ios-ipa.yml").read_text()
 build = (LAB / "build_ipa.sh").read_text()
 src = (LAB / "ios_probe.c").read_text()
@@ -215,6 +334,19 @@ for required in (
 assert workflow.index("Preflight real Kagura CI runtime resolver definition") < workflow.index("Rebuild K10 exact five sequential passes")
 assert "ios-rtld-discovery.json" in workflow
 assert "Kagura-K11-BUILD-FAILURE.txt" in build
+assert "ci_runtime_closure.py" in build
+assert "ios-runtime-closure.json" in build
+assert "ios-runtime-extra-objects.txt" in build
+assert "K11_RESOLVE_PINNED_IOS_RUNTIME_C_DEPENDENCY_CLOSURE" in build
+assert "while IFS= read -r object_path; do" in build
+assert "mapfile -t" not in build
+assert '"${runtime_extra_objects[@]}"' in build
+assert "runtime_closure.required_symbols(inputs)" in evidence_source
+assert "runtime_closure.defined_of(obj)" in evidence_source
+assert "-Wl,-undefined,error" not in build
+assert "ios_runtime_closure_sha256" in evidence_source
+assert "_kagura_image_list_contains" in evidence_source
+assert "_kagura_suspicious_image_patterns" in evidence_source
 assert "ios-kagura-rtld-symbols.txt" in build
 assert " [Tt] _kagura_rtld_default_handle$" in build
 assert "kagura-k9-build/runtime/libkagura_runtime.a" not in build

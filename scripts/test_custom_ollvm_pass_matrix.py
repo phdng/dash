@@ -89,6 +89,9 @@ assert original["experimental_kagura_pipeline"]["k10_ios_arm64"] == "OBJECT_BUIL
 assert original["experimental_kagura_pipeline"]["k10_composition_native"] == "MACOS_NATIVE_FIVE_COMPOSED_STAGES_ZERO_LINK_WARNINGS_VERIFIED"
 assert original["experimental_kagura_pipeline"]["k11_ios_ipa_status"] == "STAGED_MANUAL_IOS_IPA_CI_NOT_VERIFIED"
 assert original["experimental_kagura_pipeline"]["k11_runtime_locator"] == "scripts/custom_ollvm/kagura_k11/ci_runtime_resolver.py"
+assert original["experimental_kagura_pipeline"]["k11_runtime_closure_script"] == "scripts/custom_ollvm/kagura_k11/ci_runtime_closure.py"
+assert original["experimental_kagura_pipeline"]["k11_ios_runtime_dependency_closure"] == "RECURSIVE_REAL_PINNED_C_IOS_ARM64_NM_DEFINITIONS_NO_SHIMS"
+assert original["experimental_kagura_pipeline"]["k11_last_observed_ci_failure"] == "IOS_LD_UNDEFINED_KAGURA_IMAGE_LIST_CONTAINS_AND_SUSPICIOUS_IMAGE_PATTERNS"
 assert original["experimental_kagura_pipeline"]["k11_bundle_id"] == "com.duodash.research.kagurafivelab"
 assert original["experimental_kagura_pipeline"]["k11_final_pass_order"] == ["mvo", "genc", "fsplit", "ibr", "ci"]
 assert original["experimental_kagura_pipeline"]["k11_vectors_per_function"] == 4096
@@ -185,6 +188,9 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k10_on_device="PASS_NO_LOG"),
     lambda x: x["experimental_kagura_pipeline"].update(k11_ios_ipa_status="IOS_DEVICE_PASS"),
     lambda x: x["experimental_kagura_pipeline"].update(k11_runtime_locator="scripts/custom_ollvm/kagura_k9/pilot.py"),
+    lambda x: x["experimental_kagura_pipeline"].update(k11_runtime_closure_script="scripts/custom_ollvm/kagura_k9/pilot.py"),
+    lambda x: x["experimental_kagura_pipeline"].update(k11_ios_runtime_dependency_closure="FAKE_LD_STUB"),
+    lambda x: x["experimental_kagura_pipeline"].update(k11_last_observed_ci_failure="NONE"),
     lambda x: x["experimental_kagura_pipeline"].update(k11_final_pass_order=["ci", "ibr"]),
     lambda x: x["experimental_kagura_pipeline"].update(k11_vectors_per_function=256),
     lambda x: x["experimental_kagura_pipeline"].update(k11_bundle_id="com.duodash.research.kaguralab"),
