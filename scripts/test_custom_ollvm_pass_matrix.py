@@ -28,7 +28,7 @@ assert len(status["planned_new_llvm_passes_not_implemented"]) == 6
 assert status["arm64e_production_llvm_passes"] == []
 assert status["compiler_native_new_pass_build_verified_this_run"] is False
 assert status["custom_ollvm_strong_modified"] is False
-assert status["separate_kagura_llvm_pipeline"] == "K0_USER_ARTIFACT_VERIFIED_K1_STAGED"
+assert status["separate_kagura_llvm_pipeline"] == "K1_NATIVE_7_STAGE_ARTIFACT_VERIFIED"
 assert len(status["registry_sha256"]) == 64
 
 negative_mutations = (

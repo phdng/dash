@@ -1,6 +1,6 @@
 # DuoDash — Kagura × ý tưởng SLLVM: custom MAX compiler-pass lab
 
-Ngày bắt đầu: 2026-10-17 · Trạng thái: **K0 đã có artifact LLVM19 macOS CI thực được kiểm tra (8.192 native parity PASS); K1 đã có workflow 7 bước, chưa được chạy trên macOS**.
+Ngày bắt đầu: 2026-10-17 · Trạng thái: **K0 và K1 đều đã có artifact LLVM19 macOS CI thực; K1 có 7/7 pass tạo IR/object delta và mỗi pass giữ 8.192 vector native parity.** Chưa có kết quả Kagura K1 runtime iOS.
 
 ## Mục tiêu đúng
 
@@ -65,7 +65,7 @@ SLLVM README.
   iOS dylibs và audit JSON. Đây là pipeline thật dự kiến thực thi
   trong macOS CI, **không phải source-level canary**.
 
-**Pha K1 — MAX_STRUCTURAL** (đã triển khai phân tích tăng dần, chưa có macOS CI chạy bản K1):
+**Pha K1 — MAX_STRUCTURAL** (đã có artifact CI thực và được đối chiếu; xem [KAGURA_K1_ARTIFACT_REVIEW.md](KAGURA_K1_ARTIFACT_REVIEW.md)):
 
 Đã bổ sung `stage_pipeline.py` vào chính workflow K0 để dùng cùng LLVM19
 và cùng fixture: **str → fla → bcf → sub → co → bbr → bbs**.
@@ -73,7 +73,7 @@ Sau mỗi pass riêng, CI ghi debug-pass-manager, LLVM IR/object delta,
 số basic blocks, SHA-256 và chạy lại 8.192 native vector so baseline.
 Nếu pass không biến đổi hàm hoặc biến đổi chỉ tồn tại trên IR mà
 không thấy trên object, report phân loại rõ thay vì nhận là bảo vệ thêm.
-BBR/BBS hiện là **hai pass ứng viên**, không có runtime/device PASS.
+BBR/BBS có **IR_AND_OBJECT_DELTA và 8.192 native parity PASS trên macOS**, nhưng **chưa có runtime iPhone hay đo chi phí**. BBR thay đổi object dù basic blocks giữ 19; BBS tăng basic blocks 19→38. Debug log còn cho thấy function passes chạy trên helper decrypt, nên phải kiểm soát allowlist khi áp dụng lên hàm thật.
 Có thể thử `dci`, `lt`, `elt` sau khi xem báo cáo và sửa fixture nếu
 phù hợp. Bắt buộc kiểm tra ngoại lệ/ARC, lỗi và overhead trước khi
 xét composite. `ci`/`ibr` chỉ áp
@@ -134,5 +134,5 @@ kết quả khi CI và bài thử thật tương ứng PASS.
    Hikari/Kagura/OLLVM nếu chưa test được ordering/incompatibility.
 
 Mốc hiện tại: **K0 Kagura LLVM19 plugin thực đã PASS CI/artifact do người dùng cung cấp**; K1 7 pass tăng dần đã viết và local regression PASS,
-**chưa có kết quả macOS K1 hoặc chạy Kagura trên iPhone**. Crane OLLVM STRONG
+**K1 đã PASS trên macOS theo artifact người dùng cung cấp; chưa có kết quả Kagura trên iPhone**. Crane OLLVM STRONG
 hiện hành **không bị sửa**.

@@ -31,10 +31,10 @@ LLVM19 trên macOS, chạy pipeline thử `str,fla,bcf,sub,co` qua
 vector, quan sát IR/object/Mach-O và compile-only iOS arm64/arm64e.
 K0 đã có **artifact CI macOS thực** (8.192 vector native parity, IR/object
 thay đổi, marker biến mất), được đối chiếu tại
-[KAGURA_K0_ARTIFACT_REVIEW.md](KAGURA_K0_ARTIFACT_REVIEW.md). K1
-đã được bổ sung runner 7 pass tăng dần kèm phân loại IR/object delta
-và 8.192 vector/pass; **K1 chưa được chạy CI macOS và Kagura chưa
-được kiểm thử runtime iPhone**.
+[KAGURA_K0_ARTIFACT_REVIEW.md](KAGURA_K0_ARTIFACT_REVIEW.md). K1 đã chạy CI macOS và có artifact đã đối chiếu: cả 7 pass sinh IR/object
+khác biệt, mỗi giai đoạn giữ 8.192 vector native parity; xem
+[KAGURA_K1_ARTIFACT_REVIEW.md](KAGURA_K1_ARTIFACT_REVIEW.md).
+**Chưa kiểm thử Kagura K1 runtime iPhone hay tích hợp Crane**.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản

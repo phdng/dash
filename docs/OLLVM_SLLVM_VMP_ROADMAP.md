@@ -29,8 +29,9 @@ IR/object plaintext audit, iOS arm64 build-only và arm64e Apple Clang
 ABI audit. K0 đã được xác minh từ artifact macOS người dùng gửi (8.192 native vector
 trùng, IR/object thay đổi, public plaintext canary biến mất). K1
 đã bổ sung 7 giai đoạn pass tăng dần, hai ứng viên mới BBR/BBS và phân
-loại delta cho từng giai đoạn; **K1 chưa chạy macOS CI**. Xem
-[KAGURA_K0_ARTIFACT_REVIEW.md](KAGURA_K0_ARTIFACT_REVIEW.md).
+loại delta cho từng giai đoạn; **K1 đã có artifact macOS thực, bảy pass đều tạo IR/object delta,
+8.192 vector native parity/pass**, nhưng chưa có runtime iOS; xem
+[KAGURA_K1_ARTIFACT_REVIEW.md](KAGURA_K1_ARTIFACT_REVIEW.md).
 Đây không phải pass đã nhập vào OLLVM STRONG production.
 
 VM Kagura có mã chuyển LLVM IR thành bytecode thực nhưng chỉ dự kiến

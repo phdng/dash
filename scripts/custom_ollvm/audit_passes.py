@@ -120,11 +120,11 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
     kagura = registry.get("experimental_kagura_pipeline", {})
     if (kagura.get("provider") != "qusamulab/kagura" or
         kagura.get("profile") != "MAX_CANDIDATE" or
-        kagura.get("status") != "K0_USER_ARTIFACT_VERIFIED_K1_STAGED" or
+        kagura.get("status") != "K1_NATIVE_7_STAGE_ARTIFACT_VERIFIED" or
         kagura.get("production_merge") is not False or
         kagura.get("vm_state") != "DISABLED_PENDING_SEPARATE_OVERHEAD_AND_ABI_TEST" or
         kagura.get("arm64e_pac_runtime") != "DEFERRED_NO_A12_DEVICE" or
-        kagura.get("k1_native_ci_status") != "NOT_YET_RUN"):
+        kagura.get("k1_native_ci_status") != "VERIFIED_FROM_USER_CI_ARTIFACT"):
         raise AssertionError("Kagura must remain independent/experimental")
     if kagura.get("profile_file") != "scripts/custom_ollvm/kagura_max/profile.json" or (
         kagura.get("workflow") != ".github/workflows/kagura-max-candidate.yml"
