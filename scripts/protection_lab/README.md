@@ -124,6 +124,44 @@ plain/protected, 4 asm, 2 diff, JSON report, SHA và host benchmark.
 **Không cài lên iPhone**, chưa chạy signed canary trên A12+ hoặc kiểm
 chứng PAC runtime. Không tự suy diễn rằng chính thức tích hợp SLLVM.
 
+
+## Sprint Objective-C literal CE — NSString/ARC dual-ABI canary
+
+Workflow thủ công:
+**Protection Lab - Objective-C literal CE (Experimental)**,
+`.github/workflows/protection-objc-ce-pilot.yml`.
+
+Đây là canary riêng **Objective-C `.m` sử dụng Foundation và ARC**, không
+đưa vào Crane tweak, không sửa `CRCredits.m`, hook hay daemon:
+
+- `objc_ce_plain.m`: 3 literal `NSString` làm đối chứng, bao gồm
+  ASCII marker công khai, một chuỗi tiếng Việt/emoji UTF-8 và tên Credits;
+  `choice & 3` có cả đường chuỗi rỗng.
+- `objc_ce_generator.py`: tạo `objc_ce_data.h` **UTF-8/LF xác định**
+  với 3 mảng byte đã XOR; khóa/thuật toán đều hiển thị trong binary, không
+  chứa bí mật và **không phải mã hóa bảo mật**.
+- `objc_ce_protected.m`: đọc dữ liệu byte `volatile`, giải mã vào
+  buffer stack có giới hạn rồi tạo `NSString` bằng
+  `initWithBytes:length:encoding:`; Apple Clang/ARC xử lý lifetime,
+  không tạo class ObjC giả, không đổi selector hay PAC ABI.
+- `objc_ce_runner.m`: 8.192 lượt đối chiếu `NSString` equality,
+  Unicode `length`, độ dài UTF-8 và `UTF8String` qua nhiều
+  `@autoreleasepool` **trên macOS host**.
+- `objc_ce_audit.py`: bắt buộc 4 Mach-O dylib Apple arm64/arm64e
+  subtype hợp lệ; baseline phải chứa marker ASCII, protected không được
+  chứa 3 literal plaintext và phải chứa đầy đủ 3 byte sequence đã mã hóa;
+  host parity và generated header đúng checksum. Báo cáo JSON ghi rõ
+  `ios_device_runtime=NOT_TESTED`.
+- `scripts/test_objc_ce_pilot.py`: **10.008 vector portable**, Unicode
+  round-trip và negative tests: lỗi ABI arm64e.old, plaintext bị lộ,
+  thiếu marker, host log giả và header thay đổi.
+
+Khi chạy macOS Actions, artifact
+`ProtectionLab-ObjC-CE-arm64-arm64e-EXPERIMENTAL` gồm 4 dylib,
+4 assembly, 4 bản danh sách symbol xuất, JSON report, hashes và host log
+để so sánh trong IDA. **Build và host Foundation ARC** chỉ xác nhận sau
+khi workflow mới chạy; không đánh dấu runtime A12+/iOS PAC PASS.
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker

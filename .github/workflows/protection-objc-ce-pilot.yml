@@ -1,0 +1,108 @@
+name: Protection Lab - Objective-C literal CE (Experimental)
+
+# Standalone Foundation/ARC study, never packages or injects Crane.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  objc-ce:
+    name: Objective-C literal CE | Apple arm64 and arm64e
+    runs-on: macos-14
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Objective-C pilot and previous protection regression tests
+        run: |
+          set -euo pipefail
+          python3 scripts/test_objc_ce_pilot.py
+          python3 scripts/test_igv_ibr_pilot.py
+          python3 scripts/test_sllvm_pilot.py
+          python3 scripts/test_protection_lab.py
+
+      - name: Generate encoded test fixtures and compare real NSString runtime
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/objc-ce-pilot"
+          mkdir -p "$out"
+          python3 "$lab/objc_ce_generator.py" --out "$out/objc_ce_data.h"
+          xcrun clang --version > "$out/apple-clang-version.txt"
+          xcrun clang -fobjc-arc -O1 -Wall -Wextra -Werror \
+            -I "$out" "$lab/objc_ce_plain.m" "$lab/objc_ce_protected.m" \
+            "$lab/objc_ce_runner.m" -framework Foundation -o "$out/objc-ce-host"
+          "$out/objc-ce-host" | tee "$out/host-foundation-parity.txt"
+          grep -Fx 'OBJC_CE_HOST_PASS: 8192 NSString/ARC/UTF8 parity vectors' \
+            "$out/host-foundation-parity.txt"
+
+      - name: Inspect native Objective-C Mach-O arm64 and arm64e binaries
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/objc-ce-pilot"
+          clang="$(xcrun --sdk iphoneos --find clang)"
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          for arch in arm64 arm64e; do
+            for variant in plain protected; do
+              "$clang" -arch "$arch" -isysroot "$sdk" \
+                -miphoneos-version-min=14.0 -fobjc-arc -O1 \
+                -Wall -Wextra -Werror -fvisibility=hidden \
+                -I "$out" -dynamiclib \
+                -Wl,-install_name,@rpath/libDoudashObjCCEPilot.dylib \
+                "$lab/objc_ce_$variant.m" -framework Foundation \
+                -o "$out/$variant-$arch.dylib"
+              test -s "$out/$variant-$arch.dylib"
+              xcrun nm -gU "$out/$variant-$arch.dylib" \
+                > "$out/$variant-$arch.exports.txt"
+              if [ "$variant" = plain ]; then
+                grep -q '_DDObjCPlainValue$' "$out/$variant-$arch.exports.txt"
+              else
+                grep -q '_DDObjCProtectedValue$' "$out/$variant-$arch.exports.txt"
+              fi
+              xcrun otool -tvV "$out/$variant-$arch.dylib" \
+                > "$out/$variant-$arch.asm"
+            done
+          done
+          python3 "$lab/objc_ce_audit.py" \
+            --arm64-plain "$out/plain-arm64.dylib" \
+            --arm64-protected "$out/protected-arm64.dylib" \
+            --arm64e-plain "$out/plain-arm64e.dylib" \
+            --arm64e-protected "$out/protected-arm64e.dylib" \
+            --host-log "$out/host-foundation-parity.txt" \
+            --header "$out/objc_ce_data.h" \
+            --out "$out/report.json"
+          shasum -a 256 "$out/"*.dylib > "$out/macho-hashes.txt"
+          echo '### Objective-C NSString CE canary' >> "$GITHUB_STEP_SUMMARY"
+          echo '8192 NSString equality/UTF-8/ARC vectors passed on macOS host.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Apple arm64 and arm64e Mach-O linked and binary-audited.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'A12+ iOS PAC/ARC runtime: NOT TESTED. No SLLVM plugin.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload ObjC CE evidence for IDA (not an installable tweak)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProtectionLab-ObjC-CE-arm64-arm64e-EXPERIMENTAL
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/objc-ce-pilot/report.json
+            ${{ runner.temp }}/objc-ce-pilot/objc_ce_data.h
+            ${{ runner.temp }}/objc-ce-pilot/host-foundation-parity.txt
+            ${{ runner.temp }}/objc-ce-pilot/apple-clang-version.txt
+            ${{ runner.temp }}/objc-ce-pilot/macho-hashes.txt
+            ${{ runner.temp }}/objc-ce-pilot/plain-arm64.dylib
+            ${{ runner.temp }}/objc-ce-pilot/protected-arm64.dylib
+            ${{ runner.temp }}/objc-ce-pilot/plain-arm64e.dylib
+            ${{ runner.temp }}/objc-ce-pilot/protected-arm64e.dylib
+            ${{ runner.temp }}/objc-ce-pilot/plain-arm64.asm
+            ${{ runner.temp }}/objc-ce-pilot/protected-arm64.asm
+            ${{ runner.temp }}/objc-ce-pilot/plain-arm64e.asm
+            ${{ runner.temp }}/objc-ce-pilot/protected-arm64e.asm
+            ${{ runner.temp }}/objc-ce-pilot/plain-arm64.exports.txt
+            ${{ runner.temp }}/objc-ce-pilot/protected-arm64.exports.txt
+            ${{ runner.temp }}/objc-ce-pilot/plain-arm64e.exports.txt
+            ${{ runner.temp }}/objc-ce-pilot/protected-arm64e.exports.txt

@@ -32,8 +32,16 @@ Ngày cập nhật: 2026-10-16. Trạng thái: **Sprint P0/P1 prototype đã có
   thực tế là gọi gián tiếp an toàn ABI, không phải pass IBR của SLLVM).
   Chạy host 8.192 vector và benchmark 100.000 lời gọi mỗi hàm, có 10.004
   Python reference vectors và negative audit, tạo 4 ASM, 2 diff, JSON theo
-  slice/benchmark cho IDA. Workflow này **chưa chạy macOS**; không có
-  runtime test iPhone hay bảo vệ thật trên Crane.
+  slice/benchmark cho IDA. Người dùng đã xác nhận workflow IGV/IBR **build
+  xanh**, nhưng chưa cung cấp kết quả IDA theo hàm hay runtime A12+.
+- **Sprint Objective-C NSString CE mới:** workflow riêng
+  `.github/workflows/protection-objc-ce-pilot.yml` thử ba literal công khai
+  (ASCII, tiếng Việt/emoji, Credits), byte XOR được sinh xác định, decode
+  và tạo NSString bằng Apple Clang/ARC. Có 10.008 vector Python mô hình,
+  macOS host Foundation 8.192 lượt đối chiếu được cấu hình, bốn Mach-O
+  arm64/arm64e plain/protected, kiểm tra marker/encoded bytes và ABI trước
+  khi xuất artifact IDA. Workflow này **chưa chạy macOS**, không thay đổi
+  Crane OLLVM STRONG hoặc công bố bảo vệ thật trên thiết bị.
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 
