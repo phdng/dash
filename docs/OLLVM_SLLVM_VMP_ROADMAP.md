@@ -19,6 +19,22 @@ Hai workflow nghiên cứu manual-only có thêm
 LLVM source-level canary và nhầm arm64e PAC ABI. **Crane OLLVM STRONG
 production không thay đổi.**
 
+## Kagura / SLLVM-inspired custom MAX compiler pipeline (2026-10-17)
+
+Mục tiêu dài hạn: phối hợp các pass LLVM có mã thực từ **Kagura MIT**
+với những ý tưởng chọn lọc trong SLLVM, không sao chép binary SLLVM
+proprietary. Đã có `MAX_CANDIDATE` tách biệt để chạy **LLVM19 opt**
+với `kagura-str,fla,bcf,sub,co`, native host parity 8.192 vector,
+IR/object plaintext audit, iOS arm64 build-only và arm64e Apple Clang
+ABI audit. Đây là **workflow chưa được xác minh trên macOS**,
+không phải pass đã nhập vào OLLVM STRONG production.
+
+VM Kagura có mã chuyển LLVM IR thành bytecode thực nhưng chỉ dự kiến
+thử sau vì overhead cao, không bật trên ObjC callback/hook/daemon.
+Các kiểu indirect branch/call/global của Kagura có semantics khác
+SLLVM, cần xác thực riêng trước khi phối hợp. Đọc
+[KAGURA_SLLVM_CUSTOM_MAX.md](KAGURA_SLLVM_CUSTOM_MAX.md).
+
 ## Sprint P0/P1 đã được hiện thực hóa trong workspace
 
 - Có lab riêng ở [`scripts/protection_lab/README.md`](../scripts/protection_lab/README.md):

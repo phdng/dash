@@ -144,6 +144,18 @@
       "risk": "high runtime overhead and Objective-C ABI"
     }
   ],
+  "experimental_kagura_pipeline": {
+    "provider": "qusamulab/kagura",
+    "profile": "MAX_CANDIDATE",
+    "profile_file": "scripts/custom_ollvm/kagura_max/profile.json",
+    "workflow": ".github/workflows/kagura-max-candidate.yml",
+    "compiler": "LLVM 19 opt New Pass Manager (isolated)",
+    "status": "STAGED_CI_NOT_VERIFIED",
+    "passes": ["kagura-str", "kagura-fla", "kagura-bcf", "kagura-sub", "kagura-co"],
+    "vm_state": "DISABLED_PENDING_SEPARATE_OVERHEAD_AND_ABI_TEST",
+    "production_merge": false,
+    "arm64e_pac_runtime": "DEFERRED_NO_A12_DEVICE"
+  },
   "rollout": "manual-only separate CI; no changes to production Crane OLLVM STRONG",
   "security_claim": "pass logs + function behavior do not prove obfuscation strength or anti-tamper"
 }

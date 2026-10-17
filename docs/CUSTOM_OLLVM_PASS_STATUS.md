@@ -21,6 +21,21 @@ plugin compiler đã thêm CE/ICALL/IGV/IBR.
 Đọc chính xác machine-readable:
 `scripts/custom_ollvm/pass_registry.json`.
 
+## Kagura × SLLVM: thử nghiệm MAX_CANDIDATE mới
+
+Đã triển khai [KAGURA_SLLVM_CUSTOM_MAX.md](KAGURA_SLLVM_CUSTOM_MAX.md)
+và workflow manual-only `.github/workflows/kagura-max-candidate.yml`:
+mã C++ **Kagura LLVM IR pass thật** được tải ở SHA cố định, build
+LLVM19 trên macOS, chạy pipeline thử `str,fla,bcf,sub,co` qua
+`opt --load-pass-plugin` trên một hàm C synthetic, so native 8.192
+vector, quan sát IR/object/Mach-O và compile-only iOS arm64/arm64e.
+Đã PASS **portable fixture audit**, nhưng chưa có kết quả native CI
+macOS hay iPhone cho chính pass Kagura này.
+
+Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
+và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản
+custom merged/derived. Chưa được gọi là MAX production.
+
 ## OLLVM STRONG hiện có
 
 `policy.json` và `scripts/demo_ollvm/policy.json` hiện chỉ có

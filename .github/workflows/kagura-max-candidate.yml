@@ -1,0 +1,125 @@
+name: Kagura MAX Candidate - LLVM19 Pass Lab (Experimental)
+
+# Manual-only, separate plugin/fixture. Never changes Crane production.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  kagura-max-candidate:
+    runs-on: macos-14
+    timeout-minutes: 85
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Kagura MAX candidate scope and test contracts
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_max_candidate.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+
+      - name: Compile pinned MIT Kagura plugin with LLVM 19
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          echo "KAGURA_LLVM=$llvm" >> "$GITHUB_ENV"
+          src="$RUNNER_TEMP/kagura-source"
+          pin="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$pin"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$pin"
+          test -s "$src/LICENSE"
+          cmake -S "$src" -B "$RUNNER_TEMP/kagura-build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$RUNNER_TEMP/kagura-build" --parallel 3
+          plugin="$(find "$RUNNER_TEMP/kagura-build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          echo "KAGURA_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Native LLVM19 IR passes + same-compiler 8192 output comparison
+        run: |
+          set -euo pipefail
+          dir="$GITHUB_WORKSPACE/scripts/custom_ollvm/kagura_max"
+          out="$dir/out"
+          mkdir -p "$out"
+          echo "KAGURA_OUT=$out" >> "$GITHUB_ENV"
+          sdk="$(xcrun --sdk macosx --show-sdk-path)"
+          "$KAGURA_LLVM/bin/clang" -O1 -std=c11 -Wall -Wextra -Werror \
+            -isysroot "$sdk" -emit-llvm -c "$dir/critical.c" -o "$out/host-plain.bc"
+          # LLVM19 clang parses -mllvm before loading -fpass-plugin. Use opt.
+          "$KAGURA_LLVM/bin/opt" --load-pass-plugin="$KAGURA_PLUGIN" \
+            -passes='kagura-str,function(kagura-fla,kagura-bcf,kagura-sub,kagura-co)' \
+            "$out/host-plain.bc" -o "$out/host-candidate.bc" \
+            2>&1 | tee "$out/host-pass.log"
+          "$KAGURA_LLVM/bin/llvm-dis" "$out/host-plain.bc" -o "$out/host-plain.ll"
+          "$KAGURA_LLVM/bin/llvm-dis" "$out/host-candidate.bc" -o "$out/host-candidate.ll"
+          "$KAGURA_LLVM/bin/clang" -O0 -c "$out/host-plain.bc" -o "$out/host-plain.o"
+          "$KAGURA_LLVM/bin/clang" -O0 -c "$out/host-candidate.bc" -o "$out/host-candidate.o"
+          xcrun clang -O1 -std=c11 -Wall -Wextra -Werror \
+            -c "$dir/runner.c" -o "$out/runner.o"
+          xcrun clang "$out/host-plain.o" "$out/runner.o" -o "$out/host-plain"
+          xcrun clang "$out/host-candidate.o" "$out/runner.o" -o "$out/host-candidate"
+          "$out/host-plain" > "$out/host-plain.log"
+          "$out/host-candidate" > "$out/host-candidate.log"
+          cmp "$out/host-plain.log" "$out/host-candidate.log"
+
+      - name: Cross-compile iOS arm64 and independently check Apple arm64e ABI
+        run: |
+          set -euo pipefail
+          dir="$GITHUB_WORKSPACE/scripts/custom_ollvm/kagura_max"
+          out="$KAGURA_OUT"
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          "$KAGURA_LLVM/bin/clang" -O1 -std=c11 -Wall -Wextra -Werror \
+            -target arm64-apple-ios15.0 -isysroot "$sdk" \
+            -emit-llvm -c "$dir/critical.c" -o "$out/ios-plain.bc"
+          "$KAGURA_LLVM/bin/opt" --load-pass-plugin="$KAGURA_PLUGIN" \
+            -passes='kagura-str,function(kagura-fla,kagura-bcf,kagura-sub,kagura-co)' \
+            "$out/ios-plain.bc" -o "$out/ios-candidate.bc" \
+            2>&1 | tee "$out/ios-pass.log"
+          "$KAGURA_LLVM/bin/clang" -O0 -target arm64-apple-ios15.0 -isysroot "$sdk" \
+            -c "$out/ios-plain.bc" -o "$out/ios-plain.o"
+          "$KAGURA_LLVM/bin/clang" -O0 -target arm64-apple-ios15.0 -isysroot "$sdk" \
+            -c "$out/ios-candidate.bc" -o "$out/ios-candidate.o"
+          xcrun clang -target arm64-apple-ios15.0 -isysroot "$sdk" -dynamiclib \
+            "$out/ios-plain.o" -o "$out/ios-plain.dylib"
+          xcrun clang -target arm64-apple-ios15.0 -isysroot "$sdk" -dynamiclib \
+            "$out/ios-candidate.o" -o "$out/ios-candidate.dylib"
+          # ARM64E must remain Apple Clang-only; never relabel old PAC ABI.
+          xcrun clang -O1 -target arm64e-apple-ios15.0 -isysroot "$sdk" \
+            -dynamiclib "$dir/critical.c" -o "$out/ios-arm64e.dylib"
+          xcrun otool -hv "$out/ios-candidate.dylib" > "$out/ios-arm64-macho.txt"
+          xcrun otool -hv "$out/ios-arm64e.dylib" > "$out/ios-arm64e-macho.txt"
+
+      - name: Require actual IR/object change, plaintext removal and host parity
+        run: |
+          set -euo pipefail
+          python3 scripts/custom_ollvm/kagura_max/audit.py \
+            --native-plain-object "$KAGURA_OUT/host-plain.o" \
+            --native-protected-object "$KAGURA_OUT/host-candidate.o" \
+            --native-plain-ir "$KAGURA_OUT/host-plain.bc" \
+            --native-protected-ir "$KAGURA_OUT/host-candidate.bc" \
+            --native-plain-log "$KAGURA_OUT/host-plain.log" \
+            --native-protected-log "$KAGURA_OUT/host-candidate.log" \
+            --ios-plain "$KAGURA_OUT/ios-plain.dylib" \
+            --ios-protected "$KAGURA_OUT/ios-candidate.dylib" \
+            --ios-arm64e "$KAGURA_OUT/ios-arm64e.dylib" \
+            --out "$KAGURA_OUT/audit.json"
+          cat "$KAGURA_OUT/audit.json" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Kagura-only research; no Crane production pass merged.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload isolated Kagura IR and Mach-O evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-MAX-CANDIDATE-LLVM19-EXPERIMENTAL
+          path: scripts/custom_ollvm/kagura_max/out/
+          if-no-files-found: warn

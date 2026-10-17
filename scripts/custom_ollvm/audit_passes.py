@@ -117,6 +117,30 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         if entry["status"] != expected or not (root / entry["path"]).is_file():
             raise AssertionError("Source canary wrongly promoted to LLVM pass")
 
+    kagura = registry.get("experimental_kagura_pipeline", {})
+    if (kagura.get("provider") != "qusamulab/kagura" or
+        kagura.get("profile") != "MAX_CANDIDATE" or
+        kagura.get("status") != "STAGED_CI_NOT_VERIFIED" or
+        kagura.get("production_merge") is not False or
+        kagura.get("vm_state") != "DISABLED_PENDING_SEPARATE_OVERHEAD_AND_ABI_TEST" or
+        kagura.get("arm64e_pac_runtime") != "DEFERRED_NO_A12_DEVICE"):
+        raise AssertionError("Kagura must remain independent/experimental")
+    if kagura.get("profile_file") != "scripts/custom_ollvm/kagura_max/profile.json" or (
+        kagura.get("workflow") != ".github/workflows/kagura-max-candidate.yml"
+    ) or kagura.get("passes") != [
+        "kagura-str", "kagura-fla", "kagura-bcf", "kagura-sub", "kagura-co"
+    ]:
+        raise AssertionError("Experimental Kagura compiler-pipeline drift")
+    if not (root / kagura["profile_file"]).is_file() or not (
+        root / kagura["workflow"]
+    ).is_file():
+        raise AssertionError("Kagura experiment requires real sources/CI")
+    profile = json.loads((root / kagura["profile_file"]).read_text(encoding="utf-8"))
+    if profile.get("stages") != kagura["passes"] or (
+        profile.get("llvm_major") != 19
+    ):
+        raise AssertionError("Kagura staged LLVM19 profile and registry disagree")
+
     next_passes = registry.get("next_llvm_pass_candidates", [])
     if [item["priority"] for item in next_passes] != list(range(1, 7)):
         raise AssertionError("New compiler pass trial priorities must remain unique")
@@ -135,6 +159,7 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "production_enabled_count": len(CURRENT),
         "separate_hikari_llvm_passes_not_in_obfuscator": sorted(expected_hikari),
         "source_level_pilots_not_llvm_passes": [x["technique"] for x in sources],
+        "separate_kagura_llvm_pipeline": kagura["status"],
         "planned_new_llvm_passes_not_implemented": [x["pass"] for x in next_passes],
         "production_cpu_scope": "arm64",
         "arm64e_production_llvm_passes": [],

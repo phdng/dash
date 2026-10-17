@@ -28,6 +28,7 @@ assert len(status["planned_new_llvm_passes_not_implemented"]) == 6
 assert status["arm64e_production_llvm_passes"] == []
 assert status["compiler_native_new_pass_build_verified_this_run"] is False
 assert status["custom_ollvm_strong_modified"] is False
+assert status["separate_kagura_llvm_pipeline"] == "STAGED_CI_NOT_VERIFIED"
 assert len(status["registry_sha256"]) == 64
 
 negative_mutations = (
@@ -48,6 +49,10 @@ negative_mutations = (
     lambda x: x["source_level_only"][0].update(path="not-existing-llvm-pass.cpp"),
     lambda x: x["next_llvm_pass_candidates"][1].update(priority=1),
     lambda x: x["next_llvm_pass_candidates"][1].update(**{"pass": "string_ce"}),
+    lambda x: x["experimental_kagura_pipeline"].update(status="MERGED_PRODUCTION"),
+    lambda x: x["experimental_kagura_pipeline"].update(production_merge=True),
+    lambda x: x["experimental_kagura_pipeline"].update(vm_state="VM_PAC_PASS"),
+    lambda x: x["experimental_kagura_pipeline"]["passes"].append("kagura-vm"),
 )
 for idx, change in enumerate(negative_mutations):
     data = copy.deepcopy(original)

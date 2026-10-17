@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "profile": "MAX_CANDIDATE",
+  "origin": "qusamulab/kagura",
+  "upstream_commit": "ac2136ee0408677cf7cdee55307e9b16edd5f4d5",
+  "license": "MIT",
+  "llvm_major": 19,
+  "selector": {
+    "translation_unit": "critical.c",
+    "symbol": "dd_kagura_critical",
+    "critical_only": true,
+    "production_allowlist_modified": false
+  },
+  "pass_pipeline": "kagura-str,function(kagura-fla,kagura-bcf,kagura-sub,kagura-co)",
+  "stages": [
+    "kagura-str",
+    "kagura-fla",
+    "kagura-bcf",
+    "kagura-sub",
+    "kagura-co"
+  ],
+  "baseline": "same LLVM19 -O1 prepass bitcode, same native link; plugin only on candidate",
+  "host_vectors": 8192,
+  "targets": {
+    "macos_host": "native parity+binary marker audit",
+    "ios_arm64": "Kagura Mach-O MH_DYLIB compile/link only",
+    "ios_arm64e": "Apple Clang Mach-O MH_DYLIB build+strict ABI audit only"
+  },
+  "not_enabled": [
+    "kagura-vm",
+    "kagura-ci",
+    "kagura-anti-debug",
+    "kagura-tamper",
+    "kagura-objc",
+    "kagura-pac",
+    "kagura-pe"
+  ],
+  "goals": [
+    "function-level IR transformations",
+    "plaintext marker removal",
+    "behavior parity",
+    "measured overhead later"
+  ],
+  "claim": "experimental separate Kagura plugin; no guaranteed static analysis impossibility, no Crane production impact"
+}
