@@ -1,0 +1,98 @@
+name: Protection Lab - IGV IBR source pilot (Experimental)
+
+# Runs independently; never imports these canaries into Crane, hooks or daemons.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  igv-ibr:
+    name: IGV IBR native dual-ABI and host performance pilot
+    runs-on: macos-14
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run portable IGV IBR and previous regression contracts
+        run: |
+          set -euo pipefail
+          python3 scripts/test_igv_ibr_pilot.py
+          python3 scripts/test_sllvm_pilot.py
+          python3 scripts/test_protection_lab.py
+
+      - name: Check host runtime equivalence and measure relative overhead
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/igv-ibr-pilot"
+          mkdir -p "$out"
+          xcrun clang --version > "$out/apple-clang-version.txt"
+          xcrun clang -std=c11 -O2 -Wall -Wextra -Werror \
+            "$lab/igv_ibr_plain.c" "$lab/igv_ibr_protected.c" \
+            "$lab/igv_ibr_runner.c" -o "$out/igv-ibr-host"
+          "$out/igv-ibr-host" | tee "$out/host-vectors-and-benchmark.txt"
+          grep -Fx 'IGV_IBR_HOST_PASS: 8192 dual-function parity vectors' \
+            "$out/host-vectors-and-benchmark.txt"
+          grep -E '^IGV_IBR_BENCH:' "$out/host-vectors-and-benchmark.txt"
+
+      - name: Apple Clang two-slice Mach-O comparison for IDA
+        run: |
+          set -euo pipefail
+          lab="$GITHUB_WORKSPACE/scripts/protection_lab"
+          out="$RUNNER_TEMP/igv-ibr-pilot"
+          clang="$(xcrun --sdk iphoneos --find clang)"
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          for arch in arm64 arm64e; do
+            for variant in plain protected; do
+              "$clang" -std=c11 -arch "$arch" -isysroot "$sdk" \
+                -miphoneos-version-min=14.0 -O2 -Wall -Wextra -Werror \
+                -fvisibility=hidden -dynamiclib \
+                -Wl,-install_name,@rpath/libDoudashIGVIBRPilot.dylib \
+                "$lab/igv_ibr_$variant.c" -o "$out/$variant-$arch.dylib"
+              test -s "$out/$variant-$arch.dylib"
+              xcrun otool -tvV "$out/$variant-$arch.dylib" \
+                > "$out/$variant-$arch.asm"
+            done
+          done
+          python3 "$lab/igv_ibr_audit.py" \
+            --arm64-plain "$out/plain-arm64.dylib" \
+            --arm64-protected "$out/protected-arm64.dylib" \
+            --arm64-plain-asm "$out/plain-arm64.asm" \
+            --arm64-protected-asm "$out/protected-arm64.asm" \
+            --arm64e-plain "$out/plain-arm64e.dylib" \
+            --arm64e-protected "$out/protected-arm64e.dylib" \
+            --arm64e-plain-asm "$out/plain-arm64e.asm" \
+            --arm64e-protected-asm "$out/protected-arm64e.asm" \
+            --host-log "$out/host-vectors-and-benchmark.txt" \
+            --out "$out/audit"
+          shasum -a 256 "$out/"*.dylib > "$out/macho-hashes.txt"
+          echo '### IGV / IBR-inspired source pilot' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Host comparison PASS: 8192 vectors; host-only timings in artifact JSON.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Apple Clang Mach-O arm64/arm64e ABI inspected; iOS A12+ runtime NOT TESTED.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No proprietary SLLVM/VMP plugin; no live Crane function modified.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload IGV IBR comparison for IDA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProtectionLab-IGV-IBR-arm64-arm64e-EXPERIMENTAL
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/igv-ibr-pilot/audit/report.json
+            ${{ runner.temp }}/igv-ibr-pilot/audit/igv-ibr-arm64.diff
+            ${{ runner.temp }}/igv-ibr-pilot/audit/igv-ibr-arm64e.diff
+            ${{ runner.temp }}/igv-ibr-pilot/host-vectors-and-benchmark.txt
+            ${{ runner.temp }}/igv-ibr-pilot/apple-clang-version.txt
+            ${{ runner.temp }}/igv-ibr-pilot/macho-hashes.txt
+            ${{ runner.temp }}/igv-ibr-pilot/plain-arm64.dylib
+            ${{ runner.temp }}/igv-ibr-pilot/protected-arm64.dylib
+            ${{ runner.temp }}/igv-ibr-pilot/plain-arm64e.dylib
+            ${{ runner.temp }}/igv-ibr-pilot/protected-arm64e.dylib
+            ${{ runner.temp }}/igv-ibr-pilot/plain-arm64.asm
+            ${{ runner.temp }}/igv-ibr-pilot/protected-arm64.asm
+            ${{ runner.temp }}/igv-ibr-pilot/plain-arm64e.asm
+            ${{ runner.temp }}/igv-ibr-pilot/protected-arm64e.asm

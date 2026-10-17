@@ -87,6 +87,43 @@ canary này trên thiết bị**; chưa kiểm chứng PAC A12+ runtime, chưa g
 **Chiến lược tiếp theo:** thử IGV/IBR và CE cho ObjC literal trong
 canary tách biệt trước khi cân nhắc một helper CranePrefs không trọng yếu.
 
+## Sprint IGV/IBR theo ý tưởng SLLVM — thử nghiệm riêng
+
+Workflow thủ công:
+**Protection Lab - IGV IBR source pilot (Experimental)**,
+`.github/workflows/protection-igv-ibr-pilot.yml`.
+
+Đây là **biến đổi mã nguồn C riêng cho canary**, không phải LLVM plugin
+SLLVM/IBR thật và không áp dụng lên Crane đang hoạt động:
+
+- `igv_ibr_plain.c`: hai hàm baseline `dd_igv_plain` (switch chọn
+  hằng số) và `dd_ibr_plain` (7 vòng state switch trực tiếp).
+- `igv_ibr_protected.c`: `dd_igv_protected` dùng **hai bước truy xuất
+  global pointer có kiểu** và volatile load; `dd_ibr_protected` thay
+  state switch bằng **bảng handler pointer có kiểu**, Apple Clang tự xử lý
+  pointer authentication cho arm64e. Không chuyển function pointer sang
+  số nguyên, không JIT/RWX, không gọi private framework.
+- `igv_ibr_runner.c`: so sánh đầy đủ plain/protected **8.192 vector**
+  trên macOS host, bổ sung microbenchmark 100.000 calls cho từng hàm.
+  Số microsecond là **đo trên host CI**, rất dễ nhiễu; không áp ngưỡng
+  hiệu năng hay kết luận tốc độ trên thiết bị.
+- `igv_ibr_audit.py`: fail-closed khi Mach-O sai CPU subtype/PAC ABI,
+  binary đối chứng trùng bản bảo vệ, disassembly thiếu symbol hoặc trùng
+  nhau, host parity/benchmark log thiếu hoặc sai; xuất JSON/hash và
+  `igv-ibr-arm64.diff`, `igv-ibr-arm64e.diff`. Số opcode indirect
+  chỉ là heuristic toàn assembly, **không chứng minh indirect branch
+  trong đúng từng hàm**, cần kiểm tra với IDA.
+- `scripts/test_igv_ibr_pilot.py`: **10.004 vector Python** đối chiếu
+  mô hình và negative fixture. Test Python chỉ kiểm tra logic/model/audit,
+  không thay thế C native host hoặc iOS arm64e runtime.
+
+Chạy local: `python scripts/test_igv_ibr_pilot.py`. Để có **binary
+thật**, cập nhật GitHub rồi chạy workflow thủ công. Artifact
+`ProtectionLab-IGV-IBR-arm64-arm64e-EXPERIMENTAL` gồm 4 dylib
+plain/protected, 4 asm, 2 diff, JSON report, SHA và host benchmark.
+**Không cài lên iPhone**, chưa chạy signed canary trên A12+ hoặc kiểm
+chứng PAC runtime. Không tự suy diễn rằng chính thức tích hợp SLLVM.
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker

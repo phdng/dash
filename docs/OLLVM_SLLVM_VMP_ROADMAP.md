@@ -23,7 +23,17 @@ Ngày cập nhật: 2026-10-16. Trạng thái: **Sprint P0/P1 prototype đã có
   canary biến mất và dữ liệu mã hóa xuất hiện, native host parity 8.192 vector
   và 10.003 portable fixture vectors. Xem
   [`scripts/protection_lab/README.md`](../scripts/protection_lab/README.md).
-  Workflow mới **chưa chạy**, không được gọi arm64e device PASS.
+  Người dùng xác nhận workflow CE/ICALL trước đó **build xanh**;
+  kết quả này là biên dịch/audit CI, không phải thử A12+ PAC runtime.
+- **Sprint IGV/IBR source-level canary (mới triển khai):** workflow thủ công
+  `.github/workflows/protection-igv-ibr-pilot.yml` sinh Mach-O Apple Clang
+  baseline/protected trên arm64 và arm64e. Protected dùng hai bước đọc
+  global pointer/volatile (IGV-inspired) và bảng handler có kiểu (IBR-inspired,
+  thực tế là gọi gián tiếp an toàn ABI, không phải pass IBR của SLLVM).
+  Chạy host 8.192 vector và benchmark 100.000 lời gọi mỗi hàm, có 10.004
+  Python reference vectors và negative audit, tạo 4 ASM, 2 diff, JSON theo
+  slice/benchmark cho IDA. Workflow này **chưa chạy macOS**; không có
+  runtime test iPhone hay bảo vệ thật trên Crane.
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 
