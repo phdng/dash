@@ -69,6 +69,7 @@ python3 "$dir/ios_pipeline_audit.py" \
   --ipa "$out/KaguraLab-TrollStore-arm64.ipa" \
   --logs "$out" \
   --out "$out/KaguraLab-seven-pass-evidence.json"
+bash "$dir/verify_native_reference.sh" "$out"
 shasum -a 256 "$out/plain.o" "$out/protected.o" \
   "$out/KaguraLab.app/KaguraLab" > "$out/object-binary-sha256.txt"
 echo "KaguraLab arm64 real LLVM pass IPA build/audit PASS; runtime NOT TESTED."

@@ -99,7 +99,7 @@ Với 176 mẫu, p95 nearest-rank không còn là mẫu lớn nhất như ở K2
 11 mẫu. Chưa có kết quả native macOS K3, cũng chưa thử Kagura runtime iPhone.
 Xem [KAGURA_K3_INTERLEAVED_BENCH.md](KAGURA_K3_INTERLEAVED_BENCH.md).
 
-**K4 — KaguraLab TrollStore arm64 IPA (mới có mã và CI, chưa có build/runtime KaguraLab PASS):**
+**K4 — KaguraLab TrollStore arm64 IPA (người dùng đã báo IPA chạy PASS trên thiết bị; chưa có log được đối chiếu độc lập):**
 
 Đã tạo app UIKit riêng **KaguraLab**, biên dịch cùng `critical.c` thành
 `dd_kagura_plain` và `dd_kagura_protected` bằng LLVM19, rồi chạy
@@ -108,9 +108,20 @@ Hai object arm64 được link vào MH_EXECUTE và đóng gói IPA riêng để 
 song song ProtectionLab trên máy TrollStore. UI có parity **8192 vector**,
 benchmark iPhone **5 cặp × 4096 calls** chỉ sau parity PASS, và chia sẻ
 text log. CI có audit pass trace, SHA-256/LC_UUID, chế độ từ chối
-nhầm `arm64e`; chỉ xác minh format ở Windows, **chưa có IPA macOS CI
-mới hoặc kết quả chạy trên iPhone**. Xem
+nhầm `arm64e`; đã có hồi quy portable trên Windows. Người dùng báo IPA chạy PASS trên
+iPhone, nhưng chưa có log thật để kiểm tra độc lập và bản K5 mới chưa
+được build lại trên macOS CI. Xem
 [KAGURA_IOS_TROLLSTORE_PILOT.md](KAGURA_IOS_TROLLSTORE_PILOT.md).
+
+**K5 — iOS checksum oracle + build UUID correlation** (đã có mã, chờ CI/device retest):
+
+KaguraLab báo cáo schema 2 ghi LC_UUID của Mach-O đang chạy, và log
+benchmark phải ghi cùng UUID. Trình audit tương thích schema 1 cũ nhưng
+chỉ ghép schema 2 với cả hai báo cáo IPA/7-pass của CI. Thêm mô hình
+Python độc lập tính lại checksum parity/benchmark C (số liệu công khai),
+reject checksum sai/UUID chéo/pass evidence thiếu. Tất cả chỉ là phép
+so log người dùng gửi, **không chứng thực thực thi bằng mật mã**; chưa
+chạm Crane production. Xem [KAGURA_IOS_TROLLSTORE_PILOT.md](KAGURA_IOS_TROLLSTORE_PILOT.md).
 
 **Pha K2b — MAX_VM_SELECTIVE** (chưa triển khai, không có PASS):
 
@@ -167,5 +178,5 @@ kết quả khi CI và bài thử thật tương ứng PASS.
    Hikari/Kagura/OLLVM nếu chưa test được ordering/incompatibility.
 
 Mốc hiện tại: **K0 và K1 Kagura LLVM19 đều có artifact CI thực đã kiểm tra**;
-K2a cách ly TU và benchmark native **đã có artifact macOS thật được kiểm chứng** (7 pass có native parity, median BBS 82 ns/call = 5,467× baseline); **chưa chạy Kagura runtime trên iPhone, chưa có strict per-function allowlist hoặc bằng chứng MAX production**. Crane OLLVM STRONG
+K2a cách ly TU và benchmark native **đã có artifact macOS thật được kiểm chứng** (7 pass có native parity, median BBS 82 ns/call = 5,467× baseline); **người dùng đã báo KaguraLab iPhone PASS nhưng chưa có log đối chiếu; chưa có strict per-function allowlist hoặc bằng chứng MAX production**. Crane OLLVM STRONG
 hiện hành **không bị sửa**.

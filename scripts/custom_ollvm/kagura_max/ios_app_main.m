@@ -13,14 +13,46 @@
 #error "KaguraLab device pilot only supports physical arm64 iPhone, not arm64e"
 #endif
 
-extern int dd_kagura_ios_parity(char *report, size_t capacity);
-extern int dd_kagura_ios_benchmark(char *report, size_t capacity);
+extern int dd_kagura_ios_parity(char *report, size_t capacity,
+                                const char *app_uuid);
+extern int dd_kagura_ios_benchmark(char *report, size_t capacity,
+                                   const char *app_uuid);
 
 static BOOL DDIsPhysicalArm64(void) {
     const struct mach_header *h = _dyld_get_image_header(0);
     return h != NULL && h->magic == MH_MAGIC_64 &&
         h->cputype == CPU_TYPE_ARM64 &&
         (((uint32_t)h->cpusubtype & UINT32_C(0x00ffffff)) == 0);
+}
+
+/* Bind user-shared text to the LC_UUID in the executable currently running.
+ * This is a build identifier, NOT a signature or device attestation.
+ */
+static NSString *DDKaguraExecutableUUID(void) {
+    const struct mach_header_64 *header =
+        (const struct mach_header_64 *)_dyld_get_image_header(0);
+    if (!DDIsPhysicalArm64() || header->ncmds > 4096 ||
+        header->sizeofcmds > (1U << 20)) return nil;
+    const uint8_t *cursor = (const uint8_t *)(header + 1);
+    uint32_t remaining = header->sizeofcmds;
+    NSString *found = nil;
+    for (uint32_t i = 0; i < header->ncmds; ++i) {
+        if (remaining < sizeof(struct load_command)) return nil;
+        const struct load_command *cmd = (const struct load_command *)cursor;
+        if (cmd->cmdsize < sizeof(*cmd) || cmd->cmdsize > remaining)
+            return nil;
+        if (cmd->cmd == LC_UUID) {
+            if (cmd->cmdsize != sizeof(struct uuid_command) || found)
+                return nil;
+            const struct uuid_command *entry =
+                (const struct uuid_command *)cmd;
+            NSUUID *uuid = [[NSUUID alloc] initWithUUIDBytes:entry->uuid];
+            found = [uuid.UUIDString lowercaseString];
+        }
+        cursor += cmd->cmdsize;
+        remaining -= cmd->cmdsize;
+    }
+    return remaining == 0 ? found : nil;
 }
 
 @interface DDKaguraViewController : UIViewController
@@ -121,11 +153,14 @@ static BOOL DDIsPhysicalArm64(void) {
     self.outputView.text = @"RUNNING: 8192 native baseline / Kagura comparisons";
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
         char buffer[1024] = {0};
-        BOOL passed = DDIsPhysicalArm64() &&
-                      dd_kagura_ios_parity(buffer, sizeof(buffer));
-        NSString *report = DDIsPhysicalArm64() ?
-            [NSString stringWithUTF8String:buffer] :
-            @"DD_KAGURA_ERROR=INVALID_MACHO_ARM64_ABI\n";
+        BOOL physical = DDIsPhysicalArm64();
+        NSString *appUUID = physical ? DDKaguraExecutableUUID() : nil;
+        BOOL passed = appUUID != nil &&
+            dd_kagura_ios_parity(buffer, sizeof(buffer), appUUID.UTF8String);
+        NSString *report = !physical ?
+            @"DD_KAGURA_ERROR=INVALID_MACHO_ARM64_ABI\n" :
+            (!appUUID ? @"DD_KAGURA_ERROR=INVALID_MACHO_UUID\n" :
+             [NSString stringWithUTF8String:buffer]);
         if (!report) {
             passed = NO;
             report = @"DD_KAGURA_ERROR=INVALID_UTF8\n";
@@ -155,11 +190,14 @@ static BOOL DDIsPhysicalArm64(void) {
     self.statusLabel.text = @"Measuring Kagura on iPhone...";
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
         char buffer[1024] = {0};
-        BOOL passed = DDIsPhysicalArm64() &&
-                      dd_kagura_ios_benchmark(buffer, sizeof(buffer));
-        NSString *report = DDIsPhysicalArm64() ?
-            [NSString stringWithUTF8String:buffer] :
-            @"DD_KAGURA_PERF_ERROR=INVALID_MACHO_ARM64_ABI\n";
+        BOOL physical = DDIsPhysicalArm64();
+        NSString *appUUID = physical ? DDKaguraExecutableUUID() : nil;
+        BOOL passed = appUUID != nil &&
+            dd_kagura_ios_benchmark(buffer, sizeof(buffer), appUUID.UTF8String);
+        NSString *report = !physical ?
+            @"DD_KAGURA_PERF_ERROR=INVALID_MACHO_ARM64_ABI\n" :
+            (!appUUID ? @"DD_KAGURA_PERF_ERROR=INVALID_MACHO_UUID\n" :
+             [NSString stringWithUTF8String:buffer]);
         if (!report) {
             passed = NO;
             report = @"DD_KAGURA_PERF_ERROR=INVALID_UTF8\n";

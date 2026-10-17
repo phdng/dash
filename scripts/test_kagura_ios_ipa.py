@@ -10,6 +10,7 @@ import importlib.util
 import json
 import plistlib
 import stat
+import subprocess
 import struct
 import sys
 import tempfile
@@ -19,6 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "scripts/custom_ollvm/kagura_max"
 sys.path.insert(0, str(LAB))
+import ios_reference
 spec = importlib.util.spec_from_file_location("kagura_ipa", LAB / "package_ipa.py")
 assert spec and spec.loader
 pack = importlib.util.module_from_spec(spec)
@@ -138,26 +140,51 @@ with tempfile.TemporaryDirectory(prefix="Kagura device artifact ") as temp:
     reject_proof("incorrect object Mach-O subtype")
     candidate_obj.write_bytes(fake_macho(kind=1) + b"kagura-encrypted")
 
-    # User-shared 7-line parity + optional 10-line benchmark protocol.
-    # These are synthetic FORMAT fixtures, never iPhone evidence.
+    # Independent reference values, NOT device evidence.
+    checksums = ios_reference.expected_checksums()
+    assert checksums == {
+        "parity_checksum": "fa194ad0bc2c9f28",
+        "benchmark_checksum": "1664c1fc632776a0",
+    }
+    # Simulated macOS C host output: exact two digests required.
+    host_log = root / "host-reference.log"
+    host_json = root / "host-reference.json"
+    host_log.write_text(
+        "DD_KAGURA_HOST_PARITY_CHECKSUM=" + checksums["parity_checksum"] + "\n" +
+        "DD_KAGURA_HOST_BENCHMARK_CHECKSUM=" + checksums["benchmark_checksum"] + "\n",
+        encoding="utf-8"
+    )
+    command = [sys.executable, str(LAB / "ios_reference.py"),
+               "--check-host", str(host_log), "--out", str(host_json)]
+    completed = subprocess.run(command, capture_output=True, text=True)
+    assert completed.returncode == 0, completed.stderr
+    assert json.loads(host_json.read_text(
+        encoding="utf-8"))["native_host_reference_checked"] is True
+    host_log.write_text("DD_KAGURA_HOST_PARITY_CHECKSUM=0000000000000000\n",
+                        encoding="utf-8")
+    assert subprocess.run(command, capture_output=True).returncode != 0
+
+    app_uuid = result["macho_uuid"]
     parity_lines = [
-        "DD_KAGURA_SCHEMA=1",
+        "DD_KAGURA_SCHEMA=2",
         "DD_KAGURA_CONTEXT=IOS_DEVICE",
         "DD_KAGURA_ARCH=arm64:0x00000000",
+        "DD_KAGURA_APP_UUID=" + app_uuid,
         "DD_KAGURA_PIPELINE=STR_FLA_BCF_SUB_CO_BBR_BBS",
         "DD_KAGURA_VECTORS_PASS=8192",
-        "DD_KAGURA_CHECKSUM=0123456789abcdef",
+        "DD_KAGURA_CHECKSUM=" + checksums["parity_checksum"],
         "DD_KAGURA_COMPLETE=PASS",
     ]
     bench_lines = [
-        "DD_KAGURA_PERF_SCHEMA=1",
+        "DD_KAGURA_PERF_SCHEMA=2",
         "DD_KAGURA_PERF_CONTEXT=IOS_DEVICE",
         "DD_KAGURA_PERF_ARCH=arm64:0x00000000",
+        "DD_KAGURA_PERF_APP_UUID=" + app_uuid,
         "DD_KAGURA_PERF_PAIRS=5",
         "DD_KAGURA_PERF_CALLS_PER_SAMPLE=4096",
         "DD_KAGURA_PERF_PLAIN_MEDIAN_NS=25",
         "DD_KAGURA_PERF_PROTECTED_MEDIAN_NS=125",
-        "DD_KAGURA_PERF_CHECKSUM=1111111111111111",
+        "DD_KAGURA_PERF_CHECKSUM=" + checksums["benchmark_checksum"],
         "DD_KAGURA_PERF_NOTE=OBSERVATIONAL_NOT_SECURITY_ATTESTATION",
         "DD_KAGURA_PERF_COMPLETE=PASS",
     ]
@@ -166,6 +193,9 @@ with tempfile.TemporaryDirectory(prefix="Kagura device artifact ") as temp:
     parsed = report_audit.validate(device_log)
     assert parsed["claimed_parity_vectors"] == 8192
     assert parsed["optional_benchmark"] is None
+    assert parsed["schema"] == 2
+    assert parsed["claimed_executable_uuid"] == app_uuid
+    assert parsed["build_uuid_crosschecked_to_ci_reports"] is False
     assert parsed["device_execution_cryptographically_attested"] is False
     device_log.write_text(
         "\n".join(parity_lines) + "\n\n" + "\n".join(bench_lines) + "\n",
@@ -174,6 +204,32 @@ with tempfile.TemporaryDirectory(prefix="Kagura device artifact ") as temp:
     parsed = report_audit.validate(device_log)
     assert parsed["optional_benchmark"]["ratio_vs_plain"] == 5.0
     assert parsed["optional_benchmark"]["observational_only"] is True
+    audited = report_audit.validate(device_log, ipa_report=report,
+                                   pass_evidence=compiler_report)
+    assert audited["build_uuid_crosschecked_to_ci_reports"] is True
+    assert audited["ci_report_comparison"]["claimed_executable_uuid"] == app_uuid
+    assert audited["device_execution_cryptographically_attested"] is False
+
+    # Schema 1 from the device already shipped must remain readable, but
+    # cannot be bound to a specific CI IPA because it lacks LC_UUID.
+    legacy_parity = parity_lines.copy()
+    legacy_parity[0] = "DD_KAGURA_SCHEMA=1"
+    legacy_parity.pop(3)
+    legacy_bench = bench_lines.copy()
+    legacy_bench[0] = "DD_KAGURA_PERF_SCHEMA=1"
+    legacy_bench.pop(3)
+    device_log.write_text("\n".join(legacy_parity) + "\n\n" +
+                          "\n".join(legacy_bench) + "\n", encoding="utf-8")
+    assert report_audit.validate(device_log)["schema"] == 1
+    try:
+        report_audit.validate(device_log, ipa_report=report,
+                              pass_evidence=compiler_report)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("Accepted unbound schema 1 build identity")
+    device_log.write_text("\n".join(parity_lines) + "\n\n" +
+                          "\n".join(bench_lines) + "\n", encoding="utf-8")
 
     def reject_shared_report(raw: str):
         device_log.write_text(raw, encoding="utf-8")
@@ -190,12 +246,48 @@ with tempfile.TemporaryDirectory(prefix="Kagura device artifact ") as temp:
     reject_shared_report(valid_report.replace("COMPLETE=PASS", "COMPLETE=FAIL"))
     reject_shared_report(valid_report + "UDID=DO_NOT_RECORD\n")
     reject_shared_report(valid_report.rstrip("\n"))  # incomplete newline
-    reject_shared_report(valid_report.replace("0123456789abcdef", "invalid"))
+    reject_shared_report(valid_report.replace(checksums["parity_checksum"], "invalid"))
+    reject_shared_report(valid_report.replace(checksums["parity_checksum"],
+                                             "0000000000000000"))
+    reject_shared_report(valid_report.replace("DD_KAGURA_APP_UUID=" + app_uuid,
+                                             "DD_KAGURA_APP_UUID=bad-uuid"))
+    reject_shared_report(valid_report.replace("DD_KAGURA_APP_UUID=" + app_uuid + "\n", ""))
     reject_shared_report(
         "\n".join(parity_lines) + "\n\n" +
         "\n".join(bench_lines).replace("PROTECTED_MEDIAN_NS=125",
                                      "PROTECTED_MEDIAN_NS=0") + "\n"
     )
+
+    # Reject a benchmark whose executable ID, checksum or schema differs.
+    full_report = "\n".join(parity_lines) + "\n\n" + "\n".join(bench_lines) + "\n"
+    reject_shared_report(full_report.replace("DD_KAGURA_PERF_APP_UUID=" + app_uuid,
+                                             "DD_KAGURA_PERF_APP_UUID=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
+    reject_shared_report(full_report.replace(checksums["benchmark_checksum"],
+                                             "0000000000000000"))
+    reject_shared_report(full_report.replace("DD_KAGURA_PERF_SCHEMA=2",
+                                             "DD_KAGURA_PERF_SCHEMA=1"))
+    device_log.write_text(full_report, encoding="utf-8")
+    corrupted_ci = root / "corrupt-ci.json"
+    bad_manifest = json.loads(report.read_text(encoding="utf-8"))
+    bad_manifest["macho_uuid"] = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    corrupted_ci.write_text(json.dumps(bad_manifest), encoding="utf-8")
+    try:
+        report_audit.validate(device_log, ipa_report=corrupted_ci,
+                              pass_evidence=compiler_report)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("Accepted mismatched CI IPA UUID")
+    bad_proof = json.loads(compiler_report.read_text(encoding="utf-8"))
+    bad_proof["passes_observed_count"] = 6
+    corrupted_ci.write_text(json.dumps(bad_proof), encoding="utf-8")
+    try:
+        report_audit.validate(device_log, ipa_report=report,
+                              pass_evidence=corrupted_ci)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("Accepted missing 7-pass CI evidence")
 
     original_zip = ipa.read_bytes()
     pack.package(app, ipa, report)
@@ -256,8 +348,10 @@ for phrase in (
     "Run 8192 Kagura vectors",
     "Measure Kagura overhead (optional)",
     "Share Kagura test logs",
-    "dd_kagura_ios_parity(buffer, sizeof(buffer))",
-    "dd_kagura_ios_benchmark(buffer, sizeof(buffer))",
+    "dd_kagura_ios_parity(buffer, sizeof(buffer), appUUID.UTF8String)",
+    "dd_kagura_ios_benchmark(buffer, sizeof(buffer), appUUID.UTF8String)",
+    "DDKaguraExecutableUUID()",
+    "LC_UUID",
     "hasSuffix:@\"DD_KAGURA_COMPLETE=PASS\\n\"",
     "self.perfButton.enabled = NO",
     "self.perfButton.enabled = passed",
@@ -277,6 +371,9 @@ for phrase in (
     "DD_KAGURA_CONTEXT=IOS_DEVICE",
     "DD_KAGURA_ARCH=arm64:0x00000000",
     "DD_KAGURA_VECTORS_PASS=8192",
+    "DD_KAGURA_SCHEMA=2",
+    "DD_KAGURA_APP_UUID=%s",
+    "DD_KAGURA_PERF_APP_UUID=%s",
     "DD_KAGURA_COMPLETE=PASS",
     "DD_KAGURA_ERROR=MISMATCH_AT_",
     "DD_KAGURA_PERF_CONTEXT=IOS_DEVICE",
@@ -305,6 +402,7 @@ for required in (
     "package_ipa.py",
     "ios_pipeline_audit.py",
     "KaguraLab-seven-pass-evidence.json",
+    "verify_native_reference.sh",
     "KaguraLab-TrollStore-report.json",
     "arm64e: Apple Clang build/audit ONLY",
     "actions/upload-artifact@v4",
@@ -336,6 +434,8 @@ for required in (
     "AppleClang-arm64e-BUILD-ONLY.dylib",
     "0x80000002",
     "arm64e-build-only-uuid.txt",
+    "KaguraLab-runtime-reference.json",
+    "host-reference.log",
 ):
     assert required in standalone, required
 for required in (
@@ -347,9 +447,20 @@ for required in (
     "package_ipa.py",
     "ios_pipeline_audit.py",
     "KaguraLab-seven-pass-evidence.json",
+    "verify_native_reference.sh",
     "KaguraLab-TrollStore-arm64.ipa",
 ):
     assert required in build_script, required
+host_script = (LAB / "verify_native_reference.sh").read_text(encoding="utf-8")
+host_driver = (LAB / "ios_reference_host.c").read_text(encoding="utf-8")
+for item in ("xcrun clang", "-DDD_KAGURA_ENTRY=dd_kagura_",
+             "ios_canary.c", "ios_reference_host.c", "--check-host",
+             "host-reference.log", "ios_reference.py"):
+    assert item in host_script, item
+for item in ("DD_KAGURA_HOST_PARITY_CHECKSUM",
+             "DD_KAGURA_HOST_BENCHMARK_CHECKSUM",
+             "dd_kagura_ios_parity(", "dd_kagura_ios_benchmark("):
+    assert item in host_driver, item
 assert "kagura-k3-host-interleaved" not in standalone
 assert "interleaved_benchmark.py" not in standalone
 for source_text in (workflow, standalone, build_script):

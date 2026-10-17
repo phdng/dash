@@ -21,8 +21,8 @@ static uint64_t dd_rotate(uint64_t value) {
     return (value << 9) | (value >> 55);
 }
 
-int dd_kagura_ios_parity(char *report, size_t capacity) {
-    if (!report || capacity < 256)
+int dd_kagura_ios_parity(char *report, size_t capacity, const char *app_uuid) {
+    if (!report || capacity < 256 || !app_uuid)
         return 0;
     uint64_t seed = UINT64_C(0x123456789abcdef0);
     uint64_t digest = 0;
@@ -45,13 +45,14 @@ int dd_kagura_ios_parity(char *report, size_t capacity) {
     }
     dd_kagura_sink = digest;
     const int count = snprintf(report, capacity,
-        "DD_KAGURA_SCHEMA=1\n"
+        "DD_KAGURA_SCHEMA=2\n"
         "DD_KAGURA_CONTEXT=IOS_DEVICE\n"
         "DD_KAGURA_ARCH=arm64:0x00000000\n"
+        "DD_KAGURA_APP_UUID=%s\n"
         "DD_KAGURA_PIPELINE=STR_FLA_BCF_SUB_CO_BBR_BBS\n"
         "DD_KAGURA_VECTORS_PASS=8192\n"
         "DD_KAGURA_CHECKSUM=%016" PRIx64 "\n"
-        "DD_KAGURA_COMPLETE=PASS\n", digest);
+        "DD_KAGURA_COMPLETE=PASS\n", app_uuid, digest);
     return count > 0 && (size_t)count < capacity;
 }
 
@@ -99,8 +100,8 @@ static uint64_t dd_median5(uint64_t samples[DD_KAGURA_BENCH_PAIRS]) {
     return samples[DD_KAGURA_BENCH_PAIRS / 2];
 }
 
-int dd_kagura_ios_benchmark(char *report, size_t capacity) {
-    if (!report || capacity < 256)
+int dd_kagura_ios_benchmark(char *report, size_t capacity, const char *app_uuid) {
+    if (!report || capacity < 256 || !app_uuid)
         return 0;
     uint64_t plain[DD_KAGURA_BENCH_PAIRS];
     uint64_t protected[DD_KAGURA_BENCH_PAIRS];
@@ -125,9 +126,10 @@ int dd_kagura_ios_benchmark(char *report, size_t capacity) {
     const uint64_t median_plain = dd_median5(plain);
     const uint64_t median_protected = dd_median5(protected);
     const int count = snprintf(report, capacity,
-        "DD_KAGURA_PERF_SCHEMA=1\n"
+        "DD_KAGURA_PERF_SCHEMA=2\n"
         "DD_KAGURA_PERF_CONTEXT=IOS_DEVICE\n"
         "DD_KAGURA_PERF_ARCH=arm64:0x00000000\n"
+        "DD_KAGURA_PERF_APP_UUID=%s\n"
         "DD_KAGURA_PERF_PAIRS=5\n"
         "DD_KAGURA_PERF_CALLS_PER_SAMPLE=4096\n"
         "DD_KAGURA_PERF_PLAIN_MEDIAN_NS=%" PRIu64 "\n"
@@ -135,7 +137,7 @@ int dd_kagura_ios_benchmark(char *report, size_t capacity) {
         "DD_KAGURA_PERF_CHECKSUM=%016" PRIx64 "\n"
         "DD_KAGURA_PERF_NOTE=OBSERVATIONAL_NOT_SECURITY_ATTESTATION\n"
         "DD_KAGURA_PERF_COMPLETE=PASS\n",
-        median_plain, median_protected, checksum);
+        app_uuid, median_plain, median_protected, checksum);
     return count > 0 && (size_t)count < capacity;
 mismatch:
     (void)snprintf(report, capacity,

@@ -93,6 +93,8 @@ jobs:
             ${{ runner.temp }}/KaguraLab-IPA/KaguraLab-TrollStore-arm64.ipa
             ${{ runner.temp }}/KaguraLab-IPA/KaguraLab-TrollStore-report.json
             ${{ runner.temp }}/KaguraLab-IPA/KaguraLab-seven-pass-evidence.json
+            ${{ runner.temp }}/KaguraLab-IPA/KaguraLab-runtime-reference.json
+            ${{ runner.temp }}/KaguraLab-IPA/host-reference.log
             ${{ runner.temp }}/KaguraLab-IPA/plain.o
             ${{ runner.temp }}/KaguraLab-IPA/protected.o
             ${{ runner.temp }}/KaguraLab-IPA/pass-*.log

@@ -1,7 +1,6 @@
 # KaguraLab — iPhone arm64 IPA với 7 LLVM pass thật
 
-Ngày triển khai: 2026-10-17. **Đã thêm source, CI build/IPA và regression
-portable. Chưa có kết quả build KaguraLab trên macOS CI hay chạy thiết bị thật.**
+Ngày triển khai: 2026-10-17. **Người dùng xác nhận IPA KaguraLab đã chạy và mọi bài kiểm tra trên thiết bị đều PASS.** Chưa nhận log chia sẻ từ điện thoại để đối chiếu độc lập với build/LC_UUID. Bản tiếp theo bổ sung schema 2 và kiểm tra reference, vẫn cần CI macOS và thử lại trên iPhone.
 
 ## Ứng dụng thử nghiệm riêng
 
@@ -80,39 +79,61 @@ Mở **Kagura Lab**, nhấn:
   nếu đã đo, báo cáo hiệu năng. Kết quả có thể dùng để so sánh với
   host benchmark, không phải chứng thực mật mã của thiết bị.
 
-Báo cáo PASS dự kiến có đúng 7 dòng:
+## K5 — kiểm tra log theo executable và checksum tham chiếu
+
+Phiên bản IPA mới xuất **schema 2, tám dòng parity** (thêm UUID của
+Mach-O chính) và **11 dòng benchmark** (nếu đo). Bản IPA cũ vẫn phát
+schema 1 gồm bảy dòng parity và mười dòng benchmark, parser tiếp tục
+chấp nhận để không làm hỏng log cũ.
 
 ```text
-DD_KAGURA_SCHEMA=1
+DD_KAGURA_SCHEMA=2
 DD_KAGURA_CONTEXT=IOS_DEVICE
 DD_KAGURA_ARCH=arm64:0x00000000
+DD_KAGURA_APP_UUID=<UUID từ LC_UUID của executable đang chạy>
 DD_KAGURA_PIPELINE=STR_FLA_BCF_SUB_CO_BBR_BBS
 DD_KAGURA_VECTORS_PASS=8192
-DD_KAGURA_CHECKSUM=<16 ký tự hex thực tế>
+DD_KAGURA_CHECKSUM=fa194ad0bc2c9f28
 DD_KAGURA_COMPLETE=PASS
 ```
 
-Ví dụ phía trên là **định dạng**, không phải log lấy từ iPhone. Để
-đối chiếu text báo cáo do bạn thực sự chia sẻ (7 dòng chức năng, có thể
-kèm 10 dòng hiệu năng), lưu nguyên văn rồi chạy:
+Giá trị checksum được tính độc lập bằng
+`scripts/custom_ollvm/kagura_max/ios_reference.py`, với fixture C công
+khai gồm 8.192 vector xác định. Checksum hiệu năng 4.096 lần gọi là
+`1664c1fc632776a0`. Cả hai workflow IPA mới chạy
+`verify_native_reference.sh`: compile cùng `critical.c` và `ios_canary.c`
+thành chương trình **macOS host không obfuscate**, chạy lại parity/benchmark
+C thực, đối chiếu chính xác với Python oracle và FAIL nếu lệch. Đây là kiểm
+tra chính xác của thuật toán/reference, **không phải bài test iPhone hay
+bằng chứng 7 pass**; bằng chứng pass thuộc `ios_pipeline_audit.py`.
+Nếu iPhone thật có kết quả lệch, parser sẽ **FAIL**; không đổi reference
+để khớp một lỗi thiết bị khi chưa phân tích.
+
+Sau khi xuất **Share Kagura test logs**, giữ nguyên text và lấy hai
+JSON cùng bản IPA từ CI: `KaguraLab-TrollStore-report.json` và
+`KaguraLab-seven-pass-evidence.json`. Kiểm tra:
 
 ```sh
-python scripts/custom_ollvm/kagura_max/ios_report_audit.py \\
-  --log kagura-iphone-log.txt --out kagura-iphone-log-review.json
+python scripts/custom_ollvm/kagura_max/ios_report_audit.py \
+  --log kagura-iphone-log.txt \
+  --ipa-report KaguraLab-TrollStore-report.json \
+  --pass-evidence KaguraLab-seven-pass-evidence.json \
+  --out kagura-iphone-log-review.json
 ```
 
-Việc khớp định dạng là bằng chứng nhất quán của text được gửi,
-**không chứng thực thực thi hoặc nguồn gốc thiết bị bằng mật mã**.
+Nếu chỉ có log thì bỏ hai đối số CI: vẫn kiểm được checksum và định dạng,
+nhưng không thể đối chiếu build. Với schema 1, không có UUID nên không
+thể ghép với báo cáo IPA. Đối chiếu schema 2 xác nhận UUID tự khai trong
+text trùng UUID mà CI ghi cho IPA, cùng SHA-256/7 pass CI; **không phải
+chữ ký, không chứng thực nguồn gốc thiết bị hoặc chạy mã thật**. Log ví dụ
+chỉ là định dạng, không phải bằng chứng lấy từ điện thoại.
 Nếu
 một vector không trùng, app ghi `DD_KAGURA_ERROR=MISMATCH_AT_n`
 và không xuất `DD_KAGURA_COMPLETE=PASS`.
 
 ## Giới hạn nghiệm thu
 
-Giao diện và IPA chỉ có thể được xác nhận compile/link qua **macOS
-Actions**; hồi quy Python trên workspace không thay thế runtime của
-LLVM19/iPhone. Chưa có IPA mới từ CI trong lượt này nên không được
-ghi `IOS_DEVICE_PASS` trong registry.
+Người dùng đã báo IPA trước chạy PASS trên iPhone; chưa có log thực tế được đối chiếu nên không biến xác nhận này thành chứng thực mã hóa. Mọi thay đổi K5 mới chỉ kiểm tra portable trên workspace; build LLVM19/macOS CI và thử lại thiết bị cho bản mới **chưa xác nhận**. Không tự điền `IOS_DEVICE_PASS` vào registry từ log giả định.
 
 Sự tương đương kết quả trên hàm thử nghiệm không chứng minh hiệu quả
 trên tất cả hàm Objective-C hoặc khả năng ngăn dịch ngược. Kagura

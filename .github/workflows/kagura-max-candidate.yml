@@ -234,6 +234,7 @@ jobs:
             --ipa "$out/KaguraLab-TrollStore-arm64.ipa" \
             --logs "$iphone" \
             --out "$out/KaguraLab-seven-pass-evidence.json"
+          bash "$dir/verify_native_reference.sh" "$out"
           shasum -a 256 "$iphone/plain.o" "$iphone/protected.o" \
             "$iphone/KaguraLab.app/KaguraLab" > "$iphone/binary-sha256.txt"
           echo "Kagura iOS: unsigned arm64 MH_EXECUTE with plain + seven LLVM passes." >> "$GITHUB_STEP_SUMMARY"
