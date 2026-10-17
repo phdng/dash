@@ -37,6 +37,13 @@ Benchmark tùy chọn đo 5 cặp native/protected, mỗi cặp 20.000 lời g�
 chia sẻ riêng, không gộp vào 7 dòng runtime. Chi tiết tại
 [PROTECTION_PERFORMANCE.md](PROTECTION_PERFORMANCE.md).
 
+**Sprint identity mới:** Sau khi chức năng PASS, nút Share có mục riêng
+**Share binary identity / OS model**, tạo 7 dòng gồm UUID Mach-O đang
+được loader nạp, ABI, model và phiên bản iOS. CI còn xuất
+`build-identity.json` để so UUID arm64/arm64e đúng slice. UUID và log
+không chứng thực mật mã nguồn gốc thiết bị. Xem
+[PROTECTION_DEVICE_EVIDENCE.md](PROTECTION_DEVICE_EVIDENCE.md).
+
 ## GitHub Actions
 
 Chạy thủ công **Protection Lab - iOS UIKit test app (Experimental)**,

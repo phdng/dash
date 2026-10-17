@@ -241,6 +241,22 @@ Hướng dẫn chi tiết và lệnh kiểm tra báo cáo:
 load; chỉ xem là thông tin quyết định overhead, không chứng minh an toàn,
 PAC runtime hay mức độ chống reverse engineering.
 
+## Sprint đối chiếu binary LC_UUID giữa CI và report iPhone
+
+- `device_evidence.py build`: đọc strict Mach-O `MH_EXECUTE`, duyệt
+  các load commands có giới hạn, yêu cầu đúng 1 `LC_UUID` mỗi slice
+  Apple `arm64` và `arm64e`, tạo `build-identity.json` có UUID và
+  SHA-256 của binary chưa ký. CI vẫn không cài/test trực tiếp trên iPhone.
+- Sau khi 4 suite chức năng PASS trên UIKit, phần Share có thêm
+  **Share binary identity / OS model** với 7 dòng riêng; chỉ lấy kiểu
+  máy, phiên bản iOS, LC_UUID đang được loader nạp, không thu UDID/serial.
+- `device_evidence.py verify` bắt buộc identity log khớp slice UUID
+  trong manifest, 7 dòng runtime PASS, và tùy chọn 17 dòng benchmark.
+  Parser từ chối nhầm kiến trúc/UUID, sai schema, thiếu dòng hoặc log
+  macOS gắn nhãn iOS. **UUID không phải attestation**, vẫn không có
+  runtime device proof trước khi người dùng thật sự chạy trên iPhone.
+- Hướng dẫn: [docs/PROTECTION_DEVICE_EVIDENCE.md](../../docs/PROTECTION_DEVICE_EVIDENCE.md).
+
 ## Tiêu chí tiếp theo
 
 1. Chạy workflow, kiểm tra ABI arm64e **trên binary thực**. Nếu Apple linker

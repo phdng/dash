@@ -68,6 +68,14 @@ Ngày cập nhật: 2026-10-16. Trạng thái: **Sprint P0/P1 prototype đã có
   `perf_audit.py`, host CI kiểm thử giao thức, không có security/perf
   gate trên iPhone. Xem
   [PROTECTION_PERFORMANCE.md](PROTECTION_PERFORMANCE.md).
+- **Sprint CI/device evidence correlation:** đã tạo `device_evidence.py`
+  với LC_UUID Mach-O load commands per slice `arm64`/`arm64e`, thêm
+  artifact `build-identity.json`. UIKit xuất riêng 7 dòng
+  `DD_EVIDENCE_*` ghi loaded main binary LC_UUID, architecture, máy
+  và iOS version (không UDID). Parser buộc identity UUID khớp với
+  artifact, 7 dòng PASS chức năng và tùy chọn 17 dòng perf; không
+  có attestation mật mã, chưa xác minh provenance hay PAC trên máy thật.
+  Hướng dẫn [PROTECTION_DEVICE_EVIDENCE.md](PROTECTION_DEVICE_EVIDENCE.md).
 - **Chưa** có plugin SLLVM, backend VMProtect thương mại, codesign/thiết bị
   A12+ runtime; không biến canary thành tweak được phát hành.
 

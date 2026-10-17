@@ -24,6 +24,7 @@ jobs:
           set -euo pipefail
           python3 scripts/test_ios_app_canary.py
           python3 scripts/test_protection_perf.py
+          python3 scripts/test_device_evidence.py
           python3 scripts/test_device_runtime_canary.py
           python3 scripts/test_objc_ce_pilot.py
           python3 scripts/test_igv_ibr_pilot.py
@@ -99,9 +100,15 @@ jobs:
             --arm64 "$out/ProtectionLab-arm64.app/ProtectionLab" \
             --arm64e "$out/ProtectionLab-arm64e.app/ProtectionLab" \
             --out "$out/build-report.json"
+          python3 "$lab/device_evidence.py" build \
+            --arm64 "$out/ProtectionLab-arm64.app/ProtectionLab" \
+            --arm64e "$out/ProtectionLab-arm64e.app/ProtectionLab" \
+            --out "$out/build-identity.json"
           echo '### UIKit on-device parity application — unsigned bundles' >> "$GITHUB_STEP_SUMMARY"
           echo 'Two Apple Clang iPhoneOS MH_EXECUTE app binaries ABI-validated.' >> "$GITHUB_STEP_SUMMARY"
           echo 'App requires legitimate local signing/provisioning before device install.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'LC_UUID identity extracted per app; user logs must be checked separately.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'UUID is not device cryptographic attestation or proof of PAC enforcement.' >> "$GITHUB_STEP_SUMMARY"
           echo 'On-device ARC/function-pointer/PAC runtime: NOT TESTED in CI.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Optional timed samples are observations, not iOS measurements or acceptance gates.' >> "$GITHUB_STEP_SUMMARY"
           echo 'No signing, app installation, jailbreaking, or Crane modification.' >> "$GITHUB_STEP_SUMMARY"
@@ -115,6 +122,7 @@ jobs:
             ${{ runner.temp }}/ios-lab-app/ProtectionLab-UNSIGNED-arm64.zip
             ${{ runner.temp }}/ios-lab-app/ProtectionLab-UNSIGNED-arm64e.zip
             ${{ runner.temp }}/ios-lab-app/build-report.json
+            ${{ runner.temp }}/ios-lab-app/build-identity.json
             ${{ runner.temp }}/ios-lab-app/binary-sha256.txt
             ${{ runner.temp }}/ios-lab-app/macho-arm64.txt
             ${{ runner.temp }}/ios-lab-app/macho-arm64e.txt

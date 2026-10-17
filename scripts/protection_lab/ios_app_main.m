@@ -16,6 +16,7 @@
 #include <mach/machine.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/utsname.h>
 
 #if !TARGET_OS_IPHONE || TARGET_OS_SIMULATOR
 #error "This UIKit validation app must be compiled for a physical iOS device."
@@ -37,6 +38,74 @@ static NSString *DDRuntimeABI(void) {
         return nil;
     return [NSString stringWithFormat:@"arm64:0x%08x", raw];
 #endif
+}
+
+/* Mach-O UUID is an artifact correlation key, never an attestation.
+ * Parse bounded load commands from the loader's actual main executable.
+ */
+static NSString *DDLoadedMachOUUID(void) {
+    const struct mach_header *header = _dyld_get_image_header(0);
+    if (!header || header->magic != MH_MAGIC_64)
+        return nil;
+    const struct mach_header_64 *m = (const struct mach_header_64 *)header;
+    if (!m->ncmds || m->ncmds > 4096 ||
+        m->sizeofcmds < sizeof(struct uuid_command) ||
+        m->sizeofcmds > 1024U * 1024U)
+        return nil;
+    const uint8_t *commands = (const uint8_t *)(m + 1);
+    size_t offset = 0;
+    NSString *found = nil;
+    for (uint32_t index = 0; index < m->ncmds; ++index) {
+        if (m->sizeofcmds - offset < sizeof(struct load_command))
+            return nil;
+        struct load_command command;
+        memcpy(&command, commands + offset, sizeof(command));
+        if (command.cmdsize < sizeof(command) ||
+            (command.cmdsize & 3U) ||
+            command.cmdsize > m->sizeofcmds - offset)
+            return nil;
+        if (command.cmd == LC_UUID) {
+            if (found || command.cmdsize != sizeof(struct uuid_command))
+                return nil;
+            struct uuid_command uuidCommand;
+            memcpy(&uuidCommand, commands + offset, sizeof(uuidCommand));
+            NSMutableString *hex = [NSMutableString stringWithCapacity:36];
+            for (unsigned i = 0; i < 16; ++i) {
+                if (i == 4 || i == 6 || i == 8 || i == 10)
+                    [hex appendString:@"-"];
+                [hex appendFormat:@"%02x", uuidCommand.uuid[i]];
+            }
+            found = hex;
+        }
+        offset += command.cmdsize;
+    }
+    return offset == m->sizeofcmds ? found : nil;
+}
+
+static NSString *DDRunEvidence(NSString *abi) {
+    if (!abi) return nil;
+    NSString *uuid = DDLoadedMachOUUID();
+    struct utsname device;
+    if (!uuid || uname(&device) != 0)
+        return nil;
+    NSString *model = [NSString stringWithUTF8String:device.machine];
+    NSOperatingSystemVersion version = [NSProcessInfo processInfo].operatingSystemVersion;
+    if (!model || version.majorVersion <= 0 || version.minorVersion < 0 ||
+        version.patchVersion < 0)
+        return nil;
+    /* Hardware model and iOS version only: no serial, UDID, hostname,
+     * advertising identifier, account, or other device-personal metadata.
+     */
+    return [NSString stringWithFormat:
+        @"DD_EVIDENCE_SCHEMA=1\n"
+         @"DD_EVIDENCE_CONTEXT=IOS_DEVICE\n"
+         @"DD_EVIDENCE_ABI=%@\n"
+         @"DD_EVIDENCE_MACHO_UUID=%@\n"
+         @"DD_EVIDENCE_DEVICE_MODEL=%@\n"
+         @"DD_EVIDENCE_IOS_VERSION=%ld.%ld.%ld\n"
+         @"DD_EVIDENCE_NOTE=USER_SHARED_NOT_ATTESTED\n",
+         abi, uuid, model, (long)version.majorVersion,
+         (long)version.minorVersion, (long)version.patchVersion];
 }
 
 static BOOL DDNSStringParity(void) {
@@ -110,6 +179,7 @@ static NSString *DDRunPerformance(NSString *abi) {
 @property(nonatomic, strong) UIButton *shareButton;
 @property(nonatomic, copy) NSString *report;
 @property(nonatomic, copy) NSString *performanceReport;
+@property(nonatomic, copy) NSString *evidenceReport;
 @property(nonatomic, assign) BOOL running;
 @end
 
@@ -191,13 +261,17 @@ static NSString *DDRunPerformance(NSString *abi) {
     self.running = YES;
     self.report = nil;
     self.performanceReport = nil;
+    self.evidenceReport = nil;
     self.runButton.enabled = NO;
     self.benchmarkButton.enabled = NO;
     self.shareButton.enabled = NO;
     self.reportView.text = @"RUNNING — checking ABI, C/VM, CE/ICALL, IGV/IBR, NSString/ARC...";
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
         NSString *result = DDRunValidation();
+        NSString *identity = [result hasSuffix:@"DD_RUNTIME_COMPLETE=PASS\\n"] ?
+            DDRunEvidence(DDRuntimeABI()) : nil;
         dispatch_async(dispatch_get_main_queue(), ^{
+            self.evidenceReport = identity;
             self.report = result;
             self.reportView.text = result;
             self.running = NO;
@@ -253,14 +327,14 @@ static NSString *DDRunPerformance(NSString *abi) {
 
 - (void)shareReport {
     if (self.running || self.report.length == 0) return;
-    /* Never merge the 7-line parity proof and optional performance log. */
-    if (!self.performanceReport.length) {
+    /* Never merge 7-line parity, 17-line perf or 7-line identity proof. */
+    if (!self.performanceReport.length && !self.evidenceReport.length) {
         [self presentShareWithText:self.report];
         return;
     }
     UIAlertController *options = [UIAlertController
         alertControllerWithTitle:@"Choose evidence"
-                        message:@"Parity and performance reports are separate."
+                        message:@"Parity, binary identity and timing reports are separate."
                  preferredStyle:UIAlertControllerStyleActionSheet];
     [options addAction:[UIAlertAction
         actionWithTitle:@"Share functional PASS/failure"
@@ -269,13 +343,24 @@ static NSString *DDRunPerformance(NSString *abi) {
                     (void)action;
                     [self presentShareWithText:self.report];
                 }]];
-    [options addAction:[UIAlertAction
-        actionWithTitle:@"Share observational benchmark"
-                  style:UIAlertActionStyleDefault
-                handler:^(UIAlertAction *action) {
-                    (void)action;
-                    [self presentShareWithText:self.performanceReport];
-                }]];
+    if (self.evidenceReport.length) {
+        [options addAction:[UIAlertAction
+            actionWithTitle:@"Share binary identity / OS model"
+                      style:UIAlertActionStyleDefault
+                    handler:^(UIAlertAction *action) {
+                        (void)action;
+                        [self presentShareWithText:self.evidenceReport];
+                    }]];
+    }
+    if (self.performanceReport.length) {
+        [options addAction:[UIAlertAction
+            actionWithTitle:@"Share observational benchmark"
+                      style:UIAlertActionStyleDefault
+                    handler:^(UIAlertAction *action) {
+                        (void)action;
+                        [self presentShareWithText:self.performanceReport];
+                    }]];
+    }
     [options addAction:[UIAlertAction actionWithTitle:@"Cancel"
                       style:UIAlertActionStyleCancel handler:nil]];
     UIPopoverPresentationController *pop = options.popoverPresentationController;

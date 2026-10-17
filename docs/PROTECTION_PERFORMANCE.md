@@ -39,6 +39,9 @@ Sau khi benchmark hoàn thành, nút **Share result text** hiện lựa chọn:
   `DD_RUNTIME_*` để chạy `device_audit.py verify-log`.
 - **Share observational benchmark:** xuất riêng 17 dòng `DD_PERF_*`
   và không tự nhận là log PASS chức năng.
+- **Share binary identity / OS model:** xuất 7 dòng `DD_EVIDENCE_*`
+  riêng để so LC_UUID với `build-identity.json` từ CI. Xem
+  [PROTECTION_DEVICE_EVIDENCE.md](PROTECTION_DEVICE_EVIDENCE.md).
 
 Ví dụ (chỉ minh họa số liệu, **không phải đo đạc thực trên iPhone**):
 
