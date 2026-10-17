@@ -150,9 +150,12 @@
     "profile_file": "scripts/custom_ollvm/kagura_max/profile.json",
     "workflow": ".github/workflows/kagura-max-candidate.yml",
     "compiler": "LLVM 19 opt New Pass Manager (isolated)",
-    "status": "STAGED_CI_NOT_VERIFIED",
+    "status": "K0_USER_ARTIFACT_VERIFIED_K1_STAGED",
     "passes": ["kagura-str", "kagura-fla", "kagura-bcf", "kagura-sub", "kagura-co"],
     "vm_state": "DISABLED_PENDING_SEPARATE_OVERHEAD_AND_ABI_TEST",
+    "k1_stepwise_runner": "scripts/custom_ollvm/kagura_max/stage_pipeline.py",
+    "k1_extra_passes": ["kagura-bbr", "kagura-bbs"],
+    "k1_native_ci_status": "NOT_YET_RUN",
     "production_merge": false,
     "arm64e_pac_runtime": "DEFERRED_NO_A12_DEVICE"
   },

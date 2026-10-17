@@ -120,10 +120,11 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
     kagura = registry.get("experimental_kagura_pipeline", {})
     if (kagura.get("provider") != "qusamulab/kagura" or
         kagura.get("profile") != "MAX_CANDIDATE" or
-        kagura.get("status") != "STAGED_CI_NOT_VERIFIED" or
+        kagura.get("status") != "K0_USER_ARTIFACT_VERIFIED_K1_STAGED" or
         kagura.get("production_merge") is not False or
         kagura.get("vm_state") != "DISABLED_PENDING_SEPARATE_OVERHEAD_AND_ABI_TEST" or
-        kagura.get("arm64e_pac_runtime") != "DEFERRED_NO_A12_DEVICE"):
+        kagura.get("arm64e_pac_runtime") != "DEFERRED_NO_A12_DEVICE" or
+        kagura.get("k1_native_ci_status") != "NOT_YET_RUN"):
         raise AssertionError("Kagura must remain independent/experimental")
     if kagura.get("profile_file") != "scripts/custom_ollvm/kagura_max/profile.json" or (
         kagura.get("workflow") != ".github/workflows/kagura-max-candidate.yml"
@@ -131,6 +132,11 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "kagura-str", "kagura-fla", "kagura-bcf", "kagura-sub", "kagura-co"
     ]:
         raise AssertionError("Experimental Kagura compiler-pipeline drift")
+    if (kagura.get("k1_stepwise_runner") !=
+        "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
+        kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or
+        not (root / kagura["k1_stepwise_runner"]).is_file()):
+        raise AssertionError("K1 separate stepwise runner/CFG pass inventory drift")
     if not (root / kagura["profile_file"]).is_file() or not (
         root / kagura["workflow"]
     ).is_file():

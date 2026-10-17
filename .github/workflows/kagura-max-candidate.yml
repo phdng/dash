@@ -18,6 +18,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/test_kagura_max_candidate.py
+          python3 scripts/test_kagura_k1_stages.py
           python3 scripts/test_custom_ollvm_pass_matrix.py
 
       - name: Compile pinned MIT Kagura plugin with LLVM 19
@@ -71,6 +72,18 @@ jobs:
           "$out/host-plain" > "$out/host-plain.log"
           "$out/host-candidate" > "$out/host-candidate.log"
           cmp "$out/host-plain.log" "$out/host-candidate.log"
+
+      - name: K1 inspect each real Kagura pass and compare 8192 host results
+        run: |
+          set -euo pipefail
+          python3 scripts/custom_ollvm/kagura_max/stage_pipeline.py \
+            --llvm "$KAGURA_LLVM" \
+            --plugin "$KAGURA_PLUGIN" \
+            --plain-bc "$KAGURA_OUT/host-plain.bc" \
+            --baseline-log "$KAGURA_OUT/host-plain.log" \
+            --runner-obj "$KAGURA_OUT/runner.o" \
+            --out "$KAGURA_OUT/stages"
+          cat "$KAGURA_OUT/stages/kagura-k1-stage-report.json" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Cross-compile iOS arm64 and independently check Apple arm64e ABI
         run: |
