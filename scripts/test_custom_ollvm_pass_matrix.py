@@ -143,7 +143,16 @@ assert original["experimental_kagura_pipeline"]["k12_new_native_passes_verified"
 assert original["experimental_kagura_pipeline"]["k12_iphone_runtime"] == "NOT_TESTED"
 assert original["experimental_kagura_pipeline"]["k12_arm64e_pac"] == "NOT_TESTED"
 assert original["experimental_kagura_pipeline"]["k12_production_merge"] is False
-assert original["experimental_kagura_pipeline"]["k13_status"] == "STAGED_MANUAL_MACOS_LLVM19_NATIVE_NOT_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k13_status"] == "MACOS_NATIVE_AND_IOS_OBJECT_ARTIFACT_VERIFIED_NO_DEVICE"
+assert original["experimental_kagura_pipeline"]["k13_artifact_review"] == "docs/KAGURA_K13_ARTIFACT_REVIEW.md"
+assert original["experimental_kagura_pipeline"]["k13_artifact_zip_sha256"] == "2f18e54d3cc6f421ab997d96a162fd6b5869a4f5c78e62f739943e2238ce64f3"
+assert original["experimental_kagura_pipeline"]["k13_mac_arm64_baseline_object_sha256"] == "d8e1a34f8696d039c6133657eb10969f481c89bf0070dcb9870925a2e4fa09a5"
+assert original["experimental_kagura_pipeline"]["k13_mac_arm64_protected_object_sha256"] == "02caa3bc92b5a927463229d0de9854f3422b6ce24d90741175a4ad040464e839"
+assert original["experimental_kagura_pipeline"]["k13_ios_arm64_baseline_object_sha256"] == "43b263d0d1eb5b8194dd944e86e1c49ce57061f6ec283dd39f654f67a0c2ec71"
+assert original["experimental_kagura_pipeline"]["k13_ios_arm64_protected_object_sha256"] == "a1dea3f6cdb66d4f62d40dcfa7d32608049082700b2c78f7f69854c6b864cc62"
+assert original["experimental_kagura_pipeline"]["k13_native_checksum"] == "25a3318e3d7d6525"
+assert original["experimental_kagura_pipeline"]["k13_artifact_entry_count"] == 41
+assert original["experimental_kagura_pipeline"]["k13_independent_artifact_checks_passed"] == 422
 assert original["experimental_kagura_pipeline"]["k13_candidate"] == "kagura-cse-break"
 assert original["experimental_kagura_pipeline"]["k13_pass_class"] == "kagura::CSEBreakPass"
 assert original["experimental_kagura_pipeline"]["k13_workflow"] == ".github/workflows/kagura-k13-cse-break-native.yml"
@@ -153,11 +162,31 @@ assert original["experimental_kagura_pipeline"]["k13_portable_test"] == "scripts
 assert original["experimental_kagura_pipeline"]["k13_doc"] == "docs/KAGURA_K13_CSE_BREAK_NATIVE_LAB.md"
 assert original["experimental_kagura_pipeline"]["k13_pinned_registry_sha256"] == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa"
 assert original["experimental_kagura_pipeline"]["k13_native_vectors_planned"] == 4096
-assert original["experimental_kagura_pipeline"]["k13_native_result"] == "NOT_TESTED_MACOS_CI"
-assert original["experimental_kagura_pipeline"]["k13_ios_arm64"] == "MH_OBJECT_BUILD_ONLY_NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k13_native_result"] == "CI_MACOS_4096_PARITY_AND_BINARY_ARTIFACT_VALIDATED"
+assert original["experimental_kagura_pipeline"]["k13_ios_arm64"] == "ARM64_SUBTYPE0_MH_OBJECT_ARTIFACT_VALIDATED_NOT_DEVICE"
 assert original["experimental_kagura_pipeline"]["k13_iphone_runtime"] == "NOT_TESTED"
 assert original["experimental_kagura_pipeline"]["k13_arm64e_pac"] == "NOT_TESTED"
 assert original["experimental_kagura_pipeline"]["k13_production_merge"] is False
+assert original["experimental_kagura_pipeline"]["k14_status"] == "STAGED_MANUAL_IOS_ARM64_IPA_CI_NOT_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k14_workflow"] == ".github/workflows/kagura-k14-cse-break-ios-ipa.yml"
+assert original["experimental_kagura_pipeline"]["k14_app_bundle"] == "com.duodash.research.kaguracsebreaklab"
+assert original["experimental_kagura_pipeline"]["k14_app_executable"] == "KaguraCSEBreakLab"
+assert original["experimental_kagura_pipeline"]["k14_source"] == "scripts/custom_ollvm/kagura_k14/ios_probe.c"
+assert original["experimental_kagura_pipeline"]["k14_uikit"] == "scripts/custom_ollvm/kagura_k14/ios_app_main.m"
+assert original["experimental_kagura_pipeline"]["k14_info_plist"] == "scripts/custom_ollvm/kagura_k14/Info.plist"
+assert original["experimental_kagura_pipeline"]["k14_build"] == "scripts/custom_ollvm/kagura_k14/build_ipa.sh"
+assert original["experimental_kagura_pipeline"]["k14_package"] == "scripts/custom_ollvm/kagura_k14/package_ipa.py"
+assert original["experimental_kagura_pipeline"]["k14_evidence"] == "scripts/custom_ollvm/kagura_k14/ipa_evidence.py"
+assert original["experimental_kagura_pipeline"]["k14_device_audit"] == "scripts/custom_ollvm/kagura_k14/device_log_audit.py"
+assert original["experimental_kagura_pipeline"]["k14_portable_test"] == "scripts/test_kagura_k14_ios_ipa.py"
+assert original["experimental_kagura_pipeline"]["k14_doc"] == "docs/KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md"
+assert original["experimental_kagura_pipeline"]["k14_pinned_registry_sha256"] == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa"
+assert original["experimental_kagura_pipeline"]["k14_native_checksum_oracle"] == "25a3318e3d7d6525"
+assert original["experimental_kagura_pipeline"]["k14_ipa_ci"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k14_iphone_runtime"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k14_arm64e_pac"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k14_expected_device_vectors"] == 4096
+assert original["experimental_kagura_pipeline"]["k14_production_merge"] is False
 assert len(status["registry_sha256"]) == 64
 
 negative_mutations = (
@@ -272,6 +301,35 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k11_security_attestation=True),
     lambda x: x["experimental_kagura_pipeline"].update(k12_status="NEW_PASSES_NATIVE_PASS"),
     lambda x: x["experimental_kagura_pipeline"].update(k13_status="NATIVE_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_status="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_workflow="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_app_bundle="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_app_executable="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_source="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_uikit="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_info_plist="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_build="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_package="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_evidence="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_device_audit="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_portable_test="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_doc="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_pinned_registry_sha256="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_native_checksum_oracle="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_ipa_ci="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_iphone_runtime="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_arm64e_pac="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_expected_device_vectors=4095),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_production_merge=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_artifact_review="FAKE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_artifact_zip_sha256="FAKE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_mac_arm64_baseline_object_sha256="FAKE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_mac_arm64_protected_object_sha256="FAKE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_ios_arm64_baseline_object_sha256="FAKE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_ios_arm64_protected_object_sha256="FAKE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_artifact_entry_count=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_independent_artifact_checks_passed=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_native_checksum="0"*16),
     lambda x: x["experimental_kagura_pipeline"].update(k13_candidate="kagura-pac"),
     lambda x: x["experimental_kagura_pipeline"].update(k13_pass_class="kagura::OtherPass"),
     lambda x: x["experimental_kagura_pipeline"].update(k13_workflow=".github/workflows/build.yml"),

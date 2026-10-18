@@ -80,8 +80,12 @@ lặp lại theo ứng viên).
   cân nhắc IPA lab. **Đã triển khai K13 ở trạng thái staged**:
   [CSEBreak native lab](KAGURA_K13_CSE_BREAK_NATIVE_LAB.md)
   chọn riêng `kagura-cse-break` với gate native 4096-vector và
-  iOS arm64 `MH_OBJECT`, nhưng **chưa có K13 macOS CI artifact** và
-  vẫn **0 pass mới được công nhận native/iPhone PASS**.
+  iOS arm64 `MH_OBJECT`. **Artifact K13 đã có và được kiểm chứng**:
+  [review K13](KAGURA_K13_ARTIFACT_REVIEW.md) có 41 entry,
+  422/422 điều kiện PASS và native macOS checksum parity.
+  Đây là **một pass K13 đã có chứng cứ native macOS ở phạm vi lab**,
+  nhưng **vẫn không có iPhone K13 PASS**, không được nhập chung
+  với trạng thái kiểm kê/opt-only K12 của 23 pass.
 - K11 IPA thực đã đối chiếu 331/331 trước đó là scope **riêng**,
   không bị thay bởi K12 opt-only.
 

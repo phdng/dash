@@ -491,7 +491,23 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
             " opt artifact provenance invalid; do not elevate into"
             " native/device PASS or Crane production")
     if (kagura.get("k13_status") !=
-        "STAGED_MANUAL_MACOS_LLVM19_NATIVE_NOT_VERIFIED" or
+        "MACOS_NATIVE_AND_IOS_OBJECT_ARTIFACT_VERIFIED_NO_DEVICE" or
+        kagura.get("k13_artifact_review") !=
+        "docs/KAGURA_K13_ARTIFACT_REVIEW.md" or
+        kagura.get("k13_artifact_zip_sha256") !=
+        "2f18e54d3cc6f421ab997d96a162fd6b5869a4f5c78e62f739943e2238ce64f3" or
+        kagura.get("k13_mac_arm64_baseline_object_sha256") !=
+        "d8e1a34f8696d039c6133657eb10969f481c89bf0070dcb9870925a2e4fa09a5" or
+        kagura.get("k13_mac_arm64_protected_object_sha256") !=
+        "02caa3bc92b5a927463229d0de9854f3422b6ce24d90741175a4ad040464e839" or
+        kagura.get("k13_ios_arm64_baseline_object_sha256") !=
+        "43b263d0d1eb5b8194dd944e86e1c49ce57061f6ec283dd39f654f67a0c2ec71" or
+        kagura.get("k13_ios_arm64_protected_object_sha256") !=
+        "a1dea3f6cdb66d4f62d40dcfa7d32608049082700b2c78f7f69854c6b864cc62" or
+        kagura.get("k13_native_checksum") !=
+        "25a3318e3d7d6525" or
+        kagura.get("k13_artifact_entry_count") != 41 or
+        kagura.get("k13_independent_artifact_checks_passed") != 422 or
         kagura.get("k13_candidate") != "kagura-cse-break" or
         kagura.get("k13_pass_class") != "kagura::CSEBreakPass" or
         kagura.get("k13_workflow") !=
@@ -507,18 +523,60 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k13_pinned_registry_sha256") !=
         "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa" or
         kagura.get("k13_native_vectors_planned") != 4096 or
-        kagura.get("k13_native_result") != "NOT_TESTED_MACOS_CI" or
+        kagura.get("k13_native_result") !=
+        "CI_MACOS_4096_PARITY_AND_BINARY_ARTIFACT_VALIDATED" or
         kagura.get("k13_ios_arm64") !=
-        "MH_OBJECT_BUILD_ONLY_NOT_TESTED" or
+        "ARM64_SUBTYPE0_MH_OBJECT_ARTIFACT_VALIDATED_NOT_DEVICE" or
         kagura.get("k13_iphone_runtime") != "NOT_TESTED" or
         kagura.get("k13_arm64e_pac") != "NOT_TESTED" or
         kagura.get("k13_production_merge") is not False or
         any(not (root / kagura[field]).is_file() for field in
             ("k13_workflow", "k13_pilot", "k13_audit",
-             "k13_portable_test", "k13_doc"))):
+             "k13_portable_test", "k13_doc", "k13_artifact_review"))):
         raise AssertionError(
-            "K13 isolated pinned CSEBreak real native macOS and iOS arm64"
-            " object gates are staged only; no premature device/native PASS")
+            "K13 CSEBreak native macOS and iOS arm64 object artifact"
+            " provenance invalid; no iPhone/PAC/Crane PASS implied")
+    if (kagura.get("k14_status") !=
+        "STAGED_MANUAL_IOS_ARM64_IPA_CI_NOT_VERIFIED" or
+        kagura.get("k14_workflow") !=
+        ".github/workflows/kagura-k14-cse-break-ios-ipa.yml" or
+        kagura.get("k14_app_bundle") !=
+        "com.duodash.research.kaguracsebreaklab" or
+        kagura.get("k14_app_executable") != "KaguraCSEBreakLab" or
+        kagura.get("k14_source") !=
+        "scripts/custom_ollvm/kagura_k14/ios_probe.c" or
+        kagura.get("k14_uikit") !=
+        "scripts/custom_ollvm/kagura_k14/ios_app_main.m" or
+        kagura.get("k14_info_plist") !=
+        "scripts/custom_ollvm/kagura_k14/Info.plist" or
+        kagura.get("k14_build") !=
+        "scripts/custom_ollvm/kagura_k14/build_ipa.sh" or
+        kagura.get("k14_package") !=
+        "scripts/custom_ollvm/kagura_k14/package_ipa.py" or
+        kagura.get("k14_evidence") !=
+        "scripts/custom_ollvm/kagura_k14/ipa_evidence.py" or
+        kagura.get("k14_device_audit") !=
+        "scripts/custom_ollvm/kagura_k14/device_log_audit.py" or
+        kagura.get("k14_portable_test") !=
+        "scripts/test_kagura_k14_ios_ipa.py" or
+        kagura.get("k14_doc") !=
+        "docs/KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md" or
+        kagura.get("k14_pinned_registry_sha256") !=
+        "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa" or
+        kagura.get("k14_native_checksum_oracle") !=
+        "25a3318e3d7d6525" or
+        kagura.get("k14_expected_device_vectors") != 4096 or
+        kagura.get("k14_ipa_ci") != "NOT_TESTED" or
+        kagura.get("k14_iphone_runtime") != "NOT_TESTED" or
+        kagura.get("k14_arm64e_pac") != "NOT_TESTED" or
+        kagura.get("k14_production_merge") is not False or
+        any(not (root / kagura[field]).is_file() for field in
+            ("k14_workflow", "k14_source", "k14_uikit", "k14_info_plist",
+             "k14_build", "k14_package", "k14_evidence",
+             "k14_device_audit", "k14_portable_test", "k14_doc"))):
+        raise AssertionError(
+            "K14 CSEBreak only iOS arm64 lab IPA staged from real K13"
+            " native + object, NOT CI/device/PAC/Crane verified")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

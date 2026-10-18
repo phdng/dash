@@ -1,0 +1,87 @@
+name: Kagura K14 - Isolated CSEBreak iOS arm64 IPA Lab (Experimental)
+
+# Standalone manual unsigned IPA; never Crane/arm64e/PAC production.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k14-ipa:
+    runs-on: macos-14
+    timeout-minutes: 110
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Portable fail-closed K14 and K13/K12/K11 gates
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k14_ios_ipa.py
+          python3 scripts/test_kagura_k13_native.py
+          python3 scripts/test_kagura_k12_opt_audit.py
+          python3 scripts/test_kagura_k11_ios_ipa.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+
+      - name: Build pinned independent Kagura LLVM19 plugin
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k14-source"
+          build="$RUNNER_TEMP/kagura-k14-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          python3 - "$src/include/kagura/PassRegistry.def" <<'PY'
+          import hashlib, pathlib, sys
+          got = hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest()
+          assert got == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa", "K14 upstream source SHA diverges from K12/K13"
+          PY
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          echo "K14_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K14_SRC=$src" >> "$GITHUB_ENV"
+          echo "K14_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Rebuild real K13 single CSEBreak IR objects and 4096 native parity
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K14-CSEBreak-IPA"
+          mkdir -p "$out"
+          echo "K14_OUT=$out" >> "$GITHUB_ENV"
+          python3 scripts/custom_ollvm/kagura_k13/pilot.py \
+            --src "$K14_SRC" --llvm "$K14_LLVM" \
+            --plugin "$K14_PLUGIN" --out "$out"
+          python3 scripts/custom_ollvm/kagura_k13/audit.py --out "$out"
+
+      - name: Link true K13 protected iOS object into standalone unsigned lab IPA
+        run: |
+          set -euo pipefail
+          bash scripts/custom_ollvm/kagura_k14/build_ipa.sh \
+            "$K14_LLVM" "$K14_SRC" "$K14_OUT"
+          test -s "$K14_OUT/KaguraCSEBreakLab-TrollStore-arm64.ipa"
+          test -s "$K14_OUT/Kagura-K14-IPA-EVIDENCE.json"
+          echo "K14: actual pinned CSEBreakPass LLVM IR/object and macOS native 4096 parity, iOS arm64 MH_EXECUTE IPA UUID/SHA audited." >> "$GITHUB_STEP_SUMMARY"
+          echo "K14 signed=NO, iPhone=NOT_TESTED_BY_CI, Crane/PAC=NOT_TESTED; manual iPhone log would require separate user-shared text audit." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Always preserve K14 unsigned IPA and per-stage evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K14-CSEBREAK-IOS-ARM64-IPA-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K14-CSEBreak-IPA/

@@ -1,11 +1,14 @@
 # K13 — thử nghiệm riêng Kagura CSEBreakPass trên LLVM19
 
-Ngày chuẩn bị: **18/10/2026**. Trạng thái:
-**STAGED_MANUAL_MACOS_LLVM19_NATIVE_NOT_VERIFIED**.
+Ngày chuẩn bị và kiểm tra artifact: **18/10/2026**.
+**Trạng thái: MACOS_NATIVE_AND_IOS_OBJECT_ARTIFACT_VERIFIED_NO_DEVICE**.
 
-Không được đọc trạng thái này thành native compiler PASS:
-K13 hiện chỉ triển khai mã, workflow và portable negative gates;
-**chưa có kết quả chạy workflow K13 macOS thật**.
+Workflow macOS LLVM19 K13 đã chạy thực và ZIP được đối chiếu độc lập:
+**41 entry, CRC sạch, 422/422 kiểm tra file-backed PASS**, gồm exact
+LLVM CSEBreak class, IR và Mach-O object delta, native checksum
+4096-vector baseline/protected bằng nhau, iOS arm64 subtype0 object.
+Đọc chi tiết [KAGURA_K13_ARTIFACT_REVIEW.md](KAGURA_K13_ARTIFACT_REVIEW.md).
+**Không có IPA K13, iPhone runtime hoặc chứng thực thiết bị**.
 
 ## Nguồn chọn pass
 
@@ -70,7 +73,8 @@ Artifact (kể cả khi fail):
 ## Điều kiện đạt
 
 `K13_MACOS_CSE_BREAK_4096_PARITY_AND_IOS_ARM64_OBJECT_PASS`
-chỉ hợp lệ khi CI macOS đã chạy đủ bước và `audit.py` replay PASS.
+đã được chứng thực bằng log CI và raw ZIP, đối chiếu độc lập với
+422 điều kiện PASS (không chạy lại macOS executable trên máy auditor).
 Ngay cả như vậy: iOS arm64 **MH_OBJECT build-only**, không chứng
 minh có thể link app/IPA, kiểm nghiệm iPhone, arm64e PAC hoặc
 khả năng tương thích với pass khác. Nếu link runtime của CSEBreak

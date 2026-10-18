@@ -100,11 +100,21 @@ K12 opt-only **không phải native/IPA/iPhone PASS** và không có pass
 mới nào được tích hợp vào `Obfuscator`. Quy trình:
 [KAGURA_K12_REMAINING_PASS_INVENTORY.md](KAGURA_K12_REMAINING_PASS_INVENTORY.md).
 
-**K13 — lab CSEBreak staged, chưa có native CI artifact:**
-[KAGURA_K13_CSE_BREAK_NATIVE_LAB.md](KAGURA_K13_CSE_BREAK_NATIVE_LAB.md)
-chuẩn bị workflow thủ công LLVM19 pin, kiểm native macOS 4096 vector,
-IR/object delta và iOS arm64 MH_OBJECT build-only; không nâng bất kỳ
-pass K12 nào thành iPhone PASS. Không chỉnh Crane production.
+**K13 — CSEBreak native macOS + iOS object artifact đã xác minh:**
+[KAGURA_K13_ARTIFACT_REVIEW.md](KAGURA_K13_ARTIFACT_REVIEW.md).
+ZIP K13 41 entry CRC sạch, **422/422 kiểm tra độc lập PASS**;
+trace LLVM19 thực `CSEBreakPass`, IR/object Mach-O delta,
+hai executable macOS arm64 có 4096-vector checksum bằng
+`25a3318e3d7d6525`, iOS arm64 subtype0 `MH_OBJECT`.
+**Không có IPA/iPhone K13**; không bật pass K13 trong Crane production.
+Quy trình: [KAGURA_K13_CSE_BREAK_NATIVE_LAB.md](KAGURA_K13_CSE_BREAK_NATIVE_LAB.md).
+
+**K14 — IPA lab riêng cho CSEBreak (staged, chưa xác minh CI):**
+[KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md](KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md)
+cung cấp workflow thủ công LLVM19/arm64, rebuild exact K13 object,
+link vào bundle `KaguraCSEBreakLab` và đóng IPA unsigned
+kèm SHA/LC_UUID/source/native report. K14 chưa có IPA macOS CI thực,
+chưa chạy iPhone; không liên quan K11 năm pass hay Crane production.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản
