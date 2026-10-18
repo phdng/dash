@@ -1,0 +1,86 @@
+name: Kagura K15 - BBCheck Runtime Provider Research (Experimental)
+
+# Only test pinned BBCheck IR/object and compile/source-audit *real* C
+# runtime candidates, never execute tamper callback or build/install IPA.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  bbcheck-runtime-closure:
+    runs-on: macos-14
+    timeout-minutes: 100
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify isolated K15 BBCheck and previous K14/K13/K12 rules
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k15_bbcheck.py
+          python3 scripts/test_kagura_k14_ios_ipa.py
+          python3 scripts/test_kagura_k13_native.py
+          python3 scripts/test_kagura_k12_opt_audit.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+          python3 scripts/custom_ollvm/audit_passes.py
+
+      - name: Build genuine Kagura pinned LLVM19 plugin
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k15-source"
+          build="$RUNNER_TEMP/kagura-k15-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          python3 - "$src/include/kagura/PassRegistry.def" <<'PY'
+          import pathlib, hashlib, sys
+          digest = hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest()
+          assert digest == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa", "K15 upstream registry differs from independently verified K12/K13/K14"
+          PY
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          echo "K15_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K15_SRC=$src" >> "$GITHUB_ENV"
+          echo "K15_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Verify true BasicBlockChecksumPass IR/object + pinned runtime candidates without executing
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K15-BBCheck"
+          python3 scripts/custom_ollvm/kagura_k15/pilot.py \
+            --src "$K15_SRC" --llvm "$K15_LLVM" \
+            --plugin "$K15_PLUGIN" --out "$out"
+          python3 scripts/custom_ollvm/kagura_k15/audit.py --out "$out"
+          python3 - "$out/Kagura-K15-REPORT.json" <<'PY'
+          import json,sys
+          r=json.load(open(sys.argv[1]))
+          for target, stage in r["targets"].items():
+              p=stage["providers"]
+              print(f"K15 {target}: provider_status={p['status']}; missing={p['missing_symbols']}; duplicated={p['duplicate_symbols']}; transitive={p['transitive_unresolved_kagura_symbols']}")
+          print("K15: native checksum/IPA/iPhone/anti-tamper callback NOT TESTED; no Crane/PAC.")
+          PY
+          echo "K15 pinned BBCheckPass IR/object and actual runtime provider findings archived. This IS NOT NATIVE PASS and no tamper callback ran." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve all K15 source/IR/object/provider/compile logs even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K15-BBCHECK-RUNTIME-PROVIDER-RESEARCH-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K15-BBCheck/

@@ -167,7 +167,20 @@ assert original["experimental_kagura_pipeline"]["k13_ios_arm64"] == "ARM64_SUBTY
 assert original["experimental_kagura_pipeline"]["k13_iphone_runtime"] == "NOT_TESTED"
 assert original["experimental_kagura_pipeline"]["k13_arm64e_pac"] == "NOT_TESTED"
 assert original["experimental_kagura_pipeline"]["k13_production_merge"] is False
-assert original["experimental_kagura_pipeline"]["k14_status"] == "STAGED_MANUAL_IOS_ARM64_IPA_CI_NOT_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k14_status"] == "IPA_AND_USER_SHARED_LOG_UUID_CHECKSUM_VERIFIED_NOT_ATTESTED"
+assert original["experimental_kagura_pipeline"]["k14_artifact_review"] == "docs/KAGURA_K14_ARTIFACT_AND_DEVICE_REVIEW.md"
+assert original["experimental_kagura_pipeline"]["k14_artifact_zip_sha256"] == "0ffbace0a56457a517bded16aa92d1a2e1455982901af5f39644c9140c87da47"
+assert original["experimental_kagura_pipeline"]["k14_ipa_sha256"] == "8733e2f93001b6d1195581deea013688825a94aa1d4d29bbfb23814dd5f9716f"
+assert original["experimental_kagura_pipeline"]["k14_app_binary_sha256"] == "584e9999d25a2642d818c0857a767173031868868df94d0e7de289176aa0cbd7"
+assert original["experimental_kagura_pipeline"]["k14_app_macho_uuid"] == "7c0cb853-77aa-3ccb-9f20-560e5f40e587"
+assert original["experimental_kagura_pipeline"]["k14_protected_ios_object_sha256"] == "a1dea3f6cdb66d4f62d40dcfa7d32608049082700b2c78f7f69854c6b864cc62"
+assert original["experimental_kagura_pipeline"]["k14_user_shared_normalized_log_sha256"] == "a145013d104fc83b0369a9ff21175ec5f6e4097eb739de8b98601e9aea4360d6"
+assert original["experimental_kagura_pipeline"]["k14_claimed_context"] == "IOS_DEVICE_USER_SHARED_TEXT_NOT_INDEPENDENT_ATTESTATION"
+assert original["experimental_kagura_pipeline"]["k14_artifact_entry_count"] == 53
+assert original["experimental_kagura_pipeline"]["k14_independent_artifact_checks_passed"] == 103
+assert original["experimental_kagura_pipeline"]["k14_user_shared_device_log_lines"] == 8
+assert original["experimental_kagura_pipeline"]["k14_iphone_execution_independently_observed"] is False
+assert original["experimental_kagura_pipeline"]["k14_device_execution_cryptographically_attested"] is False
 assert original["experimental_kagura_pipeline"]["k14_workflow"] == ".github/workflows/kagura-k14-cse-break-ios-ipa.yml"
 assert original["experimental_kagura_pipeline"]["k14_app_bundle"] == "com.duodash.research.kaguracsebreaklab"
 assert original["experimental_kagura_pipeline"]["k14_app_executable"] == "KaguraCSEBreakLab"
@@ -182,11 +195,29 @@ assert original["experimental_kagura_pipeline"]["k14_portable_test"] == "scripts
 assert original["experimental_kagura_pipeline"]["k14_doc"] == "docs/KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md"
 assert original["experimental_kagura_pipeline"]["k14_pinned_registry_sha256"] == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa"
 assert original["experimental_kagura_pipeline"]["k14_native_checksum_oracle"] == "25a3318e3d7d6525"
-assert original["experimental_kagura_pipeline"]["k14_ipa_ci"] == "NOT_TESTED"
-assert original["experimental_kagura_pipeline"]["k14_iphone_runtime"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k14_ipa_ci"] == "MACOS_UNSIGNED_IPA_OBJECT_UUID_SHA_ARTIFACT_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k14_iphone_runtime"] == "USER_SHARED_TEXT_PARITY_UUID_VALIDATED_NOT_ATTESTED"
 assert original["experimental_kagura_pipeline"]["k14_arm64e_pac"] == "NOT_TESTED"
 assert original["experimental_kagura_pipeline"]["k14_expected_device_vectors"] == 4096
 assert original["experimental_kagura_pipeline"]["k14_production_merge"] is False
+assert original["experimental_kagura_pipeline"]["k15_status"] == "STAGED_BBCHECK_PINNED_RUNTIME_PROVIDER_DISCOVERY_NOT_NATIVE"
+assert original["experimental_kagura_pipeline"]["k15_candidate"] == "kagura-bbcheck"
+assert original["experimental_kagura_pipeline"]["k15_pass_class"] == "kagura::BasicBlockChecksumPass"
+assert original["experimental_kagura_pipeline"]["k15_pass_kind"] == "FN"
+assert original["experimental_kagura_pipeline"]["k15_pass_enable_flag"] == "BBCheck"
+assert original["experimental_kagura_pipeline"]["k15_workflow"] == ".github/workflows/kagura-k15-bbcheck-runtime-audit.yml"
+assert original["experimental_kagura_pipeline"]["k15_pilot"] == "scripts/custom_ollvm/kagura_k15/pilot.py"
+assert original["experimental_kagura_pipeline"]["k15_audit"] == "scripts/custom_ollvm/kagura_k15/audit.py"
+assert original["experimental_kagura_pipeline"]["k15_portable_test"] == "scripts/test_kagura_k15_bbcheck.py"
+assert original["experimental_kagura_pipeline"]["k15_doc"] == "docs/KAGURA_K15_BBCHECK_RUNTIME_RESEARCH.md"
+assert original["experimental_kagura_pipeline"]["k15_pinned_registry_sha256"] == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa"
+assert original["experimental_kagura_pipeline"]["k15_macos_native_parity"] == "NOT_TESTED_TAMPER_CALLBACK"
+assert original["experimental_kagura_pipeline"]["k15_ios_arm64_object"] == "DISCOVERY_ONLY_NOT_MACOS_CI_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k15_ios_ipa"] == "NOT_BUILT"
+assert original["experimental_kagura_pipeline"]["k15_iphone_runtime"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k15_arm64e_pac"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k15_required_runtime_symbols"] == ["_kagura_bb_check", "_kagura_on_tamper_detected"]
+assert original["experimental_kagura_pipeline"]["k15_production_merge"] is False
 assert len(status["registry_sha256"]) == 64
 
 negative_mutations = (
@@ -302,6 +333,37 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k12_status="NEW_PASSES_NATIVE_PASS"),
     lambda x: x["experimental_kagura_pipeline"].update(k13_status="NATIVE_PASS"),
     lambda x: x["experimental_kagura_pipeline"].update(k14_status="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_status="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_candidate="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_pass_class="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_pass_kind="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_pass_enable_flag="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_workflow="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_pilot="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_audit="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_portable_test="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_doc="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_pinned_registry_sha256="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_macos_native_parity="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_ios_arm64_object="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_ios_ipa="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_iphone_runtime="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_arm64e_pac="FALSE_POSITIVE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_required_runtime_symbols=["_kagura_bb_check"]),
+    lambda x: x["experimental_kagura_pipeline"].update(k15_production_merge=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_artifact_review="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_artifact_zip_sha256="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_ipa_sha256="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_app_binary_sha256="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_app_macho_uuid="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_protected_ios_object_sha256="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_user_shared_normalized_log_sha256="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_claimed_context="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_artifact_entry_count=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_independent_artifact_checks_passed=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_user_shared_device_log_lines=7),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_iphone_execution_independently_observed=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k14_device_execution_cryptographically_attested=True),
     lambda x: x["experimental_kagura_pipeline"].update(k14_workflow="FALSE_POSITIVE"),
     lambda x: x["experimental_kagura_pipeline"].update(k14_app_bundle="FALSE_POSITIVE"),
     lambda x: x["experimental_kagura_pipeline"].update(k14_app_executable="FALSE_POSITIVE"),

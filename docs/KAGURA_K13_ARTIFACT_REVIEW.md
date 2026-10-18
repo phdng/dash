@@ -87,10 +87,11 @@ executable macOS từ ZIP; đây không phải chứng thực thiết bị độ
 - Đây là bằng chứng cho **một pass `CSEBreakPass` riêng lẻ**;
   không chứng minh kết hợp an toàn với K11 năm pass khác.
 - K11 IPA đã xác minh 331/331 trước đó không thay đổi.
-- Bước kế tiếp K14 **đã triển khai ở trạng thái staged**:
-  [KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md](KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md)
-  xây IPA nghiên cứu riêng từ đúng object `ios-cse-break.o`,
-  nhưng **chưa có artifact IPA macOS K14 hay log iPhone K14**.
+- Bước kế tiếp K14 **đã có IPA thực và log iPhone do người dùng
+  chia sẻ**: [review K14](KAGURA_K14_ARTIFACT_AND_DEVICE_REVIEW.md).
+  IPA sử dụng đúng `ios-cse-break.o` nguồn K13, 53 thành phần ZIP,
+  103/103 điều kiện PASS, user-shared log UUID/checksum khớp,
+  nhưng **không có device attestation hay PAC/Crane proof**.
 
 Bản raw review JSON: `Kagura-K13-CSEBREAK-Artifact-Review.json`,
 được tạo từ ZIP thật để đối chiếu SHA/Mach-O và danh sách gate.

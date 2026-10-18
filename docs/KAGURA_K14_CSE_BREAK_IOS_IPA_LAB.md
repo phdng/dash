@@ -1,12 +1,16 @@
 # DuoDash Kagura K14 — CSEBreakPass iOS arm64 IPA lab độc lập
 
-Ngày triển khai: **18/10/2026**. Trạng thái:
-**STAGED_MANUAL_IOS_ARM64_IPA_CI_NOT_VERIFIED**.
+Ngày triển khai và nhận kết quả: **18/10/2026**. Trạng thái:
+**IPA_AND_USER_SHARED_LOG_UUID_CHECKSUM_VERIFIED_NOT_ATTESTED**.
 
-K14 **chưa có artifact IPA macOS CI thực**, chưa có log iPhone K14.
-Các portable fixture tests hiện chỉ xác minh bộ quy tắc, không phải
-native IPA hay device runtime PASS. Không sửa Crane production,
-Objective-C hooks, arm64e/PAC, K5/K7/K11 hoặc các giai đoạn khác.
+K14 **đã có artifact IPA macOS CI thực** và **8 dòng log iPhone do
+người dùng chia sẻ**: [review K14](KAGURA_K14_ARTIFACT_AND_DEVICE_REVIEW.md).
+ZIP 53 thành phần CRC sạch, **103/103 điều kiện file-backed PASS**,
+IPA executable Mach-O UUID/SHA và native K13 oracle khớp toàn bộ;
+UUID log thiết bị trùng đúng UUID trong LC_UUID thật. Nhưng
+**không có quan sát thiết bị độc lập hoặc device attestation**.
+Không sửa Crane production, Objective-C hooks, arm64e/PAC,
+K5/K7/K11 hoặc các giai đoạn khác.
 
 ## Vì sao chọn K14 sau K13
 
@@ -22,7 +26,8 @@ Object iOS subtype0 **`ios-cse-break.o`** có external symbol
 `_dd_k8_evaluate`, undefined `_strlen` và không có
 `_kagura_*` runtime dependency.
 
-Đó là bằng chứng native macOS/object iOS; **chưa có IPA iOS**.
+K13 có bằng chứng native macOS/object iOS; **K14 đã build
+và audit thành công IPA thực** từ object đó, theo [review K14](KAGURA_K14_ARTIFACT_AND_DEVICE_REVIEW.md).
 K14 đóng gói duy nhất object này vào bundle mới, không nhúng
 K11 `05-ci/ios.o` hay thư viện macOS/Kagura giả, không ghép 5 pass.
 
@@ -99,12 +104,12 @@ không tự tạo chứng thực mật mã từ một văn bản chia sẻ.
 
 ## Giới hạn và điều kiện nâng trạng thái
 
-Trước khi nhận artifact CI: `STAGED_MANUAL_IOS_ARM64_IPA_CI_NOT_VERIFIED`.
-Sau đó cần kiểm tra trực tiếp Mach-O SHA/LC_UUID thật, CRC IPA,
-symbol, object source/protected/K13 pass class + native parity.
-Ngay cả khi build IPA PASS, **CI không chạy trên iPhone**.
-Chỉ log iPhone do người dùng gửi rồi đối chiếu mới có thể ghi
-`USER_SHARED_TEXT_PARITY_UUID_VALIDATED_NOT_ATTESTED`.
+Trạng thái trước artifact là `STAGED_MANUAL_IOS_ARM64_IPA_CI_NOT_VERIFIED`.
+**Nay đã có artifact thực**: SHA/LC_UUID Mach-O, CRC IPA, symbol,
+object protected K13 và native 4096 parity được replay PASS.
+**Log do người dùng chia sẻ** có đúng 8 dòng, UUID và checksum
+khớp IPA/oracle nên đạt `USER_SHARED_TEXT_PARITY_UUID_VALIDATED_NOT_ATTESTED`.
+CI **không chạy trên iPhone** và không có chứng thực thiết bị độc lập.
 Không tuyên bố device attestation, PAC, Objective-C hook safety,
 bảo vệ chống reverse, hoặc hợp nhất Crane.
 

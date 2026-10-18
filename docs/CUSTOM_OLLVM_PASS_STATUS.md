@@ -109,12 +109,26 @@ hai executable macOS arm64 có 4096-vector checksum bằng
 **Không có IPA/iPhone K13**; không bật pass K13 trong Crane production.
 Quy trình: [KAGURA_K13_CSE_BREAK_NATIVE_LAB.md](KAGURA_K13_CSE_BREAK_NATIVE_LAB.md).
 
-**K14 — IPA lab riêng cho CSEBreak (staged, chưa xác minh CI):**
-[KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md](KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md)
-cung cấp workflow thủ công LLVM19/arm64, rebuild exact K13 object,
-link vào bundle `KaguraCSEBreakLab` và đóng IPA unsigned
-kèm SHA/LC_UUID/source/native report. K14 chưa có IPA macOS CI thực,
-chưa chạy iPhone; không liên quan K11 năm pass hay Crane production.
+**K14 — IPA CSEBreak và văn bản log thiết bị đã được đối chiếu:**
+[KAGURA_K14_ARTIFACT_AND_DEVICE_REVIEW.md](KAGURA_K14_ARTIFACT_AND_DEVICE_REVIEW.md).
+ZIP K14 thật gồm **53 thành phần, 103/103 checks PASS**, IPA unsigned
+arm64 MH_EXECUTE, executable SHA/LC_UUID và object CSEBreak đúng
+nguồn K13. Log iPhone 8 dòng do người dùng chia sẻ có UUID
+`7c0cb853-77aa-3ccb-9f20-560e5f40e587` trùng binary và
+checksum `25a3318e3d7d6525` trùng oracle K13 **4096 vector**.
+Đây là **user-shared text parity, không phải device attestation**;
+CI cũng không chạy iPhone. Quy trình:
+[KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md](KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md).
+Crane production, K11 và arm64e/PAC không thay đổi.
+
+**K15 — BBCheck runtime gốc, staged discovery-only:**
+[KAGURA_K15_BBCHECK_RUNTIME_RESEARCH.md](KAGURA_K15_BBCHECK_RUNTIME_RESEARCH.md).
+K12 cho thấy `kagura::BasicBlockChecksumPass` tạo IR delta trên
+macOS/iOS nhưng gọi thật `_kagura_bb_check` và
+`_kagura_on_tamper_detected`. K15 nghiên cứu pinned source C,
+biên dịch candidate providers trên hai target, đối chiếu symbol thật,
+không tự link/execute tamper callback, không native/IPA/iPhone PASS.
+Workflow chỉ chạy thủ công và tách hoàn toàn khỏi Crane.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản
