@@ -103,6 +103,25 @@ Workflow riêng: `.github/workflows/kagura-k11-ios-ipa.yml`
    và yêu cầu hai symbol thật được giải qua các object đã cross-build.
    Giữ K11 ở trạng thái staged cho đến khi có artifact IPA macOS mới.
 
+   **Lỗi CI tiếp theo: Objective-C selector trong Apple nm (17/10/2026).**
+   Sau K10 serialized PASS và chọn đúng nguồn
+   `runtime/anti_debug/anti_debug.c`, lần chạy K11 kế tiếp
+   dừng tại `ci_runtime_closure.py:52` vì parser `nm -u -j`
+   không chấp nhận symbol:
+   `_objc_msgSend$activateConstraints:`. Chuỗi này là tên
+   selector stub của Objective-C, **không phải Kagura dependency
+   thiếu**. Regex cũ chỉ nhận chữ/số/`_`/`.`/`$` và
+   bỏ sót dấu `:` hợp lệ. Parser mới nhận **một token ASCII
+   printable bắt đầu bằng `_`**, bao gồm dấu `:`/`$`,
+   nhưng từ chối khoảng trắng nội bộ, NUL, ANSI escape, header
+   và các cột `nm` ngoài ý muốn. Sau khi parse, chỉ
+   `_kagura_*` được chuyển vào dependency closure; Objective-C
+   symbols được giữ ở bằng chứng raw `nm` nhưng không coi là
+   nguồn định nghĩa Kagura. Kiểm thử negative fixture tái tạo
+   chính xác `_objc_msgSend$activateConstraints:` cùng
+   `_objc_msgSend$initWithFrame:` và Objective-C class symbol.
+   K11 vẫn **STAGED**, chưa có IPA macOS được xác nhận sau sửa.
+
    **Chưa có kết quả run workflow sau sửa này**; giữ
    `k11_ios_ipa_status=STAGED_MANUAL_IOS_IPA_CI_NOT_VERIFIED`
    cho đến khi ZIP artifact thật qua kiểm chứng. Nếu lỗi tái hiện,

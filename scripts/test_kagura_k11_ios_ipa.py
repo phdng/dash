@@ -194,6 +194,27 @@ assert closure.parse_undefined_names(
 assert closure.parse_undefined_names("    _kagura_image_list_contains   \n") == {
     "_kagura_image_list_contains"}
 assert closure.parse_undefined_names("") == set()
+# Reproduce exact Apple nm -u -j line from the real K11 CI failure.
+assert closure.parse_undefined_names(
+    "_objc_msgSend$activateConstraints:\n"
+    "_objc_msgSend$initWithFrame:\n"
+    "_OBJC_CLASS_$_NSLayoutConstraint\n"
+    "_kagura_image_list_contains\n"
+    "_kagura_suspicious_image_patterns\n"
+) == {
+    "_objc_msgSend$activateConstraints:",
+    "_objc_msgSend$initWithFrame:",
+    "_OBJC_CLASS_$_NSLayoutConstraint",
+    "_kagura_image_list_contains",
+    "_kagura_suspicious_image_patterns",
+}
+for invalid_nm, reason in (
+    ("_objc_msgSend$activateConstraints: with-spaces\n", "embedded whitespace"),
+    ("_objc_msgSend$activateConstraints:\ttrailing-column\n", "extra column"),
+    ("_objc_msgSend$activateConstraints:\x00\n", "NUL control character"),
+    ("_objc_msgSend$activateConstraints:\x1b[31m\n", "ANSI control sequence"),
+):
+    rejects(lambda s=invalid_nm: closure.parse_undefined_names(s), reason)
 rejects(lambda: closure.parse_undefined_names(
     "                 U _kagura_image_list_contains\n"),
     "nm -u -j should fail malformed typed output instead of silently empty")
@@ -239,7 +260,11 @@ with tempfile.TemporaryDirectory(prefix="K11-synthetic-link-closure-") as temp:
             {"_kagura_rtld_default_handle"},
             {"_kagura_image_list_contains", "_kagura_suspicious_image_patterns"}),
         str(originals[2]): ({"_dd_k11_ios_parity"}, set()),
-        str(originals[3]): (set(), set()),
+        str(originals[3]): (set(), {
+            "_objc_msgSend$activateConstraints:",
+            "_objc_msgSend$initWithFrame:",
+            "_OBJC_CLASS_$_NSLayoutConstraint",
+        }),
     }
     genuine_run = closure.run
     recursive_probe = [False]
@@ -297,6 +322,9 @@ with tempfile.TemporaryDirectory(prefix="K11-synthetic-link-closure-") as temp:
             (out / "ios-runtime-initial-nm.json").read_text())
         assert raw_samples["ios-kagura-rtld.o"]["parsed_kagura_symbols"] == [
             "_kagura_image_list_contains", "_kagura_suspicious_image_patterns"]
+        assert "_objc_msgSend$activateConstraints:" in raw_samples[
+            "ios-app-main.o"]["raw_stdout"]
+        assert raw_samples["ios-app-main.o"]["parsed_kagura_symbols"] == []
         assert (out / "ios-runtime-closure.json").is_file()
         assert len((out / "ios-runtime-extra-objects.txt").read_text().splitlines()) == 1
         recursive_probe[0] = True

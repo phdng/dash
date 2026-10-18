@@ -20,7 +20,12 @@ from pathlib import Path
 NM_LINE = re.compile(r"^\s*(?:(?:[0-9A-Fa-f]+)\s+)?([A-Za-z])\s+(_[A-Za-z0-9_.$]+)\s*$")
 # Apple 'nm -u' may output ONLY the symbol names, without a "U" column.
 # Request -j explicitly so parsing does not depend on nm output style.
-NM_SYMBOL = re.compile(r"_[A-Za-z0-9_.$]+")
+# Mach-O symbol names are not C identifiers: Apple Clang emits Objective-C
+# selector stubs such as '_objc_msgSend$activateConstraints:' with ':'.
+# Accept a SINGLE underscore-prefixed, printable ASCII token (no spaces,
+# controls, ANSI escapes, nm columns, or header lines). Only '_kagura_'
+# names are considered for the Kagura dependency closure.
+NM_SYMBOL = re.compile(r"_[!-~]+")
 MAX_SOURCES = 12
 MAX_CANDIDATES = 72
 
@@ -42,7 +47,12 @@ def parse_nm(content: str, *, defined: bool) -> set[str]:
 
 
 def parse_undefined_names(content: str) -> set[str]:
-    """Consume Apple nm -u -j *names only*; reject malformed/mixed output."""
+    """Read Apple nm -u -j names (including ObjC '$selector:' symbols).
+
+    The output must consist only of one underscore-prefixed printable
+    symbol per line; foreign formats still fail closed. Normal UIKit
+    undefined symbols are retained but never treated as Kagura providers.
+    """
     result: set[str] = set()
     for raw in content.splitlines():
         name = raw.strip()

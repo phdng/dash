@@ -91,7 +91,7 @@ assert original["experimental_kagura_pipeline"]["k11_ios_ipa_status"] == "STAGED
 assert original["experimental_kagura_pipeline"]["k11_runtime_locator"] == "scripts/custom_ollvm/kagura_k11/ci_runtime_resolver.py"
 assert original["experimental_kagura_pipeline"]["k11_runtime_closure_script"] == "scripts/custom_ollvm/kagura_k11/ci_runtime_closure.py"
 assert original["experimental_kagura_pipeline"]["k11_ios_runtime_dependency_closure"] == "RECURSIVE_REAL_PINNED_C_IOS_ARM64_NM_DEFINITIONS_NO_SHIMS"
-assert original["experimental_kagura_pipeline"]["k11_last_observed_ci_failure"] == "IOS_ARM64_NM_U_TYPED_PARSER_SILENTLY_DROPPED_BARE_NAMES"
+assert original["experimental_kagura_pipeline"]["k11_last_observed_ci_failure"] == "IOS_ARM64_NM_J_REJECTED_OBJC_SELECTOR_COLON"
 assert original["experimental_kagura_pipeline"]["k11_bundle_id"] == "com.duodash.research.kagurafivelab"
 assert original["experimental_kagura_pipeline"]["k11_final_pass_order"] == ["mvo", "genc", "fsplit", "ibr", "ci"]
 assert original["experimental_kagura_pipeline"]["k11_vectors_per_function"] == 4096
