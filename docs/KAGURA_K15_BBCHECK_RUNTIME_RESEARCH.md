@@ -1,12 +1,17 @@
 # K15 — Kagura BBCheckPass: điều tra runtime gốc, không tự chạy tamper
 
-Ngày triển khai: **18/10/2026**. Trạng thái:
-**STAGED_BBCHECK_PINNED_RUNTIME_PROVIDER_DISCOVERY_NOT_NATIVE**.
+Ngày triển khai và đối chiếu: **18/10/2026**. Trạng thái:
+**MACOS_IOS_PROVIDER_ARTIFACT_VERIFIED_WEAK_ALWAYS_PASS_STUB_NOT_NATIVE_OR_SECURITY_PASS**.
 
-Đây là workflow thử nghiệm khác K14. K14 đã có IPA CSEBreak thực
-và văn bản log iPhone 8 dòng khớp UUID/checksum, nhưng kết quả đó
-**không áp dụng** cho BBCheck. K15 chưa có artifact CI macOS, chưa
-có native parity, iOS IPA hoặc iPhone BBCheck.
+[Review ZIP K15 thật](KAGURA_K15_ARTIFACT_REVIEW.md): 231 entries,
+**2.609/2.609 điều kiện file-backed PASS**. Cả macOS và iOS arm64
+đều có hai provider C gốc duy nhất, 22 candidate source C/target
+biên dịch được và zero Kagura transitive undefined trong provider
+được chọn. **Nhưng runtime bb_check.c thực chất là weak stub
+luôn return 1, bỏ qua block_id/expected — KHÔNG có code integrity
+verification.** Tamper callback weak mặc định abort(). K15 chưa
+chạy native parity, không có iOS IPA hay iPhone BBCheck.
+K14 là CSEBreak, không chuyển kết quả IPA/log sang BBCheck.
 
 ## Dấu vết chính xác từ K12 thật
 
@@ -79,12 +84,14 @@ raw `.ll`, `.bc`, `.o`, nm và compile logs/source C.
 
 ## Tiêu chuẩn cho K16 nếu K15 chứng minh closure
 
-Chỉ khi cả macOS và iOS có provider gốc duy nhất, không
-thiếu dependency runtime Kagura, đã đọc/đánh giá nhánh tamper
-và bảo đảm xử lý error/termination trong lab **không bị bypass**,
-mới thiết kế native 4096-vector pilot trên môi trường thử nghiệm
-có cách rollback. K15 **không tự nâng trạng thái Native PASS** ngay
-cả khi bước scan provider có kết quả tốt.
+**K15 đã tìm đúng hai provider nhưng phát hiện thiết kế runtime
+yếu:** bb_check luôn trả 1, không tính lại checksum máy. Vì vậy
+**không nên đưa BBCheck nguyên trạng vào K16 native/security test**
+hoặc Crane. Cần sửa từ thiết kế pass để tạo metadata integrity
+ở post-codegen machine-code với block identifier duy nhất; thẩm
+định policy tamper, fail-closed và cách rollback trước khi cân
+nhắc native 4096-vector trên một lab an toàn. Không được bịa
+hash, che giấu abort hoặc coi stub luôn PASS là bằng chứng bảo mật.
 
 Không thay Crane production, hooks Objective-C, K5/K7,
 K11–K14, arm64e/PAC. Không đưa ra tuyên bố tăng cường bảo mật,

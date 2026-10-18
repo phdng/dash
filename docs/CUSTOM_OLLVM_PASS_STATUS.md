@@ -121,14 +121,26 @@ CI cũng không chạy iPhone. Quy trình:
 [KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md](KAGURA_K14_CSE_BREAK_IOS_IPA_LAB.md).
 Crane production, K11 và arm64e/PAC không thay đổi.
 
-**K15 — BBCheck runtime gốc, staged discovery-only:**
+**K15 — BBCheck: provider đã xác minh nhưng runtime không kiểm tra integrity:**
+[KAGURA_K15_ARTIFACT_REVIEW.md](KAGURA_K15_ARTIFACT_REVIEW.md).
+ZIP thật 231 files, 2.609/2.609 checks; 22 candidate C nguồn thật
+được compile trên mỗi target, tìm đúng provider duy nhất cho
+`_kagura_bb_check` và `_kagura_on_tamper_detected`, không còn
+Kagura transitive deps trong hai provider được chọn. **Vấn đề:**
+`runtime/core/bb_check.c` là weak stub **luôn return 1**, bỏ qua
+`block_id/expected` nên **không có code integrity check thực**;
+callback tamper weak mặc định gọi `abort()` trên macOS/iOS.
+Không native 4096/IPA/iPhone/security PASS, không tự link/execute
+hoặc merge vào Crane. Quy trình:
 [KAGURA_K15_BBCHECK_RUNTIME_RESEARCH.md](KAGURA_K15_BBCHECK_RUNTIME_RESEARCH.md).
-K12 cho thấy `kagura::BasicBlockChecksumPass` tạo IR delta trên
-macOS/iOS nhưng gọi thật `_kagura_bb_check` và
-`_kagura_on_tamper_detected`. K15 nghiên cứu pinned source C,
-biên dịch candidate providers trên hai target, đối chiếu symbol thật,
-không tự link/execute tamper callback, không native/IPA/iPhone PASS.
-Workflow chỉ chạy thủ công và tách hoàn toàn khỏi Crane.
+
+**K16 — offline post-link Mach-O `__TEXT,__text` measurement (staged):**
+[KAGURA_K16_OFFLINE_MACHO_TEXT.md](KAGURA_K16_OFFLINE_MACHO_TEXT.md).
+Workflow nghiên cứu chỉ đo SHA-256 của vùng code trong executable
+arm64 macOS K13 baseline/CSEBreak và iOS K14 CSEBreak đã link.
+Manifest **không ký, không có trust anchor**, không có runtime verifier,
+không đo per-basic-block và không chạy BBCheck weak stub. Không coi
+K16 là integrity/security PASS, không thay đổi iPhone/Crane/PAC.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản

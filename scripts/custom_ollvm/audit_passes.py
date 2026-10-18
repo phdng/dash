@@ -603,7 +603,34 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
             " UUID/checksum correlation; device cryptographic attestation"
             " and Crane/PAC remain UNVERIFIED")
     if (kagura.get("k15_status") !=
-        "STAGED_BBCHECK_PINNED_RUNTIME_PROVIDER_DISCOVERY_NOT_NATIVE" or
+        "MACOS_IOS_PROVIDER_ARTIFACT_VERIFIED_WEAK_ALWAYS_PASS_STUB_NOT_NATIVE_OR_SECURITY_PASS" or
+        kagura.get("k15_artifact_review") !=
+        "docs/KAGURA_K15_ARTIFACT_REVIEW.md" or
+        kagura.get("k15_artifact_zip_sha256") !=
+        "1f19d3d9eb58a87a9798d11082f3eaf4652e70987100084eb2c292d543bbd336" or
+        kagura.get("k15_provider_bb_check_source") !=
+        "runtime/core/bb_check.c" or
+        kagura.get("k15_provider_bb_check_source_sha256") !=
+        "2a87f559f2427c2de5217502c4d62abb1165fba34f5e1702982785dfacb24345" or
+        kagura.get("k15_provider_tamper_source") !=
+        "runtime/core/tamper_response.c" or
+        kagura.get("k15_provider_tamper_source_sha256") !=
+        "976cea2786438241b88f84c5c745f59aa669b683037ba81d7c09690339df5377" or
+        kagura.get("k15_provider_weak_macho_n_desc") !=
+        "0x0080_N_WEAK_DEF_BOTH_TARGETS" or
+        kagura.get("k15_provider_uniqueness") !=
+        "ONE_GENUINE_PROVIDER_EACH_REQUIRED_SYMBOL_BOTH_TARGETS" or
+        kagura.get("k15_provider_kagura_transitive") !=
+        "NONE_FOR_TWO_SELECTED_PROVIDERS_BOTH_TARGETS" or
+        kagura.get("k15_runtime_bbcheck_behavior") !=
+        "WEAK_ALWAYS_RETURNS_ONE_IGNORES_BLOCK_ID_EXPECTED" or
+        kagura.get("k15_runtime_tamper_response") !=
+        "WEAK_ABORT_DEFAULT_APPLE_NO_EXECUTION_K15" or
+        kagura.get("k15_artifact_entry_count") != 231 or
+        kagura.get("k15_independent_file_backed_checks") != 2609 or
+        kagura.get("k15_runtime_candidate_sources_each_target") != 22 or
+        kagura.get("k15_runtime_compiled_candidates_each_target") != 22 or
+        kagura.get("k15_security_integrity_proven") is not False or
         kagura.get("k15_candidate") != "kagura-bbcheck" or
         kagura.get("k15_pass_class") !=
         "kagura::BasicBlockChecksumPass" or
@@ -626,17 +653,49 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k15_macos_native_parity") !=
         "NOT_TESTED_TAMPER_CALLBACK" or
         kagura.get("k15_ios_arm64_object") !=
-        "DISCOVERY_ONLY_NOT_MACOS_CI_VERIFIED" or
+        "PINNED_BBCHECK_IR_MACHO_ARM64_OBJECT_ARTIFACT_VERIFIED_ONLY" or
         kagura.get("k15_ios_ipa") != "NOT_BUILT" or
         kagura.get("k15_iphone_runtime") != "NOT_TESTED" or
         kagura.get("k15_arm64e_pac") != "NOT_TESTED" or
         kagura.get("k15_production_merge") is not False or
         any(not (root / kagura[f]).is_file() for f in
             ("k15_workflow", "k15_pilot", "k15_audit",
-             "k15_portable_test", "k15_doc"))):
-        raise AssertionError("K15 real BBCheck pin + two tamper runtime"
-                             " dependencies discovery STAGED only;"
-                             " no native/device/PAC/Crane PASS")
+             "k15_portable_test", "k15_doc", "k15_artifact_review"))):
+        raise AssertionError("K15 genuine provider artifact is weak"
+                             " always-passing BBCheck stub, NOT a security"
+                             " integrity, native/device/PAC/Crane PASS")
+    if (kagura.get("k16_status") !=
+        "STAGED_MANUAL_OFFLINE_POST_LINK_MACHO_TEXT_NOT_MACOS_VERIFIED" or
+        kagura.get("k16_mode") !=
+        "OFFLINE_UNSIGNED_MACHO_TEXT_SECTION_SHA256_FEASIBILITY" or
+        kagura.get("k16_workflow") !=
+        ".github/workflows/kagura-k16-offline-macho-text.yml" or
+        kagura.get("k16_measure") !=
+        "scripts/custom_ollvm/kagura_k16/macho_measure.py" or
+        kagura.get("k16_test") !=
+        "scripts/test_kagura_k16_offline_text.py" or
+        kagura.get("k16_doc") !=
+        "docs/KAGURA_K16_OFFLINE_MACHO_TEXT.md" or
+        kagura.get("k16_specimens") !=
+        ["macos-baseline", "macos-cse-break",
+         "KaguraCSEBreakLab.app/KaguraCSEBreakLab"] or
+        kagura.get("k16_required_section") != "__TEXT,__text" or
+        kagura.get("k16_original_bbcheck") !=
+        "BLOCKED_K15_WEAK_ALWAYS_PASS_STUB" or
+        kagura.get("k16_macos_ci") != "NOT_TESTED" or
+        kagura.get("k16_reference_authenticated") is not False or
+        kagura.get("k16_runtime_verifier_implemented") is not False or
+        kagura.get("k16_per_block_integrity") is not False or
+        kagura.get("k16_security_integrity_proven") is not False or
+        kagura.get("k16_ios_device_runtime") != "NOT_TESTED" or
+        kagura.get("k16_arm64e_pac") != "NOT_TESTED" or
+        kagura.get("k16_production_merge") is not False or
+        any(not (root / kagura[key]).is_file()
+            for key in ("k16_workflow", "k16_measure",
+                        "k16_test", "k16_doc"))):
+        raise AssertionError("K16 offline UNSIGNED post-link __TEXT,__text"
+                             " measurement staged only; no BBCheck"
+                             " runtime, security/IPA/iPhone/PAC/Crane PASS")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or
