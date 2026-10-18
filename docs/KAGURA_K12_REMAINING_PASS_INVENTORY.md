@@ -81,6 +81,41 @@ K12 không link iOS IPA, không có signing/install, không test runtime
 Objective-C/PAC, không cấu hình Crane, không sửa Makefile,
 `policy.json`, plugin `Obfuscator` hoặc workflow production.
 
+## Lỗi audit K12 sau khi sàng lọc 23 ứng viên (18/10/2026)
+
+Log CI do người dùng cung cấp:
+
+```text
+K12_OPT_SCREEN_COMPLETE_NOT_NATIVE_PASS_VERIFICATION: candidates=23
+AssertionError: K12 opt evidence not actual LLVM bitcode:
+  .../ios-arm64-build-only-baseline.bc
+```
+
+**Kết luận đã biết:** đọc registry + chạy opt-only screen 23 ứng viên
+đã hoàn tất; **audit dừng trước khi công nhận artifact**. Không suy
+ra 23 pass đã đổi IR hay có native/iPhone PASS. Logic cũ trong
+`audit.py` chỉ chấp nhận file `.bc` bắt đầu `BC C0 DE`.
+Theo đặc tả LLVM, dạng wrapped bitcode cũng hợp lệ với magic
+`DE C0 17 0B` và header 20 byte little-endian gồm
+`Magic, Version, Offset, Size, CPUType`. Chưa có 4 byte đầu
+thực tế của file CI người dùng gửi nên đây là **nguyên nhân có
+cơ sở, chưa xác nhận tuyệt đối trên raw artifact**.
+
+**Bản sửa:** auditor nhận raw bitcode và **LLVM bitcode wrapper
+đúng cấu trúc** (version 0, header đủ 20 byte, offset/size bên
+trong file, payload được trỏ tới phải bắt đầu bằng `BC C0 DE`).
+Vẫn đối chiếu SHA-256 input/output với report, checksum IR
+`llvm-dis`, baseline ABI và pass stage; byte mạo danh magic,
+header hỏng, offset ngoài file và thiếu raw bitcode đều FAIL.
+Bổ sung test fixture synthetic bọc iOS baseline và output, negative
+test version/size/offset/payload sai. Ngoài các định dạng LLVM
+nói trên, audit sẽ báo prefix thực tế và không tự nới gate.
+
+**K12 vẫn chỉ opt-only UNVERIFIED, 0 pass native mới được xác minh.**
+Nếu CI còn lỗi, cần artifact
+`DuoDash-Kagura-K12-PINNED-REMAINING-PASS-INVENTORY-EXPERIMENTAL`
+để đối chiếu bytes và `Kagura-K12-REMAINING-OPT-SCREEN.json`.
+
 ## Gate nghiệm thu mỗi pass mới sau khi có K12 artifact
 
 Chỉ chọn *một* ứng viên rõ ràng có trong pinned registry, xác định

@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import pathlib
+import struct
 import sys
 import tempfile
 
@@ -34,6 +35,37 @@ def hashbytes(data: bytes) -> str:
 def preserve(path: pathlib.Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)
+
+
+def wrap_bitcode(payload: bytes, *, offset: int = 20) -> bytes:
+    assert payload.startswith(b"BC\xc0\xde") and offset >= 20
+    return (struct.pack("<IIIII", 0x0B17C0DE, 0, offset,
+                        len(payload), 0x0100000C) +
+            b"\0" * (offset - 20) + payload)
+
+
+# Real LLVM permits BOTH raw BC and a little-endian wrapper.
+assert k12audit.bitcode_container(b"BC\xc0\xde" + b"contents") == (
+    "RAW_LLVM_BITCODE")
+assert k12audit.bitcode_container(wrap_bitcode(
+    b"BC\xc0\xde" + b"contents")) == "WRAPPED_LLVM_BITCODE"
+assert k12audit.bitcode_container(wrap_bitcode(
+    b"BC\xc0\xde" + b"contents", offset=28)) == "WRAPPED_LLVM_BITCODE"
+for bad, label in (
+    (b"not-bitcode", "random fake content"),
+    (b"\xde\xc0\x17\x0b" + b"\x00" * 4, "truncated wrapper"),
+    (struct.pack("<IIIII", 0x0B17C0DE, 1, 20, 4, 0) +
+     b"BC\xc0\xde", "unknown wrapper version"),
+    (struct.pack("<IIIII", 0x0B17C0DE, 0, 19, 4, 0) +
+     b"BC\xc0\xde", "wrapper offset into header"),
+    (struct.pack("<IIIII", 0x0B17C0DE, 0, 40, 4, 0) +
+     b"BC\xc0\xde", "wrapper offset beyond file"),
+    (struct.pack("<IIIII", 0x0B17C0DE, 0, 20, 8192, 0) +
+     b"BC\xc0\xde", "wrapper payload size overflow"),
+    (struct.pack("<IIIII", 0x0B17C0DE, 0, 20, 4, 0) +
+     b"NOBC", "wrapper points to fake bitcode"),
+):
+    rejects(lambda invalid=bad: k12audit.bitcode_container(invalid), label)
 
 
 covered_rows = []
@@ -64,7 +96,9 @@ with tempfile.TemporaryDirectory(prefix="K12-artifact-fixture-") as tmp:
     results = []
     baseline = {}
     for target in k12audit.TARGET_LABELS:
-        base_bc = b"BC\xc0\xde" + target.encode()
+        raw_bc = b"BC\xc0\xde" + target.encode()
+        base_bc = (wrap_bitcode(raw_bc) if target.startswith("ios")
+                   else raw_bc)
         base_ll = ("; ModuleID = '" + target + "-baseline.bc'\n" + (
             'target triple = "arm64-apple-ios15.0.0"\n'
             if target.startswith("ios") else
@@ -107,7 +141,10 @@ with tempfile.TemporaryDirectory(prefix="K12-artifact-fixture-") as tmp:
                     "iphone_runtime": "NOT_TESTED",
                 }
                 continue
-            newer_bc = bc + b"marker"
+            newer_bc = (
+                wrap_bitcode(b"BC\xc0\xde" + target.encode() + b"marker",
+                             offset=24) if target.startswith("ios")
+                else bc + b"marker")
             # KEY NEGATIVE: no changed IR, despite DIFFERENT bitcode bytes.
             newer_ir = ir.replace(
                 b"baseline.bc'", b"post-opt.bc'")
@@ -200,6 +237,13 @@ with tempfile.TemporaryDirectory(prefix="K12-artifact-fixture-") as tmp:
     rejects(inspect, "infrastructure pass auto verified")
     report["results"][2]["screening"] = "SKIPPED_INFRA_NOT_AUTO_RUN"
     save()
+    assert inspect() == report
+    wrapped_baseline = out / "ios-arm64-build-only-baseline.bc"
+    intact = wrapped_baseline.read_bytes()
+    wrapped_baseline.write_bytes(intact[:12] + struct.pack("<I", 10**6) +
+                                 intact[16:])
+    rejects(inspect, "wrapper payload out of file even with report SHA")
+    wrapped_baseline.write_bytes(intact)
     assert inspect() == report
 
 wf = (ROOT / ".github/workflows/kagura-k12-remaining-inventory.yml").read_text(

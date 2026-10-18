@@ -308,6 +308,7 @@
     "k12_actual_pinned_remaining_names": "UNDETERMINED_UNTIL_MACOS_PINNED_ARTIFACT",
     "k12_new_native_passes_verified": 0,
     "k12_ir_delta_gate": "FILE_BACKED_NORMALIZED_LLVM_IR_SHA_IGNORE_MODULEID",
+    "k12_bitcode_container_gate": "RAW_OR_SPEC_VALIDATED_LLVM_WRAPPER_WITH_EMBEDDED_RAW_MAGIC",
     "k12_iphone_runtime": "NOT_TESTED",
     "k12_arm64e_pac": "NOT_TESTED",
     "k12_production_merge": false,

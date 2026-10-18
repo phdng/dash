@@ -122,6 +122,7 @@ assert original["experimental_kagura_pipeline"]["k12_smoke"] == "scripts/custom_
 assert original["experimental_kagura_pipeline"]["k12_artifact_auditor"] == "scripts/custom_ollvm/kagura_k12/audit.py"
 assert original["experimental_kagura_pipeline"]["k12_artifact_audit_test"] == "scripts/test_kagura_k12_opt_audit.py"
 assert original["experimental_kagura_pipeline"]["k12_ir_delta_gate"] == "FILE_BACKED_NORMALIZED_LLVM_IR_SHA_IGNORE_MODULEID"
+assert original["experimental_kagura_pipeline"]["k12_bitcode_container_gate"] == "RAW_OR_SPEC_VALIDATED_LLVM_WRAPPER_WITH_EMBEDDED_RAW_MAGIC"
 assert original["experimental_kagura_pipeline"]["k12_portable_test"] == "scripts/test_kagura_k12_remaining_inventory.py"
 assert original["experimental_kagura_pipeline"]["k12_doc"] == "docs/KAGURA_K12_REMAINING_PASS_INVENTORY.md"
 assert original["experimental_kagura_pipeline"]["k12_upstream_commit"] == "ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
@@ -250,6 +251,7 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k12_artifact_auditor="scripts/custom_ollvm/kagura_k8/pilot.py"),
     lambda x: x["experimental_kagura_pipeline"].update(k12_artifact_audit_test="scripts/test_kagura_k8_passes.py"),
     lambda x: x["experimental_kagura_pipeline"].update(k12_ir_delta_gate="BITCODE_ONLY_DELTA_FALSE_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k12_bitcode_container_gate="RAW_ONLY_REJECTS_IOS_WRAPPER"),
     lambda x: x["experimental_kagura_pipeline"].update(k12_portable_test="scripts/test_kagura_k11_ios_ipa.py"),
     lambda x: x["experimental_kagura_pipeline"].update(k12_doc="docs/KAGURA_K11_IOS_IPA_LAB.md"),
     lambda x: x["experimental_kagura_pipeline"].update(k12_upstream_commit="UNPINNED"),

@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import struct
 from pathlib import Path
 
 from inventory import PIN, sha, verify, normalized_ir_sha
@@ -19,6 +20,8 @@ STATUS_NO_DELTA = "OPT_EXECUTED_NO_IR_DELTA_UNVERIFIED"
 STATUS_FAILED = "OPT_FAILED_UNVERIFIED"
 STATUS_INVALID = "OPT_INVALID_BITCODE_UNVERIFIED"
 BITCODE_MAGIC = b"BC\xc0\xde"
+BITCODE_WRAPPER_MAGIC = b"\xde\xc0\x17\x0b"
+WRAPPER_HEADER_SIZE = 20  # magic, version, bitcode-offset, bitcode-size, cpu-type
 TARGET_LABELS = ("macos", "ios-arm64-build-only")
 
 
@@ -29,10 +32,44 @@ def ensure_file(path: Path, *, expected_sha: str | None = None) -> None:
         raise AssertionError("K12 SHA mismatch: " + str(path))
 
 
-def ensure_llvm_bc(path: Path, expected_sha: str) -> None:
+def bitcode_container(data: bytes) -> str:
+    """Verify raw or LLVM's specified little-endian wrapper container.
+
+    Apple-target clang may produce a legitimate wrapped bitcode file.
+    Never accept an arbitrary magic-prefix shim: the wrapper must be
+    complete, versioned, in bounds, and point to real raw BC magic.
+    LLVM19 llvm-dis has already parsed these files in smoke.py; this
+    independent portable check is a structural/serialization gate.
+    """
+    if len(data) >= 4 and data[:4] == BITCODE_MAGIC:
+        return "RAW_LLVM_BITCODE"
+    if len(data) >= 4 and data[:4] == BITCODE_WRAPPER_MAGIC:
+        if len(data) < WRAPPER_HEADER_SIZE:
+            raise AssertionError("K12 truncated LLVM bitcode wrapper header")
+        magic, version, offset, size, _cpu = struct.unpack_from(
+            "<IIIII", data)
+        if magic != 0x0B17C0DE or version != 0:
+            raise AssertionError("K12 malformed LLVM bitcode wrapper magic/version")
+        if (offset < WRAPPER_HEADER_SIZE or size < 4 or
+                offset > len(data) or size > len(data) - offset):
+            raise AssertionError("K12 LLVM bitcode wrapper offset/size outside file")
+        if data[offset:offset + 4] != BITCODE_MAGIC:
+            raise AssertionError("K12 LLVM wrapper points to non-bitcode bytes")
+        return "WRAPPED_LLVM_BITCODE"
+    raise AssertionError(
+        "K12 file is not raw or LLVM-wrapped bitcode, prefix=" +
+        data[:4].hex())
+
+
+def ensure_llvm_bc(path: Path, expected_sha: str) -> str:
     ensure_file(path, expected_sha=expected_sha)
-    if path.read_bytes()[:4] != BITCODE_MAGIC:
-        raise AssertionError("K12 opt evidence not actual LLVM bitcode: " + str(path))
+    if not isinstance(expected_sha, str) or not re.fullmatch(
+            r"[a-f0-9]{64}", expected_sha):
+        raise AssertionError("K12 missing genuine bitcode SHA-256 reference")
+    try:
+        return bitcode_container(path.read_bytes())
+    except AssertionError as e:
+        raise AssertionError(str(e) + ": " + str(path)) from e
 
 
 def audit(out: Path, fixture: Path) -> dict:

@@ -453,6 +453,8 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "scripts/test_kagura_k12_opt_audit.py" or
         kagura.get("k12_ir_delta_gate") !=
         "FILE_BACKED_NORMALIZED_LLVM_IR_SHA_IGNORE_MODULEID" or
+        kagura.get("k12_bitcode_container_gate") !=
+        "RAW_OR_SPEC_VALIDATED_LLVM_WRAPPER_WITH_EMBEDDED_RAW_MAGIC" or
         kagura.get("k12_portable_test") !=
         "scripts/test_kagura_k12_remaining_inventory.py" or
         kagura.get("k12_doc") !=
