@@ -1,7 +1,13 @@
 # DuoDash Kagura K12 — kiểm kê các pass còn lại (chưa nghiệm thu native)
 
-Ngày khởi tạo: **17/10/2026**. Trạng thái:
-`PINNED_REGISTRY_INVENTORY_STAGED_NOT_MACOS_VERIFIED`.
+Ngày khởi tạo: **17/10/2026**; artifact thực được đối chiếu
+**18/10/2026**. Trạng thái:
+`PINNED_REGISTRY_AND_OPT_ARTIFACT_REPLAY_VERIFIED_NOT_NATIVE`.
+Xem [KAGURA_K12_ARTIFACT_REVIEW.md](KAGURA_K12_ARTIFACT_REVIEW.md)
+để đọc kết quả **36 tên Kagura được đăng ký, 13 tên đã có bằng
+chứng phạm vi trước đó, 23 tên còn lại**, 147 ZIP entry/CRC sạch,
+2.029 điều kiện kiểm tra PASS, 8 delta/9 không delta/6 INFRA
+**chưa được nghiệm thu native hay iPhone**.
 
 ## Kết quả hiện đã có trước K12
 
@@ -28,12 +34,16 @@ cũ và exact type của năm pass K8, fail nếu thiếu/đổi loại.
 
 Phân loại file JSON thực: `historically_evidenced` (13 pass, không tự
 mở rộng phạm vi proof) và `remaining_registered_unverified`
-(mọi pass nguồn upstream mà K1/K8/VM chưa xác minh). Tên/đếm **thực tế**
-phải lấy từ artifact macOS CI trước khi lập danh sách chuẩn.
+(mọi pass nguồn upstream mà K1/K8/VM chưa xác minh).
+**Artifact macOS CI thật đã được cung cấp và audit**: có 36 pass
+đăng ký, 23 tên chưa có bằng chứng native ở các giai đoạn trước.
+Danh sách 23 tên, loại và 8 delta/9 không delta/6 INFRA được
+ghi tại [review K12](KAGURA_K12_ARTIFACT_REVIEW.md).
 
-Một vài nhóm cần lưu ý gồm AES string, protected-value,
-anti-debug, tamper, ObjC, PAC; tại đây **chưa khẳng định chúng tồn
-tại hay hoạt động trong đúng commit pin** khi chưa có inventory artifact.
+Trong nguồn registry artifact thật có AES string, protected-value,
+anti-debug, tamper, ObjC và PAC. **Được khai báo không có nghĩa đã
+được kiểm chứng hiệu lực/native/được bật trong Crane**; ví dụ
+PAC/AES string/ObjC đều không tạo IR delta với fixture hiện tại.
 Infrastructure passes `INFRA` chỉ được liệt kê, không tự gọi.
 
 ## K12 đã triển khai
@@ -97,9 +107,10 @@ ra 23 pass đã đổi IR hay có native/iPhone PASS. Logic cũ trong
 `audit.py` chỉ chấp nhận file `.bc` bắt đầu `BC C0 DE`.
 Theo đặc tả LLVM, dạng wrapped bitcode cũng hợp lệ với magic
 `DE C0 17 0B` và header 20 byte little-endian gồm
-`Magic, Version, Offset, Size, CPUType`. Chưa có 4 byte đầu
-thực tế của file CI người dùng gửi nên đây là **nguyên nhân có
-cơ sở, chưa xác nhận tuyệt đối trên raw artifact**.
+`Magic, Version, Offset, Size, CPUType`. ZIP K12 thực được người dùng gửi sau đó đã xác nhận **đúng
+dạng LLVM wrapped bitcode**: iOS và macOS baseline đều bắt đầu
+`DE C0 17 0B`, header có offset 20 byte và payload `BC C0 DE`.
+Đây chính xác là lý do auditor raw-only cũ dừng sai.
 
 **Bản sửa:** auditor nhận raw bitcode và **LLVM bitcode wrapper
 đúng cấu trúc** (version 0, header đủ 20 byte, offset/size bên
@@ -111,10 +122,11 @@ Bổ sung test fixture synthetic bọc iOS baseline và output, negative
 test version/size/offset/payload sai. Ngoài các định dạng LLVM
 nói trên, audit sẽ báo prefix thực tế và không tự nới gate.
 
-**K12 vẫn chỉ opt-only UNVERIFIED, 0 pass native mới được xác minh.**
-Nếu CI còn lỗi, cần artifact
-`DuoDash-Kagura-K12-PINNED-REMAINING-PASS-INVENTORY-EXPERIMENTAL`
-để đối chiếu bytes và `Kagura-K12-REMAINING-OPT-SCREEN.json`.
+**K12 artifact opt-only đã kiểm chứng độc lập nhưng 0 pass native
+mới được xác minh.** ZIP 147 entry/2.029 kiểm tra PASS; chi tiết
+trong [review K12](KAGURA_K12_ARTIFACT_REVIEW.md). Nếu CI tương lai
+còn lỗi, đối chiếu bytes artifact và
+`Kagura-K12-REMAINING-OPT-SCREEN.json`.
 
 ## Gate nghiệm thu mỗi pass mới sau khi có K12 artifact
 
@@ -149,5 +161,7 @@ Kiểm thử audit dùng file bitcode/IR giả lập và chứng minh rằng
 đồng thời từ chối sai SHA, thiếu tệp, report giả claim device.
 Không được
 đọc dòng `registered=16` của fixture như kết quả pinned Kagura CI.
-Chưa có macOS K12 artifact, nên **chưa đếm được số pass còn lại thật**
-và `k12_new_native_validated=0` cho đến khi nhận và audit CI.
+Đã nhận và kiểm chứng macOS K12 artifact: **23 tên còn lại** trong
+registry commit pin, gồm 8 IR delta/9 no-delta/6 INFRA theo fixture
+hiện tại. **`k12_new_native_passes_verified=0`** vẫn giữ vì K12
+không có native parity, iOS IPA hoặc iPhone runtime của các pass mới.

@@ -1,0 +1,81 @@
+name: Kagura K13 - Isolated CSEBreak Native and iOS Arm64 Object (Experimental)
+
+# MANUAL_ONLY: K12 proved opt-only IR delta, NOT native/iPhone correctness.
+# This job uses an entirely separate, pinned Kagura plugin and public-data
+# canary. It never updates Crane's production Obfuscator/arm64e/PAC route.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k13-cse-break:
+    runs-on: macos-14
+    timeout-minutes: 100
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail-closed portable K13 gates plus K12 K11 regression
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k13_native.py
+          python3 scripts/test_kagura_k12_opt_audit.py
+          python3 scripts/test_kagura_k12_remaining_inventory.py
+          python3 scripts/test_kagura_k11_ios_ipa.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+
+      - name: Build pinned Kagura LLVM19 plugin (independent of Crane)
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k13-source"
+          build="$RUNNER_TEMP/kagura-k13-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          test -s "$src/include/kagura/PassRegistry.def"
+          python3 - "$src/include/kagura/PassRegistry.def" <<'PY'
+          import hashlib, pathlib, sys
+          actual = hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest()
+          expected = "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa"
+          assert actual == expected, "K13 source differs from K12 actual registry evidence"
+          PY
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          echo "K13_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K13_SRC=$src" >> "$GITHUB_ENV"
+          echo "K13_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Real Kagura CSEBreak pass, 4096 native vectors and iOS arm64 objects
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K13-CSEBreak"
+          mkdir -p "$out"
+          python3 scripts/custom_ollvm/kagura_k13/pilot.py \
+            --src "$K13_SRC" --llvm "$K13_LLVM" \
+            --plugin "$K13_PLUGIN" --out "$out"
+          python3 scripts/custom_ollvm/kagura_k13/audit.py --out "$out"
+          echo "K13: actual pinned LLVM19 CSEBreakPass with macOS native 4096 vector parity and iOS arm64 MH_OBJECT. iPhone/PAC/Crane not tested." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Always upload K13 pass logs native checksums and iOS object audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K13-CSEBREAK-NATIVE-IOS-ARM64-OBJECT-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K13-CSEBreak/

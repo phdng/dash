@@ -88,14 +88,23 @@ Thiết kế workflow: [KAGURA_K11_IOS_IPA_LAB.md](KAGURA_K11_IOS_IPA_LAB.md).
 K7 VM đã có log `a.txt` xác minh UUID/checksum với IPA thực, median
 paired iPhone overhead 71,5× (3 cặp, chưa phải chứng thực mật mã).
 
-**K12 — kiểm kê pass Kagura chưa xác minh (workflow CI staged):**
+**K12 — artifact registry và opt-only đã được đối chiếu độc lập:**
+[KAGURA_K12_ARTIFACT_REVIEW.md](KAGURA_K12_ARTIFACT_REVIEW.md).
+ZIP 147 entry CRC sạch, **2.029 file-backed checks PASS**. Registry
+CI cho thấy **36 tên Kagura**: K1/K5 (7) + K8–K11 (5) +
+VM K6/K7 (1) = **13 tên từng có bằng chứng riêng** và **23 tên
+chưa được nghiệm thu native** (8 IR delta ở cả macOS/iOS,
+9 no-delta trên fixture, 6 INFRA không tự chạy).
+Bitcode iOS thật dùng LLVM wrapper, bản audit đã xử lý đúng.
+K12 opt-only **không phải native/IPA/iPhone PASS** và không có pass
+mới nào được tích hợp vào `Obfuscator`. Quy trình:
 [KAGURA_K12_REMAINING_PASS_INVENTORY.md](KAGURA_K12_REMAINING_PASS_INVENTORY.md).
-K1/K5 (7) + K8–K11 (5) + VM K6/K7 (1) = **13 tên pass Kagura
-đã có bằng chứng phạm vi riêng**, không đồng nghĩa 13 pass đều trong
-production. K12 phân tích `PassRegistry.def` **đúng commit pin**
-để tìm tên còn lại; opt-only screen không phải native/IPA PASS. Các
-pass chưa được kiểm thử và sáu ứng viên custom OLLVM hiện vẫn
-**chưa tích hợp vào `Obfuscator`**.
+
+**K13 — lab CSEBreak staged, chưa có native CI artifact:**
+[KAGURA_K13_CSE_BREAK_NATIVE_LAB.md](KAGURA_K13_CSE_BREAK_NATIVE_LAB.md)
+chuẩn bị workflow thủ công LLVM19 pin, kiểm native macOS 4096 vector,
+IR/object delta và iOS arm64 MH_OBJECT build-only; không nâng bất kỳ
+pass K12 nào thành iPhone PASS. Không chỉnh Crane production.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản

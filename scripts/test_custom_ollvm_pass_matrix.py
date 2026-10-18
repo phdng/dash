@@ -115,7 +115,18 @@ assert original["experimental_kagura_pipeline"]["k11_device_log_sha256"] == "b61
 assert original["experimental_kagura_pipeline"]["k11_device_log_review"] == "docs/KAGURA_K11_ARTIFACT_AND_DEVICE_REVIEW.md"
 assert original["experimental_kagura_pipeline"]["k11_arm64e_pac"] == "NOT_TESTED"
 assert original["experimental_kagura_pipeline"]["k11_security_attestation"] is False
-assert original["experimental_kagura_pipeline"]["k12_status"] == "PINNED_REGISTRY_INVENTORY_STAGED_NOT_MACOS_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k12_status"] == "PINNED_REGISTRY_AND_OPT_ARTIFACT_REPLAY_VERIFIED_NOT_NATIVE"
+assert original["experimental_kagura_pipeline"]["k12_artifact_review"] == "docs/KAGURA_K12_ARTIFACT_REVIEW.md"
+assert original["experimental_kagura_pipeline"]["k12_artifact_zip_sha256"] == "6d827807db583c8581d218da2dfc41f7fe784ea607dddd83edd399a04718b0ca"
+assert original["experimental_kagura_pipeline"]["k12_artifact_zip_entry_count"] == 147
+assert original["experimental_kagura_pipeline"]["k12_artifact_file_backed_checks"] == 2029
+assert original["experimental_kagura_pipeline"]["k12_pinned_registry_source_sha256"] == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa"
+assert original["experimental_kagura_pipeline"]["k12_pinned_registered_pass_count"] == 36
+assert original["experimental_kagura_pipeline"]["k12_remaining_unverified_pass_count"] == 23
+assert original["experimental_kagura_pipeline"]["k12_bitcode_container_in_artifact"] == "LLVM_WRAPPED_BITCODE_BOTH_TARGETS"
+assert original["experimental_kagura_pipeline"]["k12_opt_both_targets_ir_delta"] == ["kagura-tamper","kagura-anti-debug","kagura-honey","kagura-sv","kagura-cse-break","kagura-dci","kagura-telemetry","kagura-bbcheck"]
+assert original["experimental_kagura_pipeline"]["k12_opt_both_targets_no_ir_delta"] == ["kagura-pac","kagura-str-aes","kagura-wstr","kagura-string-split","kagura-objc","kagura-jni","kagura-lt","kagura-pe","kagura-elt"]
+assert original["experimental_kagura_pipeline"]["k12_opt_infra_skipped"] == ["kagura-autoselect","kagura-config","kagura-dwarf-control","kagura-symmap","kagura-vtp","kagura-audit"]
 assert original["experimental_kagura_pipeline"]["k12_workflow"] == ".github/workflows/kagura-k12-remaining-inventory.yml"
 assert original["experimental_kagura_pipeline"]["k12_inventory"] == "scripts/custom_ollvm/kagura_k12/inventory.py"
 assert original["experimental_kagura_pipeline"]["k12_smoke"] == "scripts/custom_ollvm/kagura_k12/smoke.py"
@@ -127,11 +138,26 @@ assert original["experimental_kagura_pipeline"]["k12_portable_test"] == "scripts
 assert original["experimental_kagura_pipeline"]["k12_doc"] == "docs/KAGURA_K12_REMAINING_PASS_INVENTORY.md"
 assert original["experimental_kagura_pipeline"]["k12_upstream_commit"] == "ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
 assert original["experimental_kagura_pipeline"]["k12_historically_evidenced_distinct_pass_count"] == 13
-assert original["experimental_kagura_pipeline"]["k12_actual_pinned_remaining_names"] == "UNDETERMINED_UNTIL_MACOS_PINNED_ARTIFACT"
+assert original["experimental_kagura_pipeline"]["k12_actual_pinned_remaining_names"] == ["kagura-pac","kagura-str-aes","kagura-wstr","kagura-string-split","kagura-tamper","kagura-objc","kagura-jni","kagura-anti-debug","kagura-honey","kagura-sv","kagura-cse-break","kagura-lt","kagura-dci","kagura-pe","kagura-telemetry","kagura-bbcheck","kagura-elt","kagura-autoselect","kagura-config","kagura-dwarf-control","kagura-symmap","kagura-vtp","kagura-audit"]
 assert original["experimental_kagura_pipeline"]["k12_new_native_passes_verified"] == 0
 assert original["experimental_kagura_pipeline"]["k12_iphone_runtime"] == "NOT_TESTED"
 assert original["experimental_kagura_pipeline"]["k12_arm64e_pac"] == "NOT_TESTED"
 assert original["experimental_kagura_pipeline"]["k12_production_merge"] is False
+assert original["experimental_kagura_pipeline"]["k13_status"] == "STAGED_MANUAL_MACOS_LLVM19_NATIVE_NOT_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k13_candidate"] == "kagura-cse-break"
+assert original["experimental_kagura_pipeline"]["k13_pass_class"] == "kagura::CSEBreakPass"
+assert original["experimental_kagura_pipeline"]["k13_workflow"] == ".github/workflows/kagura-k13-cse-break-native.yml"
+assert original["experimental_kagura_pipeline"]["k13_pilot"] == "scripts/custom_ollvm/kagura_k13/pilot.py"
+assert original["experimental_kagura_pipeline"]["k13_audit"] == "scripts/custom_ollvm/kagura_k13/audit.py"
+assert original["experimental_kagura_pipeline"]["k13_portable_test"] == "scripts/test_kagura_k13_native.py"
+assert original["experimental_kagura_pipeline"]["k13_doc"] == "docs/KAGURA_K13_CSE_BREAK_NATIVE_LAB.md"
+assert original["experimental_kagura_pipeline"]["k13_pinned_registry_sha256"] == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa"
+assert original["experimental_kagura_pipeline"]["k13_native_vectors_planned"] == 4096
+assert original["experimental_kagura_pipeline"]["k13_native_result"] == "NOT_TESTED_MACOS_CI"
+assert original["experimental_kagura_pipeline"]["k13_ios_arm64"] == "MH_OBJECT_BUILD_ONLY_NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k13_iphone_runtime"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k13_arm64e_pac"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k13_production_merge"] is False
 assert len(status["registry_sha256"]) == 64
 
 negative_mutations = (
@@ -245,6 +271,29 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k11_arm64e_pac="PASS"),
     lambda x: x["experimental_kagura_pipeline"].update(k11_security_attestation=True),
     lambda x: x["experimental_kagura_pipeline"].update(k12_status="NEW_PASSES_NATIVE_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_status="NATIVE_PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_candidate="kagura-pac"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_pass_class="kagura::OtherPass"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_workflow=".github/workflows/build.yml"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_pilot="scripts/custom_ollvm/kagura_k8/pilot.py"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_audit="scripts/custom_ollvm/kagura_k8/pilot.py"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_portable_test="scripts/test_kagura_k8_passes.py"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_doc="docs/KAGURA_K12_ARTIFACT_REVIEW.md"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_pinned_registry_sha256="0"*64),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_native_vectors_planned=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_native_result="PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_ios_arm64="IPHONE_TESTED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_iphone_runtime="PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_arm64e_pac="PASS"),
+    lambda x: x["experimental_kagura_pipeline"].update(k13_production_merge=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k12_artifact_zip_sha256="0" * 64),
+    lambda x: x["experimental_kagura_pipeline"].update(k12_artifact_zip_entry_count=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k12_artifact_file_backed_checks=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k12_remaining_unverified_pass_count=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k12_opt_both_targets_ir_delta=["kagura-pac"]),
+    lambda x: x["experimental_kagura_pipeline"].update(k12_opt_infra_skipped=[]),
+    lambda x: x["experimental_kagura_pipeline"].update(k12_bitcode_container_in_artifact="RAW_ONLY"),
+    lambda x: x["experimental_kagura_pipeline"].update(k12_artifact_review="docs/KAGURA_K11_IOS_IPA_LAB.md"),
     lambda x: x["experimental_kagura_pipeline"].update(k12_workflow=".github/workflows/build.yml"),
     lambda x: x["experimental_kagura_pipeline"].update(k12_inventory="scripts/custom_ollvm/kagura_k8/pilot.py"),
     lambda x: x["experimental_kagura_pipeline"].update(k12_smoke="scripts/custom_ollvm/kagura_k9/pilot.py"),
