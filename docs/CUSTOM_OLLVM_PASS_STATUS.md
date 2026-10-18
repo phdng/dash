@@ -134,13 +134,29 @@ Không native 4096/IPA/iPhone/security PASS, không tự link/execute
 hoặc merge vào Crane. Quy trình:
 [KAGURA_K15_BBCHECK_RUNTIME_RESEARCH.md](KAGURA_K15_BBCHECK_RUNTIME_RESEARCH.md).
 
-**K16 — offline post-link Mach-O `__TEXT,__text` measurement (staged):**
-[KAGURA_K16_OFFLINE_MACHO_TEXT.md](KAGURA_K16_OFFLINE_MACHO_TEXT.md).
-Workflow nghiên cứu chỉ đo SHA-256 của vùng code trong executable
-arm64 macOS K13 baseline/CSEBreak và iOS K14 CSEBreak đã link.
-Manifest **không ký, không có trust anchor**, không có runtime verifier,
-không đo per-basic-block và không chạy BBCheck weak stub. Không coi
-K16 là integrity/security PASS, không thay đổi iPhone/Crane/PAC.
+**K16 — đo Mach-O code section offline từ CI thực đã xác minh:**
+[KAGURA_K16_ARTIFACT_REVIEW.md](KAGURA_K16_ARTIFACT_REVIEW.md).
+ZIP K16 thật **54 thành phần, 276/276 checks PASS**. Ba Mach-O arm64
+macOS K13 baseline/CSEBreak và iOS K14 CSEBreak có byte
+`__TEXT,__text` thực, offset/size/SHA-256 trùng manifest.
+UUID executable iOS trùng IPA K14 và log K14 người dùng chia sẻ;
+đó **không phải device execution K16**. Manifest **không ký,
+không có trust anchor**, không có runtime verifier và không đo
+per-basic-block. Không coi K16 là integrity/security PASS,
+không chạy BBCheck stub hoặc thay đổi iPhone/Crane/PAC.
+Quy trình: [KAGURA_K16_OFFLINE_MACHO_TEXT.md](KAGURA_K16_OFFLINE_MACHO_TEXT.md).
+
+**K17 — detached Ed25519 trên manifest K16 offline (staged):**
+[KAGURA_K17_ED25519_OFFLINE_REFERENCE.md](KAGURA_K17_ED25519_OFFLINE_REFERENCE.md).
+Đã triển khai thư viện ký/xác minh với **public-key SPKI SHA-256 đã
+phê duyệt độc lập**, chữ ký detached và kiểm tra lại raw K16 manifest
+cùng ba executable gốc. Portable tests dùng khóa tạm để phát hiện
+forged signature, key swap, sai fingerprint, binary/manifest tamper.
+**Chưa có signing secret/trusted public key từ người dùng trong CI**,
+chưa có signed K17 artifact thật, không claim authenticated PASS.
+Ngay cả khi ký thành công thì đó chỉ là tham chiếu file offline,
+không phải runtime verifier, iPhone attestation hay BBCheck security.
+Không thay đổi Crane production/arm64e/PAC.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản

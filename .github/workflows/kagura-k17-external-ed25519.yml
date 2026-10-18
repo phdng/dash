@@ -1,0 +1,149 @@
+name: Kagura K17 - Externally Trusted Ed25519 Offline Manifest (Experimental)
+
+# Requires pre-provisioned private signing secret and independently approved
+# Ed25519 PUBLIC KEY + SPKI SHA256. Never generate new trusted signing keys in CI.
+# No weak BBCheck, runtime verifier, iPhone/device attestation, PAC or Crane.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k17-detached-reference:
+    runs-on: macos-14
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare pinned Ed25519 verifier (not a crypto implementation)
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/k17-crypto-venv"
+          "$RUNNER_TEMP/k17-crypto-venv/bin/python" -m pip install --disable-pip-version-check cryptography==50.0.2
+          echo "K17_PYTHON=$RUNNER_TEMP/k17-crypto-venv/bin/python" >> "$GITHUB_ENV"
+
+      - name: Verify portable K17/K16/K15/K14/K13 and strict production isolation
+        run: |
+          set -euo pipefail
+          "$K17_PYTHON" scripts/test_kagura_k17_signature.py
+          "$K17_PYTHON" scripts/test_kagura_k16_offline_text.py
+          "$K17_PYTHON" scripts/test_kagura_k15_bbcheck.py
+          "$K17_PYTHON" scripts/test_kagura_k14_ios_ipa.py
+          "$K17_PYTHON" scripts/test_kagura_k13_native.py
+          "$K17_PYTHON" scripts/test_custom_ollvm_pass_matrix.py
+          "$K17_PYTHON" scripts/custom_ollvm/audit_passes.py
+
+      - name: Require independent externally approved signing key configuration
+        env:
+          K17_PRIVATE_PEM: ${{ secrets.K17_ED25519_PRIVATE_KEY_PEM }}
+          K17_PUBLIC_PEM: ${{ vars.K17_ED25519_PUBLIC_KEY_PEM }}
+          K17_FINGERPRINT: ${{ vars.K17_ED25519_PUBLIC_KEY_SPKI_SHA256 }}
+        run: |
+          set -euo pipefail
+          if [ -z "$K17_PRIVATE_PEM" ] || [ -z "$K17_PUBLIC_PEM" ] || [ -z "$K17_FINGERPRINT" ]; then
+            echo "::error::K17 blocked: supply separately managed signing secret, public key and independently approved SPKI SHA256. No signed-pass claim without external trust root."
+            exit 1
+          fi
+          export K17_KEY_DIR="$RUNNER_TEMP/k17-external-signing-material"
+          "$K17_PYTHON" - <<'PY'
+          import os, pathlib, re
+          root = pathlib.Path(os.environ["K17_KEY_DIR"])
+          root.mkdir(mode=0o700, parents=True, exist_ok=False)
+          if not re.fullmatch(r"[a-f0-9]{64}", os.environ["K17_FINGERPRINT"]):
+              raise SystemExit("K17 expected external public key fingerprint not valid")
+          private = root / "signing-secret.pem"
+          trusted = root / "trusted-external-public.pem"
+          for name, value, mode in (
+              (private, os.environ["K17_PRIVATE_PEM"], 0o600),
+              (trusted, os.environ["K17_PUBLIC_PEM"], 0o600),
+          ):
+              if not value.strip() or len(value) > 16000:
+                  raise SystemExit("K17 invalid external key material")
+              name.write_text(value + ("" if value.endswith("\n") else "\n"),
+                              encoding="utf-8")
+              name.chmod(mode)
+          PY
+          echo "K17_KEY_DIR=$K17_KEY_DIR" >> "$GITHUB_ENV"
+          echo "K17_TRUST_FINGERPRINT=$K17_FINGERPRINT" >> "$GITHUB_ENV"
+          echo "K17: keys prepared outside artifact upload path; no unapproved ephemeral trust anchor." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build pinned Kagura LLVM19 for known-safe K13/K14 specimens
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k17-source"
+          build="$RUNNER_TEMP/kagura-k17-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          "$K17_PYTHON" - "$src/include/kagura/PassRegistry.def" <<'PY'
+          import hashlib, pathlib, sys
+          got = hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest()
+          assert got == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa", "K17 pinned Kagura registry mismatch"
+          PY
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          echo "K17_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K17_SRC=$src" >> "$GITHUB_ENV"
+          echo "K17_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Rebuild and replay genuine K13/K14 then raw K16 post-link manifest
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K17-Signed-Offline"
+          mkdir -p "$out"
+          echo "K17_OUT=$out" >> "$GITHUB_ENV"
+          "$K17_PYTHON" scripts/custom_ollvm/kagura_k13/pilot.py \
+            --src "$K17_SRC" --llvm "$K17_LLVM" --plugin "$K17_PLUGIN" --out "$out"
+          "$K17_PYTHON" scripts/custom_ollvm/kagura_k13/audit.py --out "$out"
+          bash scripts/custom_ollvm/kagura_k14/build_ipa.sh "$K17_LLVM" "$K17_SRC" "$out"
+          "$K17_PYTHON" scripts/custom_ollvm/kagura_k16/macho_measure.py --out "$out"
+          "$K17_PYTHON" scripts/custom_ollvm/kagura_k16/macho_measure.py --out "$out" --verify
+
+      - name: Sign detached OFFLINE reference and verify using external public key
+        run: |
+          set -euo pipefail
+          # Keep private key OUTSIDE artifact dir; delete key material on
+          # success. GitHub runner cleanup handles job failures.
+          "$K17_PYTHON" scripts/custom_ollvm/kagura_k17/signature.py sign \
+            --out "$K17_OUT" \
+            --trusted-public-key "$K17_KEY_DIR/trusted-external-public.pem" \
+            --expected-spki-sha256 "$K17_TRUST_FINGERPRINT" \
+            --private-key "$K17_KEY_DIR/signing-secret.pem"
+          "$K17_PYTHON" scripts/custom_ollvm/kagura_k17/signature.py verify \
+            --out "$K17_OUT" \
+            --trusted-public-key "$K17_KEY_DIR/trusted-external-public.pem" \
+            --expected-spki-sha256 "$K17_TRUST_FINGERPRINT"
+          "$K17_PYTHON" - <<'PY'
+          import os, pathlib
+          directory = pathlib.Path(os.environ["K17_KEY_DIR"])
+          for item in ("signing-secret.pem", "trusted-external-public.pem"):
+              (directory / item).unlink()
+          directory.rmdir()
+          PY
+          echo "K17: detached Ed25519 verified against externally approved SPKI SHA256 and genuine K16 Mach-O raw files. This is OFFLINE signed reference only." >> "$GITHUB_STEP_SUMMARY"
+          echo "K17: private/public keys not shipped in artifact; verifier needs an external trusted public key. No app-signing, device attestation, runtime verification, BBCheck fix, arm64e/PAC or Crane." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Always preserve K17 signed offline manifest, logs and sources
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K17-EXTERNALLY-TRUSTED-ED25519-OFFLINE-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K17-Signed-Offline/

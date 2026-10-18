@@ -665,7 +665,29 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
                              " always-passing BBCheck stub, NOT a security"
                              " integrity, native/device/PAC/Crane PASS")
     if (kagura.get("k16_status") !=
-        "STAGED_MANUAL_OFFLINE_POST_LINK_MACHO_TEXT_NOT_MACOS_VERIFIED" or
+        "REAL_MACOS_OFFLINE_TEXT_ARTIFACT_REPLAY_VERIFIED_NOT_RUNTIME_SECURITY" or
+        kagura.get("k16_artifact_review") !=
+        "docs/KAGURA_K16_ARTIFACT_REVIEW.md" or
+        kagura.get("k16_artifact_zip_sha256") !=
+        "521934d99ce952f74b0471cdd259d92e147eee718479a3863b49251b11eb79c4" or
+        kagura.get("k16_macos_baseline_text_sha256") !=
+        "9682fe57b5dc2e115f25745becc03f9eaa68f56e06f15d72f79a8c2630cef5f9" or
+        kagura.get("k16_macos_csebreak_text_sha256") !=
+        "2c8fd2006a6d636fb30c088585a9b093108b825c6032915aa1987abd0ee85186" or
+        kagura.get("k16_ios_csebreak_text_sha256") !=
+        "dd41ee5339eb6fd2732e46f34b9a22ea62233611a4a6269b4088251a6824fd3e" or
+        kagura.get("k16_ios_csebreak_macho_uuid") !=
+        "7c0cb853-77aa-3ccb-9f20-560e5f40e587" or
+        kagura.get("k16_existing_k14_device_log") !=
+        "USER_SHARED_K14_UUID_CHECKSUM_CORRELATED_NOT_K16_EXECUTION" or
+        kagura.get("k16_artifact_entry_count") != 54 or
+        kagura.get("k16_independent_file_backed_checks") != 276 or
+        kagura.get("k16_macos_baseline_text_offset") != 15376 or
+        kagura.get("k16_macos_baseline_text_size") != 728 or
+        kagura.get("k16_macos_csebreak_text_offset") != 15264 or
+        kagura.get("k16_macos_csebreak_text_size") != 840 or
+        kagura.get("k16_ios_csebreak_text_offset") != 16384 or
+        kagura.get("k16_ios_csebreak_text_size") != 6312 or
         kagura.get("k16_mode") !=
         "OFFLINE_UNSIGNED_MACHO_TEXT_SECTION_SHA256_FEASIBILITY" or
         kagura.get("k16_workflow") !=
@@ -682,7 +704,8 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k16_required_section") != "__TEXT,__text" or
         kagura.get("k16_original_bbcheck") !=
         "BLOCKED_K15_WEAK_ALWAYS_PASS_STUB" or
-        kagura.get("k16_macos_ci") != "NOT_TESTED" or
+        kagura.get("k16_macos_ci") !=
+        "REAL_MACOS_LINKED_MACHO_TEXT_OFFLINE_EVIDENCE_VERIFIED" or
         kagura.get("k16_reference_authenticated") is not False or
         kagura.get("k16_runtime_verifier_implemented") is not False or
         kagura.get("k16_per_block_integrity") is not False or
@@ -692,10 +715,50 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k16_production_merge") is not False or
         any(not (root / kagura[key]).is_file()
             for key in ("k16_workflow", "k16_measure",
-                        "k16_test", "k16_doc"))):
-        raise AssertionError("K16 offline UNSIGNED post-link __TEXT,__text"
-                             " measurement staged only; no BBCheck"
-                             " runtime, security/IPA/iPhone/PAC/Crane PASS")
+                        "k16_test", "k16_doc", "k16_artifact_review"))):
+        raise AssertionError("K16 real CI offline SHA/LC_UUID verified for"
+                             " linked Mach-O code; manifest unsigned, no BBCheck"
+                             " runtime, security/iPhone/PAC/Crane PASS")
+    if (kagura.get("k17_status") !=
+        "STAGED_EXTERNAL_ED25519_KEYS_REQUIRED_NOT_SIGNED_CI_VERIFIED" or
+        kagura.get("k17_scope") !=
+        "EXTERNAL_SPKI_SHA256_ED25519_DETACHED_K16_OFFLINE_MANIFEST_ONLY" or
+        kagura.get("k17_workflow") !=
+        ".github/workflows/kagura-k17-external-ed25519.yml" or
+        kagura.get("k17_signer") !=
+        "scripts/custom_ollvm/kagura_k17/signature.py" or
+        kagura.get("k17_test") !=
+        "scripts/test_kagura_k17_signature.py" or
+        kagura.get("k17_doc") !=
+        "docs/KAGURA_K17_ED25519_OFFLINE_REFERENCE.md" or
+        kagura.get("k17_crypto_dependency") != "cryptography==50.0.2" or
+        kagura.get("k17_external_secret") !=
+        "K17_ED25519_PRIVATE_KEY_PEM" or
+        kagura.get("k17_external_public_key_var") !=
+        "K17_ED25519_PUBLIC_KEY_PEM" or
+        kagura.get("k17_external_fingerprint_var") !=
+        "K17_ED25519_PUBLIC_KEY_SPKI_SHA256" or
+        kagura.get("k17_signature_name") !=
+        "Kagura-K17-K16-MANIFEST.ed25519" or
+        kagura.get("k17_receipt_name") !=
+        "Kagura-K17-SIGNATURE-RECEIPT.json" or
+        kagura.get("k17_signed_ci_artifact") !=
+        "NOT_TESTED_EXTERNAL_KEYS_NOT_CONFIGURED" or
+        any(kagura.get(k) is not False for k in (
+            "k17_private_key_in_artifact",
+            "k17_trusted_public_key_in_artifact",
+            "k17_external_key_verified",
+            "k17_manifest_authentication_verified",
+            "k17_runtime_verifier_implemented",
+            "k17_iphone_device_attested",
+            "k17_security_integrity_proven",
+            "k17_arm64e_pac_tested",
+            "k17_production_merge")) or
+        any(not (root / kagura[key]).is_file() for key in
+            ("k17_workflow", "k17_signer", "k17_test", "k17_doc"))):
+        raise AssertionError("K17 requires real independent external Ed25519"
+                             " trust material; staging/tests cannot be promoted"
+                             " to signed CI/device/security/Crane PASS")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

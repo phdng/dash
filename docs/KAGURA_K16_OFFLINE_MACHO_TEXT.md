@@ -1,7 +1,14 @@
 # K16 — đo SHA-256 của Mach-O sau linker (offline, không chạy BBCheck)
 
-Ngày triển khai: **18/10/2026**. Trạng thái:
-**STAGED_MANUAL_OFFLINE_POST_LINK_MACHO_TEXT_NOT_MACOS_VERIFIED**.
+Ngày triển khai và kiểm tra ZIP thực: **18/10/2026**.
+Trạng thái: **REAL_MACOS_OFFLINE_TEXT_ARTIFACT_REPLAY_VERIFIED_NOT_RUNTIME_SECURITY**.
+
+[Review K16 thực](KAGURA_K16_ARTIFACT_REVIEW.md): GitHub Actions ZIP 54
+thành phần CRC hợp lệ, **276/276 kiểm tra raw file-backed PASS**.
+Ba vùng `__TEXT,__text` trên Mach-O arm64 sau linker đã được băm
+độc lập và trùng manifest; executable iOS UUID trùng IPA K14 và
+log **K14 do người dùng chia sẻ**, nhưng **không có log chạy K16
+trên điện thoại hay runtime integrity verifier**.
 
 [K15 artifact review](KAGURA_K15_ARTIFACT_REVIEW.md) xác định nguồn Kagura
 pinned có `runtime/core/bb_check.c` là **weak always-passing stub**,
@@ -75,7 +82,8 @@ reference, cách đo in-memory hợp lệ theo ABI/pointer-auth/code-signing,
 đánh giá overhead và thử nghiệm isolated có rollback.
 Không sử dụng hiện vật K16 để tuyên bố BBCheck đã được sửa.
 
-**Mọi trạng thái hiện tại:** chưa có real macOS K16 workflow artifact;
+**Mọi trạng thái hiện tại:** đã có artifact macOS K16 thực được
+đối chiếu offline: 3 executable, hash vùng code và UUID hợp lệ.
 K11–K14 giữ bằng chứng riêng, K15 runtime weak stub chưa được
 sửa; K16 iPhone, arm64e/PAC, Crane production và bảo vệ security
-đều **NOT_TESTED/NOT_IMPLEMENTED**.
+đều **NOT_TESTED/NOT_IMPLEMENTED**. Manifest vẫn không được ký.
