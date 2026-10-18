@@ -361,7 +361,25 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         raise AssertionError(
             "K10 strict LLVM-link artifact provenance or scope invalid")
     if (kagura.get("k11_ios_ipa_status") !=
-        "STAGED_MANUAL_IOS_IPA_CI_NOT_VERIFIED" or
+        "CI_ARTIFACT_HASHES_VERIFIED_IOS_ARM64_FIVE_PASS_LAB" or
+        kagura.get("k11_artifact_zip_sha256") !=
+        "e004ea806724659afc9c7fe77efdfe954e8083e1fef10fd75275992405ad45a9" or
+        kagura.get("k11_artifact_entry_count") != 119 or
+        kagura.get("k11_independent_artifact_checks_passed") != 331 or
+        kagura.get("k11_artifact_review") !=
+        "docs/KAGURA_K11_ARTIFACT_AND_DEVICE_REVIEW.md" or
+        kagura.get("k11_ipa_sha256") !=
+        "57fe287ee04503c9bf5b64e8f7ed2589ec0b22a5c80fdcb035855b8781fa31d4" or
+        kagura.get("k11_app_binary_sha256") !=
+        "a6b01f4df5c1128e2e8f24f13cde786557b354fd9c07b8ed6a8c8a5103899692" or
+        kagura.get("k11_app_macho_uuid") !=
+        "580390ef-6ba0-357c-a1d7-a0678e3d27ff" or
+        kagura.get("k11_final_ios_object_sha256") !=
+        "087ad94d637a8e4ac4f58b878517069fa755750088ef4fdcabd7436f4b86c682" or
+        kagura.get("k11_runtime_dependency_source") !=
+        "runtime/core/imagelist.c" or
+        kagura.get("k11_runtime_dependency_object_sha256") !=
+        "d026148dac9995954c61160d5864e94176e3eb712f4b027cb26a7c4d2b582530" or
         kagura.get("k11_workflow") !=
         ".github/workflows/kagura-k11-ios-ipa.yml" or
         kagura.get("k11_build") !=
@@ -400,18 +418,62 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "IOS_ARM64_NM_J_REJECTED_OBJC_SELECTOR_COLON" or
         kagura.get("k11_macho_arch") !=
         "arm64_SUBTYPE0_MH_EXECUTE_LC_UUID" or
-        kagura.get("k11_device_runtime") != "NOT_TESTED" or
+        kagura.get("k11_device_runtime") !=
+        "USER_SHARED_TEXT_PARITY_AND_UUID_VALIDATED_NOT_ATTESTED" or
+        kagura.get("k11_shared_device_log_status") !=
+        "VALIDATED_EXACT_NINE_LINE_UUID_CHECKSUM_VS_CI_IPA" or
+        kagura.get("k11_device_log_sha256") !=
+        "b61d53c870a7553564a85eb769bcbcb6717b714590fa9ef691738e618b38987b" or
+        kagura.get("k11_device_log_review") !=
+        "docs/KAGURA_K11_ARTIFACT_AND_DEVICE_REVIEW.md" or
         kagura.get("k11_arm64e_pac") != "NOT_TESTED" or
         kagura.get("k11_security_attestation") is not False or
         any(not (root / kagura[field]).is_file() for field in
             ("k11_workflow", "k11_build", "k11_runtime_locator",
              "k11_runtime_closure_script", "k11_packager", "k11_evidence",
-             "k11_device_audit", "k11_portable_test", "k11_doc")) or
+             "k11_device_audit", "k11_portable_test", "k11_doc",
+             "k11_artifact_review", "k11_device_log_review")) or
         any(not (root / "scripts/custom_ollvm/kagura_k11" / name).is_file()
             for name in ("ios_probe.c", "ios_app_main.m", "Info.plist"))):
         raise AssertionError(
-            "K11 standalone unsigned five-pass IPA remains manual staged;"
-            " no native/device/Crane success without exact artifact")
+            "K11 standalone five-pass IPA artifact+user-shared device text"
+            " provenance invalid; no cryptographic device attestation,"
+            " PAC or Crane production claim")
+    if (kagura.get("k12_status") !=
+        "PINNED_REGISTRY_INVENTORY_STAGED_NOT_MACOS_VERIFIED" or
+        kagura.get("k12_workflow") !=
+        ".github/workflows/kagura-k12-remaining-inventory.yml" or
+        kagura.get("k12_inventory") !=
+        "scripts/custom_ollvm/kagura_k12/inventory.py" or
+        kagura.get("k12_smoke") !=
+        "scripts/custom_ollvm/kagura_k12/smoke.py" or
+        kagura.get("k12_artifact_auditor") !=
+        "scripts/custom_ollvm/kagura_k12/audit.py" or
+        kagura.get("k12_artifact_audit_test") !=
+        "scripts/test_kagura_k12_opt_audit.py" or
+        kagura.get("k12_ir_delta_gate") !=
+        "FILE_BACKED_NORMALIZED_LLVM_IR_SHA_IGNORE_MODULEID" or
+        kagura.get("k12_portable_test") !=
+        "scripts/test_kagura_k12_remaining_inventory.py" or
+        kagura.get("k12_doc") !=
+        "docs/KAGURA_K12_REMAINING_PASS_INVENTORY.md" or
+        kagura.get("k12_upstream_commit") !=
+        "ac2136ee0408677cf7cdee55307e9b16edd5f4d5" or
+        kagura.get("k12_historically_evidenced_distinct_pass_count") != 13 or
+        kagura.get("k12_actual_pinned_remaining_names") !=
+        "UNDETERMINED_UNTIL_MACOS_PINNED_ARTIFACT" or
+        kagura.get("k12_new_native_passes_verified") != 0 or
+        kagura.get("k12_iphone_runtime") != "NOT_TESTED" or
+        kagura.get("k12_arm64e_pac") != "NOT_TESTED" or
+        kagura.get("k12_production_merge") is not False or
+        any(not (root / kagura[field]).is_file() for field in
+            ("k12_workflow", "k12_inventory", "k12_smoke",
+             "k12_artifact_auditor", "k12_portable_test",
+             "k12_artifact_audit_test", "k12_doc"))):
+        raise AssertionError(
+            "K12 pinned Kagura remaining pass discovery is manual staged;"
+            " registry names must be learned from real macOS CI,"
+            " opt smoke is not native/device proof")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

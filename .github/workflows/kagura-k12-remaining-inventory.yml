@@ -1,0 +1,82 @@
+name: Kagura K12 - Remaining Pinned Pass Inventory and Opt-Only Screen (Experimental)
+
+# Catalog ALL real pinned upstream pass registrations, not new passes in Crane.
+# Runner is deliberately manual-only; opt screening never claims native PASS.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k12-inventory:
+    runs-on: macos-14
+    timeout-minutes: 100
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Portable fail-closed K12 inventory and previous K11 proof
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k12_remaining_inventory.py
+          python3 scripts/test_kagura_k12_opt_audit.py
+          python3 scripts/test_kagura_k11_ios_ipa.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+      - name: Build exact Kagura pinned LLVM19 plugin
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k12-source"
+          build="$RUNNER_TEMP/kagura-k12-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          test -s "$src/include/kagura/PassRegistry.def"
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          echo "K12_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K12_SRC=$src" >> "$GITHUB_ENV"
+          echo "K12_PLUGIN=$plugin" >> "$GITHUB_ENV"
+      - name: Inventory every named pass in exact pinned PassRegistry.def
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K12-Inventory"
+          mkdir -p "$out"
+          echo "K12_OUT=$out" >> "$GITHUB_ENV"
+          python3 scripts/custom_ollvm/kagura_k12/inventory.py \
+            --src "$K12_SRC" --out "$out"
+          python3 scripts/custom_ollvm/kagura_k12/inventory.py \
+            --out "$out" --verify-report
+          test -s "$out/Kagura-K12-REMAINING-PASS-INVENTORY.json"
+          echo "K12: source-pinned remaining pass inventory generated; previous 13 distinct Kagura passes remain separate evidence, not all production enabled." >> "$GITHUB_STEP_SUMMARY"
+      - name: Opt-only diagnostic screen on isolated C fixture (not native pass validation)
+        run: |
+          set -euo pipefail
+          python3 scripts/custom_ollvm/kagura_k12/smoke.py \
+            --src "$K12_SRC" --llvm "$K12_LLVM" \
+            --plugin "$K12_PLUGIN" --out "$K12_OUT"
+          test -s "$K12_OUT/Kagura-K12-REMAINING-OPT-SCREEN.json"
+          python3 scripts/custom_ollvm/kagura_k12/audit.py \
+            --out "$K12_OUT"
+          echo "K12 opt screen records accepted/error/REAL llvm-dis IR delta separately; file-backed SHA replay PASS; NO new pass is marked native or iPhone verified, no Crane/PAC." >> "$GITHUB_STEP_SUMMARY"
+      - name: Save K12 inventory and raw opt diagnostics even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K12-PINNED-REMAINING-PASS-INVENTORY-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K12-Inventory/

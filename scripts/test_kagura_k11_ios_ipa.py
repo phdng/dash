@@ -347,6 +347,26 @@ with tempfile.TemporaryDirectory(prefix="K11-synthetic-link-closure-") as temp:
     finally:
         closure.run = genuine_run
 
+# K11 independently audited real ZIP (119 entries / 331 checks) and
+# normalized nine-line user-shared log must stay fixed in project docs.
+review = (ROOT / "docs/KAGURA_K11_ARTIFACT_AND_DEVICE_REVIEW.md").read_text(
+    encoding="utf-8")
+assert "331/331" in review and "119 entry" in review
+assert "e004ea806724659afc9c7fe77efdfe954e8083e1fef10fd75275992405ad45a9" in review
+assert "57fe287ee04503c9bf5b64e8f7ed2589ec0b22a5c80fdcb035855b8781fa31d4" in review
+assert "a6b01f4df5c1128e2e8f24f13cde786557b354fd9c07b8ed6a8c8a5103899692" in review
+assert "not attestation" in review.lower() or "không phải device attestation" in review.lower()
+review_log = review.split("```text\n", 1)[1].split("```", 1)[0]
+assert hashlib.sha256(review_log.encode("utf-8")).hexdigest() == (
+    "b61d53c870a7553564a85eb769bcbcb6717b714590fa9ef691738e618b38987b")
+with tempfile.TemporaryDirectory(prefix="K11-reviewed-device-log-") as tmp:
+    logpath = Path(tmp) / "k11-reviewed-device.log"
+    logpath.write_text(review_log, encoding="utf-8")
+    result = logaudit.validate(logpath)
+    assert result["macho_uuid_claimed"] == "580390ef-6ba0-357c-a1d7-a0678e3d27ff"
+    assert result["user_shared_text_consistent"] is True
+    assert result["device_execution_cryptographically_attested"] is False
+
 workflow = (ROOT / ".github/workflows/kagura-k11-ios-ipa.yml").read_text()
 build = (LAB / "build_ipa.sh").read_text()
 src = (LAB / "ios_probe.c").read_text()

@@ -179,14 +179,26 @@ production/arm64e PAC**. Workflow manual-only
 `.github/workflows/kagura-k10-link-metadata.yml`.
 Xem [KAGURA_K10_ARTIFACT_REVIEW.md](KAGURA_K10_ARTIFACT_REVIEW.md).
 
-**K11 — IPA lab iOS arm64 độc lập (staged, CHƯA có IPA CI thật):**
-[KAGURA_K11_IOS_IPA_LAB.md](KAGURA_K11_IOS_IPA_LAB.md)
-thêm workflow thủ công `.github/workflows/kagura-k11-ios-ipa.yml`,
-dùng duy nhất `05-ci/ios.o` sau đúng năm Kagura pass, cross-compile
-resolver `kagura_rtld_default_handle` từ nguồn Kagura pin cho iOS
-arm64, gói `KaguraFiveLab-TrollStore-arm64.ipa` unsigned,
-bảo toàn UUID/SHA và log 2×4096 checksum. CI K11/chạy thiết bị
-**chưa xác minh**; không chỉnh K5/K7 hay Crane production.
+**K11 — IPA lab iOS arm64 độc lập (đã xác minh CI artifact):**
+[KAGURA_K11_ARTIFACT_AND_DEVICE_REVIEW.md](KAGURA_K11_ARTIFACT_AND_DEVICE_REVIEW.md):
+ZIP 119 entry, **331/331 kiểm tra PASS**, IPA `MH_EXECUTE`
+arm64 subtype 0, UUID `580390ef-6ba0-357c-a1d7-a0678e3d27ff`.
+Final `05-ci/ios.o` sau năm Kagura pass link với resolver thật
+`runtime/anti_debug/anti_debug.c` và dependency
+`runtime/core/imagelist.c` trên iOS arm64. Log iPhone người dùng
+chia sẻ có 9 dòng khớp IPA UUID, 2 checksum ×4096 vector, là
+**text parity validated / NOT cryptographically attested**.
+Không chỉnh K5/K7 hay Crane production, không xác minh PAC arm64e.
+Workflow lab: [KAGURA_K11_IOS_IPA_LAB.md](KAGURA_K11_IOS_IPA_LAB.md).
+
+**K12 — pass còn lại (đang chờ macOS CI inventory):**
+[KAGURA_K12_REMAINING_PASS_INVENTORY.md](KAGURA_K12_REMAINING_PASS_INVENTORY.md)
+đã chuẩn bị workflow thủ công `.github/workflows/kagura-k12-remaining-inventory.yml`,
+đọc `PassRegistry.def` của commit Kagura pin, so với **13 tên pass
+đã có chứng cứ riêng**; in mọi FN/MOD/INFRA chưa xác minh và
+chạy **opt-only diagnostic**, không tự tuyên bố native PASS.
+Không triển khai một cách đại trà vào IPA K11/Crane. Kết quả
+số pass còn lại thật **chưa có** trước khi nhận artifact K12.
 
 Tài liệu K6 gốc: [KAGURA_K6_VM_SELECTIVE.md](KAGURA_K6_VM_SELECTIVE.md).
 Không virtualize Objective-C methods, initializer, licensing

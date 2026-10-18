@@ -1,9 +1,13 @@
-# DuoDash K11 — IPA lab 5 Kagura LLVM19 pass ghép nối tiếp (staged)
+# DuoDash K11 — IPA lab 5 Kagura LLVM19 pass ghép nối tiếp
 
-Ngày triển khai: 17/10/2026. **Trạng thái: STAGED_MANUAL_IOS_IPA_CI_NOT_VERIFIED**.
-Chưa có K11 macOS GitHub Actions artifact, chưa có IPA K11 xác minh thực,
-**chưa có log iPhone K11**. Không diễn giải các bài test synthetic portable
-thành native/IPA/device PASS.
+Ngày triển khai và xác minh artifact: 17/10/2026.
+**Trạng thái: CI_ARTIFACT_HASHES_VERIFIED_IOS_ARM64_FIVE_PASS_LAB.**
+Bản ZIP K11 đã được kiểm chứng **331/331 kiểm tra PASS** trên
+119 entry với ZIP CRC sạch, IPA arm64 MH_EXECUTE/LC_UUID/SHA chính xác.
+Người dùng đã chia sẻ **log iPhone 9 dòng** khớp UUID IPA thật,
+hai checksum và 4096 vector/hàm. **Đây là text parity và build
+correlation, không phải cryptographic device attestation.**
+Xem [KAGURA_K11_ARTIFACT_AND_DEVICE_REVIEW.md](KAGURA_K11_ARTIFACT_AND_DEVICE_REVIEW.md).
 
 ## Vì sao tách K11 khỏi K10
 
@@ -120,14 +124,12 @@ Workflow riêng: `.github/workflows/kagura-k11-ios-ipa.yml`
    nguồn định nghĩa Kagura. Kiểm thử negative fixture tái tạo
    chính xác `_objc_msgSend$activateConstraints:` cùng
    `_objc_msgSend$initWithFrame:` và Objective-C class symbol.
-   K11 vẫn **STAGED**, chưa có IPA macOS được xác nhận sau sửa.
-
-   **Chưa có kết quả run workflow sau sửa này**; giữ
-   `k11_ios_ipa_status=STAGED_MANUAL_IOS_IPA_CI_NOT_VERIFIED`
-   cho đến khi ZIP artifact thật qua kiểm chứng. Nếu lỗi tái hiện,
-   thu `Kagura-K11-BUILD-FAILURE.txt`,
+   **Ghi chú lịch sử:** đoạn trên mô tả trạng thái khi chưa có
+   artifact ZIP thành công. Artifact K11 mới đã được cung cấp và
+   xác minh. Xem review K11 331/331 bên trên. Nếu CI tương lai
+   lại lỗi, thu `Kagura-K11-BUILD-FAILURE.txt`,
    `ios-runtime-closure.json` và `ipa-link.log`
-   để truy tiếp theo tên symbol chứ không nới kiểm tra.
+   để truy theo symbol, không nới kiểm tra.
 4. Build UIKit `ios_app_main.m` riêng và `ios_probe.c`. Link
    `05-ci/ios.o`, iOS resolver, probe và app bằng Apple iOS linker
    với undefined-symbol error. Lưu `ipa-link.log`,
@@ -190,8 +192,11 @@ trong workspace Windows. CI macOS sẽ tạo và kiểm object/IPA thật.
 K11 khác K5 và K7: **không** dùng VM Kagura, không hòa Kagura/Hikari
 vào OLLVM production và không đo benchmark ở pha này.
 
-Muốn nâng `k11_ios_ipa_status`, trước tiên phải nhận ZIP artifact
-thật và kiểm SHA/CRC, linker+resolver, final `ios.o`, Mach-O UUID,
-IPA embedding, K10 full native parity. Chỉ sau đó mới xem xét
-`k11_device_runtime` từ log iPhone đúng dạng. Cấm nhảy từ
-`IPA_ARTIFACT_VERIFIED` sang `DEVICE_VERIFIED` vì chữ PASS in ở CI.
+ZIP artifact thật và log iPhone đúng dạng **đã được cung cấp** và
+đối chiếu UUID/SHA/CRC, linker+resolver, final `05-ci/ios.o`,
+Mach-O nlist và native parity. Registry phản ánh
+`CI_ARTIFACT_HASHES_VERIFIED_IOS_ARM64_FIVE_PASS_LAB` và
+`USER_SHARED_TEXT_PARITY_AND_UUID_VALIDATED_NOT_ATTESTED`.
+Không chuyển thành `DEVICE_VERIFIED` có chứng thực mật mã
+chỉ vì người dùng chia sẻ chữ `PASS`; không khẳng định PAC
+arm64e hoặc Crane production đã được kiểm thử.

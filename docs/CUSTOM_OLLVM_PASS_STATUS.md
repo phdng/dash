@@ -76,14 +76,26 @@ target datalayout+triple trùng nhau cả macOS và iOS,
 đổi thật và native hai checksum ×4096 vector giữ nguyên.
 iOS arm64 object build-only; chưa chạy trên iPhone/arm64e/PAC,
 không sửa Crane, K5/K7 hoặc ObjC hooks.
-**K11 (staged, chưa xác minh CI IPA):**
-[KAGURA_K11_IOS_IPA_LAB.md](KAGURA_K11_IOS_IPA_LAB.md) dựng ứng dụng
-UIKit riêng `KaguraFiveLab`, liên kết `05-ci/ios.o` K10 với
-upstream CI resolver biên dịch lại cho iOS arm64, so SHA/UUID và
-tạo log hai checksum ×4096 vector để chia sẻ trên iPhone.
-Chưa có artifact K11 hoặc log thiết bị; không thay production.
+**K11 IPA lab đã xác minh artifact ZIP (331/331 kiểm tra PASS):**
+[KAGURA_K11_ARTIFACT_AND_DEVICE_REVIEW.md](KAGURA_K11_ARTIFACT_AND_DEVICE_REVIEW.md)
+cho thấy IPA iOS arm64 `MH_EXECUTE`, ZIP 119 entry, CRC sạch,
+UUID `580390ef-6ba0-357c-a1d7-a0678e3d27ff`, liên kết object
+`05-ci/ios.o` K10 với resolver Kagura thật + imagelist runtime.
+**Log iPhone 9 dòng do người dùng chia sẻ khớp UUID IPA thật,
+2 checksum ×4096 vector**, chưa phải chứng thực thiết bị mật mã.
+Không xác minh PAC arm64e, ObjC hooks hay Crane production.
+Thiết kế workflow: [KAGURA_K11_IOS_IPA_LAB.md](KAGURA_K11_IOS_IPA_LAB.md).
 K7 VM đã có log `a.txt` xác minh UUID/checksum với IPA thực, median
 paired iPhone overhead 71,5× (3 cặp, chưa phải chứng thực mật mã).
+
+**K12 — kiểm kê pass Kagura chưa xác minh (workflow CI staged):**
+[KAGURA_K12_REMAINING_PASS_INVENTORY.md](KAGURA_K12_REMAINING_PASS_INVENTORY.md).
+K1/K5 (7) + K8–K11 (5) + VM K6/K7 (1) = **13 tên pass Kagura
+đã có bằng chứng phạm vi riêng**, không đồng nghĩa 13 pass đều trong
+production. K12 phân tích `PassRegistry.def` **đúng commit pin**
+để tìm tên còn lại; opt-only screen không phải native/IPA PASS. Các
+pass chưa được kiểm thử và sáu ứng viên custom OLLVM hiện vẫn
+**chưa tích hợp vào `Obfuscator`**.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản

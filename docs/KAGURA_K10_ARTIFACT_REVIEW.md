@@ -99,10 +99,11 @@ Objective-C selector/hook ABI, Crane production integration,
 benchmark latency hay security-strength proof. K5/K7 và OLLVM
 STRONG hiện hành không thay đổi.
 
-Bước IPA lab tiếp theo đã được **triển khai ở trạng thái K11 staged**:
-[KAGURA_K11_IOS_IPA_LAB.md](KAGURA_K11_IOS_IPA_LAB.md). K11
-tách riêng bundle iOS arm64, link object cuối `05-ci/ios.o`
-với resolver Kagura được biên dịch lại đúng iPhoneOS SDK, có
-giao diện chạy hai checksum 4096 vector và log UUID. Chưa có
-macOS CI K11 hay kết quả iPhone K11; không ghép vào Crane
-hoặc khẳng định PAC. Cần xem artifact trước khi đánh dấu IPA PASS.
+Bước IPA lab kế tiếp **K11 đã có artifact macOS CI được kiểm chứng**
+([review K11](KAGURA_K11_ARTIFACT_AND_DEVICE_REVIEW.md)):
+119 ZIP entry, 331/331 kiểm tra PASS, IPA arm64 `MH_EXECUTE`,
+object `05-ci/ios.o` sau cả năm pass và upstream Kagura iOS
+runtime thật. Log iPhone **do người dùng chia sẻ** khớp UUID
+IPA/2 checksum/4096 vector mỗi hàm; không phải chứng thực thiết bị.
+K10 tự nó vẫn chỉ là giai đoạn `MH_OBJECT` build-only, không có
+K10 IPA riêng. K11 không ghép vào Crane hay khẳng định PAC arm64e.
