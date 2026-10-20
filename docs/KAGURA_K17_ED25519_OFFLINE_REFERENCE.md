@@ -19,14 +19,18 @@ khóa CI rồi tự tin rằng đó là trust anchor.
 - Khóa ký Ed25519 **private** được giữ bên ngoài repository,
   cung cấp qua GitHub Actions secret
   `K17_ED25519_PRIVATE_KEY_PEM`.
-- Khóa công khai Ed25519 được chủ sở hữu phân phối độc lập qua
-  GitHub Actions repository variable `K17_ED25519_PUBLIC_KEY_PEM`.
+- Khóa công khai Ed25519 được chủ sở hữu phân phối độc lập, trong
+  GitHub Actions chấp nhận **repository Variable hoặc repository Secret**
+  tên `K17_ED25519_PUBLIC_KEY_PEM`. Nếu cùng tồn tại ở cả hai,
+  workflow yêu cầu giá trị phải giống nhau, nếu không sẽ FAIL.
   Người kiểm toán độc lập nhận bản public PEM **ngoài ZIP**,
   tuyệt đối không dùng một PEM kèm trong ZIP làm trust anchor.
 - Fingerprint **SHA-256 của DER SubjectPublicKeyInfo (SPKI)** cần
-  được chủ sở hữu phê duyệt trước qua kênh độc lập. CI dùng
-  repo variable `K17_ED25519_PUBLIC_KEY_SPKI_SHA256` và CLI
-  verifier yêu cầu `--expected-spki-sha256` được truyền riêng.
+  được chủ sở hữu phê duyệt trước qua kênh độc lập. CI chấp nhận
+  **repository Variable hoặc Secret**
+  `K17_ED25519_PUBLIC_KEY_SPKI_SHA256` (hai nguồn cùng tồn tại
+  phải giống nhau). CLI verifier yêu cầu
+  `--expected-spki-sha256` được truyền riêng.
   **Các biến của cùng GitHub project không tự cung cấp tính độc lập**
   nếu admin hoặc đối thủ có thể sửa tất cả; khi kiểm toán, so với
   fingerprint đã ghi lưu qua kênh tin cậy độc lập với CI.
@@ -67,8 +71,15 @@ print(hashlib.sha256(raw).hexdigest())
 
 Lưu riêng fingerprint/public PEM và kiểm soát người có quyền sửa
 GitHub Actions secrets/variables. **Không commit hoặc gửi private PEM
-cho ChatGPT.** Cấp secret và hai variables trên vào repo GitHub trước
-khi chạy workflow thủ công.
+cho ChatGPT.** Khóa private **chỉ** ở Actions Secret;
+public PEM và fingerprint có thể để ở **cả hai repository Variables
+hoặc cả hai repository Secrets**. Không cần di chuyển nếu cả 3
+đã được thêm vào repository Secrets. Nếu các giá trị đặt dưới
+**Environment Secrets**, job không nhìn thấy khi không khai báo
+`environment:` tương ứng; nên di chuyển sang **Repository Secrets**.
+Preflight K17 phân biệt thiếu từng biến, kiểm tra xung đột Secret/Variable,
+kiểu khóa Ed25519, private/public thực sự cùng cặp và fingerprint
+SPKI SHA-256, **trước khi build LLVM19**. Không in PEM/khóa vào log.
 
 ## Workflow thủ công
 
@@ -78,8 +89,9 @@ khi chạy workflow thủ công.
 1. Thiết lập Python venv độc lập, dùng thư viện chuẩn cryptography
    `50.0.2`. Kiểm thử K17 fail-closed với **khóa test sinh tạm**,
    cộng regression K16/K15/K14/K13 và audit pass.
-2. Bắt buộc có private secret/public variable/fingerprint
-   đã được phê duyệt; không tự tạo private key trong CI.
+2. Bắt buộc có private secret và public PEM/fingerprint từ
+   repository Variable **hoặc Secret**; kiểm tra ngay cả 3
+   có cấu trúc đúng và khớp nhau, không tự tạo private key trong CI.
 3. Build lại Kagura LLVM19 commit pin
    `ac2136ee0408677cf7cdee55307e9b16edd5f4d5`,
    registry SHA

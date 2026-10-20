@@ -39,12 +39,35 @@ jobs:
       - name: Require independent externally approved signing key configuration
         env:
           K17_PRIVATE_PEM: ${{ secrets.K17_ED25519_PRIVATE_KEY_PEM }}
-          K17_PUBLIC_PEM: ${{ vars.K17_ED25519_PUBLIC_KEY_PEM }}
-          K17_FINGERPRINT: ${{ vars.K17_ED25519_PUBLIC_KEY_SPKI_SHA256 }}
+          K17_PUBLIC_PEM_VAR: ${{ vars.K17_ED25519_PUBLIC_KEY_PEM }}
+          K17_PUBLIC_PEM_SECRET: ${{ secrets.K17_ED25519_PUBLIC_KEY_PEM }}
+          K17_FINGERPRINT_VAR: ${{ vars.K17_ED25519_PUBLIC_KEY_SPKI_SHA256 }}
+          K17_FINGERPRINT_SECRET: ${{ secrets.K17_ED25519_PUBLIC_KEY_SPKI_SHA256 }}
         run: |
           set -euo pipefail
-          if [ -z "$K17_PRIVATE_PEM" ] || [ -z "$K17_PUBLIC_PEM" ] || [ -z "$K17_FINGERPRINT" ]; then
-            echo "::error::K17 blocked: supply separately managed signing secret, public key and independently approved SPKI SHA256. No signed-pass claim without external trust root."
+          # Private key: Secrets ONLY. Public PEM/fingerprint: support either
+          # repository Variables or Secrets, since both are valid for test CI.
+          # Never print values or silently prefer conflicting sources.
+          if [ -z "$K17_PRIVATE_PEM" ]; then
+            echo "::error::K17 missing Actions Secret: K17_ED25519_PRIVATE_KEY_PEM (verify exact name/repository/environment access)."
+            exit 1
+          fi
+          if [ -n "$K17_PUBLIC_PEM_VAR" ] && [ -n "$K17_PUBLIC_PEM_SECRET" ] && [ "$K17_PUBLIC_PEM_VAR" != "$K17_PUBLIC_PEM_SECRET" ]; then
+            echo "::error::K17 public key differs between repository Variables and Secrets. Keep one identical value only."
+            exit 1
+          fi
+          if [ -n "$K17_FINGERPRINT_VAR" ] && [ -n "$K17_FINGERPRINT_SECRET" ] && [ "$K17_FINGERPRINT_VAR" != "$K17_FINGERPRINT_SECRET" ]; then
+            echo "::error::K17 fingerprint differs between repository Variables and Secrets. Keep one identical value only."
+            exit 1
+          fi
+          export K17_PUBLIC_PEM="${K17_PUBLIC_PEM_VAR:-$K17_PUBLIC_PEM_SECRET}"
+          export K17_FINGERPRINT="${K17_FINGERPRINT_VAR:-$K17_FINGERPRINT_SECRET}"
+          if [ -z "$K17_PUBLIC_PEM" ]; then
+            echo "::error::K17 missing K17_ED25519_PUBLIC_KEY_PEM: add as Actions Variable OR Secret."
+            exit 1
+          fi
+          if [ -z "$K17_FINGERPRINT" ]; then
+            echo "::error::K17 missing K17_ED25519_PUBLIC_KEY_SPKI_SHA256: add as Actions Variable OR Secret."
             exit 1
           fi
           export K17_KEY_DIR="$RUNNER_TEMP/k17-external-signing-material"
@@ -65,6 +88,28 @@ jobs:
               name.write_text(value + ("" if value.endswith("\n") else "\n"),
                               encoding="utf-8")
               name.chmod(mode)
+          PY
+          # Validate all three values NOW, before spending time on LLVM19.
+          # Do not display private/public PEM material in logs.
+          "$K17_PYTHON" - <<'PY'
+          import hashlib, os, pathlib
+          from cryptography.hazmat.primitives import serialization
+          from cryptography.hazmat.primitives.asymmetric import ed25519
+          root = pathlib.Path(os.environ["K17_KEY_DIR"])
+          try:
+              public = serialization.load_pem_public_key((root / "trusted-external-public.pem").read_bytes())
+              private = serialization.load_pem_private_key((root / "signing-secret.pem").read_bytes(), password=None)
+              if not isinstance(public, ed25519.Ed25519PublicKey) or not isinstance(private, ed25519.Ed25519PrivateKey):
+                  raise ValueError("incorrect Ed25519 key type")
+              spki = public.public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
+              derived = private.public_key().public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
+              if derived != spki:
+                  raise ValueError("private/public keys do not form a pair")
+              if hashlib.sha256(spki).hexdigest() != os.environ["K17_FINGERPRINT"]:
+                  raise ValueError("public SPKI fingerprint does not match")
+          except (TypeError, ValueError) as exc:
+              raise SystemExit("K17 key preflight failed: " + str(exc) + "; check the three values without printing PEM content")
+          print("K17 external Ed25519 keypair + SHA256 SPKI fingerprint preflight PASS (no key contents printed)")
           PY
           echo "K17_KEY_DIR=$K17_KEY_DIR" >> "$GITHUB_ENV"
           echo "K17_TRUST_FINGERPRINT=$K17_FINGERPRINT" >> "$GITHUB_ENV"

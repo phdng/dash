@@ -216,8 +216,30 @@ for token in (
     "if: always()",
 ):
     assert token in workflow, token
+# K17 GitHub Actions accepts public/fingerprint from EITHER repository
+# Variable or Secret (common user setup places all three as Secrets).
+# Keep the private key Secret-only, fail closed for mismatched sources,
+# and never print key material in diagnostics.
+for required_source in (
+    "secrets.K17_ED25519_PRIVATE_KEY_PEM",
+    "vars.K17_ED25519_PUBLIC_KEY_PEM",
+    "secrets.K17_ED25519_PUBLIC_KEY_PEM",
+    "vars.K17_ED25519_PUBLIC_KEY_SPKI_SHA256",
+    "secrets.K17_ED25519_PUBLIC_KEY_SPKI_SHA256",
+    "K17_PUBLIC_PEM=\"${K17_PUBLIC_PEM_VAR:-$K17_PUBLIC_PEM_SECRET}\"",
+    "K17_FINGERPRINT=\"${K17_FINGERPRINT_VAR:-$K17_FINGERPRINT_SECRET}\"",
+    "private/public keys do not form a pair",
+    "public SPKI fingerprint does not match",
+    "public key differs between repository Variables and Secrets",
+    "fingerprint differs between repository Variables and Secrets",
+    "K17 external Ed25519 keypair + SHA256 SPKI fingerprint preflight PASS",
+):
+    assert required_source in workflow, required_source
 for banned in ("git push", "codesign -s", "devicectl",
-               "kagura-bbcheck", "ptrauth_strip"):
+               "kagura-bbcheck", "ptrauth_strip",
+               'echo "$K17_PRIVATE_PEM"',
+               'echo "$K17_PUBLIC_PEM"',
+               'print(os.environ["K17_PRIVATE_PEM"])'):
     assert banned not in workflow, banned
 for p in ("Makefile", "policy.json", ".github/workflows/build.yml"):
     assert "kagura_k17" not in (ROOT / p).read_text(encoding="utf-8")
