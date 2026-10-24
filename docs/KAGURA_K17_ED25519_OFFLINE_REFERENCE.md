@@ -1,7 +1,16 @@
 # K17 — Ed25519 detached signature cho tham chiếu Mach-O offline
 
-Ngày triển khai: **18/10/2026**. Trạng thái:
-**STAGED_EXTERNAL_ED25519_KEYS_REQUIRED_NOT_SIGNED_CI_VERIFIED**.
+Ngày triển khai: **18/10/2026**; ZIP K17 thực được kiểm chứng **20/10/2026**.
+Trạng thái:
+**REAL_CI_ED25519_TEST_KEY_SIGNATURE_AND_OFFLINE_MACHO_VERIFIED_NOT_SECURE_TRUST**.
+
+[Đối chiếu artifact K17 thực](KAGURA_K17_ARTIFACT_REVIEW.md): ZIP 56 tệp,
+**446/446 kiểm tra file-backed PASS**, Ed25519 detached đúng 64 bytes
+xác minh hợp lệ, khóa public TEST SPKI trùng fingerprint; raw K16
+manifest replay trên ba Mach-O và báo cáo K13/K14 thật đều khớp.
+**Private key TEST từng xuất hiện trong chat nên không thể coi đó là
+secure independent trust anchor**. Người dùng báo app cài/chạy bình
+thường, nhưng **không có chứng thực chạy K17 hoặc runtime verifier trên iPhone**.
 
 K16 đã có ZIP thực từ GitHub Actions, 54 thành phần với 276/276
 đối chiếu raw file-backed PASS; 3 executable arm64 post-link
@@ -155,6 +164,10 @@ khớp hoặc claim được nâng trạng thái thì FAIL.
 - **K15 vẫn BLOCKED** vì weak `kagura_bb_check()` luôn trả về 1;
   K17 không thay callback, không tạo stub khác, không triển khai BBCheck.
 - K11–K14 và Crane production **không sửa**, iPhone K17 NOT_TESTED.
-- **Portable test PASS không đồng nghĩa có khóa ngoài hoặc bản
-  signature từ CI thực**. Khi chưa có CI artifact K17, trạng thái
-  vẫn là `STAGED_EXTERNAL_ED25519_KEYS_REQUIRED_NOT_SIGNED_CI_VERIFIED`.
+- **Portable test và artifact CI là hai phạm vi khác nhau.** Nay đã
+  có ZIP K17 thực chứa chữ ký Ed25519 TEST được kiểm chứng; nhưng
+  private key TEST từng bị chia sẻ trong chat, vì vậy chỉ ghi
+  `ED25519_SIGNATURE_VALID_WITH_PREVIOUSLY_EXPOSED_TEST_KEY_OFFLINE_ONLY`,
+  không ghi secure-trust hoặc device/security PASS. Trước khi cần
+  tính xác thực chống giả mạo, tạo **cặp khóa MỚI ngoài chat**,
+  phê duyệt fingerprint độc lập và ký lại reference.

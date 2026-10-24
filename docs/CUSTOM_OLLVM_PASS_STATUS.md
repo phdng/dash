@@ -146,17 +146,39 @@ per-basic-block. Không coi K16 là integrity/security PASS,
 không chạy BBCheck stub hoặc thay đổi iPhone/Crane/PAC.
 Quy trình: [KAGURA_K16_OFFLINE_MACHO_TEXT.md](KAGURA_K16_OFFLINE_MACHO_TEXT.md).
 
-**K17 — detached Ed25519 trên manifest K16 offline (staged):**
+**K17 — đã kiểm chứng chữ ký Ed25519 TEST trên ZIP CI thực:**
+[KAGURA_K17_ARTIFACT_REVIEW.md](KAGURA_K17_ARTIFACT_REVIEW.md).
+ZIP gồm **56 tệp, 446/446 kiểm tra file-backed PASS**. Chữ ký detached
+Ed25519 64 bytes hợp lệ cho byte gốc manifest K16; public-key SPKI
+SHA-256 khớp khóa TEST ngoài ZIP, receipt được tính lại và ba
+executable Mach-O/IPA/IR/object K13–K14 đều replay đúng.
+**Tuy nhiên private key TEST từng bị công khai trong cuộc trò chuyện,**
+không thể coi chữ ký là secure trust anchor độc lập. Người dùng báo
+ứng dụng cài và chạy trên thiết bị, chưa có signed device attestation
+hoặc runtime verifier K17. Không có chứng cứ sửa BBCheck, tăng
+integrity security, arm64e/PAC hoặc thay đổi Crane production.
+Hướng dẫn ký/verify:
 [KAGURA_K17_ED25519_OFFLINE_REFERENCE.md](KAGURA_K17_ED25519_OFFLINE_REFERENCE.md).
-Đã triển khai thư viện ký/xác minh với **public-key SPKI SHA-256 đã
-phê duyệt độc lập**, chữ ký detached và kiểm tra lại raw K16 manifest
-cùng ba executable gốc. Portable tests dùng khóa tạm để phát hiện
-forged signature, key swap, sai fingerprint, binary/manifest tamper.
-**Chưa có signing secret/trusted public key từ người dùng trong CI**,
-chưa có signed K17 artifact thật, không claim authenticated PASS.
-Ngay cả khi ký thành công thì đó chỉ là tham chiếu file offline,
-không phải runtime verifier, iPhone attestation hay BBCheck security.
-Không thay đổi Crane production/arm64e/PAC.
+
+**K18 — người dùng bỏ qua, không đánh dấu CI/device PASS:**
+[KAGURA_K18_ROTATED_IOS_REFERENCE_LAB.md](KAGURA_K18_ROTATED_IOS_REFERENCE_LAB.md).
+Workflow macOS thủ công dùng cặp Ed25519 mới **khác khóa TEST K17
+đã công khai**, rebuild K13/K14 và K16 raw manifest, tạo chữ ký
+K17 v1 bằng signer mới, đóng app Swift CryptoKit riêng và IPA unsigned.
+Trong app, người dùng bấm Verify để đối chiếu chữ ký, SHA, UUID và
+`__TEXT,__text` của **file mẫu K14 được đóng kèm**, không phải code
+K18 đang chạy. **SKIPPED_BY_USER_NO_MACOS_OR_DEVICE_VERIFICATION**. Chưa có K18 macOS Swift build hay log device thật;
+không có trust root bất biến, code-signing/attestation,
+self-integrity/PAC/Crane production. K15 weak stub vẫn bị chặn.
+
+**K19 — nghiên cứu nlist symbol-address intervals trên Mach-O sau linker (staged):**
+[KAGURA_K19_SYMBOL_BOUNDED_OFFLINE.md](KAGURA_K19_SYMBOL_BOUNDED_OFFLINE.md).
+Workflow thủ công từ K13 native/K14 IPA/K16 section SHA, **không phụ
+thuộc K18 hay các khóa K18**. Parse thật `LC_SYMTAB`/nlist arm64,
+đo byte từ địa chỉ symbol `_dd_k8_evaluate`/`_dd_k14_ios_parity`
+đến địa chỉ symbol cao hơn gần nhất hoặc cuối `__TEXT,__text`.
+**Không phải function-size chính xác**, không hash từng basic block,
+không có runtime verifier, on-device hay security/PAC/Crane PASS.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản

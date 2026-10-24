@@ -1,0 +1,190 @@
+name: Kagura K18 - Rotated Ed25519 iOS Reference Verifier Lab (Experimental)
+
+# Manual ONLY. The iPhone app verifies a bundled read-only K14 SPECIMEN,
+# not itself; no runtime tamper or Crane production. Never use exposed K17 key.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k18-rotated-reference-lab:
+    runs-on: macos-14
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Strict K18/K17 to K13 portable rules
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/k18-crypto-venv"
+          "$RUNNER_TEMP/k18-crypto-venv/bin/python" -m pip install --disable-pip-version-check cryptography==50.0.2
+          echo "K18_PYTHON=$RUNNER_TEMP/k18-crypto-venv/bin/python" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/k18-crypto-venv/bin/python" scripts/test_kagura_k18_reference_lab.py
+          "$RUNNER_TEMP/k18-crypto-venv/bin/python" scripts/test_kagura_k17_signature.py
+          "$RUNNER_TEMP/k18-crypto-venv/bin/python" scripts/test_kagura_k16_offline_text.py
+          "$RUNNER_TEMP/k18-crypto-venv/bin/python" scripts/test_kagura_k15_bbcheck.py
+          "$RUNNER_TEMP/k18-crypto-venv/bin/python" scripts/test_kagura_k14_ios_ipa.py
+          "$RUNNER_TEMP/k18-crypto-venv/bin/python" scripts/test_kagura_k13_native.py
+          "$RUNNER_TEMP/k18-crypto-venv/bin/python" scripts/test_custom_ollvm_pass_matrix.py
+          "$RUNNER_TEMP/k18-crypto-venv/bin/python" scripts/custom_ollvm/audit_passes.py
+
+      - name: Require NEW rotated K18 keypair and out-of-band fingerprint
+        env:
+          K18_PRIVATE: ${{ secrets.K18_ED25519_PRIVATE_KEY_PEM }}
+          K18_PUBLIC_VAR: ${{ vars.K18_ED25519_PUBLIC_KEY_PEM }}
+          K18_PUBLIC_SECRET: ${{ secrets.K18_ED25519_PUBLIC_KEY_PEM }}
+          K18_FINGERPRINT_VAR: ${{ vars.K18_ED25519_PUBLIC_KEY_SPKI_SHA256 }}
+          K18_FINGERPRINT_SECRET: ${{ secrets.K18_ED25519_PUBLIC_KEY_SPKI_SHA256 }}
+        run: |
+          set -euo pipefail
+          if [ -z "$K18_PRIVATE" ]; then
+            echo "::error::K18 needs a NEW privately generated K18_ED25519_PRIVATE_KEY_PEM repository Secret (never reuse exposed K17 TEST key)."
+            exit 1
+          fi
+          if [ -n "$K18_PUBLIC_VAR" ] && [ -n "$K18_PUBLIC_SECRET" ] && [ "$K18_PUBLIC_VAR" != "$K18_PUBLIC_SECRET" ]; then
+            echo "::error::K18 public key differs between Secrets and Variables"
+            exit 1
+          fi
+          if [ -n "$K18_FINGERPRINT_VAR" ] && [ -n "$K18_FINGERPRINT_SECRET" ] && [ "$K18_FINGERPRINT_VAR" != "$K18_FINGERPRINT_SECRET" ]; then
+            echo "::error::K18 fingerprint differs between Secrets and Variables"
+            exit 1
+          fi
+          export K18_PUBLIC="${K18_PUBLIC_VAR:-$K18_PUBLIC_SECRET}"
+          export K18_FINGERPRINT="${K18_FINGERPRINT_VAR:-$K18_FINGERPRINT_SECRET}"
+          if [ -z "$K18_PUBLIC" ] || [ -z "$K18_FINGERPRINT" ]; then
+            echo "::error::K18 needs NEW matching public PEM and independently approved SPKI SHA256 from repository Secrets/Variables"
+            exit 1
+          fi
+          if [ "$K18_FINGERPRINT" = "2e91a1403ffc97eb66c2c1717205eb054ce3c341898b6978b007cb5c56241f40" ]; then
+            echo "::error::K18 refuses previously exposed K17 TEST signer"
+            exit 1
+          fi
+          export K18_KEY_DIR="$RUNNER_TEMP/k18-rotated-key-material"
+          "$K18_PYTHON" - <<'PY'
+          import hashlib, os, pathlib, re
+          from cryptography.hazmat.primitives import serialization
+          from cryptography.hazmat.primitives.asymmetric import ed25519
+          root = pathlib.Path(os.environ["K18_KEY_DIR"])
+          root.mkdir(mode=0o700, exist_ok=False)
+          fp = os.environ["K18_FINGERPRINT"]
+          if not re.fullmatch("[a-f0-9]{64}", fp):
+              raise SystemExit("K18 fingerprint must be SHA256 SPKI 64 lowercase hex")
+          for name, data in (
+              ("secret.pem", os.environ["K18_PRIVATE"]),
+              ("trusted.pem", os.environ["K18_PUBLIC"]),
+          ):
+              if not data.strip() or len(data) > 16000:
+                  raise SystemExit("K18 PEM missing or too large")
+              path = root / name
+              path.write_text(data + ("" if data.endswith("\n") else "\n"), encoding="utf-8")
+              path.chmod(0o600)
+          public = serialization.load_pem_public_key((root / "trusted.pem").read_bytes())
+          private = serialization.load_pem_private_key((root / "secret.pem").read_bytes(), password=None)
+          if not isinstance(public, ed25519.Ed25519PublicKey) or not isinstance(private, ed25519.Ed25519PrivateKey):
+              raise SystemExit("K18 only supports Ed25519 keys")
+          spki = public.public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
+          derived = private.public_key().public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
+          if spki != derived or hashlib.sha256(spki).hexdigest() != fp:
+              raise SystemExit("K18 private/public keys or fingerprint do not match")
+          print("K18 new signer pair + independent SPKI fingerprint validated (no PEM printed)")
+          PY
+          echo "K18_KEY_DIR=$K18_KEY_DIR" >> "$GITHUB_ENV"
+          echo "K18_TRUST_FINGERPRINT=$K18_FINGERPRINT" >> "$GITHUB_ENV"
+
+      - name: Build exact pinned Kagura LLVM19 for known K13/K14 specimens
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k18-source"
+          build="$RUNNER_TEMP/kagura-k18-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          "$K18_PYTHON" - "$src/include/kagura/PassRegistry.def" <<'PY'
+          import hashlib, pathlib, sys
+          expected = "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa"
+          assert hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest() == expected
+          PY
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          echo "K18_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K18_SRC=$src" >> "$GITHUB_ENV"
+          echo "K18_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Rebuild and replay K13 native, K14 IPA and K16 Mach-O manifest
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K18-Reference-IPA"
+          mkdir -p "$out"
+          echo "K18_OUT=$out" >> "$GITHUB_ENV"
+          "$K18_PYTHON" scripts/custom_ollvm/kagura_k13/pilot.py \
+            --src "$K18_SRC" --llvm "$K18_LLVM" --plugin "$K18_PLUGIN" --out "$out"
+          "$K18_PYTHON" scripts/custom_ollvm/kagura_k13/audit.py --out "$out"
+          bash scripts/custom_ollvm/kagura_k14/build_ipa.sh "$K18_LLVM" "$K18_SRC" "$out"
+          "$K18_PYTHON" scripts/custom_ollvm/kagura_k16/macho_measure.py --out "$out"
+          "$K18_PYTHON" scripts/custom_ollvm/kagura_k16/macho_measure.py --out "$out" --verify
+
+      - name: Sign K16 raw source with NEW rotated key and assemble K18 resources
+        run: |
+          set -euo pipefail
+          "$K18_PYTHON" scripts/custom_ollvm/kagura_k17/signature.py sign \
+            --out "$K18_OUT" \
+            --trusted-public-key "$K18_KEY_DIR/trusted.pem" \
+            --expected-spki-sha256 "$K18_TRUST_FINGERPRINT" \
+            --private-key "$K18_KEY_DIR/secret.pem"
+          "$K18_PYTHON" scripts/custom_ollvm/kagura_k18/package.py prepare \
+            --out "$K18_OUT" \
+            --trusted-public-key "$K18_KEY_DIR/trusted.pem" \
+            --expected-spki-sha256 "$K18_TRUST_FINGERPRINT"
+
+      - name: Compile isolated Swift CryptoKit iOS 15+ lab (no injected Crane/BBCheck)
+        run: |
+          set -euo pipefail
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          xcrun swiftc -parse-as-library -O \
+            -target arm64-apple-ios15.0 -sdk "$sdk" \
+            scripts/custom_ollvm/kagura_k18/K18ReferenceLab.swift \
+            -o "$K18_OUT/KaguraK18ReferenceLab.app/KaguraK18ReferenceLab" \
+            > "$K18_OUT/k18-swiftc.log" 2>&1 || {
+              cat "$K18_OUT/k18-swiftc.log" >&2
+              exit 1
+            }
+          xcrun otool -hv "$K18_OUT/KaguraK18ReferenceLab.app/KaguraK18ReferenceLab" > "$K18_OUT/k18-macho.log"
+          "$K18_PYTHON" scripts/custom_ollvm/kagura_k18/package.py package --out "$K18_OUT"
+          echo "K18: stand-alone unsigned iOS arm64 CryptoKit verifier app packed; actual iPhone execution NOT TESTED BY CI." >> "$GITHUB_STEP_SUMMARY"
+          echo "K18: signed K14 reference specimen only; app self-integrity is NOT IMPLEMENTED, no iPhone attestation, no BBCheck/PAC/Crane." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Clean private key files outside artifact on success
+        if: success()
+        run: |
+          set -euo pipefail
+          "$K18_PYTHON" - <<'PY'
+          import pathlib,os
+          root=pathlib.Path(os.environ["K18_KEY_DIR"])
+          for name in ("secret.pem","trusted.pem"):
+              (root/name).unlink()
+          root.rmdir()
+          PY
+
+      - name: Always preserve independent K18 lab build logs and IPA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K18-ROTATED-ED25519-IOS-REFERENCE-IPA-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K18-Reference-IPA/

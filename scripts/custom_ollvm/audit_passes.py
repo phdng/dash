@@ -720,7 +720,28 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
                              " linked Mach-O code; manifest unsigned, no BBCheck"
                              " runtime, security/iPhone/PAC/Crane PASS")
     if (kagura.get("k17_status") !=
-        "STAGED_EXTERNAL_ED25519_KEYS_REQUIRED_NOT_SIGNED_CI_VERIFIED" or
+        "REAL_CI_ED25519_TEST_KEY_SIGNATURE_AND_OFFLINE_MACHO_VERIFIED_NOT_SECURE_TRUST" or
+        kagura.get("k17_artifact_review") !=
+        "docs/KAGURA_K17_ARTIFACT_REVIEW.md" or
+        kagura.get("k17_artifact_zip_sha256") !=
+        "9b07e6a8e285102aa80671a6bdd70fe080d9424097632a7e87272f44b77d76db" or
+        kagura.get("k17_detached_signature_sha256") !=
+        "8e82eef77b726f5412fff4a0e750fc4554915748ef44bbd97aa7be437637c892" or
+        kagura.get("k17_raw_k16_manifest_sha256") !=
+        "eb322412014ede1f4b5e0aa093e513b067670ac9866b33f1511c62269cfc1cd8" or
+        kagura.get("k17_test_public_spki_sha256") !=
+        "2e91a1403ffc97eb66c2c1717205eb054ce3c341898b6978b007cb5c56241f40" or
+        kagura.get("k17_cryptographic_signature_verification") !=
+        "ED25519_SIGNATURE_VALID_WITH_PREVIOUSLY_EXPOSED_TEST_KEY_OFFLINE_ONLY" or
+        kagura.get("k17_iphone_app_user_report") !=
+        "APP_INSTALLED_AND_FUNCTIONAL_USER_REPORT_ONLY" or
+        kagura.get("k17_iphone_app_uuid") !=
+        "7c0cb853-77aa-3ccb-9f20-560e5f40e587" or
+        kagura.get("k17_artifact_entry_count") != 56 or
+        kagura.get("k17_independent_file_backed_checks") != 446 or
+        kagura.get("k17_test_private_key_previously_exposed_in_chat") is not True or
+        kagura.get("k17_iphone_execution_independently_observed") is not False or
+        kagura.get("k17_offline_macho_manifest_replayed") is not True or
         kagura.get("k17_scope") !=
         "EXTERNAL_SPKI_SHA256_ED25519_DETACHED_K16_OFFLINE_MANIFEST_ONLY" or
         kagura.get("k17_workflow") !=
@@ -743,7 +764,7 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k17_receipt_name") !=
         "Kagura-K17-SIGNATURE-RECEIPT.json" or
         kagura.get("k17_signed_ci_artifact") !=
-        "NOT_TESTED_EXTERNAL_KEYS_NOT_CONFIGURED" or
+        "REAL_CI_ED25519_TEST_KEY_DETACHED_SIGNATURE_VERIFIED_OFFLINE_ONLY" or
         any(kagura.get(k) is not False for k in (
             "k17_private_key_in_artifact",
             "k17_trusted_public_key_in_artifact",
@@ -755,10 +776,89 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
             "k17_arm64e_pac_tested",
             "k17_production_merge")) or
         any(not (root / kagura[key]).is_file() for key in
-            ("k17_workflow", "k17_signer", "k17_test", "k17_doc"))):
-        raise AssertionError("K17 requires real independent external Ed25519"
-                             " trust material; staging/tests cannot be promoted"
-                             " to signed CI/device/security/Crane PASS")
+            ("k17_workflow", "k17_signer", "k17_test", "k17_doc",
+             "k17_artifact_review"))):
+        raise AssertionError("K17 real test-key signature and offline MachO"
+                             " file replay verified, but private TEST key was"
+                             " exposed: no secure trust/device/security/Crane PASS")
+    if (kagura.get("k18_status") !=
+        "SKIPPED_BY_USER_NO_MACOS_OR_DEVICE_VERIFICATION" or
+        kagura.get("k18_scope") !=
+        "SIGNED_BUNDLED_K14_SPECIMEN_ONLY_NOT_RUNNING_APP_INTEGRITY" or
+        kagura.get("k18_workflow") !=
+        ".github/workflows/kagura-k18-rotated-reference-ipa.yml" or
+        kagura.get("k18_swift") !=
+        "scripts/custom_ollvm/kagura_k18/K18ReferenceLab.swift" or
+        kagura.get("k18_info_plist") !=
+        "scripts/custom_ollvm/kagura_k18/Info.plist" or
+        kagura.get("k18_packager") !=
+        "scripts/custom_ollvm/kagura_k18/package.py" or
+        kagura.get("k18_test") != "scripts/test_kagura_k18_reference_lab.py" or
+        kagura.get("k18_device_log_audit") !=
+        "scripts/custom_ollvm/kagura_k18/device_log_audit.py" or
+        kagura.get("k18_doc") !=
+        "docs/KAGURA_K18_ROTATED_IOS_REFERENCE_LAB.md" or
+        kagura.get("k18_bundle_id") !=
+        "com.duodash.research.kagurak18referencelab" or
+        kagura.get("k18_required_key_secret") !=
+        "K18_ED25519_PRIVATE_KEY_PEM" or
+        kagura.get("k18_required_public_key") !=
+        "K18_ED25519_PUBLIC_KEY_PEM" or
+        kagura.get("k18_required_fingerprint") !=
+        "K18_ED25519_PUBLIC_KEY_SPKI_SHA256" or
+        kagura.get("k18_forbidden_exposed_k17_test_fingerprint") !=
+        "2e91a1403ffc97eb66c2c1717205eb054ce3c341898b6978b007cb5c56241f40" or
+        kagura.get("k18_expected_log_schema") != 1 or
+        kagura.get("k18_expected_log_lines") != 10 or
+        kagura.get("k18_macos_swift_ci") != "NOT_TESTED" or
+        any(kagura.get(k) is not False for k in (
+            "k18_new_owner_key_provisioned",
+            "k18_signed_reference_ci",
+            "k18_iphone_executed",
+            "k18_independent_device_attestation",
+            "k18_embedded_key_immutable",
+            "k18_self_integrity_verifier_implemented",
+            "k18_security_strength_proven",
+            "k18_arm64e_pac_tested",
+            "k18_production_merge")) or
+        any(not (root / kagura[key]).is_file() for key in
+            ("k18_workflow", "k18_swift", "k18_info_plist",
+             "k18_packager", "k18_test", "k18_doc", "k18_device_log_audit"))):
+        raise AssertionError("K18 new rotated Ed25519 CryptoKit iOS reference"
+                             " verifier staged only; no real macOS IPA/device"
+                             " evidence, no immutable trust/self-integrity/PAC/Crane")
+    if (kagura.get("k19_status") !=
+        "STAGED_MANUAL_REAL_SYMTAB_OFFLINE_NOT_MACOS_VERIFIED" or
+        kagura.get("k19_scope") !=
+        "LC_SYMTAB_N_SECT_NEXT_ADDRESS_BOUNDED_OFFLINE_NO_FUNCTION_BOUNDARY_GUARANTEE" or
+        kagura.get("k19_workflow") !=
+        ".github/workflows/kagura-k19-symbol-bounded.yml" or
+        kagura.get("k19_measure") !=
+        "scripts/custom_ollvm/kagura_k19/symbol_ranges.py" or
+        kagura.get("k19_test") !=
+        "scripts/test_kagura_k19_symbol_ranges.py" or
+        kagura.get("k19_doc") !=
+        "docs/KAGURA_K19_SYMBOL_BOUNDED_OFFLINE.md" or
+        kagura.get("k19_manifest") !=
+        "Kagura-K19-SYMBOL-RANGES.json" or
+        kagura.get("k19_abi_symbol") != "_dd_k8_evaluate" or
+        kagura.get("k19_ios_second_symbol") != "_dd_k14_ios_parity" or
+        kagura.get("k19_macos_ci") != "NOT_TESTED" or
+        kagura.get("k19_iphone_runtime") != "NOT_TESTED" or
+        any(kagura.get(key) is not False for key in (
+            "k19_depends_on_k18",
+            "k19_signing_or_secure_trust",
+            "k19_exact_function_boundaries_proven",
+            "k19_per_basic_block_proven",
+            "k19_runtime_integrity_implemented",
+            "k19_security_anti_tamper_proven",
+            "k19_arm64e_pac_tested",
+            "k19_production_merge")) or
+        any(not (root / kagura[key]).is_file() for key in
+            ("k19_workflow", "k19_measure", "k19_test", "k19_doc"))):
+        raise AssertionError("K19 post-link real LC_SYMTAB nlist symbol range"
+                             " study is OFFLINE/STAGED without K18; no"
+                             " function/per-block/native/device security PASS")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or
