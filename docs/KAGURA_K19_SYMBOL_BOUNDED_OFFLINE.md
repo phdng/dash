@@ -35,6 +35,23 @@ Yêu cầu symbol là external `N_SECT` thực và có địa chỉ
 nằm trong section code; chặn thiếu/trùng/alias bất thường,
 tràn range, overlap table, nlist sai/không căn hàng.
 
+### Sửa lỗi GitHub Actions: Darwin string table prefix
+
+CI K19 đầu tiên thất bại ở
+`K19 Darwin string table must begin with NUL` vì parser từng
+bắt buộc `strs[0] == 0`. **Darwin linker có thể đặt padding ở đầu
+string table, ví dụ `SPACE + NUL`**, và `n_strx` là byte offset
+đến tên symbol kết thúc bằng NUL, không bắt buộc toàn bảng bắt đầu
+bằng NUL. Một số linker còn có thể dùng offset trỏ tới suffix hợp lệ
+của tên đã lưu. Đã bỏ điều kiện giả này, thay bằng xác minh offset
+`n_strx` trong phạm vi, chuỗi rỗng/không NUL/không ASCII bị từ chối;
+external mục tiêu vẫn yêu cầu tên đúng và không trùng. `strx=0`
+chỉ được chấp nhận cho local anonymous N_SECT để giữ ranh giới địa
+chỉ (external `strx=0` bị từ chối). Kiểm thử portable bao gồm prefix
+`NUL`, `SPACE + NUL`, padding thêm, suffix sharing, sai offset,
+symbol giả, alias và mutation dữ liệu. **Đây là sửa parser dựa trên
+lỗi CI đã cung cấp, chưa có lần chạy lại macOS K19 xác nhận.**
+
 Phép băm **theo khoảng địa chỉ**:
 
 1. Tìm địa chỉ máy của symbol mục tiêu từ `n_value`.

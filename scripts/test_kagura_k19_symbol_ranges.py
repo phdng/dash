@@ -26,7 +26,8 @@ def reject(fn, message):
 
 
 def executable(code: bytes, names: tuple[str, ...], *, subtype=0,
-               duplicate_alias=False, bad_strx=False, export=True):
+               duplicate_alias=False, bad_strx=False, export=True,
+               string_prefix=b"\0", unnamed_local=False):
     assert len(code) >= 128 and len(code) % 4 == 0
     segsize = 72 + 80
     cmdsize = segsize + 24 + 24
@@ -37,15 +38,19 @@ def executable(code: bytes, names: tuple[str, ...], *, subtype=0,
     assert addresses[-1] < len(code)
     if duplicate_alias:
         addresses[-1] = addresses[0]
-    string_table = bytearray(b"\0")
+    # Apple ld64 uses linker-dependent padding, often b" \\0".
+    assert string_prefix.endswith(b"\0") and len(string_prefix) >= 1
+    string_table = bytearray(string_prefix)
     nlists = bytearray()
     for i, name in enumerate(symbols):
         ix = len(string_table)
         string_table.extend(name.encode("ascii") + b"\0")
+        local_unnamed = unnamed_local and name == "_other"
         nlists.extend(struct.pack("<IBBHQ",
-                                  0xffffffff if bad_strx and i == 0 else ix,
-                                  0x0f if export else 0x0e, 1, 0,
-                                  vmbase + textoff + addresses[i]))
+                                  0xffffffff if bad_strx and i == 0 else
+                                  (0 if local_unnamed else ix),
+                                  0x0e if local_unnamed else (0x0f if export else 0x0e),
+                                  1, 0, vmbase + textoff + addresses[i]))
     symoff = textoff + len(code)
     stroff = symoff + len(nlists)
     header = struct.pack("<8I", 0xfeedfacf, 0x0100000c, subtype,
@@ -72,6 +77,31 @@ baseline = executable(code, ("_dd_k8_evaluate",))
 protected = executable(changed, ("_dd_k8_evaluate",))
 ios = executable(changed, ("_dd_k8_evaluate", "_dd_k14_ios_parity"))
 assert k19.inspect(baseline, ("_dd_k8_evaluate",))["observed_symbols"]["_dd_k8_evaluate"]["length"] == 32
+# Regression for real ld64 CI failure: string table may begin SPACE NUL,
+# not just NUL. Both must decode by n_strx into valid bounded names.
+for prefix in (b"\0", b" \0", b" \0\0", b"PAD\0"):
+    specimen = executable(code, ("_dd_k8_evaluate",), string_prefix=prefix)
+    assert k19.inspect(specimen, ("_dd_k8_evaluate",))["observed_symbols"]["_dd_k8_evaluate"]["length"] == 32
+assert k19.inspect(executable(code, ("_dd_k8_evaluate",), unnamed_local=True),
+                   ("_dd_k8_evaluate",))["observed_symbols"]["_dd_k8_evaluate"]["length"] == 32
+first_nlist = 32 + (72 + 80 + 24 + 24) + len(code)
+# Darwin n_strx is an offset, not necessarily a NUL-delimited *start*:
+# a linker can reuse the suffix of an earlier string. Accept valid suffix
+# lookup, but never accept malformed/out-of-bounds or the wrong target.
+suffix_table = b"prefix_dd_k8_evaluate\0"
+suffix_binary = bytearray(executable(code, ("_dd_k8_evaluate",),
+                                     string_prefix=suffix_table))
+struct.pack_into("<I", suffix_binary, first_nlist, len(b"prefix"))
+assert k19.inspect(bytes(suffix_binary), ("_dd_k8_evaluate",))[
+    "observed_symbols"]["_dd_k8_evaluate"]["length"] == 32
+invalid_start = bytearray(baseline)
+struct.pack_into("<I", invalid_start, first_nlist, 2)
+reject(lambda: k19.inspect(bytes(invalid_start), ("_dd_k8_evaluate",)),
+       "symbol pointer that decodes to a different name")
+external_zero = bytearray(baseline)
+struct.pack_into("<I", external_zero, first_nlist, 0)
+reject(lambda: k19.inspect(bytes(external_zero), ("_dd_k8_evaluate",)),
+       "external N_SECT strx zero")
 assert len(k19.inspect(ios, ("_dd_k8_evaluate", "_dd_k14_ios_parity"))["observed_symbols"]) == 2
 assert k19.inspect(ios, ("_dd_k8_evaluate", "_dd_k14_ios_parity"))["observed_symbols"]["_dd_k14_ios_parity"]["length"] == 32
 assert k19.inspect(baseline, ("_dd_k8_evaluate",))["observed_symbols"]["_dd_k8_evaluate"]["sha256"] != k19.inspect(protected, ("_dd_k8_evaluate",))["observed_symbols"]["_dd_k8_evaluate"]["sha256"]

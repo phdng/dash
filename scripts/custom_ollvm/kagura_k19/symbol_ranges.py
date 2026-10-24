@@ -54,6 +54,10 @@ def exact_slice(data: bytes, offset: int, size: int) -> bytes:
 def decode_cname(raw: bytes, offset: int) -> str:
     if offset == 0 or offset >= len(raw):
         raise AssertionError("K19 empty/out-of-bounds symbol strx")
+    # The first bytes can be linker padding (for example SPACE, NUL).
+    # n_strx indexes the actual NUL-terminated name; it need not be
+    # preceded by NUL (linkers may reuse a string suffix). Enforce
+    # in-bounds, non-empty, ASCII, NUL-terminated names instead.
     end = raw.find(b"\0", offset)
     if end <= offset:
         raise AssertionError("K19 unterminated/empty symbol")
@@ -102,8 +106,9 @@ def inspect(data: bytes, targets: tuple[str, ...]) -> dict:
         raise AssertionError("K19 corrupt symbol/string table sizes or overlapping commands")
     symbols_raw = exact_slice(data, symoff, count * 16)
     strs = exact_slice(data, stroff, strsize)
-    if strs[0] != 0:
-        raise AssertionError("K19 Darwin string table must begin with NUL")
+    # Apple ld64 may reserve a nonzero leading padding byte, typically
+    # b" \\0". No Mach-O contract requires strs[0] to equal 0.
+    # decode_cname guards strx bounds and terminator, not padding bytes.
     if (symoff < stroff + strsize and stroff < symoff + count * 16):
         raise AssertionError("K19 overlapping nlist and string table")
     all_text = []
@@ -114,7 +119,14 @@ def inspect(data: bytes, targets: tuple[str, ...]) -> dict:
             continue
         if val < text_addr or val >= text_addr + text_size:
             raise AssertionError("K19 nlist text symbol outside __text virtual bounds")
-        name = decode_cname(strs, strx)
+        if strx == 0:
+            # An unnamed LOCAL text symbol may still delimit the next
+            # higher code address; an external target must be named.
+            if typ & N_EXT:
+                raise AssertionError("K19 external text nlist has zero strx")
+            name = ""
+        else:
+            name = decode_cname(strs, strx)
         all_text.append((val, name, bool(typ & N_EXT), desc))
     addresses = sorted(set(v for v, _, _, _ in all_text))
     results = {}
