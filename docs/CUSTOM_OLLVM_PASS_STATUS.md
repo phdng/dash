@@ -171,7 +171,7 @@ K18 đang chạy. **SKIPPED_BY_USER_NO_MACOS_OR_DEVICE_VERIFICATION**. Chưa có
 không có trust root bất biến, code-signing/attestation,
 self-integrity/PAC/Crane production. K15 weak stub vẫn bị chặn.
 
-**K19 — nghiên cứu nlist symbol-address intervals trên Mach-O sau linker (staged):**
+**K19 — nlist symbol-address intervals trên Mach-O, artifact macOS offline đã xác minh:**
 [KAGURA_K19_SYMBOL_BOUNDED_OFFLINE.md](KAGURA_K19_SYMBOL_BOUNDED_OFFLINE.md).
 Workflow thủ công từ K13 native/K14 IPA/K16 section SHA, **không phụ
 thuộc K18 hay các khóa K18**. Parse thật `LC_SYMTAB`/nlist arm64,
@@ -179,6 +179,19 @@ thuộc K18 hay các khóa K18**. Parse thật `LC_SYMTAB`/nlist arm64,
 đến địa chỉ symbol cao hơn gần nhất hoặc cuối `__TEXT,__text`.
 **Không phải function-size chính xác**, không hash từng basic block,
 không có runtime verifier, on-device hay security/PAC/Crane PASS.
+ZIP K19 thực 55 entries CRC sạch, 4 khoảng symbol code khớp raw byte
+và K16 SHA/UUID; macOS baseline 460 bytes, CSEBreak 544 bytes,
+iOS parity 484 bytes và evaluate 544 bytes. Không phải metadata ký.
+
+**K20 — LC_FUNCTION_STARTS × LC_SYMTAB crosscheck offline (staged):**
+[KAGURA_K20_FUNCTION_STARTS_CROSSCHECK.md](KAGURA_K20_FUNCTION_STARTS_CROSSCHECK.md).
+Parser ULEB128 đọc một `LC_FUNCTION_STARTS` thật, đối chiếu
+start/end của 4 khoảng K19 với các offset từ `__TEXT` segment,
+kiểm lại SHA code raw; fail-closed khi thiếu/mismatch. Workflow
+macOS manual-only tái tạo K13/K14/K16/K19 rồi chạy K20, không cần
+K18 keys. **Chưa có K20 real CI**. Hai nguồn cùng Mach-O không
+phải hai trust anchors; không chứng minh function size hay runtime
+integrity, không đổi Crane/PAC.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản

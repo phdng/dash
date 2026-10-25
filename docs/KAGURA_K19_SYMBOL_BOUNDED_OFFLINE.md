@@ -1,7 +1,8 @@
 # K19 — offline LC_SYMTAB / nlist symbol-address-bounded Mach-O canary
 
-Ngày triển khai: **24/10/2026**. Trạng thái:
-**STAGED_MANUAL_REAL_SYMTAB_OFFLINE_NOT_MACOS_VERIFIED**.
+Ngày triển khai: **24/10/2026**. Trạng thái sau khi đối chiếu ZIP CI thực:
+**REAL_MACOS_OFFLINE_NLIST_ARTIFACT_VERIFIED_NOT_RUNTIME_SECURITY**.
+ZIP macOS K19 SHA-256 `8a7625e0c3a5222009e295f515f534bcb1cebdf88ae5f5749c2d7bbc81bcc8bc`, 55 entries tên duy nhất và CRC sạch. Ba executable arm64 và 4 khoảng symbol đã được kiểm lại byte-to-byte với `LC_SYMTAB`, K16 SHA và UUID; mỗi executable có một ancillary N_SECT nằm ngoài code bị đếm/bỏ qua theo parser. Khoảng `_dd_k8_evaluate` macOS baseline 460 bytes, protected 544 bytes, iOS evaluate 544 bytes và `_dd_k14_ios_parity` iOS 484 bytes; **đây vẫn là đo offline, không phải runtime integrity**.
 
 ## K18 đã bỏ qua theo yêu cầu người dùng
 
@@ -49,8 +50,8 @@ external mục tiêu vẫn yêu cầu tên đúng và không trùng. `strx=0`
 chỉ được chấp nhận cho local anonymous N_SECT để giữ ranh giới địa
 chỉ (external `strx=0` bị từ chối). Kiểm thử portable bao gồm prefix
 `NUL`, `SPACE + NUL`, padding thêm, suffix sharing, sai offset,
-symbol giả, alias và mutation dữ liệu. **Đây là sửa parser dựa trên
-lỗi CI đã cung cấp, chưa có lần chạy lại macOS K19 xác nhận.**
+symbol giả, alias và mutation dữ liệu. **Đây là sửa parser dựa trên lỗi CI. Các lần chạy macOS
+sau cùng đã tạo được ZIP K19 thực và được đối chiếu byte-to-byte.**
 
 Phép băm **theo khoảng địa chỉ**:
 
@@ -119,14 +120,14 @@ manifest K16 nguyên gốc.
 
 Regression synthetic gồm symbol phụ export/local nằm đúng **điểm cuối**
 section, target nằm tại điểm cuối hoặc trước section, alias target
-ngoài section, và symbol phụ có `n_strx` bị hỏng. **Đây vẫn là sửa
-trên Workspace/portable; chưa có GitHub Actions macOS chạy lại PASS.**
+ngoài section, và symbol phụ có `n_strx` bị hỏng. **Bản sửa này đã được kiểm chứng thêm bằng ZIP GitHub Actions macOS
+K19 thực, trong đó mỗi specimen có một ancillary symbol bị loại.**
 
 Portable tests
 `scripts/test_kagura_k19_symbol_ranges.py` dùng Mach-O fake **chỉ
 để kiểm parser** và negative corruption, không phải bằng chứng
-macOS thật. Chưa có artifact K19 real CI, chưa xác minh được nlist
-trên thiết bị.
+macOS thật. ZIP GitHub Actions K19 thực đã được đối chiếu offline,
+nhưng **chưa chạy K19 verifier trên thiết bị**.
 
 ## Giới hạn bắt buộc
 

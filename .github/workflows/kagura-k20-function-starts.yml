@@ -1,0 +1,111 @@
+name: Kagura K20 - Function Starts vs Symbol Ranges Offline (Experimental)
+
+# K20 triangulates two post-link address sources within SAME binary.
+# K18 explicitly skipped by user; its iOS Swift CI/device status is NOT TESTED.
+# K15 confirmed Kagura BBCheck runtime is weak always-return-1 stub.
+# THIS WORKFLOW MUST NEVER BUILD/EXECUTE BBCheck OR CLAIM INTEGRITY PROTECTION.
+# It reuses K13 native CSEBreak canary and K14 isolated iOS app as harmless
+# post-link Mach-O byte specimens; SHA metadata is unsigned and OFFLINE ONLY.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k20-function-starts:
+    runs-on: macos-14
+    timeout-minutes: 110
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: K20/K19 and previous portable rules (K18 explicitly skipped)
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k20_function_starts.py
+          python3 scripts/test_kagura_k19_symbol_ranges.py
+          python3 scripts/test_kagura_k16_offline_text.py
+          python3 scripts/test_kagura_k15_bbcheck.py
+          python3 scripts/test_kagura_k14_ios_ipa.py
+          python3 scripts/test_kagura_k13_native.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+          python3 scripts/custom_ollvm/audit_passes.py
+
+      - name: Pin Kagura LLVM19 exactly as independently reviewed K12-K15
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k20-source"
+          build="$RUNNER_TEMP/kagura-k20-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          python3 - "$src/include/kagura/PassRegistry.def" <<'PY'
+          import hashlib, pathlib, sys
+          actual=hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest()
+          assert actual == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa", "K20 source registry does not match pinned proof"
+          PY
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          echo "K20_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K20_SRC=$src" >> "$GITHUB_ENV"
+          echo "K20_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Rebuild known-safe isolated K13 and K14 Mach-O specimens
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K20-Function-Starts"
+          mkdir -p "$out"
+          echo "K20_OUT=$out" >> "$GITHUB_ENV"
+          python3 scripts/custom_ollvm/kagura_k13/pilot.py \
+            --src "$K20_SRC" --llvm "$K20_LLVM" --plugin "$K20_PLUGIN" \
+            --out "$out"
+          python3 scripts/custom_ollvm/kagura_k13/audit.py --out "$out"
+          bash scripts/custom_ollvm/kagura_k14/build_ipa.sh \
+            "$K20_LLVM" "$K20_SRC" "$out"
+
+      - name: Measure real post-link arm64 __TEXT,__text and replay manifest
+        run: |
+          set -euo pipefail
+          python3 scripts/custom_ollvm/kagura_k16/macho_measure.py --out "$K20_OUT"
+          python3 scripts/custom_ollvm/kagura_k16/macho_measure.py --out "$K20_OUT" --verify
+          echo "K20: real post-link macOS baseline/CSEBreak and iOS CSEBreak lab MachO text sections measured (SHA256)." >> "$GITHUB_STEP_SUMMARY"
+          echo "K20: UNSIGNED offline reference, not BBCheck, not authenticated metadata, not runtime verifier, not security integrity, no new device test, no Crane/PAC." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Extract real Darwin LC_SYMTAB nlist address-bounded code slices
+        run: |
+          set -euo pipefail
+          python3 scripts/custom_ollvm/kagura_k19/symbol_ranges.py --out "$K20_OUT"
+          python3 scripts/custom_ollvm/kagura_k19/symbol_ranges.py --out "$K20_OUT" --verify
+          echo "K20: exact nlist N_SECT symbol-address intervals captured/replayed; NOT per-function length or per-block security." >> "$GITHUB_STEP_SUMMARY"
+          echo "K20: K18 SKIPPED/NOT TESTED per user; no false PASS, no iPhone runtime, keys, PAC or Crane." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cross-check LC_FUNCTION_STARTS with genuine K19 symbol address intervals
+        run: |
+          set -euo pipefail
+          python3 scripts/custom_ollvm/kagura_k20/function_starts.py --out "$K20_OUT"
+          python3 scripts/custom_ollvm/kagura_k20/function_starts.py --out "$K20_OUT" --verify
+          echo "K20: real LC_FUNCTION_STARTS ULEB64 and LC_SYMTAB intervals independently decoded from same MachO; no exact function size/security." >> "$GITHUB_STEP_SUMMARY"
+          echo "K20: K18 SKIPPED/NOT TESTED, unsigned offline result only, no runtime/device/PAC/Crane." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve all Mach-O sources and metadata even if compiler fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K20-FUNCTION-STARTS-DUAL-SOURCE-OFFLINE-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K20-Function-Starts/

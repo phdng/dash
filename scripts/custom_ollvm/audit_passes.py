@@ -828,7 +828,12 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
                              " verifier staged only; no real macOS IPA/device"
                              " evidence, no immutable trust/self-integrity/PAC/Crane")
     if (kagura.get("k19_status") !=
-        "STAGED_MANUAL_REAL_SYMTAB_OFFLINE_NOT_MACOS_VERIFIED" or
+        "REAL_MACOS_OFFLINE_NLIST_ARTIFACT_VERIFIED_NOT_RUNTIME_SECURITY" or
+        kagura.get("k19_artifact_sha256") !=
+        "8a7625e0c3a5222009e295f515f534bcb1cebdf88ae5f5749c2d7bbc81bcc8bc" or
+        kagura.get("k19_artifact_unique_entries") != 55 or
+        kagura.get("k19_corroborated_symbol_intervals") != 4 or
+        kagura.get("k19_real_ignored_ancillary_per_binary") != 1 or
         kagura.get("k19_scope") !=
         "LC_SYMTAB_N_SECT_NEXT_ADDRESS_BOUNDED_OFFLINE_NO_FUNCTION_BOUNDARY_GUARANTEE" or
         kagura.get("k19_workflow") !=
@@ -843,7 +848,8 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "Kagura-K19-SYMBOL-RANGES.json" or
         kagura.get("k19_abi_symbol") != "_dd_k8_evaluate" or
         kagura.get("k19_ios_second_symbol") != "_dd_k14_ios_parity" or
-        kagura.get("k19_macos_ci") != "NOT_TESTED" or
+        kagura.get("k19_macos_ci") !=
+        "REAL_MACOS_NLIST_AND_K16_OFFLINE_REPLAY_VERIFIED" or
         kagura.get("k19_iphone_runtime") != "NOT_TESTED" or
         any(kagura.get(key) is not False for key in (
             "k19_depends_on_k18",
@@ -857,8 +863,37 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         any(not (root / kagura[key]).is_file() for key in
             ("k19_workflow", "k19_measure", "k19_test", "k19_doc"))):
         raise AssertionError("K19 post-link real LC_SYMTAB nlist symbol range"
-                             " study is OFFLINE/STAGED without K18; no"
-                             " function/per-block/native/device security PASS")
+                             " study is OFFLINE (real macOS artifact reviewed),"
+                             " without K18; no function/per-block/device"
+                             " security PASS")
+    if (kagura.get("k20_status") !=
+        "STAGED_MANUAL_LC_FUNCTION_STARTS_K19_CROSSCHECK_NOT_MACOS_VERIFIED" or
+        kagura.get("k20_scope") !=
+        "SAME_MACHO_LC_FUNCTION_STARTS_NLIST_DUAL_SOURCE_OFFLINE_NO_TRUST" or
+        kagura.get("k20_workflow") !=
+        ".github/workflows/kagura-k20-function-starts.yml" or
+        kagura.get("k20_measure") !=
+        "scripts/custom_ollvm/kagura_k20/function_starts.py" or
+        kagura.get("k20_test") !=
+        "scripts/test_kagura_k20_function_starts.py" or
+        kagura.get("k20_doc") !=
+        "docs/KAGURA_K20_FUNCTION_STARTS_CROSSCHECK.md" or
+        kagura.get("k20_manifest") !=
+        "Kagura-K20-FUNCTION-START-CROSSCHECK.json" or
+        kagura.get("k20_required_command") != "LC_FUNCTION_STARTS" or
+        kagura.get("k20_required_symbol_source") != "LC_SYMTAB_N_SECT" or
+        kagura.get("k20_macos_ci") != "NOT_TESTED" or
+        any(kagura.get(k) is not False for k in (
+            "k20_k18_dependency", "k20_authenticated_reference",
+            "k20_independent_trust_root", "k20_exact_function_size_proven",
+            "k20_per_basic_block_integrity_proven",
+            "k20_runtime_verifier_implemented", "k20_iphone_device_executed",
+            "k20_security_anti_tamper_proven", "k20_arm64e_pac_tested",
+            "k20_production_merge")) or
+        any(not (root / kagura[k]).is_file() for k in (
+            "k20_workflow", "k20_measure", "k20_test", "k20_doc"))):
+        raise AssertionError("K20 LC_FUNCTION_STARTS corroborates unsigned K19"
+                             " in SAME MachO only; no macOS K20/device/security PASS")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or
