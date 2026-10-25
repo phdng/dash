@@ -867,7 +867,15 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
                              " without K18; no function/per-block/device"
                              " security PASS")
     if (kagura.get("k20_status") !=
-        "STAGED_MANUAL_LC_FUNCTION_STARTS_K19_CROSSCHECK_NOT_MACOS_VERIFIED" or
+        "REAL_MACOS_OFFLINE_FUNCTION_STARTS_ARTIFACT_VERIFIED_NOT_RUNTIME_SECURITY" or
+        kagura.get("k20_artifact_sha256") !=
+        "235e1d4ea16437807d1920e236bb65942ef580bf021734d9093a81e73884b214" or
+        kagura.get("k20_artifact_unique_entries") != 56 or
+        kagura.get("k20_independent_file_checks") != 190 or
+        kagura.get("k20_corroborated_symbol_intervals") != 4 or
+        kagura.get("k20_function_starts_per_binary") != [3, 3, 30] or
+        kagura.get("k20_artifact_review_doc") !=
+        "docs/KAGURA_K20_ARTIFACT_REVIEW.md" or
         kagura.get("k20_scope") !=
         "SAME_MACHO_LC_FUNCTION_STARTS_NLIST_DUAL_SOURCE_OFFLINE_NO_TRUST" or
         kagura.get("k20_workflow") !=
@@ -882,7 +890,8 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "Kagura-K20-FUNCTION-START-CROSSCHECK.json" or
         kagura.get("k20_required_command") != "LC_FUNCTION_STARTS" or
         kagura.get("k20_required_symbol_source") != "LC_SYMTAB_N_SECT" or
-        kagura.get("k20_macos_ci") != "NOT_TESTED" or
+        kagura.get("k20_macos_ci") !=
+        "REAL_MACOS_LC_FUNCTION_STARTS_K19_OFFLINE_REPLAY_VERIFIED" or
         any(kagura.get(k) is not False for k in (
             "k20_k18_dependency", "k20_authenticated_reference",
             "k20_independent_trust_root", "k20_exact_function_size_proven",
@@ -891,9 +900,36 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
             "k20_security_anti_tamper_proven", "k20_arm64e_pac_tested",
             "k20_production_merge")) or
         any(not (root / kagura[k]).is_file() for k in (
-            "k20_workflow", "k20_measure", "k20_test", "k20_doc"))):
-        raise AssertionError("K20 LC_FUNCTION_STARTS corroborates unsigned K19"
-                             " in SAME MachO only; no macOS K20/device/security PASS")
+            "k20_workflow", "k20_measure", "k20_test", "k20_doc",
+            "k20_artifact_review_doc"))):
+        raise AssertionError("K20 real macOS artifact corroborates unsigned K19"
+                             " in SAME MachO only; no device/security PASS")
+    if (kagura.get("k21_status") !=
+        "STAGED_MANUAL_AARCH64_OPCODE_INVENTORY_NOT_MACOS_VERIFIED" or
+        kagura.get("k21_scope") !=
+        "STATIC_AARCH64_WORD_CLASSIFICATION_IN_K20_CORROBORATED_NLIST_INTERVALS_NO_CFG_SECURITY" or
+        kagura.get("k21_workflow") !=
+        ".github/workflows/kagura-k21-static-opcodes.yml" or
+        kagura.get("k21_measure") !=
+        "scripts/custom_ollvm/kagura_k21/opcode_inventory.py" or
+        kagura.get("k21_test") !=
+        "scripts/test_kagura_k21_opcode_inventory.py" or
+        kagura.get("k21_doc") !=
+        "docs/KAGURA_K21_STATIC_OPCODE_INVENTORY.md" or
+        kagura.get("k21_manifest") !=
+        "Kagura-K21-STATIC-OPCODE-INVENTORY.json" or
+        kagura.get("k21_macos_ci") != "NOT_TESTED" or
+        any(kagura.get(k) is not False for k in (
+            "k21_k18_dependency", "k21_instruction_semantics_proven",
+            "k21_cfg_or_function_extent_proven",
+            "k21_runtime_verifier_implemented",
+            "k21_security_anti_tamper_proven",
+            "k21_iphone_device_executed", "k21_arm64e_pac_tested",
+            "k21_production_merge")) or
+        any(not (root / kagura[k]).is_file() for k in (
+            "k21_workflow", "k21_measure", "k21_test", "k21_doc"))):
+        raise AssertionError("K21 only stages static AArch64 opcode word"
+                             " classification; no macOS/device/security PASS")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

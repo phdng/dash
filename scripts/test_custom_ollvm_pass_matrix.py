@@ -351,7 +351,13 @@ assert original["experimental_kagura_pipeline"]["k19_runtime_integrity_implement
 assert original["experimental_kagura_pipeline"]["k19_security_anti_tamper_proven"] is False
 assert original["experimental_kagura_pipeline"]["k19_arm64e_pac_tested"] is False
 assert original["experimental_kagura_pipeline"]["k19_production_merge"] is False
-assert original["experimental_kagura_pipeline"]["k20_status"] == "STAGED_MANUAL_LC_FUNCTION_STARTS_K19_CROSSCHECK_NOT_MACOS_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k20_status"] == "REAL_MACOS_OFFLINE_FUNCTION_STARTS_ARTIFACT_VERIFIED_NOT_RUNTIME_SECURITY"
+assert original["experimental_kagura_pipeline"]["k20_artifact_sha256"] == "235e1d4ea16437807d1920e236bb65942ef580bf021734d9093a81e73884b214"
+assert original["experimental_kagura_pipeline"]["k20_artifact_unique_entries"] == 56
+assert original["experimental_kagura_pipeline"]["k20_independent_file_checks"] == 190
+assert original["experimental_kagura_pipeline"]["k20_corroborated_symbol_intervals"] == 4
+assert original["experimental_kagura_pipeline"]["k20_function_starts_per_binary"] == [3, 3, 30]
+assert original["experimental_kagura_pipeline"]["k20_artifact_review_doc"] == "docs/KAGURA_K20_ARTIFACT_REVIEW.md"
 assert original["experimental_kagura_pipeline"]["k20_scope"] == "SAME_MACHO_LC_FUNCTION_STARTS_NLIST_DUAL_SOURCE_OFFLINE_NO_TRUST"
 assert original["experimental_kagura_pipeline"]["k20_workflow"] == ".github/workflows/kagura-k20-function-starts.yml"
 assert original["experimental_kagura_pipeline"]["k20_measure"] == "scripts/custom_ollvm/kagura_k20/function_starts.py"
@@ -360,7 +366,7 @@ assert original["experimental_kagura_pipeline"]["k20_doc"] == "docs/KAGURA_K20_F
 assert original["experimental_kagura_pipeline"]["k20_manifest"] == "Kagura-K20-FUNCTION-START-CROSSCHECK.json"
 assert original["experimental_kagura_pipeline"]["k20_required_command"] == "LC_FUNCTION_STARTS"
 assert original["experimental_kagura_pipeline"]["k20_required_symbol_source"] == "LC_SYMTAB_N_SECT"
-assert original["experimental_kagura_pipeline"]["k20_macos_ci"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k20_macos_ci"] == "REAL_MACOS_LC_FUNCTION_STARTS_K19_OFFLINE_REPLAY_VERIFIED"
 assert original["experimental_kagura_pipeline"]["k20_k18_dependency"] is False
 assert original["experimental_kagura_pipeline"]["k20_authenticated_reference"] is False
 assert original["experimental_kagura_pipeline"]["k20_independent_trust_root"] is False
@@ -371,6 +377,19 @@ assert original["experimental_kagura_pipeline"]["k20_iphone_device_executed"] is
 assert original["experimental_kagura_pipeline"]["k20_security_anti_tamper_proven"] is False
 assert original["experimental_kagura_pipeline"]["k20_arm64e_pac_tested"] is False
 assert original["experimental_kagura_pipeline"]["k20_production_merge"] is False
+assert original["experimental_kagura_pipeline"]["k21_status"] == "STAGED_MANUAL_AARCH64_OPCODE_INVENTORY_NOT_MACOS_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k21_scope"] == "STATIC_AARCH64_WORD_CLASSIFICATION_IN_K20_CORROBORATED_NLIST_INTERVALS_NO_CFG_SECURITY"
+assert original["experimental_kagura_pipeline"]["k21_workflow"] == ".github/workflows/kagura-k21-static-opcodes.yml"
+assert original["experimental_kagura_pipeline"]["k21_measure"] == "scripts/custom_ollvm/kagura_k21/opcode_inventory.py"
+assert original["experimental_kagura_pipeline"]["k21_test"] == "scripts/test_kagura_k21_opcode_inventory.py"
+assert original["experimental_kagura_pipeline"]["k21_doc"] == "docs/KAGURA_K21_STATIC_OPCODE_INVENTORY.md"
+assert original["experimental_kagura_pipeline"]["k21_manifest"] == "Kagura-K21-STATIC-OPCODE-INVENTORY.json"
+assert original["experimental_kagura_pipeline"]["k21_macos_ci"] == "NOT_TESTED"
+for name in ("k21_k18_dependency", "k21_instruction_semantics_proven",
+             "k21_cfg_or_function_extent_proven", "k21_runtime_verifier_implemented",
+             "k21_security_anti_tamper_proven", "k21_iphone_device_executed",
+             "k21_arm64e_pac_tested", "k21_production_merge"):
+    assert original["experimental_kagura_pipeline"][name] is False
 assert len(status["registry_sha256"]) == 64
 
 negative_mutations = (
@@ -496,6 +515,28 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k19_corroborated_symbol_intervals=0),
     lambda x: x["experimental_kagura_pipeline"].update(k19_real_ignored_ancillary_per_binary=0),
     lambda x: x["experimental_kagura_pipeline"].update(k20_status="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k20_artifact_sha256="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k20_artifact_unique_entries=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k20_independent_file_checks=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k20_corroborated_symbol_intervals=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k20_function_starts_per_binary=[3,3,3]),
+    lambda x: x["experimental_kagura_pipeline"].update(k20_artifact_review_doc="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_status="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_scope="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_workflow="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_measure="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_test="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_doc="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_manifest="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_macos_ci="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_k18_dependency=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_instruction_semantics_proven=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_cfg_or_function_extent_proven=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_runtime_verifier_implemented=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_security_anti_tamper_proven=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_iphone_device_executed=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_arm64e_pac_tested=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_production_merge=True),
     lambda x: x["experimental_kagura_pipeline"].update(k20_scope="FORGED"),
     lambda x: x["experimental_kagura_pipeline"].update(k20_workflow="FORGED"),
     lambda x: x["experimental_kagura_pipeline"].update(k20_measure="FORGED"),

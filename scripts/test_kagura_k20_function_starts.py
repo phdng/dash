@@ -212,4 +212,4 @@ for forbidden in ("kagura_k18/", "K18_ED25519_PRIVATE_KEY_PEM",
     assert forbidden not in wf, forbidden
 print("K20_PORTABLE_LC_FUNCTION_STARTS_K19_REPLAY_PASS:"
       " ULEB64 decode/terminator, nlist address boundary corroboration,"
-      " forged byte/metadata and false security gates; macOS CI NOT_TESTED")
+      " forged byte/metadata and false security gates; synthetic-only fixture")

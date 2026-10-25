@@ -183,15 +183,23 @@ ZIP K19 thực 55 entries CRC sạch, 4 khoảng symbol code khớp raw byte
 và K16 SHA/UUID; macOS baseline 460 bytes, CSEBreak 544 bytes,
 iOS parity 484 bytes và evaluate 544 bytes. Không phải metadata ký.
 
-**K20 — LC_FUNCTION_STARTS × LC_SYMTAB crosscheck offline (staged):**
+**K20 — LC_FUNCTION_STARTS × LC_SYMTAB crosscheck offline (đã xác minh artifact thực):**
+[KAGURA_K20_ARTIFACT_REVIEW.md](KAGURA_K20_ARTIFACT_REVIEW.md),
 [KAGURA_K20_FUNCTION_STARTS_CROSSCHECK.md](KAGURA_K20_FUNCTION_STARTS_CROSSCHECK.md).
-Parser ULEB128 đọc một `LC_FUNCTION_STARTS` thật, đối chiếu
-start/end của 4 khoảng K19 với các offset từ `__TEXT` segment,
-kiểm lại SHA code raw; fail-closed khi thiếu/mismatch. Workflow
-macOS manual-only tái tạo K13/K14/K16/K19 rồi chạy K20, không cần
-K18 keys. **Chưa có K20 real CI**. Hai nguồn cùng Mach-O không
-phải hai trust anchors; không chứng minh function size hay runtime
-integrity, không đổi Crane/PAC.
+ZIP K20 macOS thực người dùng cung cấp gồm **56 entries CRC sạch,
+190/190 kiểm tra file-backed PASS**; các stream ULEB128 có 3/3/30
+function starts và đối chiếu đủ 4 khoảng K19 với raw SHA-256/UUID.
+Workflow macOS manual-only tái tạo K13/K14/K16/K19 rồi chạy K20, không
+cần K18 keys. Hai metadata cùng Mach-O không tạo trust anchors; không
+chứng minh function size hay runtime integrity, không đổi Crane/PAC.
+
+**K21 — static AArch64 opcode word inventory (mới staged, chưa macOS CI):**
+[KAGURA_K21_STATIC_OPCODE_INVENTORY.md](KAGURA_K21_STATIC_OPCODE_INVENTORY.md).
+Phân loại 10 mẫu bit của word little-endian 32 bit trong 4 vùng byte
+K20 đã đối chiếu; nguồn vẫn yêu cầu K20/K19/K16 replay fail-closed.
+Workflow manual-only và test portable tách biệt, **chưa có K21 CI hay
+IPA/device PASS**. Histogram không phải disassembly/CFG/security proof;
+K18 tiếp tục skipped, BBCheck K15 không chạy, Crane/PAC không đổi.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản

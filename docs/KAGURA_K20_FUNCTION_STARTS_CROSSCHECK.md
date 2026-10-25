@@ -1,7 +1,9 @@
 # K20 — đối chiếu LC_FUNCTION_STARTS với LC_SYMTAB sau linker
 
-Ngày triển khai mã: **24/10/2026**. Trạng thái:
-**STAGED_MANUAL_LC_FUNCTION_STARTS_K19_CROSSCHECK_NOT_MACOS_VERIFIED**.
+Ngày triển khai mã: **24/10/2026**. Trạng thái sau khi đối chiếu ZIP K20 thực ngày 25/10/2026:
+**REAL_MACOS_OFFLINE_FUNCTION_STARTS_ARTIFACT_VERIFIED_NOT_RUNTIME_SECURITY**.
+Chi tiết SHA ZIP, 56 entries và 190/190 phép kiểm tra file-backed tại
+[KAGURA_K20_ARTIFACT_REVIEW.md](KAGURA_K20_ARTIFACT_REVIEW.md).
 
 ## Cơ sở trực tiếp
 
@@ -72,7 +74,8 @@ Crane production, arm64e/PAC, K11–K19 hay cài IPA mới.
 - Test `scripts/test_kagura_k20_function_starts.py` tạo thin arm64
   synthetic Mach-O có `LC_FUNCTION_STARTS` byte thật cho portable
   positive/negative; các binary này **không phải native macOS evidence**.
-- Bản K20 chỉ được phép chuyển sang *real macOS verified* sau khi
-  kiểm tra ZIP CI thực, replay manifest, raw load commands,
-  ULEB128 stream và 4 target interval. **Không tự nhận real CI PASS
-  vì portable tests xanh**.
+- ZIP K20 thực do người dùng cung cấp đã được đối chiếu byte Mach-O, raw
+  load commands, ULEB128 và đủ 4 interval với K19/K20 report: **190/190
+  file-backed checks PASS**. Đây là xác minh artifact offline; không phải
+  runtime self-integrity, không phải chứng thực iPhone. Chi tiết trong
+  [KAGURA_K20_ARTIFACT_REVIEW.md](KAGURA_K20_ARTIFACT_REVIEW.md).
