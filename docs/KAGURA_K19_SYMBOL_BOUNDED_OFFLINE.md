@@ -98,6 +98,30 @@ Tên: `Kagura K19 - Symbol-Bounded Mach-O Research Without K18 (Experimental)`
   `DuoDash-Kagura-K19-SYMBOL-BOUNDED-MACHO-OFFLINE-EXPERIMENTAL`,
   luôn upload cả log lỗi nếu CI fail.
 
+### Sửa lỗi CI tiếp theo: `nlist text symbol outside __text virtual bounds`
+
+CI macOS sau khi xử lý Darwin string-table prefix đã vượt qua bước đó
+nhưng gặp lỗi tại `symbol_ranges.py:121` khi một bản ghi `N_SECT`
+phụ mang ordinal của `__TEXT,__text` nhưng `n_value` không nằm
+trong khoảng `[section.addr, section.addr + section.size)`. Không
+thể kết luận đó là symbol hàm cần đo, hoặc Mach-O sai, khi chưa
+đối chiếu từng bản ghi thực trong artifact.
+
+**Thay đổi parser:** Decode và kiểm tra `n_strx` của từng bản ghi
+trước; symbol `_dd_k8_evaluate` hoặc `_dd_k14_ios_parity` nằm
+ngoài vùng code vẫn **FAIL ngay**, kể cả local/alias. Symbol khác
+nằm ngoài vùng code được **loại khỏi tập tạo ranh giới địa chỉ**, và
+số lượng được lưu vào trường
+`ignored_out_of_range_text_nlists` trong kết quả từng executable.
+Symbol phụ malformed `n_strx` vẫn bị từ chối. Hash mục tiêu vẫn
+phải đọc từ vùng file-backed `__TEXT,__text` và đối chiếu với
+manifest K16 nguyên gốc.
+
+Regression synthetic gồm symbol phụ export/local nằm đúng **điểm cuối**
+section, target nằm tại điểm cuối hoặc trước section, alias target
+ngoài section, và symbol phụ có `n_strx` bị hỏng. **Đây vẫn là sửa
+trên Workspace/portable; chưa có GitHub Actions macOS chạy lại PASS.**
+
 Portable tests
 `scripts/test_kagura_k19_symbol_ranges.py` dùng Mach-O fake **chỉ
 để kiểm parser** và negative corruption, không phải bằng chứng

@@ -85,6 +85,38 @@ for prefix in (b"\0", b" \0", b" \0\0", b"PAD\0"):
 assert k19.inspect(executable(code, ("_dd_k8_evaluate",), unnamed_local=True),
                    ("_dd_k8_evaluate",))["observed_symbols"]["_dd_k8_evaluate"]["length"] == 32
 first_nlist = 32 + (72 + 80 + 24 + 24) + len(code)
+# Real ld64 can emit extra N_SECT code-section nlists that do NOT
+# point into the file-backed __text interval (e.g. an end marker).
+# Those unrelated symbols must not truncate/break the requested oracle.
+text_end_vmaddr = 0x100000000 + (32 + 72 + 80 + 24 + 24) + len(code)
+for local in (False, True):
+    extra = bytearray(executable(code, ("_dd_k8_evaluate",), unnamed_local=local))
+    # The second nlist is the ancillary _other, which points at __text end.
+    struct.pack_into("<Q", extra, first_nlist + 16 + 8, text_end_vmaddr)
+    result = k19.inspect(bytes(extra), ("_dd_k8_evaluate",))
+    assert result["ignored_out_of_range_text_nlists"] == 1
+    assert result["text_symbol_count"] == 1
+    assert result["observed_symbols"]["_dd_k8_evaluate"]["length"] == len(code)
+    assert result["observed_symbols"]["_dd_k8_evaluate"]["sha256"] == k19.digest(code)
+    # Reject the same nlist if it now advertises the required ABI target:
+    # no outside-section symbol can satisfy/alias the target.
+    struct.pack_into("<I", extra, first_nlist + 16, 1)
+    reject(lambda: k19.inspect(bytes(extra), ("_dd_k8_evaluate",)),
+           "required target alias outside __text interval")
+# A required ABI symbol outside __text must still fail closed.
+wrong_target = bytearray(baseline)
+struct.pack_into("<Q", wrong_target, first_nlist + 8, text_end_vmaddr)
+reject(lambda: k19.inspect(bytes(wrong_target), ("_dd_k8_evaluate",)),
+       "required target outside __text end")
+struct.pack_into("<Q", wrong_target, first_nlist + 8, 0)
+reject(lambda: k19.inspect(bytes(wrong_target), ("_dd_k8_evaluate",)),
+       "required target before __text")
+# Bad n_strx stays forbidden even if the nlist is out of text range.
+bad_outside = bytearray(baseline)
+struct.pack_into("<Q", bad_outside, first_nlist + 16 + 8, text_end_vmaddr)
+struct.pack_into("<I", bad_outside, first_nlist + 16, 0xffffffff)
+reject(lambda: k19.inspect(bytes(bad_outside), ("_dd_k8_evaluate",)),
+       "malformed ancillary n_strx outside __text")
 # Darwin n_strx is an offset, not necessarily a NUL-delimited *start*:
 # a linker can reuse the suffix of an earlier string. Accept valid suffix
 # lookup, but never accept malformed/out-of-bounds or the wrong target.

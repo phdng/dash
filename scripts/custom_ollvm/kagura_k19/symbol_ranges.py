@@ -112,13 +112,17 @@ def inspect(data: bytes, targets: tuple[str, ...]) -> dict:
     if (symoff < stroff + strsize and stroff < symoff + count * 16):
         raise AssertionError("K19 overlapping nlist and string table")
     all_text = []
+    ignored_out_of_range_text_nlists = 0
     for k in range(count):
         strx, typ, sect, desc, val = struct.unpack_from("<IBBHQ",
                                                          symbols_raw, k * 16)
         if (typ & N_STAB) or (typ & N_TYPE) != N_SECT or sect != section_id:
             continue
-        if val < text_addr or val >= text_addr + text_size:
-            raise AssertionError("K19 nlist text symbol outside __text virtual bounds")
+        # Decode the name BEFORE deciding whether an nlist address can
+        # delimit machine code. ld64 can emit N_SECT records whose n_value
+        # points at the __text end marker or outside its file-backed range.
+        # Such unrelated records must not poison the symbol-address oracle;
+        # requested ABI targets must still be strictly inside __text.
         if strx == 0:
             # An unnamed LOCAL text symbol may still delimit the next
             # higher code address; an external target must be named.
@@ -127,6 +131,11 @@ def inspect(data: bytes, targets: tuple[str, ...]) -> dict:
             name = ""
         else:
             name = decode_cname(strs, strx)
+        if not (text_addr <= val < text_addr + text_size):
+            if name in targets:
+                raise AssertionError("K19 required target outside __text: " + name)
+            ignored_out_of_range_text_nlists += 1
+            continue
         all_text.append((val, name, bool(typ & N_EXT), desc))
     addresses = sorted(set(v for v, _, _, _ in all_text))
     results = {}
@@ -165,6 +174,7 @@ def inspect(data: bytes, targets: tuple[str, ...]) -> dict:
             "text_size": text_size,
             "nlist_count": count,
             "text_symbol_count": len(all_text),
+            "ignored_out_of_range_text_nlists": ignored_out_of_range_text_nlists,
             "observed_symbols": results}
 
 
