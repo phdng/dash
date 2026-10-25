@@ -1,7 +1,9 @@
 # K21 — đo opcode-word pattern AArch64 từ Mach-O đã kiểm chứng K20 (offline)
 
 Ngày đưa mã vào workspace: **25/10/2026**.
-Trạng thái: **STAGED_MANUAL_AARCH64_OPCODE_INVENTORY_NOT_MACOS_VERIFIED**.
+Trạng thái sau review ZIP thực: **REAL_MACOS_OFFLINE_AARCH64_WORD_ARTIFACT_VERIFIED_NOT_RUNTIME_SECURITY**.
+SHA-256 artifact `1991f38f5af55f310352e0f23d6e2a566eec8dba5d0a35ee6c8c2d91fffe40aa`; **57 entries, 785/785 kiểm tra file-backed PASS**. Chi tiết:
+[KAGURA_K21_ARTIFACT_REVIEW.md](KAGURA_K21_ARTIFACT_REVIEW.md).
 
 ## Mục tiêu
 
@@ -26,7 +28,7 @@ Không xác định số lượng CFG edges, destination thực, basic-block ID,
 - Chạy **workflow_dispatch** thủ công trên `macos-14`, LLVM19 và upstream Kagura pinned giống K13–K20.
 - Build K13 native parity, K14 standalone IPA, đo và replay K16/K19/K20, sau đó ghi và replay K21.
 - Bằng chứng khi chạy thật: artifact `DuoDash-Kagura-K21-STATIC-OPCODE-INVENTORY-OFFLINE-EXPERIMENTAL` (upload kể cả lỗi).
-- Hiện mới có mã/workflow và bài test portable. **Chưa có CI native macOS hay artifact K21**; không chuyển `k21_macos_ci=NOT_TESTED` sang PASS cho đến khi có dữ liệu thật.
+- Artifact K21 thực đã được người dùng cung cấp và review byte-backed; 57 entries, 785/785 checks. Đánh dấu **verified macOS artifact OFFLINE**; chưa có iPhone K21/runtime integrity/CFG/PAC/Crane security. K22 được tách riêng làm cổng tái lập hai build; K22 hiện NOT_TESTED.
 
 ## Ranh giới an toàn
 

@@ -193,13 +193,22 @@ Workflow macOS manual-only tái tạo K13/K14/K16/K19 rồi chạy K20, không
 cần K18 keys. Hai metadata cùng Mach-O không tạo trust anchors; không
 chứng minh function size hay runtime integrity, không đổi Crane/PAC.
 
-**K21 — static AArch64 opcode word inventory (mới staged, chưa macOS CI):**
+**K21 — static AArch64 opcode word inventory (ZIP macOS offline đã xác minh):**
+[KAGURA_K21_ARTIFACT_REVIEW.md](KAGURA_K21_ARTIFACT_REVIEW.md),
 [KAGURA_K21_STATIC_OPCODE_INVENTORY.md](KAGURA_K21_STATIC_OPCODE_INVENTORY.md).
-Phân loại 10 mẫu bit của word little-endian 32 bit trong 4 vùng byte
-K20 đã đối chiếu; nguồn vẫn yêu cầu K20/K19/K16 replay fail-closed.
-Workflow manual-only và test portable tách biệt, **chưa có K21 CI hay
-IPA/device PASS**. Histogram không phải disassembly/CFG/security proof;
-K18 tiếp tục skipped, BBCheck K15 không chạy, Crane/PAC không đổi.
+ZIP thực **57 entries CRC sạch, 785/785 file-backed checks PASS**, bốn
+vùng K19/K20 có 115/136/136/121 word AArch64; 10 encoding patterns
+được tính lại từ bytes gốc; native 4096 parity và K14 IPA đối chiếu đúng.
+Không có K21 on-device/integrity/CFG/security/PAC/Crane proof.
+
+**K22 — hai lần build/link độc lập trên cùng runner để kiểm tra tính
+tái lập bốn khoảng code (staged, chưa CI):**
+[KAGURA_K22_REPRODUCIBILITY_GATE.md](KAGURA_K22_REPRODUCIBILITY_GATE.md).
+Cả hai nguồn phải chạy lại K13→K21 và trùng SHA của 4 code intervals;
+không đòi giống whole Mach-O/UUID, không chứng thực hai CI runners độc
+lập. Nếu artifact K22 thực PASS, đóng mốc **offline research**; không
+là production. K18 tiếp tục skipped, K15 BBCheck weak-stub không chạy,
+Crane/PAC không đổi.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản

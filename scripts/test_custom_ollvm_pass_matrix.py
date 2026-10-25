@@ -377,18 +377,37 @@ assert original["experimental_kagura_pipeline"]["k20_iphone_device_executed"] is
 assert original["experimental_kagura_pipeline"]["k20_security_anti_tamper_proven"] is False
 assert original["experimental_kagura_pipeline"]["k20_arm64e_pac_tested"] is False
 assert original["experimental_kagura_pipeline"]["k20_production_merge"] is False
-assert original["experimental_kagura_pipeline"]["k21_status"] == "STAGED_MANUAL_AARCH64_OPCODE_INVENTORY_NOT_MACOS_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k21_status"] == "REAL_MACOS_OFFLINE_AARCH64_WORD_ARTIFACT_VERIFIED_NOT_RUNTIME_SECURITY"
+assert original["experimental_kagura_pipeline"]["k21_artifact_sha256"] == "1991f38f5af55f310352e0f23d6e2a566eec8dba5d0a35ee6c8c2d91fffe40aa"
+assert original["experimental_kagura_pipeline"]["k21_artifact_unique_entries"] == 57
+assert original["experimental_kagura_pipeline"]["k21_independent_file_checks"] == 785
+assert original["experimental_kagura_pipeline"]["k21_target_word_counts"] == [115, 136, 136, 121]
+assert original["experimental_kagura_pipeline"]["k21_function_starts_per_binary"] == [3, 3, 30]
+assert original["experimental_kagura_pipeline"]["k21_artifact_review_doc"] == "docs/KAGURA_K21_ARTIFACT_REVIEW.md"
 assert original["experimental_kagura_pipeline"]["k21_scope"] == "STATIC_AARCH64_WORD_CLASSIFICATION_IN_K20_CORROBORATED_NLIST_INTERVALS_NO_CFG_SECURITY"
 assert original["experimental_kagura_pipeline"]["k21_workflow"] == ".github/workflows/kagura-k21-static-opcodes.yml"
 assert original["experimental_kagura_pipeline"]["k21_measure"] == "scripts/custom_ollvm/kagura_k21/opcode_inventory.py"
 assert original["experimental_kagura_pipeline"]["k21_test"] == "scripts/test_kagura_k21_opcode_inventory.py"
 assert original["experimental_kagura_pipeline"]["k21_doc"] == "docs/KAGURA_K21_STATIC_OPCODE_INVENTORY.md"
 assert original["experimental_kagura_pipeline"]["k21_manifest"] == "Kagura-K21-STATIC-OPCODE-INVENTORY.json"
-assert original["experimental_kagura_pipeline"]["k21_macos_ci"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k21_macos_ci"] == "REAL_MACOS_STATIC_AARCH64_WORD_ARTIFACT_REPLAY_VERIFIED"
 for name in ("k21_k18_dependency", "k21_instruction_semantics_proven",
              "k21_cfg_or_function_extent_proven", "k21_runtime_verifier_implemented",
              "k21_security_anti_tamper_proven", "k21_iphone_device_executed",
              "k21_arm64e_pac_tested", "k21_production_merge"):
+    assert original["experimental_kagura_pipeline"][name] is False
+assert original["experimental_kagura_pipeline"]["k22_status"] == "STAGED_MANUAL_TWO_BUILD_CODE_REPRODUCIBILITY_NOT_MACOS_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k22_scope"] == "TWO_SEPARATE_K21_SOURCE_REPLAYS_COMPARE_POSTLINK_CODE_INTERVAL_SHA_NO_ATTESTATION"
+assert original["experimental_kagura_pipeline"]["k22_workflow"] == ".github/workflows/kagura-k22-reproducibility.yml"
+assert original["experimental_kagura_pipeline"]["k22_measure"] == "scripts/custom_ollvm/kagura_k22/reproducibility.py"
+assert original["experimental_kagura_pipeline"]["k22_test"] == "scripts/test_kagura_k22_reproducibility.py"
+assert original["experimental_kagura_pipeline"]["k22_doc"] == "docs/KAGURA_K22_REPRODUCIBILITY_GATE.md"
+assert original["experimental_kagura_pipeline"]["k22_manifest"] == "Kagura-K22-REPRODUCIBILITY.json"
+assert original["experimental_kagura_pipeline"]["k22_macos_ci"] == "NOT_TESTED"
+for name in ("k22_k18_dependency", "k22_two_independent_ci_runs_attested",
+             "k22_runtime_integrity_implemented", "k22_iphone_device_executed",
+             "k22_security_anti_tamper_proven", "k22_arm64e_pac_tested",
+             "k22_production_merge"):
     assert original["experimental_kagura_pipeline"][name] is False
 assert len(status["registry_sha256"]) == 64
 
@@ -522,6 +541,27 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k20_function_starts_per_binary=[3,3,3]),
     lambda x: x["experimental_kagura_pipeline"].update(k20_artifact_review_doc="FORGED"),
     lambda x: x["experimental_kagura_pipeline"].update(k21_status="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_artifact_sha256="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_artifact_unique_entries=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_independent_file_checks=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_target_word_counts=[1,1,1,1]),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_function_starts_per_binary=[3,3,3]),
+    lambda x: x["experimental_kagura_pipeline"].update(k21_artifact_review_doc="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_status="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_scope="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_workflow="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_measure="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_test="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_doc="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_manifest="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_macos_ci="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_k18_dependency=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_two_independent_ci_runs_attested=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_runtime_integrity_implemented=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_iphone_device_executed=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_security_anti_tamper_proven=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_arm64e_pac_tested=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k22_production_merge=True),
     lambda x: x["experimental_kagura_pipeline"].update(k21_scope="FORGED"),
     lambda x: x["experimental_kagura_pipeline"].update(k21_workflow="FORGED"),
     lambda x: x["experimental_kagura_pipeline"].update(k21_measure="FORGED"),

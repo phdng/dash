@@ -1,0 +1,112 @@
+name: Kagura K22 - Two Build AArch64 Code Reproducibility (Experimental)
+
+# Manual research-only. Two independent K13/K14 compile+link sequences on
+# the same macOS runner, using one pinned Kagura compiler/plugin. K22 compares
+# four K21-validated K19/K20 symbol-bounded code slices across builds.
+# No unsigned hash security, self-integrity, PAC/Crane or device claims.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k22-reproducibility:
+    runs-on: macos-14
+    timeout-minutes: 150
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Strict portable K22-K13 and registry gates
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k22_reproducibility.py
+          python3 scripts/test_kagura_k21_opcode_inventory.py
+          python3 scripts/test_kagura_k20_function_starts.py
+          python3 scripts/test_kagura_k19_symbol_ranges.py
+          python3 scripts/test_kagura_k16_offline_text.py
+          python3 scripts/test_kagura_k15_bbcheck.py
+          python3 scripts/test_kagura_k14_ios_ipa.py
+          python3 scripts/test_kagura_k13_native.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+          python3 scripts/custom_ollvm/audit_passes.py
+
+      - name: Exact pinned Kagura LLVM19 source and plugin
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k22-source"
+          build="$RUNNER_TEMP/kagura-k22-plugin-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          python3 - "$src/include/kagura/PassRegistry.def" <<'PY'
+          import hashlib, pathlib, sys
+          actual = hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest()
+          assert actual == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa", "K22 Kagura registry mismatch"
+          PY
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          echo "K22_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K22_SRC=$src" >> "$GITHUB_ENV"
+          echo "K22_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Two separate K13-K21 build and replay directories
+        run: |
+          set -euo pipefail
+          left="$RUNNER_TEMP/Kagura-K22-Reproducibility/build-a"
+          right="$RUNNER_TEMP/Kagura-K22-Reproducibility/build-b"
+          mkdir -p "$left" "$right"
+          test "$left" != "$right"
+          echo "K22_LEFT=$left" >> "$GITHUB_ENV"
+          echo "K22_RIGHT=$right" >> "$GITHUB_ENV"
+          for target in "$left" "$right"; do
+            echo "K22_COMPILE_LINK_START=$target" >> "$GITHUB_STEP_SUMMARY"
+            python3 scripts/custom_ollvm/kagura_k13/pilot.py \
+              --src "$K22_SRC" --llvm "$K22_LLVM" --plugin "$K22_PLUGIN" \
+              --out "$target"
+            python3 scripts/custom_ollvm/kagura_k13/audit.py --out "$target"
+            bash scripts/custom_ollvm/kagura_k14/build_ipa.sh \
+              "$K22_LLVM" "$K22_SRC" "$target"
+            python3 scripts/custom_ollvm/kagura_k16/macho_measure.py --out "$target"
+            python3 scripts/custom_ollvm/kagura_k16/macho_measure.py --out "$target" --verify
+            python3 scripts/custom_ollvm/kagura_k19/symbol_ranges.py --out "$target"
+            python3 scripts/custom_ollvm/kagura_k19/symbol_ranges.py --out "$target" --verify
+            python3 scripts/custom_ollvm/kagura_k20/function_starts.py --out "$target"
+            python3 scripts/custom_ollvm/kagura_k20/function_starts.py --out "$target" --verify
+            python3 scripts/custom_ollvm/kagura_k21/opcode_inventory.py --out "$target"
+            python3 scripts/custom_ollvm/kagura_k21/opcode_inventory.py --out "$target" --verify
+          done
+
+      - name: Strict cross-build reproducibility of raw linked target code
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K22-Reproducibility"
+          python3 scripts/custom_ollvm/kagura_k22/reproducibility.py \
+            --left "$K22_LEFT" --right "$K22_RIGHT" --out "$out"
+          python3 scripts/custom_ollvm/kagura_k22/reproducibility.py \
+            --left "$K22_LEFT" --right "$K22_RIGHT" --out "$out" --verify
+          echo "K22: 4 K21-replayed code intervals reproducible across two separate build/link sequences." >> "$GITHUB_STEP_SUMMARY"
+          echo "K22: whole Mach-O/UUID may differ; no independent CI attestation, K18 skipped, K15 BBCheck stub blocked, no iPhone/PAC/Crane or security proof." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload both sources, manifests and errors even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K22-TWO-BUILD-REPRODUCIBILITY-OFFLINE-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K22-Reproducibility/

@@ -905,7 +905,15 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         raise AssertionError("K20 real macOS artifact corroborates unsigned K19"
                              " in SAME MachO only; no device/security PASS")
     if (kagura.get("k21_status") !=
-        "STAGED_MANUAL_AARCH64_OPCODE_INVENTORY_NOT_MACOS_VERIFIED" or
+        "REAL_MACOS_OFFLINE_AARCH64_WORD_ARTIFACT_VERIFIED_NOT_RUNTIME_SECURITY" or
+        kagura.get("k21_artifact_sha256") !=
+        "1991f38f5af55f310352e0f23d6e2a566eec8dba5d0a35ee6c8c2d91fffe40aa" or
+        kagura.get("k21_artifact_unique_entries") != 57 or
+        kagura.get("k21_independent_file_checks") != 785 or
+        kagura.get("k21_target_word_counts") != [115, 136, 136, 121] or
+        kagura.get("k21_function_starts_per_binary") != [3, 3, 30] or
+        kagura.get("k21_artifact_review_doc") !=
+        "docs/KAGURA_K21_ARTIFACT_REVIEW.md" or
         kagura.get("k21_scope") !=
         "STATIC_AARCH64_WORD_CLASSIFICATION_IN_K20_CORROBORATED_NLIST_INTERVALS_NO_CFG_SECURITY" or
         kagura.get("k21_workflow") !=
@@ -918,7 +926,8 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "docs/KAGURA_K21_STATIC_OPCODE_INVENTORY.md" or
         kagura.get("k21_manifest") !=
         "Kagura-K21-STATIC-OPCODE-INVENTORY.json" or
-        kagura.get("k21_macos_ci") != "NOT_TESTED" or
+        kagura.get("k21_macos_ci") !=
+        "REAL_MACOS_STATIC_AARCH64_WORD_ARTIFACT_REPLAY_VERIFIED" or
         any(kagura.get(k) is not False for k in (
             "k21_k18_dependency", "k21_instruction_semantics_proven",
             "k21_cfg_or_function_extent_proven",
@@ -927,9 +936,34 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
             "k21_iphone_device_executed", "k21_arm64e_pac_tested",
             "k21_production_merge")) or
         any(not (root / kagura[k]).is_file() for k in (
-            "k21_workflow", "k21_measure", "k21_test", "k21_doc"))):
-        raise AssertionError("K21 only stages static AArch64 opcode word"
-                             " classification; no macOS/device/security PASS")
+            "k21_workflow", "k21_measure", "k21_test", "k21_doc",
+            "k21_artifact_review_doc"))):
+        raise AssertionError("K21 real macOS static AArch64 word study"
+                             " is OFFLINE only; no device/security PASS")
+    if (kagura.get("k22_status") !=
+        "STAGED_MANUAL_TWO_BUILD_CODE_REPRODUCIBILITY_NOT_MACOS_VERIFIED" or
+        kagura.get("k22_scope") !=
+        "TWO_SEPARATE_K21_SOURCE_REPLAYS_COMPARE_POSTLINK_CODE_INTERVAL_SHA_NO_ATTESTATION" or
+        kagura.get("k22_workflow") !=
+        ".github/workflows/kagura-k22-reproducibility.yml" or
+        kagura.get("k22_measure") !=
+        "scripts/custom_ollvm/kagura_k22/reproducibility.py" or
+        kagura.get("k22_test") !=
+        "scripts/test_kagura_k22_reproducibility.py" or
+        kagura.get("k22_doc") !=
+        "docs/KAGURA_K22_REPRODUCIBILITY_GATE.md" or
+        kagura.get("k22_manifest") !=
+        "Kagura-K22-REPRODUCIBILITY.json" or
+        kagura.get("k22_macos_ci") != "NOT_TESTED" or
+        any(kagura.get(k) is not False for k in (
+            "k22_k18_dependency", "k22_two_independent_ci_runs_attested",
+            "k22_runtime_integrity_implemented",
+            "k22_iphone_device_executed", "k22_security_anti_tamper_proven",
+            "k22_arm64e_pac_tested", "k22_production_merge")) or
+        any(not (root / kagura[k]).is_file() for k in (
+            "k22_workflow", "k22_measure", "k22_test", "k22_doc"))):
+        raise AssertionError("K22 is staged for two separate macOS build"
+                             " sequences; no CI/device/security PASS")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

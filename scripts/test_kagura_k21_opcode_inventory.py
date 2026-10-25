@@ -147,4 +147,4 @@ for forbidden in ("kagura_k18/", "K18_ED25519_PRIVATE_KEY_PEM",
 
 print("K21_STATIC_AARCH64_OPCODE_WORD_INVENTORY_PORTABLE_PASS:"
       " 10 categories, source replay, forged report, changed Mach-O,"
-      " K18 skipped; real macOS K21 NOT_TESTED")
+      " K18 skipped; fixtures are synthetic, not macOS evidence")
