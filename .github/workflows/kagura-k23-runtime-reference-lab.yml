@@ -1,0 +1,111 @@
+name: Kagura K23 - iOS Bundled Reference Runtime SHA Lab (Experimental)
+
+# New standalone arm64 unsigned IPA. Runtime K14 BUNDLED reference SHA checks
+# and in-memory corrupted/truncated negative tests, NOT running code integrity.
+# K18 user-skipped; K15 weak BBCheck blocked; NO Crane/PAC/production.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k23-runtime-reference-lab:
+    runs-on: macos-14
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Portable K23-K13 tests and strict registry audit
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k23_runtime_reference.py
+          python3 scripts/test_kagura_k22_reproducibility.py
+          python3 scripts/test_kagura_k21_opcode_inventory.py
+          python3 scripts/test_kagura_k20_function_starts.py
+          python3 scripts/test_kagura_k19_symbol_ranges.py
+          python3 scripts/test_kagura_k16_offline_text.py
+          python3 scripts/test_kagura_k15_bbcheck.py
+          python3 scripts/test_kagura_k14_ios_ipa.py
+          python3 scripts/test_kagura_k13_native.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+          python3 scripts/custom_ollvm/audit_passes.py
+
+      - name: Pin upstream Kagura LLVM19 and compile isolated plugin
+        run: |
+          set -euo pipefail
+          brew install llvm@19 cmake ninja
+          llvm="$(brew --prefix llvm@19)"
+          src="$RUNNER_TEMP/kagura-k23-source"
+          build="$RUNNER_TEMP/kagura-k23-build"
+          commit="ac2136ee0408677cf7cdee55307e9b16edd5f4d5"
+          git init -q "$src"
+          git -C "$src" remote add origin https://github.com/qusamulab/kagura.git
+          git -C "$src" fetch --depth 1 origin "$commit"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+          test -s "$src/LICENSE"
+          python3 - "$src/include/kagura/PassRegistry.def" <<'PY'
+          import hashlib, pathlib, sys
+          assert hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest() == "6f15bc2b432a6d1d84e83ecdb6221cc359e42adee40d0f93f36d75b2c363b5fa", "K23 pinned Kagura pass registry mismatch"
+          PY
+          cmake -S "$src" -B "$build" -G Ninja \
+            -DLLVM_DIR="$llvm/lib/cmake/llvm" \
+            -DCMAKE_C_COMPILER="$llvm/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
+            -DKAGURA_BUILD_TESTS=OFF
+          cmake --build "$build" --parallel 3
+          plugin="$(find "$build" -type f \
+            \( -name KaguraObfuscator.dylib -o -name KaguraObfuscator.so \) -print -quit)"
+          test -n "$plugin" && test -s "$plugin"
+          echo "K23_LLVM=$llvm" >> "$GITHUB_ENV"
+          echo "K23_SRC=$src" >> "$GITHUB_ENV"
+          echo "K23_PLUGIN=$plugin" >> "$GITHUB_ENV"
+
+      - name: Produce real K13 native parity, K14 unsigned IPA and K16-K21 records
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K23-Runtime-Reference"
+          mkdir -p "$out"
+          echo "K23_OUT=$out" >> "$GITHUB_ENV"
+          python3 scripts/custom_ollvm/kagura_k13/pilot.py \
+            --src "$K23_SRC" --llvm "$K23_LLVM" --plugin "$K23_PLUGIN" --out "$out"
+          python3 scripts/custom_ollvm/kagura_k13/audit.py --out "$out"
+          bash scripts/custom_ollvm/kagura_k14/build_ipa.sh "$K23_LLVM" "$K23_SRC" "$out"
+          python3 scripts/custom_ollvm/kagura_k16/macho_measure.py --out "$out"
+          python3 scripts/custom_ollvm/kagura_k16/macho_measure.py --out "$out" --verify
+          python3 scripts/custom_ollvm/kagura_k19/symbol_ranges.py --out "$out"
+          python3 scripts/custom_ollvm/kagura_k19/symbol_ranges.py --out "$out" --verify
+          python3 scripts/custom_ollvm/kagura_k20/function_starts.py --out "$out"
+          python3 scripts/custom_ollvm/kagura_k20/function_starts.py --out "$out" --verify
+          python3 scripts/custom_ollvm/kagura_k21/opcode_inventory.py --out "$out"
+          python3 scripts/custom_ollvm/kagura_k21/opcode_inventory.py --out "$out" --verify
+
+      - name: Generate compile-bound expected K14 code SHA256 and package lab IPA
+        run: |
+          set -euo pipefail
+          python3 scripts/custom_ollvm/kagura_k23/package.py prepare --out "$K23_OUT"
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          xcrun swiftc -parse-as-library -O \
+            -target arm64-apple-ios15.0 -sdk "$sdk" \
+            scripts/custom_ollvm/kagura_k23/K23RuntimeLab.swift \
+            "$K23_OUT/K23Expected.swift" \
+            -o "$K23_OUT/KaguraK23RuntimeLab.app/KaguraK23RuntimeLab" \
+            > "$K23_OUT/k23-swiftc.log" 2>&1 || {
+              cat "$K23_OUT/k23-swiftc.log" >&2
+              exit 1
+            }
+          xcrun otool -hv "$K23_OUT/KaguraK23RuntimeLab.app/KaguraK23RuntimeLab" > "$K23_OUT/k23-macho.log"
+          python3 scripts/custom_ollvm/kagura_k23/package.py package --out "$K23_OUT"
+          echo "K23: unsigned standalone arm64 IPA verifies BUNDLED K14 reference when user runs it; CI only builds/packs." >> "$GITHUB_STEP_SUMMARY"
+          echo "K23: runtime iPhone NOT TESTED; compile-time hash is not independent trust root; no running-app self-integrity, K18 skipped, no BBCheck/PAC/Crane." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Always upload K23 code/reference IPA and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K23-IOS-RUNTIME-REFERENCE-LAB-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K23-Runtime-Reference/

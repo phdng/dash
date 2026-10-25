@@ -201,14 +201,22 @@ vùng K19/K20 có 115/136/136/121 word AArch64; 10 encoding patterns
 được tính lại từ bytes gốc; native 4096 parity và K14 IPA đối chiếu đúng.
 Không có K21 on-device/integrity/CFG/security/PAC/Crane proof.
 
-**K22 — hai lần build/link độc lập trên cùng runner để kiểm tra tính
-tái lập bốn khoảng code (staged, chưa CI):**
+**K22 — tính tái lập hai lượt build/link (ZIP thực verified offline):**
+[KAGURA_K22_ARTIFACT_REVIEW.md](KAGURA_K22_ARTIFACT_REVIEW.md),
 [KAGURA_K22_REPRODUCIBILITY_GATE.md](KAGURA_K22_REPRODUCIBILITY_GATE.md).
-Cả hai nguồn phải chạy lại K13→K21 và trùng SHA của 4 code intervals;
-không đòi giống whole Mach-O/UUID, không chứng thực hai CI runners độc
-lập. Nếu artifact K22 thực PASS, đóng mốc **offline research**; không
-là production. K18 tiếp tục skipped, K15 BBCheck weak-stub không chạy,
-Crane/PAC không đổi.
+ZIP K22 **115 entries, CRC sạch, 388/388 file-backed checks PASS**;
+bốn code intervals, ba whole Mach-O executables và IPA K14 giống byte
+trên hai chuỗi build/link của cùng runner. Đây là mốc đóng nghiên cứu
+offline K13–K22, không là kết quả runtime-security/device/PAC/Crane.
+
+**K23 — iOS runtime reference diagnostic IPA (staged):**
+[KAGURA_K23_RUNTIME_REFERENCE_LAB.md](KAGURA_K23_RUNTIME_REFERENCE_LAB.md).
+Swift CryptoKit độc lập có nút user-initiated kiểm SHA-256 của **K14
+reference được bundle riêng** và hai code intervals biên dịch từ K21;
+negative control đảo byte/cắt dữ liệu phải bị reject. Không đo
+in-memory code đang thực thi, không phải self-integrity/trust anchor;
+IPA K23 chưa macOS CI/iPhone verified, không trộn K18/K15 weak-stub,
+Crane production hay PAC.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản

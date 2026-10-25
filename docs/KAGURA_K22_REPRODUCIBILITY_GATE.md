@@ -1,7 +1,9 @@
 # Kagura K22 — cổng nghiệm thu tính tái lập của code interval (hai build)
 
-Triển khai mã: **25/10/2026**. Trạng thái:
-**STAGED_MANUAL_TWO_BUILD_CODE_REPRODUCIBILITY_NOT_MACOS_VERIFIED**.
+Triển khai mã: **25/10/2026**. Trạng thái sau đối chiếu ZIP thật:
+**REAL_MACOS_TWO_BUILD_OFFLINE_CODE_ARTIFACT_VERIFIED_NOT_RUNTIME_SECURITY**.
+Artifact SHA-256 `f7f449e3929f78f42650c46925e37e884c8a4612713abd67bf604c8ce8b01c82`, **115 entries, 388/388 đối chiếu PASS**; xem
+[KAGURA_K22_ARTIFACT_REVIEW.md](KAGURA_K22_ARTIFACT_REVIEW.md).
 
 ## Vì sao K22 là chặng kết thúc nghiên cứu offline
 
@@ -13,11 +15,11 @@ Triển khai mã: **25/10/2026**. Trạng thái:
 - `scripts/custom_ollvm/kagura_k22/reproducibility.py` yêu cầu hai thư mục nguồn khác nhau và gọi `k21.verify` trên cả hai. Phải trùng đúng raw SHA-256, chiều dài, word count, word đầu/cuối và histogram của bốn *symbol intervals* K19/K20. Chênh lệch code bytes bất kỳ **FAIL**.
 - Chấp nhận khác `LC_UUID`, whole-executable SHA-256 giữa hai build (linker metadata có thể không tái lập). Lưu hai digest và UUID vào report để kiểm toán. Điều này **không phải reproducible binary toàn phần**.
 - Báo cáo `Kagura-K22-REPRODUCIBILITY.json`, `--verify` tái tính từ raw sources; không cho ghi đè và chặn JSON giả/byte bị sửa. Vì hai folder có thể do bất kỳ ai copy, **không có chứng thực hai CI runs độc lập**; workflow chỉ tạo hai compile/link passes riêng trong một runner.
-- Artifact dự kiến: `DuoDash-Kagura-K22-TWO-BUILD-REPRODUCIBILITY-OFFLINE-EXPERIMENTAL`, upload dù fail, gồm cả hai thư mục để truy xuất nguyên nhân. Chưa có native macOS K22 thật; **không tự đánh dấu K22 PASS vì portable tests**.
+- Artifact dự kiến: `DuoDash-Kagura-K22-TWO-BUILD-REPRODUCIBILITY-OFFLINE-EXPERIMENTAL`, upload dù fail, gồm cả hai thư mục để truy xuất nguyên nhân. Đã có artifact K22 macOS thực được kiểm chứng độc lập offline; **không đánh đồng artifact PASS với runtime/device/security PASS**.
 
 ## Tiêu chí kết thúc và số vòng test dự kiến
 
-**Mốc A — nghiên cứu offline hoàn tất:** K22 macOS CI tạo ZIP thật và kiểm tra độc lập 4 interval, native baseline/protected 4.096-vector đều PASS, hai build có cùng code bytes và báo cáo phù hợp. Nếu ZIP K22 PASS ngay: **1 vòng CI còn lại**. Nếu có nondeterminism hoặc lỗi linker/parser cần sửa: dự kiến **1–2 vòng bổ sung**, không bảo đảm số lượng.
+**Mốc A — nghiên cứu offline hoàn tất:** K22 macOS CI tạo ZIP thật và kiểm tra độc lập 4 interval, native baseline/protected 4.096-vector đều PASS, hai build có cùng code bytes và báo cáo phù hợp. ZIP K22 đã được người dùng cung cấp và review; **0 vòng bổ sung bắt buộc cho phạm vi nghiên cứu offline K13–K22**. Đây là kết quả đã quan sát, không phải dự báo.
 
 **Mốc B — IPA thử nghiệm trên iPhone:** cần riêng quy trình signing/cài sạch, chạy parity + negative cases (không dùng test synthetic làm bằng chứng), soak/stability và rollback, bao gồm kiến trúc thiết bị thực. Ước lượng kế hoạch **3–5 vòng tích hợp/test**, không phải số vòng đã chứng thực đủ.
 

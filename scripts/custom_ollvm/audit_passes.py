@@ -941,7 +941,15 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         raise AssertionError("K21 real macOS static AArch64 word study"
                              " is OFFLINE only; no device/security PASS")
     if (kagura.get("k22_status") !=
-        "STAGED_MANUAL_TWO_BUILD_CODE_REPRODUCIBILITY_NOT_MACOS_VERIFIED" or
+        "REAL_MACOS_TWO_BUILD_OFFLINE_CODE_ARTIFACT_VERIFIED_NOT_RUNTIME_SECURITY" or
+        kagura.get("k22_artifact_sha256") !=
+        "f7f449e3929f78f42650c46925e37e884c8a4612713abd67bf604c8ce8b01c82" or
+        kagura.get("k22_artifact_unique_entries") != 115 or
+        kagura.get("k22_independent_file_checks") != 388 or
+        kagura.get("k22_matched_target_intervals") != 4 or
+        kagura.get("k22_whole_executables_identical") != 3 or
+        kagura.get("k22_artifact_review_doc") !=
+        "docs/KAGURA_K22_ARTIFACT_REVIEW.md" or
         kagura.get("k22_scope") !=
         "TWO_SEPARATE_K21_SOURCE_REPLAYS_COMPARE_POSTLINK_CODE_INTERVAL_SHA_NO_ATTESTATION" or
         kagura.get("k22_workflow") !=
@@ -954,16 +962,50 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "docs/KAGURA_K22_REPRODUCIBILITY_GATE.md" or
         kagura.get("k22_manifest") !=
         "Kagura-K22-REPRODUCIBILITY.json" or
-        kagura.get("k22_macos_ci") != "NOT_TESTED" or
+        kagura.get("k22_macos_ci") !=
+        "REAL_MACOS_TWO_SEPARATE_BUILD_SEQUENCES_OFFLINE_ARTIFACT_VERIFIED" or
         any(kagura.get(k) is not False for k in (
             "k22_k18_dependency", "k22_two_independent_ci_runs_attested",
             "k22_runtime_integrity_implemented",
             "k22_iphone_device_executed", "k22_security_anti_tamper_proven",
             "k22_arm64e_pac_tested", "k22_production_merge")) or
         any(not (root / kagura[k]).is_file() for k in (
-            "k22_workflow", "k22_measure", "k22_test", "k22_doc"))):
-        raise AssertionError("K22 is staged for two separate macOS build"
-                             " sequences; no CI/device/security PASS")
+            "k22_workflow", "k22_measure", "k22_test", "k22_doc",
+            "k22_artifact_review_doc"))):
+        raise AssertionError("K22 real two-sequence macOS offline artifact"
+                             " verified only; no device/security PASS")
+    if (kagura.get("k23_status") !=
+        "STAGED_MANUAL_IOS_BUNDLED_REFERENCE_RUNTIME_DIAGNOSTIC_NOT_DEVICE_VERIFIED" or
+        kagura.get("k23_scope") !=
+        "ISOLATED_IOS_ARM64_K14_BUNDLED_REFERENCE_RUNTIME_SHA256_FAIL_CLOSED_LAB_NO_SELF_INTEGRITY" or
+        kagura.get("k23_workflow") !=
+        ".github/workflows/kagura-k23-runtime-reference-lab.yml" or
+        kagura.get("k23_package") !=
+        "scripts/custom_ollvm/kagura_k23/package.py" or
+        kagura.get("k23_swift") !=
+        "scripts/custom_ollvm/kagura_k23/K23RuntimeLab.swift" or
+        kagura.get("k23_device_log_audit") !=
+        "scripts/custom_ollvm/kagura_k23/device_log_audit.py" or
+        kagura.get("k23_info_plist") !=
+        "scripts/custom_ollvm/kagura_k23/Info.plist" or
+        kagura.get("k23_test") !=
+        "scripts/test_kagura_k23_runtime_reference.py" or
+        kagura.get("k23_doc") !=
+        "docs/KAGURA_K23_RUNTIME_REFERENCE_LAB.md" or
+        kagura.get("k23_macos_ci") != "NOT_TESTED" or
+        kagura.get("k23_iphone_runtime") != "NOT_TESTED" or
+        any(kagura.get(k) is not False for k in (
+            "k23_k18_dependency", "k23_embedded_hash_is_trust_anchor",
+            "k23_running_executable_integrity_verified",
+            "k23_runtime_self_integrity_implemented",
+            "k23_security_anti_tamper_proven", "k23_arm64e_pac_tested",
+            "k23_production_merge")) or
+        any(not (root / kagura[k]).is_file() for k in (
+            "k23_workflow", "k23_package", "k23_swift",
+            "k23_device_log_audit", "k23_info_plist", "k23_test",
+            "k23_doc"))):
+        raise AssertionError("K23 staged bundled reference runtime DIAGNOSTIC"
+                             " app only, no iPhone/runtime-security PASS")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or
