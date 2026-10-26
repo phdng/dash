@@ -117,6 +117,15 @@ for token in (
     "DD_K23_SELF_INTEGRITY=NOT_IMPLEMENTED",
     "DD_K23_SCOPE=BUNDLED_REFERENCE_ONLY",
     "#if targetEnvironment(simulator)", "#if !arch(arm64)",
+    "CRYPTOKIT_SHA256_SELFTEST_FAILED",
+    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+    "Bundle.main.bundleURL.appendingPathComponent(filename",
+    "REFERENCE_RESOURCE_NOT_REGULAR_FILE", "REFERENCE_FILE_READ_FAILED",
+    "WHOLE_REFERENCE_SHA_MISMATCH", "CODE_INTERVAL_SHA_MISMATCH",
+    "TAMPERED_REFERENCE_UNEXPECTEDLY_ACCEPTED",
+    "TRUNCATED_REFERENCE_UNEXPECTEDLY_ACCEPTED",
+    "catch K23.Failure.invalid(let reason)", "DD_K23_ERROR=\\(reason)",
+    "DD_K23_ERROR=UNEXPECTED_RUNTIME_ERROR",
 ):
     assert token in swift, token
 workflow = (ROOT / ".github/workflows/kagura-k23-runtime-reference-lab.yml").read_text(

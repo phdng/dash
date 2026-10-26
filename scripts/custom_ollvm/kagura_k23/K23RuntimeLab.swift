@@ -101,11 +101,33 @@ private enum K23 {
     }
 
     static func run() throws -> String {
-        guard let url = Bundle.main.url(forResource: "KaguraCSEBreakLab",
-                                        withExtension: "reference") else {
-            throw Failure.invalid("MISSING_BUNDLED_REFERENCE")
+        // A known-answer check separates any CryptoKit/environment problem
+        // from a failure to locate or validate the K14 reference asset.
+        guard hash(Array("abc".utf8)) ==
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" else {
+            throw Failure.invalid("CRYPTOKIT_SHA256_SELFTEST_FAILED")
         }
-        let raw = Array(try Data(contentsOf: url))
+        let filename = "KaguraCSEBreakLab.reference"
+        // Preserve strict SHA/UUID/interval verification after the lookup.
+        // The direct bundle-root fallback diagnoses installers whose resource
+        // APIs do not resolve nonstandard .reference extensions.
+        let direct = Bundle.main.bundleURL.appendingPathComponent(filename,
+                                                                 isDirectory: false)
+        let lookedUp = Bundle.main.url(forResource: "KaguraCSEBreakLab",
+                                       withExtension: "reference")
+        guard let url = lookedUp ??
+            (FileManager.default.fileExists(atPath: direct.path) ? direct : nil)
+        else { throw Failure.invalid("MISSING_BUNDLED_REFERENCE") }
+        let values: URLResourceValues
+        do { values = try url.resourceValues(forKeys: [.isRegularFileKey,
+                                                        .isSymbolicLinkKey]) }
+        catch { throw Failure.invalid("REFERENCE_RESOURCE_METADATA_READ_FAILED") }
+        guard values.isRegularFile == true && values.isSymbolicLink != true else {
+            throw Failure.invalid("REFERENCE_RESOURCE_NOT_REGULAR_FILE")
+        }
+        let raw: [UInt8]
+        do { raw = Array(try Data(contentsOf: url, options: .mappedIfSafe)) }
+        catch { throw Failure.invalid("REFERENCE_FILE_READ_FAILED") }
         try verify(raw)
         // Negative control 1: flip a byte INSIDE a K21-measured code interval.
         guard let first = K23Expected.targetRanges.first else {
@@ -175,9 +197,13 @@ private final class K23Controller: UIViewController {
     @objc private func start() {
         do {
             output.text = try K23.run()
+        } catch K23.Failure.invalid(let reason) {
+            // Fail closed, but show a stable stage-specific reason so a
+            // real device can distinguish missing asset, hash and negative-test failures.
+            output.text = "DD_K23_SCHEMA=1\nDD_K23_COMPLETE=FAIL\nDD_K23_ERROR=\(reason)\n"
         } catch {
-            // No PASS for corrupted, truncated or unavailable reference.
-            output.text = "DD_K23_COMPLETE=FAIL\nDD_K23_ERROR=REFERENCE_RUNTIME_VERIFICATION_FAILED\n"
+            // Never silently turn an unknown runtime exception into PASS.
+            output.text = "DD_K23_SCHEMA=1\nDD_K23_COMPLETE=FAIL\nDD_K23_ERROR=UNEXPECTED_RUNTIME_ERROR\n"
         }
     }
     @objc private func export() {

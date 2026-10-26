@@ -1,7 +1,11 @@
 # K23 — thử nghiệm iOS runtime kiểm tra tham chiếu Mach-O K14 trong bundle
 
-Ngày tạo: **25/10/2026**. Trạng thái:
-**STAGED_MANUAL_IOS_BUNDLED_REFERENCE_RUNTIME_DIAGNOSTIC_NOT_DEVICE_VERIFIED**.
+Ngày tạo: **25/10/2026**. Trạng thái sau khi người dùng cài IPA:
+**REAL_MACOS_UNSIGNED_IPA_ARTIFACT_VERIFIED_USER_REPORTED_DEVICE_VERIFY_FAIL**.
+ZIP macOS K23 thực đã được kiểm tra raw bytes, nhưng trên iPhone
+người dùng báo bấm Verify nhận 2 dòng FAIL chung. Đã sửa để phát mã lỗi
+cụ thể trong lần build tiếp theo, **chưa có bằng chứng on-device PASS**.
+Xem [KAGURA_K23_ARTIFACT_DEVICE_FAILURE_REVIEW.md](KAGURA_K23_ARTIFACT_DEVICE_FAILURE_REVIEW.md).
 Tách riêng hẳn khỏi K18 user-skipped, K15 BBCheck weak-stub và Crane production.
 
 ## K22 đã đóng nghiên cứu offline
@@ -68,10 +72,13 @@ phải security anti-tamper hoặc kiểm chứng bất kỳ BBCheck production.
 Không kiểm tra code sau ASLR/dyld, không quét trang thực thi, không có
 independent on-device observation, PAC/arm64e/Crane protection.
 
-**Tiêu chí nghiệm thu vòng sắp tới:** manual macOS CI phải compile Swift
-CryptoKit và tạo IPA K23 có UUID/source SHA khớp. Sau đó người dùng
-cài thử app riêng trên iPhone có khả năng chạy arm64 subtype0; kiểm
-tra UX và đầy đủ 10 dòng log rồi thử reinstall/rollback. CI PASS một
+**Tiêu chí nghiệm thu vòng sắp tới:** macOS CI cần build **lại K23
+với mã đã sửa**, kiểm tra IPA/UUID/reference SHA. Người dùng gỡ K23 cũ,
+cài IPA mới, bấm Verify: nếu còn FAIL, chia sẻ chính xác 3 dòng
+`DD_K23_SCHEMA=1`, `DD_K23_COMPLETE=FAIL`,
+`DD_K23_ERROR=<mã lỗi cụ thể>`; nếu PASS, chia sẻ đủ 10 dòng để đối
+chiếu với artifact. Chưa được bỏ bất kỳ kiểm tra SHA/UUID/negative case
+chỉ để ép PASS; khi có log hợp lệ, tiếp tục thử reinstall/rollback. CI PASS một
 mình không đủ chứng minh runtime; nếu không có log thiết bị, giữ
 `k23_iphone_runtime=NOT_TESTED`. Không mang cơ chế tham chiếu yếu này
 vào Crane production.

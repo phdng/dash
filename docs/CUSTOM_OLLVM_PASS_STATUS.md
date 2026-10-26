@@ -209,14 +209,17 @@ bốn code intervals, ba whole Mach-O executables và IPA K14 giống byte
 trên hai chuỗi build/link của cùng runner. Đây là mốc đóng nghiên cứu
 offline K13–K22, không là kết quả runtime-security/device/PAC/Crane.
 
-**K23 — iOS runtime reference diagnostic IPA (staged):**
+**K23 — IPA macOS artifact verified, iPhone user-reported Verify FAIL:**
+[KAGURA_K23_ARTIFACT_DEVICE_FAILURE_REVIEW.md](KAGURA_K23_ARTIFACT_DEVICE_FAILURE_REVIEW.md),
 [KAGURA_K23_RUNTIME_REFERENCE_LAB.md](KAGURA_K23_RUNTIME_REFERENCE_LAB.md).
-Swift CryptoKit độc lập có nút user-initiated kiểm SHA-256 của **K14
-reference được bundle riêng** và hai code intervals biên dịch từ K21;
-negative control đảo byte/cắt dữ liệu phải bị reject. Không đo
-in-memory code đang thực thi, không phải self-integrity/trust anchor;
-IPA K23 chưa macOS CI/iPhone verified, không trộn K18/K15 weak-stub,
-Crane production hay PAC.
+ZIP thực 65 entries CRC sạch; IPA, K14 bundled reference, K23Expected
+Swift, UUID và hai code-interval SHA khớp byte thực. Người dùng cài và
+mở K23 nhưng nhận hai dòng FAIL chung khi bấm Verify. Chưa biết bước
+thất bại vì app bản đầu nuốt exception thành một mã lỗi. Đã sửa K23
+để in mã lỗi cụ thể, thêm SHA known-answer preflight, bundle-root lookup
+fallback và vẫn giữ SHA/UUID/mutation/truncation gates. **Bản sửa chưa
+build macOS/kiểm tra iPhone lại**, không gọi K23 runtime PASS. Không
+đo running-app integrity/trust anchor, K18/K15/Crane/PAC vẫn ngoài scope.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản
