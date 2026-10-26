@@ -225,6 +225,20 @@ Vẫn chưa có ba file log riêng để chạy strict `device_qa.py`, không c�
 attestation thiết bị hay running-app self-integrity.
 Không được suy diễn anti-tamper, root trust, PAC hoặc Crane production.
 
+**K24 — thử nghiệm riêng đo chính mã đang chạy, chưa build macOS/iPhone:**
+[KAGURA_K24_SELF_TEXT_EXTERNAL_SIGNATURE_LAB.md](KAGURA_K24_SELF_TEXT_EXTERNAL_SIGNATURE_LAB.md).
+Swift iOS arm64 đọc `__TEXT,__text` từ **main executable thực đang nạp
+trong RAM** và tính SHA-256, UUID, section size; không dùng K14 bundled
+reference nữa. Sau link, macOS workflow tạo unsigned IPA và signing
+request chứa hash thật; private key Ed25519 **không** nằm trong CI.
+Nếu repo variable public Ed25519 chưa cấu hình, K24 chỉ chạy đo
+`MEASUREMENT_ONLY`. Nếu có khóa public được pin và người dùng nhập
+statement do private key bên ngoài ký, ứng dụng xác minh chữ ký + hash
+runtime trùng và ba negative controls mới in `PASS_LAB_ONLY`.
+**Mã và synthetic portable tests đã tạo; macOS Swift/iPhone chưa chạy**.
+Không gọi key nằm trong unsigned IPA là root bất biến, không chứng minh
+anti-tamper/hardened code signing/PAC/Crane, không dùng K15 weak stub.
+
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,
 và `VM` Kagura chưa bật. Chỉ sau CI và runtime evidence mới xét bản
 custom merged/derived. Chưa được gọi là MAX production.

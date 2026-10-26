@@ -1048,6 +1048,42 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
             "k23_artifact_review_doc", "k23_v2_artifact_review_doc"))):
         raise AssertionError("K23 user-shared functional log may PASS but"
                              " device attestation and self-security remain false")
+    if (kagura.get("k24_status") !=
+        "STAGED_OWN_RUNNING_TEXT_EXTERNAL_ED25519_LAB_MACOS_DEVICE_UNTESTED" or
+        kagura.get("k24_scope") !=
+        "ISOLATED_IOS_ARM64_MAIN_EXECUTABLE_IN_MEMORY_TEXT_MEASUREMENT_EXTERNAL_DETACHED_SIGNED_REFERENCE_LAB" or
+        kagura.get("k24_workflow") !=
+        ".github/workflows/kagura-k24-self-text-external-signature.yml" or
+        kagura.get("k24_swift") !=
+        "scripts/custom_ollvm/kagura_k24/K24SelfTextLab.swift" or
+        kagura.get("k24_package") !=
+        "scripts/custom_ollvm/kagura_k24/package.py" or
+        kagura.get("k24_external_sign") !=
+        "scripts/custom_ollvm/kagura_k24/external_sign.py" or
+        kagura.get("k24_device_log_audit") !=
+        "scripts/custom_ollvm/kagura_k24/device_log_audit.py" or
+        kagura.get("k24_info_plist") !=
+        "scripts/custom_ollvm/kagura_k24/Info.plist" or
+        kagura.get("k24_test") !=
+        "scripts/test_kagura_k24_own_text.py" or
+        kagura.get("k24_doc") !=
+        "docs/KAGURA_K24_SELF_TEXT_EXTERNAL_SIGNATURE_LAB.md" or
+        kagura.get("k24_measurement_source_staged") is not True or
+        kagura.get("k24_external_signature_gate_optional") is not True or
+        kagura.get("k24_macos_ci") != "NOT_TESTED" or
+        kagura.get("k24_iphone_runtime") != "NOT_TESTED" or
+        kagura.get("k24_external_signature_runtime") != "NOT_TESTED" or
+        any(kagura.get(k) is not False for k in (
+            "k24_external_private_key_in_ci", "k24_trust_anchor_immutable",
+            "k24_actual_device_code_measurement_verified",
+            "k24_anti_tamper_proven", "k24_arm64e_pac_tested",
+            "k24_crane_production_merge")) or
+        any(not (root / kagura[k]).is_file() for k in (
+            "k24_workflow", "k24_swift", "k24_package",
+            "k24_external_sign", "k24_device_log_audit",
+            "k24_info_plist", "k24_test", "k24_doc"))):
+        raise AssertionError("K24 isolated own-code measurement SOURCE only:"
+                             " no macOS/device/signature/security PASS")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

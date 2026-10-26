@@ -456,6 +456,26 @@ for name in ("k23_k18_dependency", "k23_embedded_hash_is_trust_anchor",
              "k23_security_anti_tamper_proven", "k23_arm64e_pac_tested",
              "k23_production_merge"):
     assert original["experimental_kagura_pipeline"][name] is False
+assert original["experimental_kagura_pipeline"]["k24_status"] == "STAGED_OWN_RUNNING_TEXT_EXTERNAL_ED25519_LAB_MACOS_DEVICE_UNTESTED"
+assert original["experimental_kagura_pipeline"]["k24_scope"] == "ISOLATED_IOS_ARM64_MAIN_EXECUTABLE_IN_MEMORY_TEXT_MEASUREMENT_EXTERNAL_DETACHED_SIGNED_REFERENCE_LAB"
+assert original["experimental_kagura_pipeline"]["k24_workflow"] == ".github/workflows/kagura-k24-self-text-external-signature.yml"
+assert original["experimental_kagura_pipeline"]["k24_swift"] == "scripts/custom_ollvm/kagura_k24/K24SelfTextLab.swift"
+assert original["experimental_kagura_pipeline"]["k24_package"] == "scripts/custom_ollvm/kagura_k24/package.py"
+assert original["experimental_kagura_pipeline"]["k24_external_sign"] == "scripts/custom_ollvm/kagura_k24/external_sign.py"
+assert original["experimental_kagura_pipeline"]["k24_device_log_audit"] == "scripts/custom_ollvm/kagura_k24/device_log_audit.py"
+assert original["experimental_kagura_pipeline"]["k24_info_plist"] == "scripts/custom_ollvm/kagura_k24/Info.plist"
+assert original["experimental_kagura_pipeline"]["k24_test"] == "scripts/test_kagura_k24_own_text.py"
+assert original["experimental_kagura_pipeline"]["k24_doc"] == "docs/KAGURA_K24_SELF_TEXT_EXTERNAL_SIGNATURE_LAB.md"
+assert original["experimental_kagura_pipeline"]["k24_measurement_source_staged"] is True
+assert original["experimental_kagura_pipeline"]["k24_external_signature_gate_optional"] is True
+assert original["experimental_kagura_pipeline"]["k24_macos_ci"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k24_iphone_runtime"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k24_external_signature_runtime"] == "NOT_TESTED"
+for name in ("k24_external_private_key_in_ci", "k24_trust_anchor_immutable",
+             "k24_actual_device_code_measurement_verified",
+             "k24_anti_tamper_proven", "k24_arm64e_pac_tested",
+             "k24_crane_production_merge"):
+    assert original["experimental_kagura_pipeline"][name] is False
 assert len(status["registry_sha256"]) == 64
 
 negative_mutations = (
@@ -631,6 +651,24 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k23_three_user_reported_runs_pass=4),
     lambda x: x["experimental_kagura_pipeline"].update(k23_three_device_logs_independently_provided=True),
     lambda x: x["experimental_kagura_pipeline"].update(k23_cryptographic_device_attestation=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_status="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_workflow="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_swift="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_package="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_external_sign="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_device_log_audit="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_info_plist="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_test="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_doc="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_macos_ci="PASS_WITHOUT_RUN"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_iphone_runtime="PASS_WITHOUT_DEVICE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_external_signature_runtime="PASS_WITHOUT_DEVICE"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_external_private_key_in_ci=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_trust_anchor_immutable=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_actual_device_code_measurement_verified=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_anti_tamper_proven=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_arm64e_pac_tested=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_crane_production_merge=True),
     lambda x: x["experimental_kagura_pipeline"].update(k23_info_plist="FORGED"),
     lambda x: x["experimental_kagura_pipeline"].update(k23_test="FORGED"),
     lambda x: x["experimental_kagura_pipeline"].update(k23_doc="FORGED"),

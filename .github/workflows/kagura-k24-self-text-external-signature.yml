@@ -1,0 +1,77 @@
+name: Kagura K24 - Own Running Text and External Ed25519 Lab (Experimental)
+
+# Independent Swift-only iOS arm64 lab. NO private key in repo/CI.
+# Measures real main executable __TEXT,__text IN RUNNING MEMORY.
+# External signed expected statement is imported manually on device.
+# Unsigned IPA is NOT a production anti-tamper solution, no PAC/Crane.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  k24-own-text-external-reference:
+    runs-on: macos-14
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned offline-signature test dependency
+        run: python3 -m pip install cryptography==44.0.3
+      - name: Offline portable positive and fail-closed test gates
+        run: |
+          set -euo pipefail
+          python3 scripts/test_kagura_k24_own_text.py
+          python3 scripts/test_kagura_k23_runtime_reference.py
+          python3 scripts/test_custom_ollvm_pass_matrix.py
+          python3 scripts/custom_ollvm/audit_passes.py
+      - name: Build standalone unsigned iOS physical-device self-measurement app
+        env:
+          K24_TRUSTED_ED25519_PUBLIC_KEY_B64: ${{ vars.K24_TRUSTED_ED25519_PUBLIC_KEY_B64 }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/Kagura-K24-Own-Text-External-Statement"
+          mkdir -p "$out"
+          echo "K24_OUT=$out" >> "$GITHUB_ENV"
+          python3 scripts/custom_ollvm/kagura_k24/package.py prepare \
+            --out "$out" \
+            --trusted-ed25519-public-key-b64 "${K24_TRUSTED_ED25519_PUBLIC_KEY_B64:-}"
+          sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+          xcrun swiftc -parse-as-library -O \
+            -target arm64-apple-ios15.0 -sdk "$sdk" \
+            scripts/custom_ollvm/kagura_k24/K24SelfTextLab.swift \
+            "$out/K24Pinned.swift" \
+            -o "$out/KaguraK24SelfTextLab.app/KaguraK24SelfTextLab" \
+            > "$out/k24-swiftc.log" 2>&1 || {
+              cat "$out/k24-swiftc.log" >&2
+              exit 1
+            }
+          xcrun otool -hv "$out/KaguraK24SelfTextLab.app/KaguraK24SelfTextLab" > "$out/k24-macho.log"
+          python3 scripts/custom_ollvm/kagura_k24/package.py package --out "$out"
+          python3 - "$out" <<'PY'
+          import json, pathlib, sys
+          out=pathlib.Path(sys.argv[1])
+          report=json.loads((out/"Kagura-K24-SELF-TEXT-IPA-REPORT.json").read_text())
+          assert report["signing"]=="UNSIGNED"
+          assert report["runtime_self_integrity_security_proven"] is False
+          assert report["crane_production_modified"] is False
+          assert report["device_runtime_text_matches_file"]=="NOT_TESTED"
+          print("K24_REAL_MACOS_UNSIGNED_OWN_TEXT_IPA_PACKAGING_PASS:"
+                " no device/signature/anti-tamper claims")
+          PY
+          echo "K24: self __TEXT,__text measurement app built, unsigned. iPhone NOT TESTED." >> "$GITHUB_STEP_SUMMARY"
+          echo "K24: external key set only if repo variable configured; CI never holds Ed25519 private key or signature." >> "$GITHUB_STEP_SUMMARY"
+          echo "K24: signature import does not prove immutable trust root or patched-verifier resistance; no Crane/BBCheck/PAC." >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload unsigned IPA and offline signature request
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoDash-Kagura-K24-OWN-TEXT-EXTERNAL-SIGNATURE-LAB-EXPERIMENTAL
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/Kagura-K24-Own-Text-External-Statement/
