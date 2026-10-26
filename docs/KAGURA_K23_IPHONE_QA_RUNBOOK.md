@@ -1,8 +1,12 @@
 # Hướng dẫn chạy K23 v2 — nghiệm thu iPhone 3 lượt (manual-only)
 
-**Mục tiêu:** kiểm tra chức năng **bundled K14 reference verifier** đã
-được user báo PASS một lượt (10 dòng). Thực hiện **ba lượt thao tác
-riêng**, đối chiếu log với **chính IPA v2** macOS build. Chưa phải bảo vệ
+**Mục tiêu:** kiểm tra chức năng **bundled K14 reference verifier**.
+Tới 26/10/2026, người dùng đã báo **ba lượt đều PASS** (cùng log 10
+dòng) và đã cung cấp IPA/report v2 hợp lệ, nhưng **chưa cung cấp ba file
+log thiết bị nguồn riêng**. Vì vậy chỉ thực hiện lại hướng dẫn này nếu
+cần đối chiếu ba tệp log riêng bằng QA script; không được sinh ba log
+giả từ một log dán trong chat. Thực hiện **ba lượt thao tác riêng** để
+đối chiếu với **chính IPA v2** macOS build. Chưa phải bảo vệ
 mã thực thi trong RAM, anti-tamper, security root of trust, chứng thực
 thiết bị hay Crane production.
 

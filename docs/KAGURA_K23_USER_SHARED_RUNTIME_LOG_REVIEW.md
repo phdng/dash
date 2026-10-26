@@ -26,12 +26,18 @@ chứng, dữ liệu thử sửa/cắt cụt bị từ chối. Lỗi
 `WHOLE_REFERENCE_SHA_MISMATCH` báo trước đây **không còn xuất hiện
 trong log người dùng mới**.
 
-**Giới hạn bằng chứng:** chỉ có văn bản do người dùng chia sẻ; chưa có
-file IPA v2 và JSON report v2 được đính kèm để so trực tiếp với log, chưa
-có capture hay cryptographic device attestation, chưa có 3 lượt QA
-cài mới/mở lại/gỡ-cài-lại có log riêng. Không thể khẳng định device type,
-OS, thời gian thật, app chưa bị đóng gói lại, hay chứng minh ba lần chạy
-độc lập bằng log văn bản giống nhau.
+**Cập nhật 26/10/2026:** người dùng báo 3 lượt test đều có đúng
+chuỗi 10 dòng trên. Đã tiếp nhận ZIP K23 **v2 thực** và đối chiếu toàn
+bộ IPA, reference Base64, K23Expected.swift, hash/UUID/2 vùng mã;
+**65 entries CRC PASS**. Xem [KAGURA_K23_V2_THREE_RUN_ARTIFACT_REVIEW.md](KAGURA_K23_V2_THREE_RUN_ARTIFACT_REVIEW.md)
+để biết SHA-256 và bằng chứng chi tiết.
+
+**Giới hạn bằng chứng:** ZIP có IPA/report/build logs, **không có ba file
+log thực từ ba lần chạy**. Người dùng dán một chuỗi 10 dòng rồi báo cả
+ba lượt giống nhau, nên đây là **3/3 user-reported functional PASS**, không
+phải 3 log độc lập đã được script nghiệm thu hay device attestation.
+Không thể xác nhận device type, OS, thời điểm, attested executable hay
+chống đóng gói lại. Các flag security/self-integrity vẫn false.
 
 Các flag `k23_running_executable_integrity_verified`,
 `k23_runtime_self_integrity_implemented`,

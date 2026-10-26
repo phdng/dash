@@ -214,13 +214,15 @@ offline K13–K22, không là kết quả runtime-security/device/PAC/Crane.
 [KAGURA_K23_USER_SHARED_RUNTIME_LOG_REVIEW.md](KAGURA_K23_USER_SHARED_RUNTIME_LOG_REVIEW.md),
 [KAGURA_K23_IPHONE_QA_RUNBOOK.md](KAGURA_K23_IPHONE_QA_RUNBOOK.md),
 [KAGURA_K23_RUNTIME_REFERENCE_LAB.md](KAGURA_K23_RUNTIME_REFERENCE_LAB.md).
-ZIP K23 cũ 65 entries và IPA đã được kiểm offline; người dùng sau đó
-báo lỗi SHA khi cài, đã tạo K23 v2 dùng reference Base64 và chẩn đoán
-actual-vs-expected. Log mới người dùng chia sẻ đúng 10 dòng Swift:
-SHA tham chiếu PASS, 2 vùng code, mutated/truncated REJECTED,
-`SELF_INTEGRITY=NOT_IMPLEMENTED`. **Chỉ xác nhận chức năng theo log tự
-báo cáo**, chưa có artifact v2 đi kèm hay độc lập xác minh thiết bị.
-Đã thêm QA ba giai đoạn cài sạch/mở lại/gỡ-cài-lại; chưa có ba log đó.
+ZIP **K23 v2 thực** đã được đối chiếu: 65 entries CRC PASS,
+IPA SHA `c92c030048162f3a1c4182688045af301346aeb78cafca45d4b79fd0fac1452b`,
+Base64 reference/SHA toàn Mach-O/UUID và 2 code intervals khớp raw bytes.
+Người dùng báo **3/3 lượt chức năng PASS**, tất cả dùng log Swift 10
+dòng giống nhau (SHA K14 PASS, mutation/truncation REJECTED,
+`SELF_INTEGRITY=NOT_IMPLEMENTED`). Xem
+[KAGURA_K23_V2_THREE_RUN_ARTIFACT_REVIEW.md](KAGURA_K23_V2_THREE_RUN_ARTIFACT_REVIEW.md).
+Vẫn chưa có ba file log riêng để chạy strict `device_qa.py`, không có
+attestation thiết bị hay running-app self-integrity.
 Không được suy diễn anti-tamper, root trust, PAC hoặc Crane production.
 
 Nhánh này **không hợp nhất Hikari, Obfuscator, Kagura thành một plugin**,

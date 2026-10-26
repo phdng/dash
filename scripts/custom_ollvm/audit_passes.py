@@ -975,7 +975,7 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         raise AssertionError("K22 real two-sequence macOS offline artifact"
                              " verified only; no device/security PASS")
     if (kagura.get("k23_status") !=
-        "USER_SHARED_BUNDLED_REFERENCE_DEVICE_LOG_PASS_NOT_ATTESTED_NO_SELF_INTEGRITY" or
+        "REAL_MACOS_V2_IPA_VERIFIED_USER_REPORTED_THREE_FUNCTIONAL_PASS_NOT_ATTESTED" or
         kagura.get("k23_artifact_sha256") !=
         "eba93a0b5e2f965c4addec02e06262e3ca5db550bf6b23a61496b42b7a844f06" or
         kagura.get("k23_artifact_unique_entries") != 65 or
@@ -987,6 +987,21 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "7c0cb853-77aa-3ccb-9f20-560e5f40e587" or
         kagura.get("k23_artifact_review_doc") !=
         "docs/KAGURA_K23_ARTIFACT_DEVICE_FAILURE_REVIEW.md" or
+        kagura.get("k23_v2_artifact_review_doc") !=
+        "docs/KAGURA_K23_V2_THREE_RUN_ARTIFACT_REVIEW.md" or
+        kagura.get("k23_v2_artifact_sha256") !=
+        "7fbea5d7d52dec575011143dea7cacecbdbacc985ce63aedc29e83d2ecd16cf1" or
+        kagura.get("k23_v2_artifact_unique_entries") != 65 or
+        kagura.get("k23_v2_ipa_sha256") !=
+        "c92c030048162f3a1c4182688045af301346aeb78cafca45d4b79fd0fac1452b" or
+        kagura.get("k23_v2_app_executable_sha256") !=
+        "5e6fee5912451552279464731894f67c05d5a3eb7e1e441851c2017a0d158abe" or
+        kagura.get("k23_v2_transport_sha256") !=
+        "060497b06ad64f5d38525251a5051535dc8616e4f151d9c79cfccf117386e907" or
+        kagura.get("k23_v2_transport_bytes") != 123313 or
+        kagura.get("k23_v2_decoded_reference_bytes") != 92456 or
+        kagura.get("k23_v2_ipa_member_count") != 3 or
+        kagura.get("k23_v2_bundle_version") != "2" or
         kagura.get("k23_scope") !=
         "ISOLATED_IOS_ARM64_K14_BUNDLED_REFERENCE_RUNTIME_SHA256_FAIL_CLOSED_LAB_NO_SELF_INTEGRITY" or
         kagura.get("k23_workflow") !=
@@ -1005,7 +1020,10 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "docs/KAGURA_K23_IPHONE_QA_RUNBOOK.md" or
         kagura.get("k23_user_shared_log_lines") != 10 or
         kagura.get("k23_three_stage_qa_status") !=
-        "PENDING_FRESH_RELAUNCH_REINSTALL_LOGS_AND_V2_ARTIFACT" or
+        "USER_REPORTED_3_OF_3_PASS_V2_ARTIFACT_VERIFIED_SOURCE_LOG_FILES_PENDING" or
+        kagura.get("k23_three_user_reported_runs_pass") != 3 or
+        kagura.get("k23_three_device_logs_independently_provided") is not False or
+        kagura.get("k23_cryptographic_device_attestation") is not False or
         kagura.get("k23_info_plist") !=
         "scripts/custom_ollvm/kagura_k23/Info.plist" or
         kagura.get("k23_test") !=
@@ -1015,7 +1033,7 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         kagura.get("k23_macos_ci") !=
         "REAL_MACOS_UNSIGNED_IPA_ARTIFACT_BYTE_REPLAY_VERIFIED" or
         kagura.get("k23_iphone_runtime") !=
-        "USER_SHARED_TEN_LINE_BUNDLED_REFERENCE_PASS_NOT_ATTESTED" or
+        "USER_REPORTED_THREE_OF_THREE_BUNDLED_REFERENCE_FUNCTIONAL_PASS_NOT_ATTESTED" or
         any(kagura.get(k) is not False for k in (
             "k23_k18_dependency", "k23_embedded_hash_is_trust_anchor",
             "k23_running_executable_integrity_verified",
@@ -1027,7 +1045,7 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
             "k23_device_log_audit", "k23_three_stage_qa_tool",
             "k23_user_shared_log_review_doc", "k23_qa_runbook_doc",
             "k23_info_plist", "k23_test", "k23_doc",
-            "k23_artifact_review_doc"))):
+            "k23_artifact_review_doc", "k23_v2_artifact_review_doc"))):
         raise AssertionError("K23 user-shared functional log may PASS but"
                              " device attestation and self-security remain false")
     if (kagura.get("k1_stepwise_runner") !=

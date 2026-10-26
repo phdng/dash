@@ -3,9 +3,14 @@
 Ngày tạo: **25/10/2026**. Cập nhật **26/10/2026**:
 **USER_SHARED_BUNDLED_REFERENCE_DEVICE_LOG_PASS_NOT_ATTESTED_NO_SELF_INTEGRITY**.
 Người dùng đã cung cấp 10 dòng log K23 đúng thứ tự, SHA K14 PASS,
-2 vùng mã, các trường hợp sửa byte/cắt cụt bị từ chối; KHÔNG chứng
-thực device run độc lập. Đã tạo hướng dẫn 3 bước nghiệm thu và công cụ
-QA strict; còn cần artifact IPA/report v2 + log cài mới/mở lại/cài lại.
+2 vùng mã, các trường hợp sửa byte/cắt cụt bị từ chối. Sau đó người dùng
+báo **3 lượt test đều có kết quả giống nhau** và đã tải lên **ZIP K23 v2**.
+ZIP, IPA, resource Base64, toàn SHA/UUID/code-interval và Swift expected
+đã được đối chiếu bằng raw bytes; xem
+[KAGURA_K23_V2_THREE_RUN_ARTIFACT_REVIEW.md](KAGURA_K23_V2_THREE_RUN_ARTIFACT_REVIEW.md).
+**Ba lượt PASS là user-reported**, chưa có 3 tệp log nguồn thiết bị
+riêng hay chứng thực device run độc lập. Có hướng dẫn và script QA strict
+nếu cần cấp bằng chứng cao hơn.
 Chi tiết [KAGURA_K23_USER_SHARED_RUNTIME_LOG_REVIEW.md](KAGURA_K23_USER_SHARED_RUNTIME_LOG_REVIEW.md),
 [KAGURA_K23_IPHONE_QA_RUNBOOK.md](KAGURA_K23_IPHONE_QA_RUNBOOK.md)
 và [KAGURA_K23_ARTIFACT_DEVICE_FAILURE_REVIEW.md](KAGURA_K23_ARTIFACT_DEVICE_FAILURE_REVIEW.md).
