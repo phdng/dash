@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "scripts/custom_ollvm/kagura_k23"))
 import test_kagura_k22_reproducibility as k22fixture
 import package as k23
 import device_log_audit as device
+import device_qa as qa
 
 
 def rejects(fn, reason: str) -> None:
@@ -92,6 +93,47 @@ with tempfile.TemporaryDirectory(prefix="K23-SYNTHETIC-UNSIGNED-ONLY-") as tmp:
         rejects(lambda: device.validate(user_log, out / k23.REPORT),
                 "forged user-shared iPhone log")
     user_log.write_text(valid_log, encoding="ascii")
+
+    # K23 three-stage QA is a strict text/artifact-correlation gate. Three
+    # identically authored synthetic log files do NOT attest distinct runs.
+    stages = {}
+    for stage in qa.STAGES:
+        p = out / ("SYNTHETIC-" + stage + ".txt")
+        p.write_text(valid_log, encoding="ascii")
+        stages[stage] = p
+    sample_review = qa.review(out, stages)
+    assert sample_review["scope"] == (
+        "USER_SHARED_K23_V2_THREE_STAGE_TEXT_CORRELATION_NOT_ATTESTATION")
+    assert len(sample_review["stages"]) == 3
+    assert sample_review["three_independent_device_runs_attested"] is False
+    assert sample_review["device_execution_cryptographically_attested"] is False
+    assert sample_review["runtime_self_integrity_implemented"] is False
+    assert sample_review["artifact"]["reference_uuid"] == info["reference_uuid"]
+    rejects(lambda: qa.review(out, {**stages, "reinstall": stages["relaunch"]}),
+            "identical input paths for two stages")
+    rejects(lambda: qa.review(out, {"fresh_install": stages["fresh_install"]}),
+            "missing required stage")
+    stages["relaunch"].write_text(valid_log.replace(
+        "DD_K23_MUTATED_CODE=REJECTED", "DD_K23_MUTATED_CODE=ACCEPTED"),
+        encoding="ascii")
+    rejects(lambda: qa.review(out, stages), "tampered device stage log")
+    stages["relaunch"].write_text(valid_log, encoding="ascii")
+    unchanged_report = (out / k23.REPORT).read_bytes()
+    altered_claims = json.loads(unchanged_report)
+    altered_claims["reference_transport_sha256"] = "f" * 64
+    (out / k23.REPORT).write_text(json.dumps(altered_claims), encoding="utf-8")
+    rejects(lambda: qa.review(out, stages), "forged reference transport SHA in IPA report")
+    (out / k23.REPORT).write_bytes(unchanged_report)
+    unchanged_ipa = (out / k23.IPA).read_bytes()
+    (out / k23.IPA).write_bytes(unchanged_ipa + b"X")
+    rejects(lambda: qa.review(out, stages), "modified real IPA byte digest")
+    (out / k23.IPA).write_bytes(unchanged_ipa)
+    swift_saved = expected.read_bytes()
+    expected.write_bytes(swift_saved.replace(b"static let fileSize = ",
+                                              b"static let fileSize = 9"))
+    rejects(lambda: qa.review(out, stages), "generated compiler digest source forged")
+    expected.write_bytes(swift_saved)
+    assert qa.review(out, stages)["three_distinct_file_paths_supplied"] is True
 
     # Direct byte corruption must fail in packager before any runtime claims.
     reference.write_bytes(k23.encode_reference(

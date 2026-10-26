@@ -72,9 +72,18 @@ Nếu file trên iPhone vẫn bị biến đổi hoặc expected khác, v2 in th
 của từng vùng mã nếu giải mã được. **FAIL luôn fail-closed**, không
 chấp nhận code SHA trùng để bỏ qua sai lệch whole reference.
 
-**Bước cần kiểm chứng tiếp:** build IPA K23 v2 sau bản sửa trên macOS,
-gỡ ứng dụng K23 cũ, cài IPA mới, chạm Verify và chia sẻ nguyên văn 3
-dòng FAIL nếu còn lỗi; nếu PASS thì xuất đầy đủ 10 dòng. Không yêu cầu
-cài đặt K18, không bật BBCheck weak stub hoặc Crane production. Build
-macOS đã có artifact thực; iPhone user-reported FAIL vẫn chưa được khắc
-phục bằng bằng chứng thiết bị.
+## Kết quả người dùng báo cáo sau bản sửa v2 (26/10/2026)
+
+Người dùng đã gửi một log gồm đúng 10 dòng theo output Swift K23,
+`DD_K23_REFERENCE_SHA256=PASS`, `DD_K23_MUTATED_CODE=REJECTED`,
+`DD_K23_TRUNCATED_REFERENCE=REJECTED` và `DD_K23_COMPLETE=PASS`.
+Theo log này lỗi SHA mismatch trước đó không tái xuất hiện tại lượt
+kiểm tra, nhưng **chưa có artifact ZIP/report v2 độc lập đi kèm** để
+chứng minh provenance, không được ghi là device-attested. Chi tiết
+[KAGURA_K23_USER_SHARED_RUNTIME_LOG_REVIEW.md](KAGURA_K23_USER_SHARED_RUNTIME_LOG_REVIEW.md).
+
+**Bước tiếp theo:** nghiệm thu ba giai đoạn fresh install, relaunch,
+reinstall bằng đúng IPA v2 và ba log riêng, dùng
+[KAGURA_K23_IPHONE_QA_RUNBOOK.md](KAGURA_K23_IPHONE_QA_RUNBOOK.md).
+Không yêu cầu K18 hay bật K15 BBCheck weak stub, không đổi Crane
+production và không tự nhận self-integrity.

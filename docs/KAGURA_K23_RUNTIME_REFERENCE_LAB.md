@@ -1,11 +1,14 @@
 # K23 — thử nghiệm iOS runtime kiểm tra tham chiếu Mach-O K14 trong bundle
 
-Ngày tạo: **25/10/2026**. Trạng thái sau khi người dùng cài IPA:
-**REAL_MACOS_UNSIGNED_IPA_ARTIFACT_VERIFIED_USER_REPORTED_DEVICE_VERIFY_FAIL**.
-ZIP macOS K23 thực đã được kiểm tra raw bytes, nhưng trên iPhone
-người dùng báo bấm Verify nhận 2 dòng FAIL chung. Đã sửa để phát mã lỗi
-cụ thể trong lần build tiếp theo, **chưa có bằng chứng on-device PASS**.
-Xem [KAGURA_K23_ARTIFACT_DEVICE_FAILURE_REVIEW.md](KAGURA_K23_ARTIFACT_DEVICE_FAILURE_REVIEW.md).
+Ngày tạo: **25/10/2026**. Cập nhật **26/10/2026**:
+**USER_SHARED_BUNDLED_REFERENCE_DEVICE_LOG_PASS_NOT_ATTESTED_NO_SELF_INTEGRITY**.
+Người dùng đã cung cấp 10 dòng log K23 đúng thứ tự, SHA K14 PASS,
+2 vùng mã, các trường hợp sửa byte/cắt cụt bị từ chối; KHÔNG chứng
+thực device run độc lập. Đã tạo hướng dẫn 3 bước nghiệm thu và công cụ
+QA strict; còn cần artifact IPA/report v2 + log cài mới/mở lại/cài lại.
+Chi tiết [KAGURA_K23_USER_SHARED_RUNTIME_LOG_REVIEW.md](KAGURA_K23_USER_SHARED_RUNTIME_LOG_REVIEW.md),
+[KAGURA_K23_IPHONE_QA_RUNBOOK.md](KAGURA_K23_IPHONE_QA_RUNBOOK.md)
+và [KAGURA_K23_ARTIFACT_DEVICE_FAILURE_REVIEW.md](KAGURA_K23_ARTIFACT_DEVICE_FAILURE_REVIEW.md).
 Tách riêng hẳn khỏi K18 user-skipped, K15 BBCheck weak-stub và Crane production.
 
 ## K22 đã đóng nghiên cứu offline
@@ -77,18 +80,15 @@ phải security anti-tamper hoặc kiểm chứng bất kỳ BBCheck production.
 Không kiểm tra code sau ASLR/dyld, không quét trang thực thi, không có
 independent on-device observation, PAC/arm64e/Crane protection.
 
-**Tiêu chí nghiệm thu vòng sắp tới:** macOS CI cần build **lại K23 v2
-với transport Base64 và diagnostic SHA actual-vs-expected**, kiểm tra IPA/UUID/reference SHA. Người dùng gỡ K23 cũ,
-cài IPA mới, bấm Verify: nếu còn FAIL, chia sẻ chính xác 3 dòng
-`DD_K23_SCHEMA=1`, `DD_K23_COMPLETE=FAIL`,
-`DD_K23_ERROR=<mã lỗi cụ thể>`; nếu có các dòng
-`DD_K23_DIAG_*`, chia sẻ nguyên văn để xác định file/đoạn mã bị đổi;
-nếu PASS, chia sẻ đủ 10 dòng để đối
-chiếu với artifact. Chưa được bỏ bất kỳ kiểm tra SHA/UUID/negative case
-chỉ để ép PASS; khi có log hợp lệ, tiếp tục thử reinstall/rollback. CI PASS một
-mình không đủ chứng minh runtime; nếu không có log thiết bị, giữ
-`k23_iphone_runtime=NOT_TESTED`. Không mang cơ chế tham chiếu yếu này
-vào Crane production.
+**Tiêu chí nghiệm thu vòng sắp tới:** giữ cùng IPA K23 v2,
+JSON report v2 và `K23Expected.swift` trong một artifact; theo
+[KAGURA_K23_IPHONE_QA_RUNBOOK.md](KAGURA_K23_IPHONE_QA_RUNBOOK.md),
+chạy **3 lần user-initiated** sau fresh install, relaunch và reinstall,
+lưu 3 file log riêng; dùng `device_qa.py` để đối chiếu digest/tham chiếu
+và đúng 10 dòng trên từng log. Nếu FAIL, giữ nguyên `DD_K23_ERROR` và
+`DD_K23_DIAG_*`; không bỏ qua SHA/UUID/negative tests. Tên 3 file không
+chứng minh ba lần chạy độc lập; log user-shared không phải attestation.
+Không mang cơ chế tham chiếu yếu này vào Crane production.
 
 Tiếp theo, để thực sự tiến đến production: cần thiết kế trust anchor
 ngoài quyền kiểm soát của attacker, verifier có khả năng đối chiếu chính
