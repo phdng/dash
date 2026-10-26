@@ -14,7 +14,11 @@ import CryptoKit
 #endif
 
 private enum K23 {
-    enum Failure: Error { case invalid(String) }
+    enum Failure: Error {
+        case invalid(String)
+        case detailed(String, String)
+    }
+    static let transportMagic = Array("K23-BUNDLED-K14-REFERENCE-BASE64-V1\n".utf8)
 
     static func hash(_ bytes: [UInt8]) -> String {
         Data(SHA256.hash(data: Data(bytes))).map {
@@ -76,6 +80,58 @@ private enum K23 {
         return result
     }
 
+    static func decodeReference(_ packed: [UInt8]) throws -> [UInt8] {
+        // ASCII/base64 is an inert carrier. It stops iOS installers from
+        // treating the bundled specimen as a nested Mach-O executable.
+        // The decoding itself is not authentication or anti-tamper.
+        guard packed.count >= transportMagic.count + 5,
+              packed.count <= 2 * 32 * 1024 * 1024,
+              packed.starts(with: transportMagic),
+              packed.last == 0x0a else {
+            throw Failure.invalid("REFERENCE_TRANSPORT_HEADER_OR_LENGTH_INVALID")
+        }
+        let encoded = Data(packed.dropFirst(transportMagic.count).dropLast())
+        guard !encoded.contains(0x0a), !encoded.contains(0x0d),
+              let decoded = Data(base64Encoded: encoded),
+              decoded.base64EncodedData() == encoded,
+              (56...32 * 1024 * 1024).contains(decoded.count) else {
+            throw Failure.invalid("REFERENCE_TRANSPORT_BASE64_INVALID")
+        }
+        return Array(decoded)
+    }
+
+    static func diagnostic(_ packed: [UInt8], _ decoded: [UInt8]?) -> String {
+        var lines = [
+            "DD_K23_DIAG_SCHEMA=1",
+            "DD_K23_DIAG_TRANSPORT_BYTES_ACTUAL=\(packed.count)",
+            "DD_K23_DIAG_TRANSPORT_BYTES_EXPECTED=\(K23Expected.transportSize)",
+            "DD_K23_DIAG_TRANSPORT_SHA_ACTUAL=\(hash(packed))",
+            "DD_K23_DIAG_TRANSPORT_SHA_EXPECTED=\(K23Expected.transportSHA256)",
+            "DD_K23_DIAG_REFERENCE_BYTES_EXPECTED=\(K23Expected.fileSize)",
+            "DD_K23_DIAG_REFERENCE_SHA_EXPECTED=\(K23Expected.fullSHA256)"
+        ]
+        if let raw = decoded {
+            lines.append("DD_K23_DIAG_REFERENCE_BYTES_ACTUAL=\(raw.count)")
+            lines.append("DD_K23_DIAG_REFERENCE_SHA_ACTUAL=\(hash(raw))")
+            lines.append("DD_K23_DIAG_UUID_EXPECTED=\(K23Expected.uuid)")
+            lines.append("DD_K23_DIAG_UUID_ACTUAL=\((try? uuid(raw)) ?? "INVALID_MACHO")")
+            for (index, (offset, length, expected)) in
+                K23Expected.targetRanges.enumerated() {
+                guard offset >= 0, length >= 4, offset <= raw.count,
+                      length <= raw.count - offset else {
+                    lines.append("DD_K23_DIAG_CODE_\(index)=OUT_OF_BOUNDS")
+                    continue
+                }
+                let actual = hash(Array(raw[offset..<(offset + length)]))
+                lines.append("DD_K23_DIAG_CODE_\(index)=\(actual == expected ? "MATCH" : "MISMATCH")")
+                lines.append("DD_K23_DIAG_CODE_\(index)_SHA_ACTUAL=\(actual)")
+            }
+        } else {
+            lines.append("DD_K23_DIAG_REFERENCE_DECODE=FAIL")
+        }
+        return lines.joined(separator: "\n") + "\n"
+    }
+
     static func verify(_ raw: [UInt8]) throws {
         // Fail closed on *any* mismatch. Do not catch an error and return true.
         guard hash(raw) == K23Expected.fullSHA256 else {
@@ -107,14 +163,14 @@ private enum K23 {
             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" else {
             throw Failure.invalid("CRYPTOKIT_SHA256_SELFTEST_FAILED")
         }
-        let filename = "KaguraCSEBreakLab.reference"
+        let filename = "KaguraCSEBreakLab.reference.b64"
         // Preserve strict SHA/UUID/interval verification after the lookup.
         // The direct bundle-root fallback diagnoses installers whose resource
-        // APIs do not resolve nonstandard .reference extensions.
+        // API does not resolve our inert encoded asset.
         let direct = Bundle.main.bundleURL.appendingPathComponent(filename,
                                                                  isDirectory: false)
-        let lookedUp = Bundle.main.url(forResource: "KaguraCSEBreakLab",
-                                       withExtension: "reference")
+        let lookedUp = Bundle.main.url(forResource: "KaguraCSEBreakLab.reference",
+                                       withExtension: "b64")
         guard let url = lookedUp ??
             (FileManager.default.fileExists(atPath: direct.path) ? direct : nil)
         else { throw Failure.invalid("MISSING_BUNDLED_REFERENCE") }
@@ -125,10 +181,24 @@ private enum K23 {
         guard values.isRegularFile == true && values.isSymbolicLink != true else {
             throw Failure.invalid("REFERENCE_RESOURCE_NOT_REGULAR_FILE")
         }
-        let raw: [UInt8]
-        do { raw = Array(try Data(contentsOf: url, options: .mappedIfSafe)) }
+        let packed: [UInt8]
+        do { packed = Array(try Data(contentsOf: url, options: .mappedIfSafe)) }
         catch { throw Failure.invalid("REFERENCE_FILE_READ_FAILED") }
-        try verify(raw)
+        let decoded = try? decodeReference(packed)
+        guard hash(packed) == K23Expected.transportSHA256,
+              packed.count == K23Expected.transportSize else {
+            throw Failure.detailed("TRANSPORT_SHA_MISMATCH",
+                                   diagnostic(packed, decoded))
+        }
+        guard let raw = decoded else {
+            throw Failure.detailed("REFERENCE_TRANSPORT_DECODE_FAILED",
+                                   diagnostic(packed, nil))
+        }
+        do {
+            try verify(raw)
+        } catch Failure.invalid(let reason) {
+            throw Failure.detailed(reason, diagnostic(packed, raw))
+        }
         // Negative control 1: flip a byte INSIDE a K21-measured code interval.
         guard let first = K23Expected.targetRanges.first else {
             throw Failure.invalid("MISSING_TEST_INTERVAL")
@@ -166,11 +236,11 @@ private final class K23Controller: UIViewController {
     private let output = UITextView()
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "K23 Reference Runtime Lab"
+        title = "K23 Reference Runtime Lab v2"
         view.backgroundColor = .systemBackground
         let heading = UILabel()
         heading.numberOfLines = 0
-        heading.text = "K23 • bundled K14 code digest verification\nNOT running-app integrity or anti-tamper"
+        heading.text = "K23 v2 • encoded K14 reference digest verification\nNOT running-app integrity or anti-tamper"
         heading.font = .preferredFont(forTextStyle: .headline)
         let run = UIButton(type: .system)
         run.setTitle("Verify + run tamper negative tests", for: .normal)
@@ -197,6 +267,10 @@ private final class K23Controller: UIViewController {
     @objc private func start() {
         do {
             output.text = try K23.run()
+        } catch K23.Failure.detailed(let reason, let details) {
+            // Preserve fail-closed rejection while collecting raw file/region
+            // comparisons from the actual installed iPhone app data.
+            output.text = "DD_K23_SCHEMA=1\nDD_K23_COMPLETE=FAIL\nDD_K23_ERROR=\(reason)\n" + details
         } catch K23.Failure.invalid(let reason) {
             // Fail closed, but show a stable stage-specific reason so a
             // real device can distinguish missing asset, hash and negative-test failures.

@@ -2,14 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>CFBundleDevelopmentRegion</key><string>en</string>
-<key>CFBundleDisplayName</key><string>K23 Runtime Reference Lab</string>
+<key>CFBundleDisplayName</key><string>K23 Reference Lab v2</string>
 <key>CFBundleExecutable</key><string>KaguraK23RuntimeLab</string>
 <key>CFBundleIdentifier</key><string>com.duodash.research.kagurak23runtimelab</string>
 <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
 <key>CFBundleName</key><string>KaguraK23RuntimeLab</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>0.1.0</string>
-<key>CFBundleVersion</key><string>1</string>
+<key>CFBundleVersion</key><string>2</string>
 <key>CFBundleSupportedPlatforms</key><array><string>iPhoneOS</string></array>
 <key>LSRequiresIPhoneOS</key><true/>
 <key>MinimumOSVersion</key><string>15.0</string>

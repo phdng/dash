@@ -36,7 +36,13 @@ with tempfile.TemporaryDirectory(prefix="K23-SYNTHETIC-UNSIGNED-ONLY-") as tmp:
     reference = app / k23.REFERENCE
     original = reference.read_bytes()
     assert expected.read_text(encoding="utf-8") == k23.generated_expected(
-        k23.source(out)[1], k23.source(out)[2])
+        k23.source(out)[1], k23.source(out)[2], k23.source(out)[0])
+    assert original.startswith(k23.TRANSPORT_MAGIC)
+    assert not original.startswith(b"\xcf\xfa\xed\xfe")
+    assert k23.decode_reference(original) == k23.source(out)[0]
+    rejects(lambda: k23.decode_reference(original[:-1]), "missing transport newline")
+    rejects(lambda: k23.decode_reference(b"bad-header" + original), "forged transport")
+    rejects(lambda: k23.decode_reference(original[:-5] + b"!!!!\n"), "invalid base64")
     # Synthetic executable only; real Swift app remains macOS CI unverified.
     (app / k23.APP).write_bytes(k22fixture.fixtures.baseline)
     report = k23.package(out)
@@ -47,6 +53,9 @@ with tempfile.TemporaryDirectory(prefix="K23-SYNTHETIC-UNSIGNED-ONLY-") as tmp:
     assert report["security_anti_tamper_proven"] is False
     assert report["k18_dependency"] is False
     assert report["signing"] == "UNSIGNED"
+    assert report["reference_transport_format"] == "BASE64_V1_INERT_RESOURCE_NOT_TRUST_ANCHOR"
+    assert report["reference_transport_member"] == "KaguraCSEBreakLab.reference.b64"
+    assert report["reference_transport_sha256"] == k23.sha(original)
     assert len(report["reference_target_region_sha256"]) == 2
     with zipfile.ZipFile(out / k23.IPA) as z:
         assert len(z.infolist()) == 3
@@ -85,10 +94,12 @@ with tempfile.TemporaryDirectory(prefix="K23-SYNTHETIC-UNSIGNED-ONLY-") as tmp:
     user_log.write_text(valid_log, encoding="ascii")
 
     # Direct byte corruption must fail in packager before any runtime claims.
-    reference.write_bytes(original[:-1] + bytes([original[-1] ^ 1]))
-    rejects(lambda: k23.collect(out), "changed source binary")
+    reference.write_bytes(k23.encode_reference(
+        k23.decode_reference(original)[:-1] +
+        bytes([k23.decode_reference(original)[-1] ^ 1])))
+    rejects(lambda: k23.collect(out), "changed decoded K14 source binary")
     reference.write_bytes(original[:-1])
-    rejects(lambda: k23.collect(out), "truncated source binary")
+    rejects(lambda: k23.collect(out), "truncated base64 transport")
     reference.write_bytes(original)
 
     saved = expected.read_text(encoding="utf-8")
@@ -106,7 +117,7 @@ with tempfile.TemporaryDirectory(prefix="K23-SYNTHETIC-UNSIGNED-ONLY-") as tmp:
     extra.write_bytes(b"X")
     rejects(lambda: k23.collect(out), "unexpected app member")
     extra.unlink()
-    assert k23.collect(out)["reference_binary_sha256"] == k23.sha(original)
+    assert k23.collect(out)["reference_binary_sha256"] == k23.sha(k23.decode_reference(original))
 
 swift = (ROOT / "scripts/custom_ollvm/kagura_k23/K23RuntimeLab.swift").read_text(
     encoding="utf-8")
@@ -126,6 +137,11 @@ for token in (
     "TRUNCATED_REFERENCE_UNEXPECTEDLY_ACCEPTED",
     "catch K23.Failure.invalid(let reason)", "DD_K23_ERROR=\\(reason)",
     "DD_K23_ERROR=UNEXPECTED_RUNTIME_ERROR",
+    "KaguraCSEBreakLab.reference.b64", "decodeReference(_ packed:",
+    "transportMagic", "transportSHA256", "DD_K23_DIAG_SCHEMA=1",
+    "DD_K23_DIAG_REFERENCE_SHA_ACTUAL", "DD_K23_DIAG_CODE_",
+    "TRANSPORT_SHA_MISMATCH", "REFERENCE_TRANSPORT_DECODE_FAILED",
+    "catch K23.Failure.detailed(let reason, let details)",
 ):
     assert token in swift, token
 workflow = (ROOT / ".github/workflows/kagura-k23-runtime-reference-lab.yml").read_text(

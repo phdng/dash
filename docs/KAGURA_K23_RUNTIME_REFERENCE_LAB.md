@@ -31,12 +31,17 @@ canary native + K14 IPA thật; replay K16/K19/K20/K21. Python
 `scripts/custom_ollvm/kagura_k23/package.py prepare` rút SHA-256 toàn
 executable K14, UUID và SHA của `_dd_k8_evaluate`,
 `_dd_k14_ios_parity` từ `k21.verify` (không tin JSON ghi PASS). Nó
-đóng `KaguraCSEBreakLab.reference` nguyên bản vào ứng dụng K23, tạo
-`K23Expected.swift` có expected digest/offset/length biên dịch **vào
+đóng mẫu K14 dưới dạng Base64 canonical có header
+`KaguraCSEBreakLab.reference.b64` để tránh installer nhìn thấy một
+Mach-O nested có thể cần ký lại. Khi chạy, Swift kiểm SHA của transport,
+giải mã thành byte executable K14 chính xác, rồi thực hiện đầy đủ
+các phép kiểm original SHA/UUID/code interval. `K23Expected.swift` có
+expected digest/offset/length biên dịch **vào
 K23 executable** rồi Swift CryptoKit code thực hiện khi người dùng bấm nút.
 
 Mỗi lần bấm **Verify + run tamper negative tests**:
-- đọc K14 reference từ bundle, đối chiếu SHA-256 toàn file;
+- đọc transport Base64 của K14 reference từ bundle, kiểm SHA-256
+  transport, giải mã canonical, đối chiếu SHA-256 toàn Mach-O gốc;
 - kiểm tra Mach-O thin arm64 MH_EXECUTE và LC_UUID đúng;
 - so SHA-256 từng vùng mã trong đúng offset/length đã được K21 đo;
 - tạo bản copy trong RAM, flip byte đầu của một vùng mã rồi bắt buộc
@@ -72,11 +77,13 @@ phải security anti-tamper hoặc kiểm chứng bất kỳ BBCheck production.
 Không kiểm tra code sau ASLR/dyld, không quét trang thực thi, không có
 independent on-device observation, PAC/arm64e/Crane protection.
 
-**Tiêu chí nghiệm thu vòng sắp tới:** macOS CI cần build **lại K23
-với mã đã sửa**, kiểm tra IPA/UUID/reference SHA. Người dùng gỡ K23 cũ,
+**Tiêu chí nghiệm thu vòng sắp tới:** macOS CI cần build **lại K23 v2
+với transport Base64 và diagnostic SHA actual-vs-expected**, kiểm tra IPA/UUID/reference SHA. Người dùng gỡ K23 cũ,
 cài IPA mới, bấm Verify: nếu còn FAIL, chia sẻ chính xác 3 dòng
 `DD_K23_SCHEMA=1`, `DD_K23_COMPLETE=FAIL`,
-`DD_K23_ERROR=<mã lỗi cụ thể>`; nếu PASS, chia sẻ đủ 10 dòng để đối
+`DD_K23_ERROR=<mã lỗi cụ thể>`; nếu có các dòng
+`DD_K23_DIAG_*`, chia sẻ nguyên văn để xác định file/đoạn mã bị đổi;
+nếu PASS, chia sẻ đủ 10 dòng để đối
 chiếu với artifact. Chưa được bỏ bất kỳ kiểm tra SHA/UUID/negative case
 chỉ để ép PASS; khi có log hợp lệ, tiếp tục thử reinstall/rollback. CI PASS một
 mình không đủ chứng minh runtime; nếu không có log thiết bị, giữ

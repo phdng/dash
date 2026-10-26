@@ -7,6 +7,7 @@ not authenticated by an independent trust root. This is NOT self-integrity.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import plistlib
@@ -27,13 +28,37 @@ PREFIX = f"Payload/{APP}.app/"
 IPA = f"{APP}-TrollStore-arm64.ipa"
 REPORT = "Kagura-K23-RUNTIME-REFERENCE-IPA-REPORT.json"
 SCOPE = "K23_ISOLATED_BUNDLED_K14_CODE_REFERENCE_SHA256_RUNTIME_FUNCTIONALITY_NO_SELF_SECURITY"
-REFERENCE = "KaguraCSEBreakLab.reference"
+REFERENCE = "KaguraCSEBreakLab.reference.b64"
+# Keep Mach-O executable magic out of the on-device resource: installers
+# must not see a nested executable to consider re-signing or rewriting it.
+# This transport is NOT encryption, signing or a root of trust.
+TRANSPORT_MAGIC = b"K23-BUNDLED-K14-REFERENCE-BASE64-V1\n"
 EXPECTED_MEMBERS = {APP, "Info.plist", REFERENCE}
 MAX_FILE = 32 * 1024 * 1024
 
 
 def sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def encode_reference(data: bytes) -> bytes:
+    if type(data) is not bytes or not (56 <= len(data) <= MAX_FILE):
+        raise AssertionError("K23 reference Mach-O bytes missing/unbounded")
+    return TRANSPORT_MAGIC + base64.b64encode(data) + b"\n"
+
+
+def decode_reference(blob: bytes) -> bytes:
+    if (type(blob) is not bytes or not blob.startswith(TRANSPORT_MAGIC) or
+            not blob.endswith(b"\n") or len(blob) > 2 * MAX_FILE or
+            blob.count(b"\n") != 2):
+        raise AssertionError("K23 malformed/oversized opaque binary transport")
+    try:
+        decoded = base64.b64decode(blob[len(TRANSPORT_MAGIC):-1], validate=True)
+    except (ValueError, base64.binascii.Error) as exc:
+        raise AssertionError("K23 base64 resource corrupt") from exc
+    if not (56 <= len(decoded) <= MAX_FILE) or encode_reference(decoded) != blob:
+        raise AssertionError("K23 noncanonical/corrupted reference transport")
+    return decoded
 
 
 def source(out: Path) -> tuple[bytes, dict, dict]:
@@ -58,7 +83,7 @@ def source(out: Path) -> tuple[bytes, dict, dict]:
     return data, report, targets
 
 
-def generated_expected(ref: dict, targets: dict) -> str:
+def generated_expected(ref: dict, targets: dict, data: bytes) -> str:
     if not re.fullmatch(r"[0-9a-f-]{36}", ref["macho_uuid"]):
         raise AssertionError("K23 K14 UUID malformed")
     lines = [
@@ -67,6 +92,9 @@ def generated_expected(ref: dict, targets: dict) -> str:
         "enum K23Expected {",
         f'    static let uuid = "{ref["macho_uuid"]}"',
         f'    static let fullSHA256 = "{ref["binary_sha256"]}"',
+        f'    static let fileSize = {len(data)}',
+        f'    static let transportSHA256 = "{sha(encode_reference(data))}"',
+        f'    static let transportSize = {len(encode_reference(data))}',
         "    static let targetRanges: [(Int, Int, String)] = [",
     ]
     for key in sorted(targets):
@@ -84,9 +112,9 @@ def prepare(out: Path) -> dict:
         raise AssertionError("K23 refuses to overwrite app or generated Swift")
     app.mkdir()
     shutil.copyfile(HERE / "Info.plist", app / "Info.plist")
-    (app / REFERENCE).write_bytes(data)
+    (app / REFERENCE).write_bytes(encode_reference(data))
     (out / "K23Expected.swift").write_text(
-        generated_expected(ref, targets), encoding="utf-8")
+        generated_expected(ref, targets, data), encoding="utf-8")
     return {"reference_binary_sha256": ref["binary_sha256"],
             "reference_uuid": ref["macho_uuid"]}
 
@@ -96,6 +124,7 @@ def info_check(data: bytes) -> None:
     for key, value in {
         "CFBundleExecutable": APP,
         "CFBundleIdentifier": BUNDLE,
+        "CFBundleVersion": "2",
         "CFBundlePackageType": "APPL",
         "CFBundleSupportedPlatforms": ["iPhoneOS"],
         "MinimumOSVersion": "15.0",
@@ -116,12 +145,13 @@ def collect(out: Path) -> dict:
         if p.is_symlink() or not p.is_file() or not (0 < p.stat().st_size <= MAX_FILE):
             raise AssertionError("K23 unexpected/unbounded app member")
     info_check((app / "Info.plist").read_bytes())
-    actual = (app / REFERENCE).read_bytes()
+    packed = (app / REFERENCE).read_bytes()
+    actual = decode_reference(packed)
     if actual != data or sha(actual) != ref["binary_sha256"]:
-        raise AssertionError("K23 bundled K14 executable differs from K21 source")
+        raise AssertionError("K23 transported K14 executable differs from K21 source")
     generated = out / "K23Expected.swift"
     if (not generated.is_file() or generated.is_symlink() or
-            generated.read_text(encoding="utf-8") != generated_expected(ref, targets)):
+            generated.read_text(encoding="utf-8") != generated_expected(ref, targets, data)):
         raise AssertionError("K23 compiled expected digests drifted from K21 source")
     program = k21.k20.k19.k16.inspect_macho((app / APP).read_bytes())
     if program["binary_sha256"] == ref["binary_sha256"]:
@@ -132,6 +162,9 @@ def collect(out: Path) -> dict:
         "app_executable_sha256": program["binary_sha256"],
         "reference_uuid": ref["macho_uuid"],
         "reference_binary_sha256": ref["binary_sha256"],
+        "reference_transport_format": "BASE64_V1_INERT_RESOURCE_NOT_TRUST_ANCHOR",
+        "reference_transport_sha256": sha(packed),
+        "reference_transport_member": REFERENCE,
         "reference_target_region_sha256": {
             name: v["bytes_sha256"] for name, v in sorted(targets.items())},
         "bundled_reference_checked_at_packaging": True,

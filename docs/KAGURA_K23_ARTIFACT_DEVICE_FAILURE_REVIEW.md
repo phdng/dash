@@ -47,7 +47,32 @@ Mã K23 cập nhật:
 - xuất `DD_K23_ERROR=<stable-code>` ở trường hợp FAIL; không đặt PASS
   trên bất kỳ lỗi nào. Mã FAIL không tạo security/attestation claims.
 
-**Bước cần kiểm chứng tiếp:** build IPA K23 sau bản sửa trên macOS,
+## Lượt chạy thiết bị kế tiếp: WHOLE_REFERENCE_SHA_MISMATCH
+
+Người dùng sau bản chẩn đoán báo `WHOLE_REFENRENCE_SHA_MISMATCH`
+(chuẩn hóa đúng tên lỗi trong code là
+`WHOLE_REFERENCE_SHA_MISMATCH`). Điều này xác nhận file tham chiếu
+**đã được đọc và kết quả hash tại runtime KHÔNG trùng expected**, không
+chứng minh nguyên nhân là do ký lại, installer, tệp cũ hay thay đổi độc
+hại. SHA trên ZIP nguồn đã khớp source, nên cần phân biệt nguồn file
+trước cài và file thực trên iPhone.
+
+**Bản thử K23 v2:** thay raw `KaguraCSEBreakLab.reference` vốn là một
+Mach-O `MH_EXECUTE` có thể bị trình cài đặt nhận diện và xử lý, thành
+`KaguraCSEBreakLab.reference.b64` có magic ASCII và Base64 canonical.
+Bản Swift v2 giới hạn payload, kiểm exact transport SHA-256, giải mã
+trong RAM, kiểm **toàn bộ SHA-256 gốc của Mach-O K14**, UUID và hai
+code intervals; không giảm độ nghiêm ngặt của các điều kiện kiểm tra
+ban đầu. Transport Base64 chỉ là cách bảo toàn dữ liệu khi đóng gói;
+không phải mật mã, ký, bảo vệ chống giả mạo hay trust root.
+
+Nếu file trên iPhone vẫn bị biến đổi hoặc expected khác, v2 in thêm
+`DD_K23_DIAG_TRANSPORT_SHA_ACTUAL/EXPECTED`, kích thước thực và dự kiến,
+`DD_K23_DIAG_REFERENCE_SHA_ACTUAL/EXPECTED`, UUID và trạng thái SHA
+của từng vùng mã nếu giải mã được. **FAIL luôn fail-closed**, không
+chấp nhận code SHA trùng để bỏ qua sai lệch whole reference.
+
+**Bước cần kiểm chứng tiếp:** build IPA K23 v2 sau bản sửa trên macOS,
 gỡ ứng dụng K23 cũ, cài IPA mới, chạm Verify và chia sẻ nguyên văn 3
 dòng FAIL nếu còn lỗi; nếu PASS thì xuất đầy đủ 10 dòng. Không yêu cầu
 cài đặt K18, không bật BBCheck weak stub hoặc Crane production. Build
