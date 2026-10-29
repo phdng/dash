@@ -25,6 +25,7 @@ import test_kagura_k22_reproducibility as fixtures
 import package as k24
 import external_sign as signer
 import device_log_audit as device
+import key_preflight as preflight
 
 
 def rejects(fn, what: str) -> None:
@@ -58,6 +59,15 @@ with tempfile.TemporaryDirectory(prefix="K24-EXTERNAL-KEY-ONLY-") as tmp:
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption()))
     pub64 = base64.b64encode(raw_pub).decode("ascii")
+    assert preflight.validate("false", "", "") .startswith("K24_MODE_A_")
+    assert preflight.validate("false", pub64, "").startswith("K24_MODE_A_")
+    assert preflight.validate("true", pub64, fingerprint).startswith("K24_MODE_B_")
+    for args in (("true", "", fingerprint), ("true", pub64, ""),
+                 ("true", pub64, "0" * 64), ("true", "!" * 44, fingerprint),
+                 ("false", pub64, fingerprint), ("maybe", pub64, fingerprint),
+                 ("true", pub64, fingerprint.upper())):
+        rejects(lambda args=args: preflight.validate(*args),
+                "invalid manually requested public key / fingerprint")
     k24.prepare(artifact, pub64)
     rejects(lambda: k24.prepare(artifact, pub64), "overwritten app")
     assert "keyConfigured = true" in (artifact / k24.EXPECTED_SWIFT).read_text()
@@ -211,6 +221,9 @@ for token in (
     "scripts/test_kagura_k24_own_text.py",
     "scripts/custom_ollvm/kagura_k24/package.py prepare",
     "scripts/custom_ollvm/kagura_k24/package.py package",
+    "require_signed_mode", "approved_public_spki_sha256",
+    "scripts/custom_ollvm/kagura_k24/key_preflight.py",
+    "K24_REQUIRE_SIGNED_MODE", "K24_EXPECTED_SPKI_SHA256",
     "K24Pinned.swift", "xcrun swiftc -parse-as-library",
     "DuoDash-Kagura-K24-OWN-TEXT-EXTERNAL-SIGNATURE-LAB-EXPERIMENTAL"
 ):

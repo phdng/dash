@@ -456,7 +456,7 @@ for name in ("k23_k18_dependency", "k23_embedded_hash_is_trust_anchor",
              "k23_security_anti_tamper_proven", "k23_arm64e_pac_tested",
              "k23_production_merge"):
     assert original["experimental_kagura_pipeline"][name] is False
-assert original["experimental_kagura_pipeline"]["k24_status"] == "STAGED_OWN_RUNNING_TEXT_EXTERNAL_ED25519_LAB_MACOS_DEVICE_UNTESTED"
+assert original["experimental_kagura_pipeline"]["k24_status"] == "REAL_MACOS_MODE_A_IPA_RAW_TEXT_VERIFIED_USER_SHARED_DEVICE_MEASUREMENT_MATCH_NOT_ATTESTED"
 assert original["experimental_kagura_pipeline"]["k24_scope"] == "ISOLATED_IOS_ARM64_MAIN_EXECUTABLE_IN_MEMORY_TEXT_MEASUREMENT_EXTERNAL_DETACHED_SIGNED_REFERENCE_LAB"
 assert original["experimental_kagura_pipeline"]["k24_workflow"] == ".github/workflows/kagura-k24-self-text-external-signature.yml"
 assert original["experimental_kagura_pipeline"]["k24_swift"] == "scripts/custom_ollvm/kagura_k24/K24SelfTextLab.swift"
@@ -466,10 +466,22 @@ assert original["experimental_kagura_pipeline"]["k24_device_log_audit"] == "scri
 assert original["experimental_kagura_pipeline"]["k24_info_plist"] == "scripts/custom_ollvm/kagura_k24/Info.plist"
 assert original["experimental_kagura_pipeline"]["k24_test"] == "scripts/test_kagura_k24_own_text.py"
 assert original["experimental_kagura_pipeline"]["k24_doc"] == "docs/KAGURA_K24_SELF_TEXT_EXTERNAL_SIGNATURE_LAB.md"
+assert original["experimental_kagura_pipeline"]["k24_mode_a_artifact_review_doc"] == "docs/KAGURA_K24_MODE_A_REAL_ARTIFACT_DEVICE_LOG_REVIEW.md"
+assert original["experimental_kagura_pipeline"]["k24_mode_b_key_preflight"] == "scripts/custom_ollvm/kagura_k24/key_preflight.py"
+assert original["experimental_kagura_pipeline"]["k24_mode_a_zip_sha256"] == "5fd433a6c21defee780f65f25e21fe6d3593a44c7591c879f8314e53d9dc21d3"
+assert original["experimental_kagura_pipeline"]["k24_mode_a_zip_entries"] == 9
+assert original["experimental_kagura_pipeline"]["k24_mode_a_ipa_sha256"] == "006a1d3ce1a61394f9e5f03e2c8a5f5e3d10c6a0b9eaf8f419a4cc070fbc5cd0"
+assert original["experimental_kagura_pipeline"]["k24_mode_a_executable_sha256"] == "79a4b05cdbc06a2a7aa6b2c471f909903b4d833859556b8a74bbdc5edaeb9e26"
+assert original["experimental_kagura_pipeline"]["k24_mode_a_main_uuid"] == "825856f9-f710-38bd-a434-aaa983adbc5b"
+assert original["experimental_kagura_pipeline"]["k24_mode_a_text_sha256"] == "5471f918a4fad5c7360c7f423d2ed8639c1a329b4a61a40eaaff63c017298b5b"
+assert original["experimental_kagura_pipeline"]["k24_mode_a_text_size"] == 45880
+assert original["experimental_kagura_pipeline"]["k24_mode_a_runtime_matches_postlink_user_shared"] is True
+assert original["experimental_kagura_pipeline"]["k24_mode_a_cryptographic_device_attestation"] is False
+assert original["experimental_kagura_pipeline"]["k24_mode_b_status"] == "PENDING_EXTERNAL_OPERATOR_KEY_NEW_MACOS_IPA_AND_SIGNED_DEVICE_LOG"
 assert original["experimental_kagura_pipeline"]["k24_measurement_source_staged"] is True
 assert original["experimental_kagura_pipeline"]["k24_external_signature_gate_optional"] is True
-assert original["experimental_kagura_pipeline"]["k24_macos_ci"] == "NOT_TESTED"
-assert original["experimental_kagura_pipeline"]["k24_iphone_runtime"] == "NOT_TESTED"
+assert original["experimental_kagura_pipeline"]["k24_macos_ci"] == "REAL_MACOS_UNSIGNED_MODE_A_IPA_POSTLINK_TEXT_REPLAY_VERIFIED"
+assert original["experimental_kagura_pipeline"]["k24_iphone_runtime"] == "USER_SHARED_MODE_A_IN_MEMORY_TEXT_EQUALS_POSTLINK_NOT_ATTESTED"
 assert original["experimental_kagura_pipeline"]["k24_external_signature_runtime"] == "NOT_TESTED"
 for name in ("k24_external_private_key_in_ci", "k24_trust_anchor_immutable",
              "k24_actual_device_code_measurement_verified",
@@ -660,6 +672,18 @@ negative_mutations = (
     lambda x: x["experimental_kagura_pipeline"].update(k24_info_plist="FORGED"),
     lambda x: x["experimental_kagura_pipeline"].update(k24_test="FORGED"),
     lambda x: x["experimental_kagura_pipeline"].update(k24_doc="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_a_artifact_review_doc="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_b_key_preflight="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_a_zip_sha256="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_a_zip_entries=8),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_a_ipa_sha256="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_a_executable_sha256="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_a_main_uuid="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_a_text_sha256="FORGED"),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_a_text_size=0),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_a_runtime_matches_postlink_user_shared=False),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_a_cryptographic_device_attestation=True),
+    lambda x: x["experimental_kagura_pipeline"].update(k24_mode_b_status="PASS_WITHOUT_SIGNED_RELEASE"),
     lambda x: x["experimental_kagura_pipeline"].update(k24_macos_ci="PASS_WITHOUT_RUN"),
     lambda x: x["experimental_kagura_pipeline"].update(k24_iphone_runtime="PASS_WITHOUT_DEVICE"),
     lambda x: x["experimental_kagura_pipeline"].update(k24_external_signature_runtime="PASS_WITHOUT_DEVICE"),

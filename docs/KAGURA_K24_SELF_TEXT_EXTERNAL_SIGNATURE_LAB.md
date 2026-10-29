@@ -7,6 +7,18 @@ resource**. K24 khắc phục giới hạn đo đó: ứng dụng Swift mới t�
 vùng **`__TEXT,__text` của chính main executable đã được dyld nạp
 trong RAM** (ASLR/slide), tính SHA-256 và UUID. Không đọc K14 tham chiếu.
 
+## Trạng thái sau artifact thực (26/10/2026)
+
+**Mode A đã có bằng chứng offline + log người dùng phù hợp**: ZIP K24
+9 entries CRC PASS, IPA SHA khớp report, main executable UUID
+`825856f9-f710-38bd-a434-aaa983adbc5b`, vùng `__TEXT,__text`
+**45880 bytes**, SHA-256
+`5471f918a4fad5c7360c7f423d2ed8639c1a329b4a61a40eaaff63c017298b5b`.
+Cả ba trường khớp log K24 iPhone `MEASUREMENT_ONLY` mà người dùng báo.
+Xem [KAGURA_K24_MODE_A_REAL_ARTIFACT_DEVICE_LOG_REVIEW.md](KAGURA_K24_MODE_A_REAL_ARTIFACT_DEVICE_LOG_REVIEW.md).
+**Không phải device attestation hay anti-tamper**. Tới lúc này Mode B
+vẫn chưa build IPA với external public key hoặc thử chữ ký trên iPhone.
+
 ## Hai chế độ và mức độ tin cậy
 
 **Mode A — đo runtime, không cần khóa:** workflow manual
@@ -66,12 +78,21 @@ mới vào production.
 3. Trên GitHub repo → Settings → Secrets and variables → Actions →
    **Variables** → đặt `K24_TRUSTED_ED25519_PUBLIC_KEY_B64` thành
    `PUBLIC_B64` **trước khi build**. Đây là public key, không phải
-   private key. Nếu bỏ trống, build vẫn tạo IPA mode A và mode B
-   luôn từ chối `NO_EXTERNALLY_CONFIGURED_KEY`.
+   private key. Nếu không có key, workflow **Mode B fail closed ngay CI**,
+   không im lặng xây Mode A. Mode A có thể chạy khi chưa cấu hình key:
+   nó luôn biên dịch `keyConfigured=false`, kể cả khi repo đang có biến
+   public key, để không làm sai kỳ vọng của user.
 
 4. GitHub **Actions → Kagura K24 - Own Running Text and External
    Ed25519 Lab (Experimental) → Run workflow**, chọn branch
-   `chore/reconstruction-build-ci`. Khi CI macOS chạy thành công,
+   `chore/reconstruction-build-ci`. **Để chạy Mode B**, tại form dispatch
+   chọn `require_signed_mode=true` và điền đúng
+   `approved_public_spki_sha256` (64 ký tự hex thường từ bước 2,
+   được phê duyệt ngoài artifact); workflow gọi
+   `scripts/custom_ollvm/kagura_k24/key_preflight.py` để từ chối
+   key sai/thiếu/fingerprint sai trước khi gọi Swift compiler.
+   Nếu không chọn Mode B, Mode A vẫn đo, không giữ public key bên trong
+   binary. Khi CI macOS chạy thành công,
    lấy ZIP artifact
    `DuoDash-Kagura-K24-OWN-TEXT-EXTERNAL-SIGNATURE-LAB-EXPERIMENTAL`.
    Giải nén, tìm thư mục chứa:
@@ -116,8 +137,9 @@ mới vào production.
 Nếu nhận `DD_K24_COMPLETE=MEASUREMENT_ONLY`, điều đó chỉ xác nhận đã
 đọc phần code runtime trong RAM, **chưa có signature verification**.
 Nếu bất kỳ bước nào FAIL, gửi log và artifact; không coi là PASSED.
-Chưa có artifact K24 macOS, compile Swift thực hay log iPhone K24 ở
-thời điểm tạo tài liệu: tất cả là **PENDING**.
+Mode A **đã có** artifact macOS thật và log iPhone user-shared
+khớp SHA/UUID/size; xem báo cáo Mode A. Còn **Mode B** (bản build
+public-key-pinned, ký detached và thử iPhone) **PENDING**.
 
 ## 7. Đối chiếu log user chia sẻ với artifact (không phải attestation)
 
@@ -144,11 +166,11 @@ thiết bị hoặc bảo đảm chống bản app bị thay thế.
 
 ## Nghiệm thu tiếp theo
 
-- Chạy workflow trên macOS và review IPA/raw K24 executable thật,
-  signing request SHA và code interval `__TEXT,__text`.
-- On-device mode A: UUID/SHA text phải được đo từ in-memory main
-  executable, so với request post-link. Khác thì investigate dyld/
-  code signing/tải bản khác; không bỏ qua.
+- Mode A có ZIP thật và log user-shared tương quan với
+  `__TEXT,__text`; không cần thử lặp vô hạn.
+- Mode B bắt buộc chạy **workflow mới** với `require_signed_mode=true`
+  và fingerprint được operator xác nhận, rồi review IPA/raw Mach-O
+  bản key-pinned trước khi ký request.
 - Mode B: app xác nhận Ed25519 imported, signed expected và memory
   code trùng; thử sai key, sai chữ ký, changed payload, stale release
   và import thiếu. Phải FAIL CLOSED. `PASS_LAB_ONLY` không phải

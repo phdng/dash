@@ -1049,7 +1049,7 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         raise AssertionError("K23 user-shared functional log may PASS but"
                              " device attestation and self-security remain false")
     if (kagura.get("k24_status") !=
-        "STAGED_OWN_RUNNING_TEXT_EXTERNAL_ED25519_LAB_MACOS_DEVICE_UNTESTED" or
+        "REAL_MACOS_MODE_A_IPA_RAW_TEXT_VERIFIED_USER_SHARED_DEVICE_MEASUREMENT_MATCH_NOT_ATTESTED" or
         kagura.get("k24_scope") !=
         "ISOLATED_IOS_ARM64_MAIN_EXECUTABLE_IN_MEMORY_TEXT_MEASUREMENT_EXTERNAL_DETACHED_SIGNED_REFERENCE_LAB" or
         kagura.get("k24_workflow") !=
@@ -1068,10 +1068,32 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         "scripts/test_kagura_k24_own_text.py" or
         kagura.get("k24_doc") !=
         "docs/KAGURA_K24_SELF_TEXT_EXTERNAL_SIGNATURE_LAB.md" or
+        kagura.get("k24_mode_a_artifact_review_doc") !=
+        "docs/KAGURA_K24_MODE_A_REAL_ARTIFACT_DEVICE_LOG_REVIEW.md" or
+        kagura.get("k24_mode_b_key_preflight") !=
+        "scripts/custom_ollvm/kagura_k24/key_preflight.py" or
+        kagura.get("k24_mode_a_zip_sha256") !=
+        "5fd433a6c21defee780f65f25e21fe6d3593a44c7591c879f8314e53d9dc21d3" or
+        kagura.get("k24_mode_a_zip_entries") != 9 or
+        kagura.get("k24_mode_a_ipa_sha256") !=
+        "006a1d3ce1a61394f9e5f03e2c8a5f5e3d10c6a0b9eaf8f419a4cc070fbc5cd0" or
+        kagura.get("k24_mode_a_executable_sha256") !=
+        "79a4b05cdbc06a2a7aa6b2c471f909903b4d833859556b8a74bbdc5edaeb9e26" or
+        kagura.get("k24_mode_a_main_uuid") !=
+        "825856f9-f710-38bd-a434-aaa983adbc5b" or
+        kagura.get("k24_mode_a_text_sha256") !=
+        "5471f918a4fad5c7360c7f423d2ed8639c1a329b4a61a40eaaff63c017298b5b" or
+        kagura.get("k24_mode_a_text_size") != 45880 or
+        kagura.get("k24_mode_a_runtime_matches_postlink_user_shared") is not True or
+        kagura.get("k24_mode_a_cryptographic_device_attestation") is not False or
+        kagura.get("k24_mode_b_status") !=
+        "PENDING_EXTERNAL_OPERATOR_KEY_NEW_MACOS_IPA_AND_SIGNED_DEVICE_LOG" or
         kagura.get("k24_measurement_source_staged") is not True or
         kagura.get("k24_external_signature_gate_optional") is not True or
-        kagura.get("k24_macos_ci") != "NOT_TESTED" or
-        kagura.get("k24_iphone_runtime") != "NOT_TESTED" or
+        kagura.get("k24_macos_ci") !=
+        "REAL_MACOS_UNSIGNED_MODE_A_IPA_POSTLINK_TEXT_REPLAY_VERIFIED" or
+        kagura.get("k24_iphone_runtime") !=
+        "USER_SHARED_MODE_A_IN_MEMORY_TEXT_EQUALS_POSTLINK_NOT_ATTESTED" or
         kagura.get("k24_external_signature_runtime") != "NOT_TESTED" or
         any(kagura.get(k) is not False for k in (
             "k24_external_private_key_in_ci", "k24_trust_anchor_immutable",
@@ -1081,9 +1103,11 @@ def audit(registry: dict, root: Path = ROOT) -> dict:
         any(not (root / kagura[k]).is_file() for k in (
             "k24_workflow", "k24_swift", "k24_package",
             "k24_external_sign", "k24_device_log_audit",
-            "k24_info_plist", "k24_test", "k24_doc"))):
-        raise AssertionError("K24 isolated own-code measurement SOURCE only:"
-                             " no macOS/device/signature/security PASS")
+            "k24_info_plist", "k24_test", "k24_doc",
+            "k24_mode_a_artifact_review_doc",
+            "k24_mode_b_key_preflight"))):
+        raise AssertionError("K24 Mode A real IPA matches user-shared measurement;"
+                             " no signed/device-attested security PASS")
     if (kagura.get("k1_stepwise_runner") !=
         "scripts/custom_ollvm/kagura_max/stage_pipeline.py" or
         kagura.get("k1_extra_passes") != ["kagura-bbr", "kagura-bbs"] or

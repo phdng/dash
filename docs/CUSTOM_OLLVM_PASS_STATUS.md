@@ -225,8 +225,9 @@ Vẫn chưa có ba file log riêng để chạy strict `device_qa.py`, không c�
 attestation thiết bị hay running-app self-integrity.
 Không được suy diễn anti-tamper, root trust, PAC hoặc Crane production.
 
-**K24 — thử nghiệm riêng đo chính mã đang chạy, chưa build macOS/iPhone:**
-[KAGURA_K24_SELF_TEXT_EXTERNAL_SIGNATURE_LAB.md](KAGURA_K24_SELF_TEXT_EXTERNAL_SIGNATURE_LAB.md).
+**K24 — Mode A đã có artifact thật và log iPhone khớp phép đo:**
+[KAGURA_K24_SELF_TEXT_EXTERNAL_SIGNATURE_LAB.md](KAGURA_K24_SELF_TEXT_EXTERNAL_SIGNATURE_LAB.md),
+[KAGURA_K24_MODE_A_REAL_ARTIFACT_DEVICE_LOG_REVIEW.md](KAGURA_K24_MODE_A_REAL_ARTIFACT_DEVICE_LOG_REVIEW.md).
 Swift iOS arm64 đọc `__TEXT,__text` từ **main executable thực đang nạp
 trong RAM** và tính SHA-256, UUID, section size; không dùng K14 bundled
 reference nữa. Sau link, macOS workflow tạo unsigned IPA và signing
@@ -235,7 +236,12 @@ Nếu repo variable public Ed25519 chưa cấu hình, K24 chỉ chạy đo
 `MEASUREMENT_ONLY`. Nếu có khóa public được pin và người dùng nhập
 statement do private key bên ngoài ký, ứng dụng xác minh chữ ký + hash
 runtime trùng và ba negative controls mới in `PASS_LAB_ONLY`.
-**Mã và synthetic portable tests đã tạo; macOS Swift/iPhone chưa chạy**.
+Artifact macOS K24 Mode A thật: ZIP 9 entries CRC PASS, main executable
+UUID `825856f9-f710-38bd-a434-aaa983adbc5b`, vùng mã 45880 bytes
+SHA `5471f918a4fad5c7360c7f423d2ed8639c1a329b4a61a40eaaff63c017298b5b`,
+khớp log `MEASUREMENT_ONLY` do người dùng gửi. **Mode B chưa build/ký/
+chạy thiết bị**. Workflow mới buộc chọn explicit Mode B và độc lập
+nhập approved Ed25519 SPKI fingerprint, sai/thiếu phải fail trước build.
 Không gọi key nằm trong unsigned IPA là root bất biến, không chứng minh
 anti-tamper/hardened code signing/PAC/Crane, không dùng K15 weak stub.
 

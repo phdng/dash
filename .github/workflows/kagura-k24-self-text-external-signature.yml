@@ -6,6 +6,16 @@ name: Kagura K24 - Own Running Text and External Ed25519 Lab (Experimental)
 # Unsigned IPA is NOT a production anti-tamper solution, no PAC/Crane.
 on:
   workflow_dispatch:
+    inputs:
+      require_signed_mode:
+        description: 'Mode B: fail if no externally approved Ed25519 public key is pinned'
+        type: boolean
+        required: true
+        default: false
+      approved_public_spki_sha256:
+        description: 'Mode B: independent Ed25519 public SPKI SHA-256 fingerprint (64 lowercase hex)'
+        type: string
+        required: false
 permissions:
   contents: read
 
@@ -33,14 +43,23 @@ jobs:
       - name: Build standalone unsigned iOS physical-device self-measurement app
         env:
           K24_TRUSTED_ED25519_PUBLIC_KEY_B64: ${{ vars.K24_TRUSTED_ED25519_PUBLIC_KEY_B64 }}
+          K24_REQUIRE_SIGNED_MODE: ${{ inputs.require_signed_mode }}
+          K24_EXPECTED_SPKI_SHA256: ${{ inputs.approved_public_spki_sha256 }}
         run: |
           set -euo pipefail
           out="$RUNNER_TEMP/Kagura-K24-Own-Text-External-Statement"
           mkdir -p "$out"
           echo "K24_OUT=$out" >> "$GITHUB_ENV"
+          # Fail CLOSED for Mode B; never silently produce Mode A when
+          # a signed experiment was explicitly selected.
+          python3 scripts/custom_ollvm/kagura_k24/key_preflight.py
+          key_b64=""
+          if [[ "$K24_REQUIRE_SIGNED_MODE" == "true" ]]; then
+            key_b64="$K24_TRUSTED_ED25519_PUBLIC_KEY_B64"
+          fi
           python3 scripts/custom_ollvm/kagura_k24/package.py prepare \
             --out "$out" \
-            --trusted-ed25519-public-key-b64 "${K24_TRUSTED_ED25519_PUBLIC_KEY_B64:-}"
+            --trusted-ed25519-public-key-b64 "$key_b64"
           sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
           xcrun swiftc -parse-as-library -O \
             -target arm64-apple-ios15.0 -sdk "$sdk" \
@@ -65,7 +84,7 @@ jobs:
                 " no device/signature/anti-tamper claims")
           PY
           echo "K24: self __TEXT,__text measurement app built, unsigned. iPhone NOT TESTED." >> "$GITHUB_STEP_SUMMARY"
-          echo "K24: external key set only if repo variable configured; CI never holds Ed25519 private key or signature." >> "$GITHUB_STEP_SUMMARY"
+          echo "K24: Mode B requires an independently supplied Ed25519 SPKI fingerprint and matching repo public key; Mode A disables key. CI never holds Ed25519 private key or signature." >> "$GITHUB_STEP_SUMMARY"
           echo "K24: signature import does not prove immutable trust root or patched-verifier resistance; no Crane/BBCheck/PAC." >> "$GITHUB_STEP_SUMMARY"
       - name: Upload unsigned IPA and offline signature request
         if: always()
